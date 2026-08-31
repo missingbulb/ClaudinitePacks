@@ -1,0 +1,19 @@
+[
+  {
+    "id": "pack-independence",
+    "severity": "blocking",
+    "failureMessage": "the vendor set ships a pack only when declared, so a cross-pack import crashes every consumer that vendors one pack without the other",
+    "fix": "declare the dependency (requires) and pass configuration, move the shared helper into engine/checks/helpers, or accept the import with a reason in .claudinite-settings.json",
+    "relevantWhen": { "pathExists": "packs" },
+    "forbidReferences": [
+      {
+        "siblings": "packs",
+        "to": "*",
+        "scope": "imports",
+        "allow": ["engine", "packs/claudinite-tasks/shared-code"],
+        "reason": "a pack imports only its own files, the engine surface, and the tasks pack's published shared-code/ — abilities otherwise cross pack boundaries through declaration and configuration, never imports; a pack's updates/ is carved out because no vendor set carries it, so an import there cannot crash a consumer (#1317)",
+    "except": ["packs/claudinite-lifecycle/updates"]
+      }
+    ]
+  }
+]
