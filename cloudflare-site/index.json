@@ -1,0 +1,20 @@
+{
+  "v": 1,
+  "pack": "cloudflare-site",
+  "serial": 1,
+  "versions": [
+    {
+      "version": "60928.1",
+      "sha256": "1b451a6ad1e4a08ecc6f5934521526d7ba23542fcee49a0b4c0d6bd1ec614bf8",
+      "size": 19961,
+      "minEngineVersion": "60928.1",
+      "requires": [
+        "claudinite-tasks"
+      ],
+      "channel": "canary",
+      "revoked": false,
+      "publishedAt": "2026-10-01T14:32:10Z",
+      "sourceCommit": "27612838c695d2d6704966572cd86d34485e4751"
+    }
+  ]
+}
