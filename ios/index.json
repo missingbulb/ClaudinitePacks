@@ -1,0 +1,18 @@
+{
+  "v": 1,
+  "pack": "ios",
+  "serial": 1,
+  "versions": [
+    {
+      "version": "60928.1",
+      "sha256": "1f13bbf5a9400fdc6e2211eb606630eaa3db53b82701cdf580fe74a02d2fe526",
+      "size": 1654,
+      "minEngineVersion": "60928.1",
+      "requires": [],
+      "channel": "canary",
+      "revoked": false,
+      "publishedAt": "2026-10-01T14:32:10Z",
+      "sourceCommit": "27612838c695d2d6704966572cd86d34485e4751"
+    }
+  ]
+}
