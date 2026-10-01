@@ -285,6 +285,7 @@ test('setup creates the bucket and the custom domain when absent and returns the
   const cf = fakeCloudflare();
   const r = await setup({ accountId: 'acme0123', token: 'acme-token', fetch: cf.fetch, log: () => {} });
   assert.equal(r.tokenId, 'acme-token-id');
+  assert.equal(r.createdDomain, true);
   assert.deepEqual(cf.calls, [
     'GET /client/v4/user/tokens/verify',
     'GET /client/v4/accounts/acme0123/r2/buckets/claudinite-packs',
@@ -297,8 +298,9 @@ test('setup creates the bucket and the custom domain when absent and returns the
 
 test('setup is idempotent: with bucket and domain present it creates nothing', async () => {
   const cf = fakeCloudflare({ bucket: true, domain: true });
-  await setup({ accountId: 'acme0123', token: 'acme-token', fetch: cf.fetch, log: () => {} });
+  const r = await setup({ accountId: 'acme0123', token: 'acme-token', fetch: cf.fetch, log: () => {} });
   assert.deepEqual(cf.calls.filter((c) => c.startsWith('POST')), []);
+  assert.equal(r.createdDomain, false);
 });
 
 test('setup fails with the response body on an unexpected status, a disabled domain or a missing zone', async () => {
@@ -331,9 +333,10 @@ test('the dry run lists every object as would PUT and makes no request', async (
 });
 
 // Cloudflare's API, the S3 endpoint and the CDN as one fetch over one in-memory store.
-function fakeWorld() {
-  const cf = fakeCloudflare({ bucket: true, domain: true });
+function fakeWorld({ domain = true, cdnFailures = 0 } = {}) {
+  const cf = fakeCloudflare({ bucket: true, domain });
   const store = new Map();
+  let refused = 0;
   const fetch = async (url, init = {}) => {
     const u = new URL(url);
     if (u.host === 'api.cloudflare.com') return cf.fetch(url, init);
@@ -352,6 +355,7 @@ function fakeWorld() {
       return store.has(key) ? new Response(store.get(key)) : new Response('', { status: 404 });
     }
     if (u.host === 'packs.claudinite.com') {
+      if (refused < cdnFailures) { refused++; return new Response('CNAME Cross-User Banned', { status: 403 }); }
       const key = u.pathname.slice(1);
       return store.has(key) ? new Response(store.get(key)) : new Response('', { status: 404 });
     }
@@ -375,6 +379,62 @@ test('a real upload sets up, writes what the bucket lacks, reads it back through
   assert.equal(second[0].skipped.length, 4);
   assert.equal(second[0].byEtag, 4);
   assert.ok(again.includes('compared 4 object(s) by ETag, 0 by GET; 0 absent'), again.join('\n'));
+});
+
+// An injected clock that sleep() advances, recording every wait.
+function fakeTime() {
+  let t = 0;
+  const waits = [];
+  return { waits, clock: () => t, sleep: async (ms) => { waits.push(ms); t += ms; } };
+}
+
+// A CDN that answers 403 to the first `failures` requests, then serves the objects.
+function provisioningCdn(objects, failures) {
+  const cdn = fakeCdn(objects);
+  let refused = 0;
+  return { ...cdn, fetch: async (url) => (refused++ < failures ? new Response('CNAME Cross-User Banned', { status: 403 }) : cdn.fetch(url)) };
+}
+
+test('verify-cdn, after a run created the domain, retries a 403 or 404 with backoff until the CDN answers', async () => {
+  const objects = branch(['60101.1']);
+  const time = fakeTime();
+  const lines = [];
+  await verifyCdn(objects, { fetch: provisioningCdn(objects, 4).fetch, roots: ROOTS, now: NOW, log: (l) => lines.push(l), retry: { windowMs: 300e3, clock: time.clock, sleep: time.sleep } });
+  assert.deepEqual(lines.filter((l) => l.startsWith('verify-cdn acme-pack')), ['verify-cdn acme-pack ok']);
+  assert.equal(time.waits.length, 4);
+  for (let i = 1; i < time.waits.length; i++) assert.ok(time.waits[i] >= time.waits[i - 1], `backoff never shrinks: ${time.waits}`);
+  assert.ok(lines.some((l) => /^verify-cdn .*403.*retrying/.test(l)), lines.join('\n'));
+});
+
+test('verify-cdn gives up once the retry window has passed, naming the last answer', async () => {
+  const objects = branch(['60101.1']);
+  const time = fakeTime();
+  await assert.rejects(
+    verifyCdn(objects, { fetch: provisioningCdn(objects, Infinity).fetch, roots: ROOTS, now: NOW, log: () => {}, retry: { windowMs: 300e3, clock: time.clock, sleep: time.sleep } }),
+    /60101\.1\.tar\.gz: 403.*CNAME Cross-User Banned/,
+  );
+  assert.ok(time.clock() <= 300e3, `waited ${time.clock()} ms`);
+  assert.ok(time.clock() >= 240e3, `gave up early, after ${time.clock()} ms`);
+});
+
+test('without the retry, a 403 from the CDN fails at once', async () => {
+  const objects = branch(['60101.1']);
+  const cdn = provisioningCdn(objects, 1);
+  await assert.rejects(verifyCdn(objects, { fetch: cdn.fetch, roots: ROOTS, now: NOW, log: () => {} }), /403/);
+});
+
+test('the upload retries verify-cdn only in the run whose setup attached the domain', async () => {
+  const objects = branch(['60101.1']);
+  const env = { CLOUDFLARE_API_TOKEN: 'acme-token', CLOUDFLARE_ACCOUNT_ID: 'acme0123' };
+  const created = fakeTime();
+  await runUpload({ objects, target: 'claudinite-packs', env, fetch: fakeWorld({ domain: false, cdnFailures: 3 }).fetch, roots: ROOTS, now: NOW, log: () => {}, clock: created.clock, sleep: created.sleep });
+  assert.equal(created.waits.length, 3);
+  const present = fakeTime();
+  await assert.rejects(
+    runUpload({ objects, target: 'claudinite-packs', env, fetch: fakeWorld({ domain: true, cdnFailures: 3 }).fetch, roots: ROOTS, now: NOW, log: () => {}, clock: present.clock, sleep: present.sleep }),
+    /403/,
+  );
+  assert.deepEqual(present.waits, []);
 });
 
 test('r2.mjs, which runs beside the Cloudflare token, imports only node: modules, ../sign/sign.mjs and ./index.mjs', () => {

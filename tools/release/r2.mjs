@@ -168,14 +168,38 @@ export async function applyUpload(actions, bucket, log) {
   }
 }
 
-// Reads every object back through the CDN, the index pair with ?s=<serial> so the 300-second
-// cache cannot answer with the previous serial, and verifies each index's signature.
-export async function verifyCdn(objects, { fetch = globalThis.fetch, base = `https://${DOMAIN}`, roots, now = new Date(), log }) {
+// How long verify-cdn keeps retrying a domain this run attached, and its backoff.
+export const PROVISIONING_WINDOW_MS = 5 * 60e3;
+const FIRST_WAIT_MS = 5e3;
+const LONGEST_WAIT_MS = 60e3;
+
+// Reads every object back through the CDN, the index pair with ?s=<serial> so no cache rule can
+// answer with the previous serial, and verifies each index's signature. With retry (the run that
+// attached the custom domain, which answers 403 or 404 until Cloudflare has provisioned it), a 403
+// or 404 is retried with doubling waits until retry.windowMs has passed since the first read;
+// without it, every failure is final at once.
+export async function verifyCdn(objects, { fetch = globalThis.fetch, base = `https://${DOMAIN}`, roots, now = new Date(), log, retry }) {
   const problems = [];
   const byPack = new Map();
+  const started = retry?.clock();
+  let wait = FIRST_WAIT_MS;
+  const read = async (o, url) => {
+    for (;;) {
+      const res = await fetch(url);
+      if (res.ok || !retry || (res.status !== 403 && res.status !== 404)) return res;
+      if (retry.clock() - started + wait > retry.windowMs) {
+        const what = await failure(`CDN ${o.key}`, res);
+        return { gaveUp: `${what} (still failing ${Math.round((retry.clock() - started) / 1000)}s after this run attached the domain; that is a statement about the clock, not about the objects)` };
+      }
+      log(`verify-cdn ${o.key}: ${res.status}, retrying in ${wait / 1000}s while the custom domain attached this run provisions`);
+      await retry.sleep(wait);
+      wait = Math.min(wait * 2, LONGEST_WAIT_MS);
+    }
+  };
   for (const o of objects) {
     const url = `${base}/${o.key}${o.serial !== undefined ? `?s=${o.serial}` : ''}`;
-    const res = await fetch(url);
+    const res = await read(o, url);
+    if (res.gaveUp) { problems.push(res.gaveUp); continue; }
     if (!res.ok) { problems.push(await failure(`CDN ${o.key}`, res)); continue; }
     const got = Buffer.from(await res.arrayBuffer());
     if (Buffer.compare(got, o.body) !== 0) problems.push(`CDN ${o.key} differs from the branch: sha256 ${sha256(got)}, branch ${sha256(o.body)}`);
@@ -209,7 +233,7 @@ async function expectOk(what, res) {
 }
 
 // Idempotent: reads the bucket and the custom domain and creates only what is absent. Returns the
-// token's id, which the S3 credentials need.
+// token's id, which the S3 credentials need, and whether this call attached the domain.
 export async function setup({ accountId, token, bucket = BUCKET, domain = DOMAIN, zone = ZONE, fetch = globalThis.fetch, log }) {
   const cf = (method, path, body) => cloudflare(fetch, token, method, path, body);
   const verified = await expectOk('GET /user/tokens/verify', await cf('GET', '/user/tokens/verify'));
@@ -229,7 +253,8 @@ export async function setup({ accountId, token, bucket = BUCKET, domain = DOMAIN
   if (!zoneId) throw new R2Error(`the token sees no zone named ${zone}`);
 
   const d = await cf('GET', `/accounts/${accountId}/r2/buckets/${bucket}/domains/custom/${domain}`);
-  if (d.status === 404) {
+  const createdDomain = d.status === 404;
+  if (createdDomain) {
     await expectOk(`POST custom domain ${domain}`, await cf('POST', `/accounts/${accountId}/r2/buckets/${bucket}/domains/custom`, { domain, zoneId, enabled: true }));
     log(`attached ${domain} to ${bucket}`);
   } else {
@@ -237,7 +262,7 @@ export async function setup({ accountId, token, bucket = BUCKET, domain = DOMAIN
     if (current?.enabled !== true) throw new R2Error(`custom domain ${domain} is attached to ${bucket} but not enabled; enable it in the R2 bucket settings`);
     log(`${domain} serves ${bucket}`);
   }
-  return { tokenId: verified.id };
+  return { tokenId: verified.id, createdDomain };
 }
 
 // The reason a real upload cannot start, or null when both Cloudflare variables are set.
@@ -249,7 +274,10 @@ const describe = (o) => (o.kind === 'archive' ? `${o.key} (${o.body.length} byte
 
 // The whole upload: target is a bucket name or `dry-run`. Returns, per pack, the keys it PUT, the
 // keys it skipped and how many objects its ETag alone showed equal.
-export async function runUpload({ objects, target, env, fetch = globalThis.fetch, roots, now, log }) {
+export async function runUpload({
+  objects, target, env, fetch = globalThis.fetch, roots, now, log,
+  clock = () => Date.now(), sleep = (ms) => new Promise((r) => { setTimeout(r, ms); }),
+}) {
   const ids = [...new Set(objects.map((o) => o.id))];
   if (target === 'dry-run') {
     for (const o of objects) log(`would PUT ${describe(o)}`);
@@ -259,13 +287,13 @@ export async function runUpload({ objects, target, env, fetch = globalThis.fetch
   if (missing) throw new R2Error(missing);
   const token = env.CLOUDFLARE_API_TOKEN;
   const accountId = env.CLOUDFLARE_ACCOUNT_ID;
-  const { tokenId } = await setup({ accountId, token, bucket: target, fetch, log });
+  const { tokenId, createdDomain } = await setup({ accountId, token, bucket: target, fetch, log });
   const bucket = s3Bucket({ accountId, bucket: target, credentials: deriveCredentials({ id: tokenId, value: token }), fetch });
   const actions = await planUpload(objects, bucket);
   const by = (how) => actions.filter((a) => a.compared === how).length;
   log(`compared ${by('etag')} object(s) by ETag, ${by('get')} by GET; ${by('absent')} absent`);
   await applyUpload(actions, bucket, log);
-  await verifyCdn(objects, { fetch, roots, now, log });
+  await verifyCdn(objects, { fetch, roots, now, log, ...(createdDomain ? { retry: { windowMs: PROVISIONING_WINDOW_MS, clock, sleep } } : {}) });
   return ids.map((id) => ({
     id,
     put: actions.filter((a) => a.id === id && a.put).map((a) => a.key),
