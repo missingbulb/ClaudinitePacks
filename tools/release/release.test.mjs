@@ -273,23 +273,46 @@ test('--key and --cert name the signing key in place of the environment', () => 
   assert.deepEqual(JSON.parse(show(w, 'acme-pack/index.sig.json')).certificate, chain.certificate);
 });
 
-test('the R2 upload is a dry run listing every object, reading no Cloudflare variable', () => {
+test('publish no longer lists R2 objects; upload --r2 dry-run lists every object on the branch and reads no Cloudflare variable', () => {
   const w = world();
   const chain = testChain(scratch());
   const b = build(w);
-  const p = run(['publish', '--archives', b.archives, '--repo', w.src, '--remote', w.remote, '--roots', chain.roots],
-    { CN_PACKS_KEY: chain.key, CN_PACKS_CERT: chain.cert, CLOUDFLARE_API_TOKEN: 'acme', R2_BUCKET: 'acme' });
+  const p = publish(w, b.archives, chain);
   assert.equal(p.status, 0, p.out);
+  assert.doesNotMatch(p.out, /would PUT/);
+
+  const summary = join(scratch(), 'summary.md');
+  const u = run(['upload', '--r2', 'dry-run', '--repo', w.src, '--remote', w.remote, '--roots', chain.roots, '--summary', summary],
+    { CLOUDFLARE_API_TOKEN: 'acme', CLOUDFLARE_ACCOUNT_ID: 'acme' });
+  assert.equal(u.status, 0, u.out);
   const sums = readFileSync(join(b.archives, 'SHA256SUMS'), 'utf8');
   for (const id of ['acme-pack', 'acme-pack-two']) {
     const hex = sums.match(new RegExp(`^([0-9a-f]{64})  ${id}-60101\\.1\\.tar\\.gz$`, 'm'))[1];
     const size = readFileSync(join(b.archives, `${id}-60101.1.tar.gz`)).length;
-    assert.ok(p.out.includes(`would PUT packs/${id}/60101.1.tar.gz (${size} bytes, sha256 ${hex})\n`), p.out);
-    assert.ok(p.out.includes(`would PUT packs/${id}/index.json\n`));
-    assert.ok(p.out.includes(`would PUT packs/${id}/index.sig.json\n`));
+    assert.ok(u.out.includes(`would PUT packs/${id}/60101.1.tar.gz (${size} bytes, sha256 ${hex})\n`), u.out);
+    assert.ok(u.out.includes(`would PUT packs/${id}/index.json\n`));
+    assert.ok(u.out.includes(`would PUT packs/${id}/index.sig.json\n`));
   }
-  assert.equal(p.out.match(/^would PUT /gm).length, 6);
-  assert.doesNotMatch(readFileSync(RELEASE, 'utf8'), /CLOUDFLARE|R2_/);
+  assert.equal(u.out.match(/^would PUT /gm).length, 6);
+  assert.match(readFileSync(summary, 'utf8'), /6 object\(s\) would be PUT/);
+});
+
+test('upload to a bucket without CLOUDFLARE_API_TOKEN or CLOUDFLARE_ACCOUNT_ID fails with an error annotation', () => {
+  const w = world();
+  const chain = testChain(scratch());
+  assert.equal(publish(w, build(w).archives, chain).status, 0);
+  for (const env of [{}, { CLOUDFLARE_API_TOKEN: 'acme' }, { CLOUDFLARE_ACCOUNT_ID: 'acme' }]) {
+    const u = run(['upload', '--r2', 'claudinite-packs', '--repo', w.src, '--remote', w.remote, '--roots', chain.roots], env);
+    assert.equal(u.status, 1, u.out);
+    assert.match(u.out, /^::error::.*CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID/m);
+  }
+});
+
+test('upload with nothing on vendored says so and succeeds', () => {
+  const w = world();
+  const u = run(['upload', '--r2', 'dry-run', '--repo', w.src, '--remote', w.remote, '--roots', DEV_ROOTS]);
+  assert.equal(u.status, 0, u.out);
+  assert.match(u.out, /nothing on vendored to upload/);
 });
 
 test('the self-check refuses to push an index that does not verify against the given roots', () => {

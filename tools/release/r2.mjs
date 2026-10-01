@@ -221,6 +221,11 @@ export async function setup({ accountId, token, bucket = BUCKET, domain = DOMAIN
   return { tokenId: verified.id };
 }
 
+// The reason a real upload cannot start, or null when both Cloudflare variables are set.
+export function missingCredentials(env) {
+  return env.CLOUDFLARE_API_TOKEN && env.CLOUDFLARE_ACCOUNT_ID ? null : 'uploading to R2 needs CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID in the environment';
+}
+
 const describe = (o) => (o.kind === 'archive' ? `${o.key} (${o.body.length} bytes, sha256 ${sha256(o.body)})` : o.key);
 
 // The whole upload: target is a bucket name or `dry-run`. Returns, per pack, the keys it PUT and
@@ -231,9 +236,10 @@ export async function runUpload({ objects, target, env, fetch = globalThis.fetch
     for (const o of objects) log(`would PUT ${describe(o)}`);
     return ids.map((id) => ({ id, put: [], skipped: [] }));
   }
+  const missing = missingCredentials(env);
+  if (missing) throw new R2Error(missing);
   const token = env.CLOUDFLARE_API_TOKEN;
   const accountId = env.CLOUDFLARE_ACCOUNT_ID;
-  if (!token || !accountId) throw new R2Error('uploading to R2 needs CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID in the environment');
   const { tokenId } = await setup({ accountId, token, bucket: target, fetch, log });
   const bucket = s3Bucket({ accountId, bucket: target, credentials: deriveCredentials({ id: tokenId, value: token }), fetch });
   const actions = await planUpload(objects, bucket);

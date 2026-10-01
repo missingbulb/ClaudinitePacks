@@ -5,23 +5,27 @@
 //   node tools/release/release.mjs build --out <dir> [--packs <dir>]
 //   node tools/release/release.mjs publish --archives <dir> --roots <dir> [--key <file> --cert <file>]
 //                                  [--repo <dir>] [--remote <name|url>] [--summary <file>] [--now <instant>]
+//   node tools/release/release.mjs upload --r2 <bucket|dry-run> --roots <dir>
+//                                  [--repo <dir>] [--remote <name|url>] [--summary <file>]
 //
 // `build` vendors every pack under --packs (default: this repo's packs/) into --out, with a
 // packs.json describing them and a SHA256SUMS over both. `publish` checks SHA256SUMS first, then
 // for each pack whose version is absent on the remote's `vendored` branch writes the unpacked set,
 // the archive and a newly signed index as one commit, refuses a published version whose unpacked
-// files differ (gzip bytes alone may differ), re-verifies every index it wrote against --roots, and pushes once. The signing key is
+// files differ (the gzip bytes alone may), re-verifies every index it wrote against --roots, and
+// pushes once. --now moves only that self-check's instant, for tests. The signing key is
 // --key/--cert, else the files CN_PACKS_KEY/CN_PACKS_CERT name, else the development key under
-// keys/dev/. The R2 upload is a dry run listing the objects it would send. docs/release.md has
-// the branch layout and index format.
+// keys/dev/. `upload` makes the R2 bucket hold every object on the branch and reads them back
+// through the CDN (r2.mjs); `dry-run` lists them. docs/release.md has the layout and formats.
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { appendFileSync, copyFileSync, existsSync, lstatSync, mkdirSync, readdirSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { keyId, parsePrivateKey, readRoots, SignError } from '../sign/sign.mjs';
-import { BRANCH, fetchVendored, git, openBranch, ReleaseError } from './branch.mjs';
+import { BRANCH, fetchVendored, git, openBranch, packIds, ReleaseError, showFile } from './branch.mjs';
 import { addVersion, assertSerialAdvances, IndexError, newIndex, packFields, readIndex, serialize, signIndex } from './index.mjs';
+import { branchObjects, missingCredentials, R2Error, runUpload } from './r2.mjs';
 
 const REPO_ROOT = fileURLToPath(new URL('../../', import.meta.url));
 const DEV_KEY = 'keys/dev/packs.key';
@@ -235,17 +239,45 @@ function publish(opts) {
     branch.push();
     console.log(`pushed ${written.length} release commit(s) to ${BRANCH}`);
 
-    console.log('R2 upload (dry run until ClaudinitePacks#1):');
-    for (const p of written) {
-      console.log(`would PUT packs/${p.id}/${p.version}.tar.gz (${p.size} bytes, sha256 ${p.sha256})`);
-      console.log(`would PUT packs/${p.id}/index.json`);
-      console.log(`would PUT packs/${p.id}/index.sig.json`);
-    }
     writeSummary(opts.summary, written, key, dev);
     return 0;
   } finally {
     branch.close();
   }
+}
+
+// Makes R2 hold what the branch holds: every version's archive and each pack's index pair, then
+// reads them back through the CDN. The scope is the branch, so a run that died after a publish
+// pushed is healed by the next.
+async function upload(opts) {
+  if (!opts.r2 || !opts.roots) throw new ReleaseError('upload needs --r2 <bucket|dry-run> and --roots <dir>');
+  if (opts.r2 !== 'dry-run') {
+    const missing = missingCredentials(process.env);
+    if (missing) {
+      console.log(`::error::${missing}`);
+      return 1;
+    }
+  }
+  const roots = readRoots(resolve(opts.roots));
+  const repo = resolve(opts.repo ?? '.');
+  const tip = fetchVendored(repo, opts.remote ?? 'origin');
+  if (!tip) {
+    console.log(`nothing on ${BRANCH} to upload`);
+    return 0;
+  }
+  const objects = branchObjects((path) => showFile(repo, tip, path), packIds(repo, tip));
+  const report = await runUpload({ objects, target: opts.r2, env: process.env, roots, now: new Date(), log: (l) => console.log(l) });
+  if (opts.summary) {
+    const lines = ['## R2 upload', ''];
+    if (opts.r2 === 'dry-run') lines.push(`Dry run: ${objects.length} object(s) would be PUT.`);
+    else {
+      const puts = report.reduce((n, r) => n + r.put.length, 0);
+      lines.push(`Bucket \`${opts.r2}\` at ${tip.slice(0, 12)} of ${BRANCH}: ${puts} object(s) PUT, every object read back through the CDN.`, '');
+      for (const r of report) lines.push(`- ${r.id}: ${r.put.length ? `PUT ${r.put.map((k) => `\`${k}\``).join(', ')}` : 'nothing PUT'}; ${r.skipped.length} skipped`);
+    }
+    appendFileSync(opts.summary, lines.join('\n') + '\n\n');
+  }
+  return 0;
 }
 
 function writeSummary(file, written, key, dev) {
@@ -265,14 +297,15 @@ function writeSummary(file, written, key, dev) {
 async function main([cmd, ...args]) {
   if (cmd === 'plan') return plan(parseArgs(args, ['packs', 'repo', 'remote']));
   if (cmd === 'build') return build(parseArgs(args, ['packs', 'out']));
+  if (cmd === 'upload') return upload(parseArgs(args, ['r2', 'roots', 'repo', 'remote', 'summary']));
   if (cmd === 'publish') return publish(parseArgs(args, ['archives', 'roots', 'key', 'cert', 'repo', 'remote', 'summary', 'now']));
-  console.error('usage: release.mjs plan | build --out <dir> | publish --archives <dir> --roots <dir> (see the header)');
+  console.error('usage: release.mjs plan | build --out <dir> | publish --archives <dir> --roots <dir> | upload --r2 <bucket|dry-run> --roots <dir> (see the header)');
   return 2;
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   main(process.argv.slice(2)).then((code) => { process.exitCode = code; }).catch((e) => {
-    if (!(e instanceof ReleaseError || e instanceof IndexError || e instanceof SignError || e.code === 'ENOENT')) throw e;
+    if (!(e instanceof ReleaseError || e instanceof IndexError || e instanceof SignError || e instanceof R2Error || e.code === 'ENOENT')) throw e;
     console.error(`release.mjs: ${e.message}`);
     process.exitCode = 1;
   });

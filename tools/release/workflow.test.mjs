@@ -154,3 +154,20 @@ test('dev-key-expiry runs weekly off the hour and on dispatch, reads only, and r
   const runs = Object.values(w.jobs).flatMap((j) => j.steps.map((s) => s.run ?? '')).join('\n');
   assert.match(runs, /^node tools\/release\/dev-key-expiry\.mjs$/m);
 });
+
+test('upload runs after publish in the release environment, reads only, and gets the two Cloudflare secrets and nothing else', () => {
+  const { publish, upload } = workflow('release-packs.yml').jobs;
+  assert.equal(upload.needs, 'publish');
+  assert.equal(upload.environment, 'release');
+  assert.deepEqual(upload.permissions, { contents: 'read' });
+  const checkout = upload.steps.find((s) => s.uses?.startsWith('actions/checkout@'));
+  assert.equal(checkout.with['persist-credentials'], false);
+  assert.ok(upload.steps.some((s) => s.with?.['node-version-file'] === '.node-version'));
+  const secrets = upload.steps.flatMap((s) => Object.entries(s.env ?? {})).filter(([, v]) => String(v).includes('secrets.'));
+  assert.deepEqual(secrets.map(([k]) => k).sort(), ['CLOUDFLARE_ACCOUNT_ID', 'CLOUDFLARE_API_TOKEN']);
+  for (const [k, v] of secrets) assert.equal(v, `\${{ secrets.${k} }}`);
+  const runs = (job) => job.steps.map((s) => s.run ?? '').join('\n');
+  assert.match(runs(upload), /node tools\/release\/release\.mjs upload --r2 claudinite-packs --roots keys\/dev\/roots --remote origin --summary "\$GITHUB_STEP_SUMMARY"/);
+  assert.doesNotMatch(runs(upload), /node --test|release\.mjs (build|publish)|vendor\.mjs/);
+  assert.doesNotMatch(runs(publish), /release\.mjs upload/);
+});
