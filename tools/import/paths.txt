@@ -1,0 +1,17 @@
+# The paths import.sh keeps from Claudinite's history (git filter-repo --paths-from-file).
+# packs/ is the shelf; the others are pack-content directories whose files were later renamed
+# into packs/, kept so `git log --follow` on a pack file reaches its first commit.
+packs/
+packs-tests/
+skills/
+technologies/
+growth/
+migrations/
+# Engine-side directories that also renamed files into packs/, deliberately not kept: keeping
+# them would import most of the engine's history for a handful of files. verify.mjs reads these
+# lines and lists every file whose pre-packs/ history they hold.
+# dropped: engine-tests/
+# dropped: engine/
+# dropped: docs/
+# dropped: .claudinite/
+# dropped: routines/
