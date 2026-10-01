@@ -1,0 +1,55 @@
+# web-speech pack
+
+Active when a browser speech API — `webkitSpeechRecognition` / `SpeechRecognition`, `speechSynthesis` / `SpeechSynthesisUtterance`, or `chrome.tts` — is referenced in JS/TS source. Portable runtime gotchas for browser voice I/O (speech-to-text and text-to-speech).
+
+Most of the pack is prose (`RULES.md`). The call-site contracts with a file-scoped signature, some in the [`web-speech-io`](skills/web-speech-io/SKILL.md) skill's bundle and the rest pack-level, run as checks at every Stop and in CI; each failure message is the rule.
+
+Some of these APIs are extension-only, and where a rule touches MV3 service-worker or content-script mechanics this pack owns the speech-API facet of it specifically — never the general extension gotcha underneath.
+
+## Rules (`RULES.md`)
+
+| Rule | Severity | Reason | Enforcement |
+|---|---|---|---|
+| The recognizer owns its microphone capture | high | correctness | prose: <100 words + skill check (`web-speech-capture-released-on-pagehide`) |
+| Read the whole n-best list | medium | correctness | prose: <50 words |
+| Settle the listen cycle exactly once | high | correctness | prose: <50 words + check (`stt-terminal-handlers`) |
+| A missing isFinal means final | high | correctness | prose: <50 words |
+| Classic recognition streams to the cloud | critical | legal | prose: <100 words |
+| Biasing works only on-device | medium | correctness | prose: <100 words |
+| Map error names to a small taxonomy | medium | complexity | prose: <50 words + check (`stt-error-map-has-default`) |
+| Guard your own spoken output | high | correctness | prose: <100 words + check (`mic-constraints-not-screen-capture`) |
+| A missed endpoint needs a pause watchdog | high | correctness | prose: <100 words |
+| Mic permission is per-origin | high | correctness | prose: <200 words + check (`mic-capture-released`) |
+| Prefer chrome.tts over speechSynthesis | medium | correctness | prose: <100 words |
+| Relay chrome.tts from a content script | high | correctness | prose: <100 words + skill check (`web-speech-no-window-api-in-service-worker`) |
+| An empty getVoices() means not-ready | high | correctness | prose: <50 words + check (`tts-voices-cached-empty`) |
+| Don't trust the default voice | low | correctness | prose: <100 words |
+| Never reject a speak() promise | high | correctness | prose: <50 words + check (`tts-speak-settles`) |
+| Neither engine reliably supports SSML | low | correctness | prose: <50 words |
+
+## Checks
+
+The first three ride the [`web-speech-io`](skills/web-speech-io/SKILL.md) skill's bundle, and
+judge whether the APIs are reachable and released where the code runs. The ones below them are
+pack-level and judge the API *contracts* themselves — read at the call site, comments stripped
+first, and parsed rather than grepped so the legitimate spellings stay quiet: a wrapper that
+delegates its terminal handling, a constraints object hoisted into a constant, a switch that
+dispatches side effects rather than mapping a value, a voice cache a `voiceschanged` listener
+keeps current.
+
+| Check | Severity | Reason | Enforcement |
+|---|---|---|---|
+| `web-speech-no-window-api-in-service-worker` | high | correctness | check: blocking |
+| `web-speech-capture-released-on-pagehide` | critical | correctness | check: blocking |
+| `web-speech-recognition-feature-detected` | medium | correctness | check: advisory |
+| `mic-capture-released` | critical | correctness | check: blocking |
+| `mic-constraints-not-screen-capture` | high | correctness | check: blocking |
+| `stt-error-map-has-default` | high | correctness | check: blocking |
+| `stt-interim-results-gated` | high | correctness | check: blocking |
+| `stt-terminal-handlers` | high | correctness | check: blocking |
+| `tts-speak-settles` | high | correctness | check: blocking |
+| `tts-voices-cached-empty` | high | correctness | check: blocking |
+
+What unites the pack-level ones is that their breach is **silent**: nothing throws, nothing logs,
+and the app keeps showing a live session while the user is heard by nobody, hears nothing, or
+hears every line in a voice nobody chose.

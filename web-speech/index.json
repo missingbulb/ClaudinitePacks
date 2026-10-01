@@ -1,0 +1,18 @@
+{
+  "v": 1,
+  "pack": "web-speech",
+  "serial": 1,
+  "versions": [
+    {
+      "version": "60928.1",
+      "sha256": "6fd136ada60186fa52a789ab0b086f5f48a1a7846d0f8e7e7c6dd40a7946117b",
+      "size": 17458,
+      "minEngineVersion": "60928.1",
+      "requires": [],
+      "channel": "canary",
+      "revoked": false,
+      "publishedAt": "2026-10-01T14:32:10Z",
+      "sourceCommit": "27612838c695d2d6704966572cd86d34485e4751"
+    }
+  ]
+}
