@@ -7,6 +7,9 @@
 //                                  [--repo <dir>] [--remote <name|url>] [--summary <file>] [--now <instant>]
 //   node tools/release/release.mjs upload --r2 <bucket|dry-run> --roots <dir>
 //                                  [--repo <dir>] [--remote <name|url>] [--summary <file>]
+//   node tools/release/release.mjs evidence --out <file> [--canaries <file>] [--repo] [--remote] [--summary]
+//   node tools/release/release.mjs promote --evidence <file> --roots <dir> [--canaries <file>] [...]
+//   node tools/release/release.mjs promote|revoke --pack <id> --version <v> --by <login> --roots <dir> [...]
 //
 // `build` vendors every pack under --packs (default: this repo's packs/) into --out, with a
 // packs.json describing them and a SHA256SUMS over both. `publish` checks SHA256SUMS first, then
@@ -16,7 +19,9 @@
 // pushes once. --now moves only that self-check's instant, for tests. The signing key is
 // --key/--cert, else the files CN_PACKS_KEY/CN_PACKS_CERT name, else the development key under
 // keys/dev/. `upload` makes the R2 bucket hold every object on the branch and reads them back
-// through the CDN (r2.mjs); `dry-run` lists them. docs/release.md has the layout and formats.
+// through the CDN (r2.mjs); `dry-run` lists them. `evidence`, `promote` and `revoke` read canary
+// evidence and rewrite index entries (promote.mjs), signing as publish does. docs/release.md has
+// the layout and formats.
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { appendFileSync, copyFileSync, existsSync, lstatSync, mkdirSync, readdirSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs';
@@ -25,6 +30,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { keyId, parsePrivateKey, readRoots, SignError } from '../sign/sign.mjs';
 import { BRANCH, fetchVendored, git, openBranch, packIds, ReleaseError, showFile } from './branch.mjs';
 import { addVersion, assertSerialAdvances, IndexError, newIndex, packFields, readIndex, serialize, signIndex } from './index.mjs';
+import { choosePromotions, githubReader, readEvidence, rewriteBranch } from './promote.mjs';
 import { branchObjects, missingCredentials, R2Error, runUpload } from './r2.mjs';
 
 const REPO_ROOT = fileURLToPath(new URL('../../', import.meta.url));
@@ -280,6 +286,60 @@ async function upload(opts) {
   return 0;
 }
 
+const CANARIES = join(REPO_ROOT, 'tools/release/canaries.json');
+const readJsonFile = (path) => JSON.parse(readFileSync(path, 'utf8'));
+const appendSummary = (file, lines) => { if (file) appendFileSync(file, lines.join('\n') + '\n\n'); };
+
+function branchIndexes(repo, remote) {
+  const tip = fetchVendored(repo, remote);
+  return packIds(repo, tip).map((pack) => ({ pack, index: readIndex(showFile(repo, tip, `${pack}/index.json`)) }));
+}
+
+async function evidence(opts) {
+  if (!opts.out) throw new ReleaseError('evidence needs --out <file>');
+  const config = readJsonFile(opts.canaries ?? CANARIES);
+  const indexes = branchIndexes(resolve(opts.repo ?? '.'), opts.remote ?? 'origin');
+  const ev = await readEvidence({ indexes, config, reader: githubReader({ token: process.env.GITHUB_TOKEN }) });
+  writeFileSync(opts.out, JSON.stringify(ev, null, 2) + '\n');
+  console.log(`${ev.candidates.length} candidate(s) read from ${config.canaries.length} canary repo(s) and ${config.blockers.repo}`);
+  appendSummary(opts.summary, ['## Canary evidence', '', `Read at ${ev.readAt}: ${ev.candidates.length} candidate(s).`, '',
+    ...ev.candidates.map((c) => `- ${c.pack} ${c.version}: ${c.canaries.flatMap((k) => k.workflows.map((w) => `${k.repo} ${w.file} ${w.run ? w.run.conclusion : 'no run'}`)).join(', ') || 'no workflow listed'}${c.blockers.length ? `; blockers ${c.blockers.map((b) => `#${b.number}`).join(', ')}` : ''}`)]);
+  return 0;
+}
+
+// promote --evidence <file>, or a dispatch: promote|revoke --pack --version --by.
+function rewrite(action, opts) {
+  if (!opts.roots) throw new ReleaseError(`${action} needs --roots <dir>`);
+  const repo = resolve(opts.repo ?? '.');
+  const remote = opts.remote ?? 'origin';
+  let changes;
+  let declined = [];
+  if (action === 'promote' && opts.evidence) {
+    const config = readJsonFile(opts.canaries ?? CANARIES);
+    const decision = choosePromotions(readJsonFile(opts.evidence), config);
+    if (decision.verdict) {
+      console.log(decision.verdict);
+      appendSummary(opts.summary, ['## Promotion', '', decision.verdict]);
+      return 0;
+    }
+    declined = decision.declined;
+    for (const d of declined) console.log(`not promoted: ${d.pack} ${d.version}: ${d.reason}`);
+    changes = decision.promote.map((p) => ({ ...p, action }));
+  } else {
+    if (!opts.pack || !opts.version || !opts.by) throw new ReleaseError(`${action} needs --pack, --version and --by together${action === 'promote' ? ', or --evidence <file>' : ''}`);
+    changes = [{ pack: opts.pack, version: opts.version, action, by: opts.by }];
+  }
+  const { key, certificate } = signingKey(opts);
+  const written = changes.length ? rewriteBranch({
+    repo, remote, roots: readRoots(resolve(opts.roots)), key, certificate, changes, now: new Date(), skipStale: Boolean(opts.evidence), log: (l) => console.log(l),
+  }) : [];
+  if (!written.length) console.log(`nothing to ${action}`);
+  appendSummary(opts.summary, [action === 'promote' ? '## Promotion' : '## Revocation', '', `Signing key id \`${keyId(key.publicKey)}\`.`, '',
+    ...(written.length ? written.map((w) => `- ${w.message} (index serial ${w.serial})`) : [`Nothing to ${action}.`]),
+    ...declined.map((d) => `- not promoted: ${d.pack} ${d.version}: ${d.reason}`)]);
+  return 0;
+}
+
 function writeSummary(file, written, key, dev) {
   if (!file) return;
   const lines = [
@@ -297,9 +357,12 @@ function writeSummary(file, written, key, dev) {
 async function main([cmd, ...args]) {
   if (cmd === 'plan') return plan(parseArgs(args, ['packs', 'repo', 'remote']));
   if (cmd === 'build') return build(parseArgs(args, ['packs', 'out']));
+  if (cmd === 'evidence') return evidence(parseArgs(args, ['out', 'canaries', 'repo', 'remote', 'summary']));
+  if (cmd === 'promote') return rewrite('promote', parseArgs(args, ['evidence', 'canaries', 'pack', 'version', 'by', 'roots', 'key', 'cert', 'repo', 'remote', 'summary']));
+  if (cmd === 'revoke') return rewrite('revoke', parseArgs(args, ['pack', 'version', 'by', 'roots', 'key', 'cert', 'repo', 'remote', 'summary']));
   if (cmd === 'upload') return upload(parseArgs(args, ['r2', 'roots', 'repo', 'remote', 'summary']));
   if (cmd === 'publish') return publish(parseArgs(args, ['archives', 'roots', 'key', 'cert', 'repo', 'remote', 'summary', 'now']));
-  console.error('usage: release.mjs plan | build --out <dir> | publish --archives <dir> --roots <dir> | upload --r2 <bucket|dry-run> --roots <dir> (see the header)');
+  console.error('usage: release.mjs plan | build --out <dir> | publish --archives <dir> --roots <dir> | upload --r2 <bucket|dry-run> --roots <dir> | evidence --out <file> | promote | revoke (see the header)');
   return 2;
 }
 
