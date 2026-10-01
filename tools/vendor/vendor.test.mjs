@@ -125,10 +125,11 @@ test('--all fails naming the pack that has no pack.json', () => {
   assert.match(r.stdout, /acme-broken/);
 });
 
-// Every test/, docs/, provenance/ or updates/ folder below a pack root but not at it: the depth at
-// which the design's root-only rule and Claudinite's any-depth rule would vendor different sets.
+// Every test/, docs/ or updates/ folder below a pack root but not at it: the depth at which the
+// design's root-only rule and Claudinite's any-depth rule would vendor different sets. Both drop
+// provenance/ at the root only, so a nested one is no disagreement.
 function nestedDroppedFolders(packsDir) {
-  const names = new Set(['test', 'docs', 'provenance', 'updates']);
+  const names = new Set(['test', 'docs', 'updates']);
   const found = [];
   const walk = (dir, rel, depth) => {
     for (const name of readdirSync(dir).sort()) {
@@ -144,7 +145,7 @@ function nestedDroppedFolders(packsDir) {
   return found;
 }
 
-test('the real shelf holds no test/, docs/, provenance/ or updates/ folder below a pack root, so the two vendoring rules agree', () => {
+test('the real shelf holds no test/, docs/ or updates/ folder below a pack root, so the two vendoring rules agree', () => {
   assert.deepEqual(nestedDroppedFolders(PACKS), [],
     'a nested folder makes the design\'s root-only rule and Claudinite\'s any-depth rule vendor different sets: move the folder, or decide the rule (missingbulb/ClaudinitePacks#3 item 1, #9)');
 });
@@ -152,5 +153,5 @@ test('the real shelf holds no test/, docs/, provenance/ or updates/ folder below
 test('nestedDroppedFolders finds a nested test/ in a synthetic pack and ignores the root-level ones', () => {
   const root = scratch();
   acmePack(root);
-  assert.deepEqual(nestedDroppedFolders(root), ['acme-pack/skills/acme-skill/provenance', 'acme-pack/skills/acme-skill/test']);
+  assert.deepEqual(nestedDroppedFolders(root), ['acme-pack/skills/acme-skill/test']);
 });
