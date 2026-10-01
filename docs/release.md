@@ -126,7 +126,9 @@ re-derives from the new tip.
   such run counts as not passed. Each promotion is a commit `Promote <id> <version>`. While no
   canary lists a workflow, the run declines with `no canary workflow is configured; promotion
   needs a dispatch` and exits 0. The blockers read fails on a non-2xx answer, so a repository the
-  token cannot read is an error, never "no blockers".
+  token cannot read is an error, never "no blockers". GitHub disables a `schedule:` trigger after
+  60 days without activity in the repository, which stops the hourly run until someone re-enables
+  the workflow; a dispatch still works meanwhile.
 - **On dispatch** with `pack` and `version`, `action: promote` promotes that entry regardless of
   evidence, refusing a version not in the index, already `stable` or revoked, and
   `action: revoke` sets `revoked: true`, refusing one already revoked; the commit is
@@ -178,14 +180,20 @@ packs/<id>/index.sig.json      application/json   public, max-age=300           
    SHA-256s before anything is written. An index pair differing from the branch is rewritten,
    `index.json` then `index.sig.json`. A `412` on an archive is a race with another writer, which
    the concurrency group rules out, so it fails rather than being retried as an overwrite.
-4. Reads every object back through the CDN, the index pair with `?s=<serial>` so the 300-second
-   cache cannot answer with an older serial, compares bytes with the branch and verifies each
-   signature against `--roots`. The summary lists per pack what it PUT and skipped.
+4. Reads every object back through the CDN, the index pair with `?s=<serial>`, compares bytes
+   with the branch and verifies each signature against `--roots`. The summary lists per pack what
+   it PUT and skipped.
+
+By default Cloudflare's edge caches the archives on the custom domain but not JSON, so
+`max-age=300` governs only a client's cache and the edge answers an index read with the bucket's
+current bytes. `?s=<serial>` stays so the read-back keeps working if a Cache Everything rule is
+added later. The CDN is never purged: archives never change. A reader needing the newest index
+sooner than its own cache allows reads `vendored`.
 
 The S3 credentials derive from the one token: the access key id is the token's id and the secret
-the SHA-256 of its value. Requests are signed with SigV4 (`r2.mjs`, proven by AWS's published
-examples in `sigv4.test-vectors.json`); the CDN is never purged, since archives never change and
-indexes expire in five minutes. A reader needing the newest index sooner reads `vendored`.
+the SHA-256 of its value. The token is a user token, whose id `GET /user/tokens/verify` returns;
+an account-owned token would need `GET /accounts/{id}/tokens/verify` instead. Requests are signed
+with SigV4 (`r2.mjs`, proven by AWS's published examples in `sigv4.test-vectors.json`).
 
 ## Running it locally
 
