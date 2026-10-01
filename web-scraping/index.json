@@ -1,0 +1,18 @@
+{
+  "v": 1,
+  "pack": "web-scraping",
+  "serial": 1,
+  "versions": [
+    {
+      "version": "60928.1",
+      "sha256": "38f6df133ba9e5a911b2ae02974bf76c7edd4e4798759e3fbdb540e39f88460e",
+      "size": 8330,
+      "minEngineVersion": "60928.1",
+      "requires": [],
+      "channel": "canary",
+      "revoked": false,
+      "publishedAt": "2026-10-01T14:32:10Z",
+      "sourceCommit": "27612838c695d2d6704966572cd86d34485e4751"
+    }
+  ]
+}
