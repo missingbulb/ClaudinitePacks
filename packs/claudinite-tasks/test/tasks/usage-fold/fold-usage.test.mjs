@@ -1,0 +1,1197 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import {
+  isUserMessage, commandName, skillToolLoads, countEntries,
+  hookCheckRuns, checkSummaries, findingHeaders, checkInvocations, checkOutputs, countChecks,
+  foldDays, isoWeek, daysToFold, addDayToWeek, foldUsage, carryTaskRuns, withinTaskWindow,
+  countTaskExecs, emptyTaskExec, encodeUsage, decodeUsage,
+  tokensIn, foldDayFields, foldQueueOutcomes, foldHours, withinHourWindow, captureHours,
+  tokensByModelIn, turnSeconds, taskCostKey, foldPrs,
+  TOKENS_BY_MODEL_UNKNOWN, TASK_COST_NONE, TASK_COST_UNRESOLVED,
+} from '../../../tasks/usage-fold/fold-usage.mjs';
+import {
+  USAGE_FIELDS, USAGE_VERSION, QUEUE_OUTCOMES, COUNTER_GROUPS, BARE_MAPS, renderUsageFile,
+} from '../../../src/items/usage-format.mjs';
+import {
+  OUTCOME_DONE, OUTCOME_DELIVERED, OUTCOME_OBSOLETE,
+} from '../../../public/task-constants.mjs';
+import { outcomeOf } from '../../../public/work-item-grammar.mjs';
+import { LEGACY_EXECUTOR_DOC } from '../../legacy-protocol.mjs';
+
+// A day row as `foldDays` builds an empty one: the capture-derived scalars zeroed and
+// every other field absent. Spelled here so a test about the absent ones does not have
+// to build a row by hand and accidentally assert its own construction.
+const blankDay = () => ({
+  captures: 0, merges: 0, sessions: 0, userMessages: 0, userCommands: 0,
+  ...emptyGroups(),
+});
+
+// Every sub-map a row carries, all empty — the shape a row has before any source
+// speaks for it. Derived from the vocabulary rather than listed, so appending a
+// counter group does not silently leave a test asserting the shape it replaced.
+const emptyGroups = () => ({
+  ...Object.fromEntries(BARE_MAPS.map((m) => [m, {}])),
+  ...Object.fromEntries(COUNTER_GROUPS.map((g) => [g, {}])),
+});
+
+// One rule's findings row with every slot present, so a case names only the slots
+// it is about. Derived from the vocabulary, like emptyGroups above.
+const findingRow = (over) => ({ ...Object.fromEntries(USAGE_FIELDS.checkFindings.map((f) => [f, 0])), ...over });
+
+// --- entry fixtures -----------------------------------------------------------
+// Every shape below is copied from real captured transcripts on a conversation-logs
+// branch — the counting is only as good as these being the real thing, so they are
+// not invented.
+
+const human = (text) => ({
+  type: 'user', origin: { kind: 'human' }, promptSource: 'sdk', userType: 'external',
+  message: { content: text },
+});
+const toolResult = () => ({ type: 'user', message: { content: [{ type: 'tool_result', content: 'ok' }] } });
+const meta = (text) => ({ type: 'user', isMeta: true, message: { content: text } });
+const sidechainUser = (text) => ({ type: 'user', isSidechain: true, message: { content: text } });
+const scheduledFiring = (text) => ({
+  type: 'user', origin: { kind: 'task-notification', subkind: 'scheduled-trigger' },
+  message: { content: text },
+});
+const taskNotification = (text) => ({ type: 'user', origin: { kind: 'task-notification' }, message: { content: text } });
+const compactSummary = () => ({
+  type: 'user', isCompactSummary: true, isVisibleInTranscriptOnly: true,
+  message: { content: 'This session is being continued from a previous conversation…' },
+});
+const slash = (name, args = '') => ({
+  type: 'user',
+  message: { content: `<command-name>/${name}</command-name>\n<command-message>${name}</command-message>\n<command-args>${args}</command-args>` },
+});
+const commandStdout = () => ({ type: 'user', message: { content: '<local-command-stdout>Set model to opus</local-command-stdout>' } });
+const skillCall = (skill, { sidechain = false } = {}) => ({
+  type: 'assistant', ...(sidechain ? { isSidechain: true } : {}),
+  message: { content: [{ type: 'tool_use', name: 'Skill', input: { skill } }] },
+});
+const assistantText = (text) => ({ type: 'assistant', message: { content: [{ type: 'text', text }] } });
+const otherTool = () => ({ type: 'assistant', message: { content: [{ type: 'tool_use', name: 'Read', input: { file_path: '/x' } }] } });
+
+// --- userMessages: the most fragile line in the fold --------------------------
+
+test('isUserMessage counts a human turn and nothing else', () => {
+  assert.equal(isUserMessage(human('do the thing')), true);
+});
+
+test('isUserMessage excludes every non-human user-role shape', () => {
+  // One assertion per shape, deliberately: this is the heuristic the denominators
+  // rest on, and a regression in any single shape silently changes every ratio.
+  for (const [what, entry] of [
+    ['a tool result', toolResult()],
+    ['an injected/meta turn', meta('<system-reminder>…</system-reminder>')],
+    ['a subagent sidechain turn', sidechainUser('go')],
+    ['a scheduled-task firing', scheduledFiring(`Execute the Claudinite executor: ${LEGACY_EXECUTOR_DOC}`)],
+    ['a task notification', taskNotification('<task-notification>…')],
+    ['a compaction summary', compactSummary()],
+    ['a slash-command expansion', slash('model', 'claude-opus-5')],
+    ['a local command\'s stdout', commandStdout()],
+    ['an assistant turn', assistantText('sure')],
+  ]) {
+    assert.equal(isUserMessage(entry), false, `${what} must not count as a user message`);
+  }
+});
+
+// --- userCommands and skill loads ---------------------------------------------
+
+test('commandName reads the typed command out of its expansion, and only from there', () => {
+  assert.equal(commandName(slash('acme-skill-h')), 'acme-skill-h');
+  assert.equal(commandName(slash('model', 'claude-opus-5')), 'model');
+  // prose that merely mentions a slash command is not a command
+  assert.equal(commandName(human('run /acme-skill-h when you are done')), null);
+  assert.equal(commandName(assistantText('use /review')), null);
+});
+
+test('skillToolLoads reads the Skill tool_use, ignoring every other tool', () => {
+  assert.deepEqual(skillToolLoads(skillCall('acme-skill-i')), ['acme-skill-i']);
+  assert.deepEqual(skillToolLoads(otherTool()), []);
+  assert.deepEqual(skillToolLoads(human('hi')), []);
+});
+
+test('countEntries: a typed /command naming a mounted skill is a load; a built-in is not', () => {
+  const mounted = new Set(['acme-skill-h', 'acme-skill-i']);
+  const counts = countEntries([
+    slash('acme-skill-h'),   // a skill — one event, two axes
+    slash('model', 'opus'),   // a built-in CLI command — never a skill load
+    slash('clear'),
+  ], mounted);
+  assert.equal(counts.userCommands, 3, 'every typed command counts as a command');
+  assert.deepEqual(counts.skillLoads, { 'acme-skill-h': 1 }, 'only the one naming a mounted skill is a load');
+});
+
+test('countEntries: subagent skill loads count — a subagent loading a skill is a load', () => {
+  const counts = countEntries([skillCall('acme-skill-i', { sidechain: true }), skillCall('acme-skill-i')]);
+  assert.deepEqual(counts.skillLoads, { 'acme-skill-i': 2 });
+});
+
+test('countEntries: a whole session, every counter at once', () => {
+  const counts = countEntries([
+    human('start'), otherTool(), toolResult(),
+    skillCall('acme-skill-f'), assistantText('found it'),
+    human('now merge'), slash('acme-skill-h'), skillCall('acme-skill-h'),
+    scheduledFiring('automated'), meta('<system-reminder>'),
+  ], new Set(['acme-skill-h', 'acme-skill-f']));
+  assert.equal(counts.userMessages, 2);
+  assert.equal(counts.userCommands, 1);
+  // the typed /acme-skill-h AND the Skill tool_use are two separate loads
+  assert.deepEqual(counts.skillLoads, { 'acme-skill-f': 1, 'acme-skill-h': 2 });
+});
+
+// --- check activations --------------------------------------------------------
+// Same discipline as above: every string below is copied out of a real capture on a
+// conversation-logs branch. The checks leave no metrics file, so these marks in the
+// transcript ARE the measurement — invent them and the counts measure nothing.
+
+// The Stop hook's stderr, verbatim: hooklog mirrors to stderr and the harness
+// records it, which is the only reason a PASSING check run is countable at all.
+const HOOK_PASS = '2026-07-28T22:14:43Z run=4421 Stop: start checks\n'
+  + '2026-07-28T22:14:43Z run=4421 Stop: done exit=0 checks-passed\n';
+const HOOK_FAIL = 'Stop hook feedback:\n[node $CLAUDE_PROJECT_DIR/engine/hooks/stop-command.mjs]: '
+  + '2026-07-28T22:14:19Z run=3614 Stop: start checks\n'
+  + 'Claudinite conformance checks failed — fix these findings now, in this session:\n\n'
+  + '[BLOCKING] comment-classification  (conversation)\n'
+  + '  the reply to the owner\'s latest comment ("lgtm…") declares no `Comment class:` line\n'
+  + '  Fix: state the classification explicitly\n'
+  + '  More: packs/acme-pack/RULES.md\n\n'
+  + '[BLOCKING] task-lifecycle  (branch)\n'
+  + '  none of the 1 commit(s) since origin/main references an issue (#N)\n'
+  + '  Fix: reference the issue in the commit message\n\n'
+  + '2 blocking, 0 advisory (work scope: all vs origin/main).\n'
+  + '2026-07-28T22:14:19Z run=3614 Stop: done exit=2 blocking-findings\n';
+
+const hookFeedback = (text) => ({ type: 'user', isMeta: true, message: { content: text } });
+const hookSummary = (text) => ({ type: 'system', subtype: 'stop_hook_summary', hookErrors: [text] });
+const hookSuccess = (stderr, stdout = '') => ({
+  type: 'attachment',
+  attachment: { type: 'hook_success', hookName: 'Stop', hookEvent: 'Stop', stderr, stdout, exitCode: 0 },
+});
+const bash = (id, command) => ({ type: 'assistant', message: { content: [{ type: 'tool_use', id, name: 'Bash', input: { command } }] } });
+const bashResult = (id, stdout) => ({
+  type: 'user',
+  message: { content: [{ type: 'tool_result', tool_use_id: id, content: stdout }] },
+  toolUseResult: { stdout, stderr: '', interrupted: false, isImage: false },
+});
+const readResult = (id, content) => ({
+  type: 'user',
+  message: { content: [{ type: 'tool_result', tool_use_id: id, content }] },
+  toolUseResult: { type: 'text', file: { content } },
+});
+// A CI job log the session pulled in: an MCP tool call, and a result whose text
+// reaches the transcript as content blocks rather than as `{ stdout }`. Every line
+// of an Actions log carries the runner's own timestamp in front of the output.
+// The payload is a JSON document inside a text block, so the log's newlines arrive
+// ESCAPED — copied from a real capture, because a fixture with real newlines would
+// pass while every actual CI log matched nothing.
+const ciFetch = (id) => ({ type: 'assistant', message: { content: [{ type: 'tool_use', id, name: 'mcp__github__get_job_logs', input: { job_id: 1 } }] } });
+const ciResult = (id, logs) => {
+  const text = JSON.stringify({ job_id: 90518898761, logs_content: logs });
+  return {
+    type: 'user',
+    message: { content: [{ type: 'tool_result', tool_use_id: id, content: [{ type: 'text', text }] }] },
+    toolUseResult: [{ type: 'text', text }],
+  };
+};
+const CI_LOG = '2026-07-29T08:12:04.1234567Z ##[group]Run node engine/checks/check_the_world.mjs\n'
+  + '2026-07-29T08:12:05.7654321Z [BLOCKING] task-lifecycle  (branch)\n'
+  + '2026-07-29T08:12:05.7654322Z   none of the 1 commit(s) since origin/main references an issue (#N)\n'
+  + '2026-07-29T08:12:05.7654323Z 1 blocking, 4 advisory (world scope: all vs origin/main).\n'
+  + '2026-07-29T08:12:05.9000000Z ##[error]Process completed with exit code 1.\n';
+
+// One place for the per-scope row shape, so adding a counter is one edit rather than
+// a sweep through every assertion that names the whole row.
+const scopeRow = (over) => ({ runs: 0, failures: 0, errors: 0, blocking: 0, advisory: 0, ciRuns: 0, ciFailures: 0, ...over });
+
+test('hookCheckRuns reads the hook\'s own completion line, with the outcome it declares', () => {
+  assert.deepEqual(hookCheckRuns(HOOK_PASS), [{ stamp: '2026-07-28T22:14:43Z 4421', exit: 0, reason: 'checks-passed' }]);
+  assert.deepEqual(hookCheckRuns(HOOK_FAIL), [{ stamp: '2026-07-28T22:14:19Z 3614', exit: 2, reason: 'blocking-findings' }]);
+  // The other two outcomes the hook emits — both matter, and neither prints findings.
+  assert.equal(hookCheckRuns('2026-07-28T10:00:00Z run=7 Stop: done exit=0 loop-guard-relent')[0].reason, 'loop-guard-relent');
+  assert.equal(hookCheckRuns('2026-07-28T10:00:00Z run=7 Stop: done exit=2 runner-error')[0].reason, 'runner-error');
+  assert.deepEqual(hookCheckRuns('2026-07-28T10:00:00Z run=7 Stop: start checks'), [], 'a start is not a run — only a completion is');
+});
+
+test('checkSummaries reads the scope and the finding counts off report-findings\' summary line', () => {
+  assert.deepEqual(checkSummaries('2 blocking, 0 advisory (work scope: all vs origin/main).'),
+    [{ scope: 'work', blocking: 2, advisory: 0 }]);
+  assert.deepEqual(checkSummaries('# tests 810\n# pass 810\n0 blocking, 7 advisory (world scope: all vs origin/main).'),
+    [{ scope: 'world', blocking: 0, advisory: 7 }]);
+  // Anchored to the line start, so a doc or a session quoting the shape is not a run.
+  assert.deepEqual(checkSummaries('the runner prints 2 blocking, 0 advisory (work scope: all) at the end'), []);
+});
+
+test('findingHeaders reads the rule id off each rendered finding', () => {
+  assert.deepEqual(findingHeaders(HOOK_FAIL), [
+    { severity: 'blocking', rule: 'comment-classification' },
+    { severity: 'blocking', rule: 'task-lifecycle' },
+  ]);
+  assert.deepEqual(findingHeaders('[ADVISORY] acme-skill-g  packs/x/y.mjs:3'), [{ severity: 'advisory', rule: 'acme-skill-g' }]);
+});
+
+test('checkInvocations counts runner invocations, and only actual invocations', () => {
+  assert.deepEqual(checkInvocations('node engine/checks/check_the_world.mjs 2>&1 | tail -40'), { work: 0, world: 1 });
+  assert.deepEqual(checkInvocations('node .claudinite/shared/engine/checks/check_the_work.mjs >/tmp/out'), { work: 1, world: 0 });
+  // Two runners on one line stay two runs — the separator stops one match swallowing the next.
+  assert.deepEqual(
+    checkInvocations('node engine/checks/check_the_world.mjs | tail -3; node engine/checks/check_the_work.mjs'),
+    { work: 1, world: 1 });
+  // Talking about the runner is not running it.
+  assert.deepEqual(checkInvocations('git ls-files | grep -i "check_the_world" | head'), { work: 0, world: 0 });
+});
+
+test('checkOutputs dedupes ONE hook execution recorded under two entry shapes', () => {
+  // The harness records a blocking hook run twice — as the feedback turn the model
+  // sees, and again in its stop_hook_summary. Counting both would double every
+  // failure, which is precisely the number that must not be inflated.
+  const outputs = checkOutputs([hookFeedback(HOOK_FAIL), hookSummary(HOOK_FAIL)]);
+  assert.equal(outputs.length, 1);
+  assert.equal(outputs[0].source, 'hook');
+});
+
+test('checkOutputs takes Bash results and leaves every other tool result alone', () => {
+  const outputs = checkOutputs([
+    bash('t1', 'node engine/checks/check_the_world.mjs'),
+    bashResult('t1', '0 blocking, 7 advisory (world scope: all vs origin/main).'),
+    // A Read of a file that merely CONTAINS this vocabulary is not a check run — in
+    // the corpus that owns the runners, that is the ordinary case, not a corner one.
+    readResult('t2', '[BLOCKING] acme-skill-g  x.mjs\n0 blocking, 1 advisory (world scope: all).'),
+  ]);
+  assert.equal(outputs.length, 1);
+  assert.equal(outputs[0].command, 'node engine/checks/check_the_world.mjs');
+});
+
+test('countChecks: a passing hook run is an activation, not a failure', () => {
+  const { checks, checkFindings } = countChecks([hookSuccess(HOOK_PASS)]);
+  assert.deepEqual(checks.work, scopeRow({ runs: 1 }));
+  assert.deepEqual(checkFindings, {}, 'nothing was caught, so no rule has a key');
+});
+
+test('countChecks: a failing hook run is one activation, one failure, and its rules', () => {
+  const { checks, checkFindings } = countChecks([hookFeedback(HOOK_FAIL), hookSummary(HOOK_FAIL)]);
+  assert.deepEqual(checks.work, scopeRow({ runs: 1, failures: 1, blocking: 2 }));
+  assert.deepEqual(checkFindings, {
+    'comment-classification': findingRow({ blocking: 1, sessions: 1 }),
+    'task-lifecycle': findingRow({ blocking: 1, sessions: 1 }),
+  });
+});
+
+test('countChecks: the loop-guard relent is a FAILURE — it prints no findings to give it away', () => {
+  // The hook gives up after the same findings survive two fixes and lets the stop
+  // through with exit 0. Read only the exit code and a real failure reads as a pass.
+  const { checks } = countChecks([hookSuccess(
+    '2026-07-28T10:00:00Z run=7 Stop: done exit=0 loop-guard-relent\n',
+    'claudinite checks: the same blocking findings survived 2 fix attempts — letting the stop through.',
+  )]);
+  assert.deepEqual(checks.work, scopeRow({ runs: 1, failures: 1 }));
+});
+
+test('countChecks: a runner that could not launch is an ERROR, never a quiet clean day', () => {
+  const { checks } = countChecks([hookFeedback(
+    'Stop hook feedback:\n[node …/stop-command.mjs]: 2026-07-28T10:00:00Z run=7 Stop: done exit=2 runner-error\n')]);
+  assert.deepEqual(checks.work, scopeRow({ runs: 1, errors: 1 }));
+});
+
+test('countChecks: world-scope runs come off the Bash invocation, so a PASSING sweep still counts', () => {
+  const { checks } = countChecks([
+    bash('t1', 'node engine/checks/check_the_world.mjs'),
+    bashResult('t1', ''),                       // a clean world sweep prints nothing at all
+    bash('t2', 'node engine/checks/check_the_world.mjs 2>&1 | tail -5'),
+    bashResult('t2', '[BLOCKING] task-lifecycle  (branch)\n  …\n1 blocking, 4 advisory (world scope: all vs origin/main).'),
+  ]);
+  assert.deepEqual(checks.world, scopeRow({ runs: 2, failures: 1, blocking: 1, advisory: 4 }));
+});
+
+test('countChecks: a runner wrapped in a test command is counted from its OUTPUT, not double-counted', () => {
+  // `make test` / `npm test` invoke the world sweep without naming it, so the summary
+  // line is the only evidence. The two signals are two views of the same runs — the
+  // count is their max, never their sum.
+  const wrapped = countChecks([bash('t1', 'npm test'), bashResult('t1', '0 blocking, 7 advisory (world scope: all vs origin/main).')]);
+  assert.equal(wrapped.checks.world.runs, 1);
+  const named = countChecks([
+    bash('t1', 'node engine/checks/check_the_world.mjs'),
+    bashResult('t1', '0 blocking, 7 advisory (world scope: all vs origin/main).'),
+  ]);
+  assert.equal(named.checks.world.runs, 1, 'named AND reported is still one run');
+});
+
+test('a GitHub Actions timestamp prefix does not hide the marks', () => {
+  // Actions stamps every log line before the command's own output. Anchoring to the
+  // bare line start would make every fetched CI log read as having printed nothing.
+  assert.deepEqual(checkSummaries(CI_LOG), [{ scope: 'world', blocking: 1, advisory: 4 }]);
+  assert.deepEqual(findingHeaders(CI_LOG), [{ severity: 'blocking', rule: 'task-lifecycle' }]);
+});
+
+test('checkOutputs decodes the JSON-wrapped CI payload, so the log has real lines again', () => {
+  // Every mark is line-anchored. Left encoded, the whole job log is ONE line and the
+  // CI counting silently measures nothing at all — the failure mode that looks like
+  // "CI just never catches anything".
+  const [output] = checkOutputs([ciFetch('c1'), ciResult('c1', CI_LOG)]);
+  assert.equal(output.source, 'ci');
+  assert.ok(output.text.includes('\n'), 'the escaped newlines are real newlines by the time a mark reads them');
+  assert.deepEqual(checkSummaries(output.text), [{ scope: 'world', blocking: 1, advisory: 4 }]);
+});
+
+test('countChecks: a CI run the session pulled the log for IS counted', () => {
+  // write → commit → let CI run → fix what it caught is the same correction loop as
+  // the Stop hook's, one turn wider, and its failures are the same kind of win.
+  const { checks, checkFindings } = countChecks([ciFetch('c1'), ciResult('c1', CI_LOG)]);
+  assert.deepEqual(checks.world, scopeRow({ runs: 1, failures: 1, blocking: 1, advisory: 4, ciRuns: 1, ciFailures: 1 }));
+  assert.deepEqual(checkFindings, { 'task-lifecycle': findingRow({ blocking: 1, sessions: 1 }) });
+});
+
+test('countChecks: the CI share stays separable, because CI can only see runs that PRINTED', () => {
+  // A green CI sweep prints nothing, so it is invisible — which would skew any rate
+  // computed over a total that mixed the two sources without saying so.
+  const { checks } = countChecks([
+    bash('t1', 'node engine/checks/check_the_world.mjs'), bashResult('t1', ''),
+    ciFetch('c1'), ciResult('c1', CI_LOG),
+  ]);
+  assert.equal(checks.world.runs, 2);
+  assert.equal(checks.world.ciRuns, 1);
+  assert.equal(checks.world.runs - checks.world.ciRuns, 1, 'the session-observed runs stay derivable');
+});
+
+test('countChecks: re-reading one CI job log is still one run', () => {
+  // Iterating on a CI failure means fetching the same log more than once. Nothing in
+  // a fetch says WHICH run it was, so the check output is the identity.
+  const { checks } = countChecks([ciFetch('c1'), ciResult('c1', CI_LOG), ciFetch('c2'), ciResult('c2', CI_LOG)]);
+  assert.equal(checks.world.runs, 1);
+  const next = countChecks([
+    ciFetch('c1'), ciResult('c1', CI_LOG),
+    ciFetch('c2'), ciResult('c2', CI_LOG.replaceAll('08:12:05', '09:30:11')),
+  ]);
+  assert.equal(next.checks.world.runs, 2, 'a genuinely later run differs by its Actions timestamps');
+});
+
+test('countChecks: a CI log carrying no check output at all is not a run', () => {
+  const { checks } = countChecks([ciFetch('c1'), ciResult('c1',
+    '2026-07-29T08:12:04.1234567Z ##[group]Run npm ci\n2026-07-29T08:12:09.0000000Z added 0 packages\n')]);
+  assert.deepEqual(checks, {});
+});
+
+test('countChecks: a scope that never ran has no key — zeros stay implicit here too', () => {
+  const { checks } = countChecks([hookSuccess(HOOK_PASS)]);
+  assert.deepEqual(Object.keys(checks), ['work']);
+});
+
+test('countEntries carries the check counts alongside the skill counts', () => {
+  const counts = countEntries([human('go'), skillCall('acme-skill-i'), hookFeedback(HOOK_FAIL)], new Set(['acme-skill-i']));
+  assert.deepEqual(counts.skillLoads, { 'acme-skill-i': 1 });
+  assert.equal(counts.checks.work.failures, 1);
+  assert.equal(counts.checkFindings['task-lifecycle'].blocking, 1);
+});
+
+// --- day folding --------------------------------------------------------------
+
+const fileOf = (date, issue, sessionId, counts = {}) => ({
+  date, issue, sessionId,
+  counts: { userMessages: 0, userCommands: 0, skillLoads: {}, checks: {}, checkFindings: {}, ...counts },
+});
+
+test('foldDays: a PR-keyed capture is a merge, and its session is (unresolved) like an issue-keyed one', () => {
+  const days = foldDays([
+    { ...fileOf('2026-07-28', null, 's9', { userMessages: 3 }), pr: 1583 },
+    fileOf('2026-07-28', 0, 's9'),  // the session-end tail
+  ]);
+  assert.equal(days['2026-07-28'].merges, 1);
+  assert.equal(days['2026-07-28'].sessions, 1);
+  assert.deepEqual(days['2026-07-28'].taskCost, { '(unresolved)': { sessions: 1, userMessages: 3 } });
+});
+
+test('foldDays: captures, merges and DISTINCT sessions per day', () => {
+  const days = foldDays([
+    fileOf('2026-07-28', 12, 's1', { userMessages: 4, skillLoads: { a: 1 } }),
+    fileOf('2026-07-28', 0, 's1', { userMessages: 2, skillLoads: { a: 1, b: 3 } }), // same session, session-end tail
+    fileOf('2026-07-28', 13, 's2', { userMessages: 5, userCommands: 1 }),
+    fileOf('2026-07-27', 0, 's0'),
+  ]);
+  assert.deepEqual(days['2026-07-28'], {
+    captures: 3,
+    merges: 2,          // issue 0 is a capture, not a merge
+    sessions: 2,        // s1 captured twice
+    userMessages: 11,
+    userCommands: 1,
+    ...emptyGroups(),
+    skillLoads: { a: 2, b: 3 },
+    // The per-task cost split counts SESSIONS, not captures: s1 captured twice and is
+    // one session. Both sessions name an issue and attest no execution record, so both
+    // are `(unresolved)` — s1's issue-0 tail capture does not demote it to `(none)`,
+    // which is the person-started lane the human share is read from.
+    taskCost: { '(unresolved)': { sessions: 2, userMessages: 11 } },
+  });
+  assert.equal(days['2026-07-27'].merges, 0);
+});
+
+test('foldDays sums the check activations across a day\'s capture files', () => {
+  const work = (over) => ({ runs: 0, failures: 0, errors: 0, blocking: 0, advisory: 0, ...over });
+  const days = foldDays([
+    fileOf('2026-07-28', 12, 's1', {
+      checks: { work: work({ runs: 4, failures: 2, blocking: 3 }), world: work({ runs: 1 }) },
+      checkFindings: { 'task-lifecycle': { blocking: 2, advisory: 0 } },
+    }),
+    fileOf('2026-07-28', 13, 's2', {
+      checks: { work: work({ runs: 2, failures: 1, blocking: 1 }) },
+      checkFindings: { 'task-lifecycle': { blocking: 1, advisory: 0 }, 'acme-skill-g': { blocking: 0, advisory: 5 } },
+    }),
+  ]);
+  assert.deepEqual(days['2026-07-28'].checks.work, work({ runs: 6, failures: 3, blocking: 4 }));
+  assert.deepEqual(days['2026-07-28'].checks.world, work({ runs: 1 }), 'a scope only one file saw still folds');
+  assert.deepEqual(days['2026-07-28'].checkFindings, {
+    // `sessions` is DISTINCT sessions, so the rule both files saw reads 2 where its
+    // blocking count reads 3 — the count a rate against the day's sessions needs.
+    // The slots these files had an opinion about, summed — plus `sessions`, which
+    // foldDays writes from the distinct sessions rather than summing: the rule both
+    // files saw reads 2 where its blocking count reads 3.
+    'task-lifecycle': { blocking: 3, advisory: 0, sessions: 2 },
+    'acme-skill-g': { blocking: 0, advisory: 5, sessions: 1 },
+  });
+});
+
+test('foldDays is a pure recompute — folding the same files twice gives the same rows', () => {
+  const files = [fileOf('2026-07-28', 1, 's1', { userMessages: 3, skillLoads: { a: 1 } })];
+  assert.deepEqual(foldDays(files), foldDays(files));
+});
+
+// --- week folding ---------------------------------------------------------------
+
+test('isoWeek puts a date in its ISO-8601 week, including the year boundary', () => {
+  assert.equal(isoWeek('2026-07-28'), '2026-W31');
+  assert.equal(isoWeek('2026-07-26'), '2026-W30');   // Sunday closes W30
+  assert.equal(isoWeek('2026-07-27'), '2026-W31');   // Monday opens W31
+  // 2027-01-01 is a Friday, so it belongs to the week containing its Thursday: 2026-W53
+  assert.equal(isoWeek('2027-01-01'), '2026-W53');
+  assert.equal(isoWeek('2026-01-01'), '2026-W01');
+});
+
+test('daysToFold takes every day that CLOSED since the watermark, in order', () => {
+  const days = { '2026-07-25': {}, '2026-07-26': {}, '2026-07-27': {}, '2026-07-28': {} };
+  assert.deepEqual(daysToFold(days, '2026-07-25', '2026-07-28'), ['2026-07-26', '2026-07-27']);
+  assert.deepEqual(daysToFold(days, null, '2026-07-28'), ['2026-07-25', '2026-07-26', '2026-07-27']);
+  // today is never folded — its capture files are still arriving
+  assert.deepEqual(daysToFold(days, '2026-07-27', '2026-07-28'), []);
+});
+
+test('addDayToWeek sums the counters and declares how many days it absorbed', () => {
+  const day = {
+    captures: 2, merges: 1, sessions: 2, userMessages: 10, userCommands: 1, skillLoads: { a: 1 },
+    checks: { work: { runs: 3, failures: 1, errors: 0, blocking: 1, advisory: 0 } },
+    checkFindings: { 'task-lifecycle': { blocking: 1, advisory: 0 } },
+  };
+  const week = addDayToWeek(addDayToWeek(undefined, day), day);
+  assert.deepEqual(week, {
+    days: 2, captures: 4, merges: 2, sessionDays: 4, userMessages: 20, userCommands: 2,
+    ...emptyGroups(),
+    skillLoads: { a: 2 },
+    checks: { work: { runs: 6, failures: 2, errors: 0, blocking: 2, advisory: 0 } },
+    checkFindings: { 'task-lifecycle': { blocking: 2, advisory: 0 } },
+  });
+});
+
+test('addDayToWeek extends a week folded BEFORE the checks were counted', () => {
+  // Weeks are frozen once folded, so the first fold after this shipped meets week rows
+  // that have no `checks` key at all. It must grow them, not throw — a throw here would
+  // wedge the watermark and stop every counter, not just the new ones.
+  const old = { days: 3, captures: 6, merges: 5, sessionDays: 4, userMessages: 50, userCommands: 2, skillLoads: { a: 1 } };
+  const week = addDayToWeek(old, {
+    captures: 1, merges: 1, sessions: 1, userMessages: 5, userCommands: 0, skillLoads: {},
+    checks: { work: { runs: 2, failures: 1, errors: 0, blocking: 1, advisory: 0 } },
+    checkFindings: { 'task-lifecycle': { blocking: 1, advisory: 0 } },
+  });
+  assert.equal(week.days, 4);
+  assert.deepEqual(week.checks.work, { runs: 2, failures: 1, errors: 0, blocking: 1, advisory: 0 });
+  assert.equal(week.userMessages, 55, 'and the counters it already had keep summing');
+});
+
+// --- the whole fold -------------------------------------------------------------
+
+test('foldUsage: days recompute, weeks append once, watermark advances', () => {
+  const files = [
+    fileOf('2026-07-26', 1, 's1', { userMessages: 3, skillLoads: { 'acme-skill-h': 1 } }),
+    fileOf('2026-07-27', 2, 's2', { userMessages: 5 }),
+    fileOf('2026-07-28', 0, 's3', { userMessages: 1 }),
+  ];
+  const first = foldUsage({ files, prior: {}, today: '2026-07-28' });
+  assert.equal(first.foldedThrough, '2026-07-27');
+  assert.deepEqual(Object.keys(first.weeks), ['2026-W30', '2026-W31']);
+  assert.equal(first.weeks['2026-W30'].days, 1);
+  assert.deepEqual(first.weeks['2026-W30'].skillLoads, { 'acme-skill-h': 1 });
+  assert.ok(first.days['2026-07-28'], 'today still has its day row — it just is not folded yet');
+
+  // Same day, run again with a new capture landing on today. The closed days must NOT
+  // be folded a second time — this is the whole exactly-once mechanism.
+  const second = foldUsage({
+    files: [...files, fileOf('2026-07-28', 4, 's4', { userMessages: 2 })],
+    prior: first,
+    today: '2026-07-28',
+  });
+  assert.deepEqual(second.weeks, first.weeks, 'a re-run folds no closed day twice');
+  assert.equal(second.days['2026-07-28'].captures, 2, 'but today recomputes to include the new capture');
+
+  // Tomorrow: yesterday has closed and folds, once.
+  const third = foldUsage({
+    files: [...files, fileOf('2026-07-28', 4, 's4', { userMessages: 2 })],
+    prior: second,
+    today: '2026-07-29',
+  });
+  assert.equal(third.foldedThrough, '2026-07-28');
+  assert.equal(third.weeks['2026-W31'].days, 2);
+  assert.equal(third.weeks['2026-W31'].userMessages, 5 + 1 + 2);
+});
+
+test('foldUsage: a day whose raw files aged out keeps its week row and drops its day row', () => {
+  const prior = foldUsage({
+    files: [fileOf('2026-07-20', 1, 's1', { userMessages: 9 })],
+    prior: {}, today: '2026-07-21',
+  });
+  assert.equal(prior.weeks['2026-W30'].userMessages, 9);
+  // the raw file has since been pruned — it is simply absent from the next fold
+  const later = foldUsage({ files: [], prior, today: '2026-08-01' });
+  assert.deepEqual(later.days, {}, 'the day row is gone with its raw backing');
+  assert.equal(later.weeks['2026-W30'].userMessages, 9, 'its week row carries it');
+  assert.equal(later.foldedThrough, '2026-07-20', 'and the watermark does not skip forward over days it never saw');
+});
+
+test('the written file sorts every key, so an unchanged recompute is byte-identical', () => {
+  // Sorting is the ENCODER's job — the fold works in whatever order the sources
+  // arrived, and the file is what has to be stable, because a byte-identical recompute
+  // is what stops the delivery opening a daily no-op PR.
+  const files = [
+    fileOf('2026-07-27', 2, 's2', { skillLoads: { zeta: 1, alpha: 2 } }),
+    fileOf('2026-07-26', 1, 's1', { skillLoads: { middle: 1 } }),
+  ];
+  const written = (input) => renderUsageFile(encodeUsage(foldUsage({ files: input, prior: {}, today: '2026-07-28' })));
+  const a = written(files);
+  assert.equal(a, written([...files].reverse()));
+  assert.deepEqual(Object.keys(JSON.parse(a).days['2026-07-27'].skillLoads), ['alpha', 'zeta']);
+});
+
+test('foldUsage: a mounted skill that never loads has no key — the zero set is derived, not stored', () => {
+  const folded = foldUsage({
+    files: [fileOf('2026-07-27', 1, 's1', { skillLoads: { 'acme-skill-h': 1 } })],
+    prior: {}, today: '2026-07-28',
+  });
+  assert.deepEqual(Object.keys(folded.days['2026-07-27'].skillLoads), ['acme-skill-h']);
+  // "never loads" is visible by diffing against the repo's mounted set, which is the
+  // only way a skill with zero loads can be told from a skill that is not mounted.
+  const mounted = ['acme-skill-h', 'acme-skill-i', 'acme-skill-f'];
+  const never = mounted.filter((s) => !(s in folded.days['2026-07-27'].skillLoads));
+  assert.deepEqual(never, ['acme-skill-i', 'acme-skill-f']);
+});
+
+// --- what the session cost ----------------------------------------------------------
+// A per-session figure read off the transcript itself. It is allowed to be ABSENT — a
+// transcript shape carrying no usage records — and absent must never render as zero.
+
+test('tokensIn sums the usage records the transcript carries, and probes rather than assumes', () => {
+  const assistant = (usage) => ({ type: 'assistant', message: { content: [], usage } });
+  assert.deepEqual(
+    tokensIn([
+      assistant({ input_tokens: 10, output_tokens: 3, cache_read_input_tokens: 100 }),
+      assistant({ input_tokens: 5, output_tokens: 2, cache_creation_input_tokens: 40 }),
+    ]),
+    { input: 155, output: 5 },
+  );
+  // A transcript shape that records no usage at all reports NOTHING, so the consumer
+  // can say the series is absent instead of drawing a free session.
+  assert.equal(tokensIn([{ type: 'assistant', message: { content: [] } }, human('hi')]), null);
+  assert.equal(tokensIn([]), null);
+});
+
+test('countEntries carries the spend, and foldDays counts it once per SESSION', () => {
+  const counts = countEntries([
+    { type: 'assistant', message: { content: [], usage: { input_tokens: 7, output_tokens: 1 } } },
+  ]);
+  assert.deepEqual(counts.tokens, { input: 7, output: 1 });
+
+  // One session, captured twice — a merge capture and the session-end tail. The
+  // second file repeats the same facts, so summing them would double the figure.
+  const file = (issue, extra) => ({
+    date: '2026-08-20', stamp: '2026-08-20T09:30:00Z', issue, sessionId: 'sess-1',
+    counts: {
+      userMessages: 0, userCommands: 0, skillLoads: {}, checks: {}, checkFindings: {}, taskExec: {},
+      ...extra,
+    },
+  });
+  const days = foldDays([
+    file(12, { tokens: { input: 100, output: 10 } }),
+    file(0, { tokens: { input: 260, output: 30 } }),
+  ]);
+  assert.equal(days['2026-08-20'].captures, 2, 'both captures still count as captures');
+  assert.equal(days['2026-08-20'].sessions, 1);
+  assert.equal(days['2026-08-20'].tokensIn, 260, 'the fuller capture wins — the tail is a superset, not a second spend');
+  assert.equal(days['2026-08-20'].tokenSessions, 1);
+});
+
+test('a day whose transcripts carried no usage records has NO token keys at all', () => {
+  const days = foldDays([{
+    date: '2026-08-20', stamp: '2026-08-20T09:30:00Z', issue: 0, sessionId: 's1',
+    counts: { userMessages: 1, userCommands: 0, skillLoads: {}, checks: {}, checkFindings: {}, taskExec: {}, tokens: null },
+  }]);
+  const day = days['2026-08-20'];
+  assert.ok(!('tokensIn' in day), 'unknown is a state, not a zero');
+  assert.ok(!('tokenSessions' in day));
+});
+
+// --- the redesign's new capture-derived fields ------------------------------------
+
+test('tokensByModelIn splits the same spend by the model that was billed for it', () => {
+  const assistant = (model, usage) => ({ type: 'assistant', message: { model, content: [], usage } });
+  const entries = [
+    assistant('claude-opus-5', { input_tokens: 10, output_tokens: 3, cache_read_input_tokens: 100 }),
+    assistant('claude-opus-5', { input_tokens: 5, output_tokens: 2, cache_creation_input_tokens: 40 }),
+    assistant('claude-haiku-4-5', { input_tokens: 1, output_tokens: 1 }),
+  ];
+  assert.deepEqual(tokensByModelIn(entries), {
+    'claude-opus-5': { input: 15, cacheRead: 100, cacheCreate: 40, output: 5 },
+    'claude-haiku-4-5': { input: 1, cacheRead: 0, cacheCreate: 0, output: 1 },
+  });
+  // The four counters are kept APART here where `tokensIn` sums the first three — the
+  // split has to be priceable per counter, and the total has to keep meaning what it
+  // meant to every reader already using it.
+  const total = tokensIn(entries);
+  assert.deepEqual(total, { input: 15 + 100 + 40 + 1, output: 6 });
+});
+
+test('tokensByModelIn keys an unattributed spend as its own state, and answers null for none', () => {
+  const spend = { input_tokens: 4, output_tokens: 1 };
+  assert.deepEqual(tokensByModelIn([{ type: 'assistant', message: { content: [], usage: spend } }]), {
+    [TOKENS_BY_MODEL_UNKNOWN]: { input: 4, cacheRead: 0, cacheCreate: 0, output: 1 },
+  });
+  assert.equal(tokensByModelIn([{ type: 'assistant', message: { content: [] } }]), null);
+  assert.equal(tokensByModelIn([]), null);
+});
+
+test('turnSeconds bills each turn the gap that produced it, and caps the human side', () => {
+  const at = (s) => new Date(Date.UTC(2026, 7, 20, 9, 0, s)).toISOString();
+  const stamped = (entry, seconds) => ({ ...entry, timestamp: at(seconds) });
+  const out = turnSeconds([
+    stamped(human('do the thing'), 0),
+    stamped(assistantText('on it'), 30),      // 30s of agent
+    stamped(human('and this too'), 90),       // 60s of person
+    stamped(assistantText('done'), 100),      // 10s of agent
+  ]);
+  assert.deepEqual(out, { human: 60, agent: 40 });
+});
+
+test('turnSeconds caps an overnight gap so the human figure stays a floor', () => {
+  const at = (m) => new Date(Date.UTC(2026, 7, 20, 9, m)).toISOString();
+  const out = turnSeconds([
+    { ...assistantText('done'), timestamp: at(0) },
+    { ...human('back'), timestamp: at(600) },   // ten hours later — not ten hours of attention
+  ]);
+  assert.equal(out.human, 600, 'the cap, in seconds — the gap above it is a break, not work');
+});
+
+test('turnSeconds excludes a subagent sidechain, whose span the turn around it already carries', () => {
+  const at = (s) => new Date(Date.UTC(2026, 7, 20, 9, 0, s)).toISOString();
+  const withChain = turnSeconds([
+    { ...human('go'), timestamp: at(0) },
+    { ...assistantText('spawning'), timestamp: at(10) },
+    { ...assistantText('subagent working'), isSidechain: true, timestamp: at(20) },
+    { ...assistantText('done'), timestamp: at(40) },
+  ]);
+  // 10s to the first assistant entry, then 30s to the last — the sidechain entry
+  // between them neither adds a span of its own nor splits the one around it.
+  assert.deepEqual(withChain, { human: 0, agent: 40 });
+});
+
+test('turnSeconds answers null — never zero — for a transcript that carries no timestamps', () => {
+  assert.equal(turnSeconds([human('hi'), assistantText('hello')]), null);
+  assert.equal(turnSeconds([]), null);
+});
+
+test('taskCostKey names the task, and keeps the two unknown lanes apart', () => {
+  assert.equal(taskCostKey({ taskExec: { 'tidy-repo/tidy-issues': {} } }, 42), 'tidy-repo/tidy-issues');
+  // A session filed under no issue is a PERSON at the keyboard — the human-driven
+  // share, which is a fact worth seeing rather than a gap.
+  assert.equal(taskCostKey({ taskExec: {} }, 0), TASK_COST_NONE);
+  // One filed under an issue that attests no execution record is a hole in the record,
+  // and must never be quietly counted as a person.
+  assert.equal(taskCostKey({ taskExec: {} }, 42), TASK_COST_UNRESOLVED);
+});
+
+test('foldDays splits cost per task, per session, and never demotes a named task', () => {
+  const file = (issue, extra) => ({
+    date: '2026-08-20', stamp: '2026-08-20T09:30:00Z', issue, sessionId: extra.sessionId ?? 'sess-1',
+    counts: {
+      userMessages: 0, userCommands: 0, skillLoads: {}, checks: {}, checkFindings: {}, taskExec: {},
+      ...extra,
+    },
+  });
+  const days = foldDays([
+    // One session that ran a task, captured twice: the merge capture attests the exec
+    // record, the session-end tail is filed under issue 0 and attests nothing.
+    file(12, { taskExec: { 'tidy-repo/tidy-issues': { success: 1 } }, userMessages: 2, tokens: { input: 100, output: 10 } }),
+    file(0, { userMessages: 1, tokens: { input: 260, output: 30 } }),
+    // …and a session a person started.
+    file(0, { sessionId: 'sess-2', userMessages: 7, tokens: { input: 50, output: 5 } }),
+  ]);
+  assert.deepEqual(days['2026-08-20'].taskCost, {
+    // The tail capture does not demote the session to `(none)`: the most-informed
+    // capture of a session names its task, and the session has one dispatch.
+    'tidy-repo/tidy-issues': { sessions: 1, userMessages: 3, tokensIn: 260, tokensOut: 30 },
+    [TASK_COST_NONE]: { sessions: 1, userMessages: 7, tokensIn: 50, tokensOut: 5 },
+  });
+  // The token columns are the same per-session dedupe the day scalars use, so the
+  // split adds up to the day's own total rather than double-counting the tail.
+  assert.equal(days['2026-08-20'].tokensIn, 310);
+});
+
+test('a task whose sessions attested no spend carries NO token columns', () => {
+  const days = foldDays([{
+    date: '2026-08-20', stamp: '2026-08-20T09:30:00Z', issue: 0, sessionId: 's1',
+    counts: {
+      userMessages: 4, userCommands: 0, skillLoads: {}, checks: {}, checkFindings: {}, taskExec: {},
+      tokens: null,
+    },
+  }]);
+  assert.deepEqual(days['2026-08-20'].taskCost, { [TASK_COST_NONE]: { sessions: 1, userMessages: 4 } });
+});
+
+test('foldDays sums the wall clock and the per-model split from the winning capture', () => {
+  const file = (extra) => ({
+    date: '2026-08-20', stamp: '2026-08-20T09:30:00Z', issue: 0, sessionId: 's1',
+    counts: { userMessages: 0, userCommands: 0, skillLoads: {}, checks: {}, checkFindings: {}, taskExec: {}, ...extra },
+  });
+  const days = foldDays([
+    file({ tokens: { input: 100, output: 10 }, tokensByModel: { m1: { input: 100, cacheRead: 0, cacheCreate: 0, output: 10 } }, seconds: { human: 30, agent: 60 } }),
+    file({ tokens: { input: 260, output: 30 }, tokensByModel: { m1: { input: 260, cacheRead: 0, cacheCreate: 0, output: 30 } }, seconds: { human: 90, agent: 200 } }),
+  ]);
+  const day = days['2026-08-20'];
+  assert.deepEqual(day.tokensByModel, { m1: { input: 260, cacheRead: 0, cacheCreate: 0, output: 30 } });
+  assert.deepEqual([day.humanSeconds, day.agentSeconds], [90, 200]);
+});
+
+test('a day whose sessions carried no timestamps has NO wall-clock keys', () => {
+  const days = foldDays([{
+    date: '2026-08-20', stamp: '2026-08-20T09:30:00Z', issue: 0, sessionId: 's1',
+    counts: { userMessages: 1, userCommands: 0, skillLoads: {}, checks: {}, checkFindings: {}, taskExec: {}, seconds: null },
+  }]);
+  assert.ok(!('humanSeconds' in days['2026-08-20']), 'an unknown span is not a zero one');
+  assert.ok(!('agentSeconds' in days['2026-08-20']));
+  assert.ok(!('tokensByModel' in encodeUsage({ days, weeks: {}, hours: {} }).days['2026-08-20']),
+    'and an empty group map is never written at all');
+});
+
+test('foldPrs files each merged PR under its merge day, keeping unknown ends absent', () => {
+  const days = {};
+  foldPrs(days, {}, [
+    { date: '2026-08-20', number: 1583, leadHours: 14.2, issueLeadHours: 38.5, sessionToMergeHours: 0.7 },
+    { date: '2026-08-20', number: 1584, leadHours: 2.5, issueLeadHours: null, sessionToMergeHours: null },
+  ], '2026-08-21');
+  assert.deepEqual(days['2026-08-20'].prs, {
+    1583: { leadHours: 14.2, issueLeadHours: 38.5, sessionToMergeHours: 0.7 },
+    // A PR that closes no issue has no issue lead time — absent, so a reader's p50 is
+    // over the PRs that HAD one rather than over a floor of zeros.
+    1584: { leadHours: 2.5 },
+  });
+});
+
+test('foldPrs carries prior rows forward and ages them out with the day window', () => {
+  const prior = {
+    '2026-08-19': { prs: { 1580: { leadHours: 3 } } },
+    '2026-06-01': { prs: { 1400: { leadHours: 9 } } },
+  };
+  const days = {};
+  foldPrs(days, prior, [], '2026-08-21');
+  assert.deepEqual(days['2026-08-19'].prs, { 1580: { leadHours: 3 } }, 'append-once: nothing re-reads it');
+  assert.ok(!days['2026-06-01'], 'past the day window, the week row is what keeps it');
+});
+
+test('foldQueueOutcomes counts each park kind once per item, and unknown parks stay unknown', () => {
+  const days = {};
+  foldQueueOutcomes(days, {}, [
+    { date: '2026-08-20', pack: 'p', task: 't', outcome: 'done', parks: ['approval', 'approval', 'failure'] },
+    { date: '2026-08-20', pack: 'p', task: 't', outcome: 'done', parks: ['approval'] },
+    // The events listing for this one could not be read: its outcome still counts and
+    // its parks are simply not counted, rather than counted as none.
+    { date: '2026-08-20', pack: 'p', task: 'u', outcome: 'done', parks: null },
+  ], '2026-08-21');
+  assert.deepEqual(days['2026-08-20'].parks['p/t'], { failure: 1, action: 0, decision: 0, approval: 2 });
+  assert.ok(!('p/u' in days['2026-08-20'].parks), 'an unreadable listing leaves no key');
+  assert.equal(days['2026-08-20'].queue['p/u'].done, 1, 'and costs the item nothing else');
+});
+
+// --- the sources outside the capture files ---------------------------------------
+
+test('foldDayFields writes only the days a source could speak for', () => {
+  const days = { '2026-08-20': { ...blankDay() } };
+  foldDayFields(days, {
+    '2026-08-20': { commits: 3, linesAdded: 40, linesRemoved: 5 },
+    '2026-08-19': { commits: 0, linesAdded: 0, linesRemoved: 0 },
+  });
+  assert.equal(days['2026-08-20'].commits, 3);
+  assert.equal(days['2026-08-19'].commits, 0, 'a covered day with nothing in it is a real zero');
+  assert.ok(!('releases' in days['2026-08-20']), 'a source that said nothing leaves no key');
+});
+
+test('addDayToWeek adds nothing for a field the day has no opinion on', () => {
+  // The case this exists for: a week half of whose days came from a checkout with the
+  // history and half from one without. The week must report the days it could read,
+  // not seven days' worth of understated lines.
+  const known = { ...blankDay(), captures: 1, commits: 4, linesAdded: 10, linesRemoved: 2 };
+  const unknown = { ...blankDay(), captures: 1 };
+  const week = addDayToWeek(addDayToWeek(null, known), unknown);
+  assert.equal(week.days, 2);
+  assert.equal(week.captures, 2);
+  assert.equal(week.commits, 4, 'only the day that knew contributed');
+  assert.equal(week.linesAdded, 10);
+  // …and a field NO day had an opinion on gets no key at all, rather than a zero that
+  // would read as a week nobody released anything in.
+  assert.ok(!('releases' in week), Object.keys(week).join(','));
+  assert.ok(!('tokensIn' in week));
+});
+
+// --- the queue's own outcome record ----------------------------------------------
+// The successor to the retired slot scheduler's log lines (#994): every occurrence is
+// a work item, and a closed one wears the outcome it came to.
+
+const closed = (date, task, outcome, pack = 'acme-pack-b') => ({ date, pack, task, outcome });
+
+test('foldQueueOutcomes counts each closed item under its task and outcome word', () => {
+  const days = {};
+  foldQueueOutcomes(days, {}, [
+    closed('2026-08-20', 'usage-fold', 'done'),
+    closed('2026-08-20', 'usage-fold', 'done'),
+    closed('2026-08-20', 'acme-task', 'delivered'),
+    closed('2026-08-19', 'acme-task', 'none'),
+  ], '2026-08-20');
+  assert.deepEqual(days['2026-08-20'].queue['acme-pack-b/usage-fold'],
+    { done: 2, delivered: 0, obsolete: 0, none: 0 });
+  assert.equal(days['2026-08-20'].queue['acme-pack-b/acme-task'].delivered, 1);
+  assert.equal(days['2026-08-19'].queue['acme-pack-b/acme-task'].none, 1);
+  assert.equal(days['2026-08-19'].captures, 0, 'a day with queue activity and no captures still gets a row');
+});
+
+test('foldQueueOutcomes appends onto what earlier folds counted, and ages rows out', () => {
+  const prior = {
+    '2026-08-20': { queue: { 'p/t': { done: 2, delivered: 0, obsolete: 0, none: 0 } } },
+    '2026-06-01': { queue: { 'p/ancient': { done: 9, delivered: 0, obsolete: 0, none: 0 } } },
+  };
+  const days = {};
+  foldQueueOutcomes(days, prior, [closed('2026-08-20', 't', 'done', 'p')], '2026-08-20');
+  assert.equal(days['2026-08-20'].queue['p/t'].done, 3, 'appended, never recomputed');
+  assert.equal(days['2026-06-01'], undefined, 'past the day window, its week row carries it now');
+});
+
+test('the queue vocabulary matches what the engine\'s own decoder can return', () => {
+  // The drift guard for a vocabulary this pack spells rather than imports (see
+  // usage-format.mjs for why it cannot import it). Drive the REAL decoder over every
+  // outcome label the queue writes, plus an item wearing none, and demand that the
+  // words that come back are exactly the ones the counter rows are keyed by.
+  const words = new Set([
+    outcomeOf({ labels: [] }) ?? 'none',
+    ...[OUTCOME_DONE, OUTCOME_DELIVERED, OUTCOME_OBSOLETE].map((l) => outcomeOf({ labels: [{ name: l }] }) ?? 'none'),
+  ]);
+  assert.deepEqual([...words].sort(), [...QUEUE_OUTCOMES].sort());
+});
+
+// --- the hour tier ----------------------------------------------------------------
+
+test('foldHours counts runs by workflow and sessions by their capture stamp', () => {
+  const hours = foldHours({
+    prior: {},
+    runs: [
+      { startedAt: '2026-08-21T10:03:00Z', workflow: 'scheduler', conclusion: 'success', id: 1 },
+      { startedAt: '2026-08-21T10:41:00Z', workflow: 'executor', conclusion: 'failure', id: 2 },
+      { startedAt: '2026-08-21T11:03:00Z', workflow: 'scheduler', conclusion: 'success', id: 3 },
+    ],
+    captureHours: { '2026-08-21T10': { agentic: 2, taskExec: { 'p/t': { success: 1, failed: 0, 'task-gone': 0, invalid: 0 } } } },
+    now: '2026-08-21T11:30:00Z',
+  });
+  assert.deepEqual(hours['2026-08-21T10'], {
+    scheduler: 1, executor: 1, agentic: 2, failed: 1,
+    taskExec: { 'p/t': { success: 1, failed: 0, 'task-gone': 0, invalid: 0 } },
+  });
+  assert.deepEqual(hours['2026-08-21T11'], { scheduler: 1, executor: 0, agentic: 0, failed: 0, taskExec: {} });
+});
+
+test('foldHours appends run counts onto prior rows but OVERWRITES the recomputed ones', () => {
+  // The two sources meet in one row on different clocks: the runs are read once past a
+  // watermark, the capture-derived counts are recomputed from scratch every fold. If
+  // the second were added rather than set, every fold would double it.
+  const prior = { '2026-08-21T10': { scheduler: 1, executor: 0, agentic: 2, failed: 0, taskExec: { 'p/t': { success: 1 } } } };
+  const hours = foldHours({
+    prior,
+    runs: [{ startedAt: '2026-08-21T10:41:00Z', workflow: 'executor', conclusion: 'success', id: 2 }],
+    captureHours: { '2026-08-21T10': { agentic: 2, taskExec: { 'p/t': { success: 1, failed: 0, 'task-gone': 0, invalid: 0 } } } },
+    now: '2026-08-21T11:30:00Z',
+  });
+  assert.equal(hours['2026-08-21T10'].scheduler, 1, 'carried forward');
+  assert.equal(hours['2026-08-21T10'].executor, 1, 'appended');
+  assert.equal(hours['2026-08-21T10'].agentic, 2, 'recomputed, not doubled');
+  assert.equal(hours['2026-08-21T10'].taskExec['p/t'].success, 1, 'recomputed, not doubled');
+});
+
+test('foldHours keeps three days of rows and drops everything older', () => {
+  const now = '2026-08-21T11:30:00Z';
+  assert.ok(withinHourWindow('2026-08-21T11', now), 'this hour');
+  assert.ok(withinHourWindow('2026-08-18T12', now), 'the far edge of the window');
+  assert.ok(!withinHourWindow('2026-08-18T11', now), 'one hour past it');
+  assert.ok(!withinHourWindow('2026-08-21T12', now), 'a future hour is not this fold\'s to write');
+
+  const hours = foldHours({
+    prior: { '2026-08-10T04': { scheduler: 9, executor: 0, agentic: 0, failed: 0, taskExec: {} } },
+    runs: [{ startedAt: '2026-08-10T05:00:00Z', workflow: 'scheduler', conclusion: 'success', id: 1 }],
+    captureHours: {},
+    now,
+  });
+  assert.deepEqual(Object.keys(hours), [], 'nothing inside the window, so nothing written');
+});
+
+test('captureHours files each session under the hour its capture name stamps', () => {
+  const file = (stamp, sessionId, exec = {}) => ({
+    date: stamp.slice(0, 10), stamp, issue: 1, sessionId,
+    counts: { userMessages: 0, userCommands: 0, skillLoads: {}, checks: {}, checkFindings: {}, taskExec: exec },
+  });
+  const hours = captureHours([
+    file('2026-08-21T10:03:00Z', 's1', { 'p/t': { success: 1, failed: 0, 'task-gone': 0, invalid: 0 } }),
+    file('2026-08-21T10:44:00Z', 's1'),                    // the same session's tail capture
+    file('2026-08-21T10:55:00Z', 's2'),
+    file('2026-08-21T11:02:00Z', 's3'),
+  ]);
+  assert.equal(hours['2026-08-21T10'].agentic, 2, 'distinct sessions, not capture files');
+  assert.equal(hours['2026-08-21T10'].taskExec['p/t'].success, 1);
+  assert.equal(hours['2026-08-21T11'].agentic, 1);
+});
+
+// --- the whole fold ---------------------------------------------------------------
+
+test('foldUsage carries every watermark, and the stamp it was handed', () => {
+  const first = foldUsage({
+    files: [], prior: {}, today: '2026-08-21', now: '2026-08-21T11:00:00Z', generated: '2026-08-21T11:00:00Z',
+    runs: [{ startedAt: '2026-08-21T10:03:00Z', workflow: 'scheduler', conclusion: 'success', id: 1 }],
+    runsFoldedThrough: '2026-08-21T10:03:00Z',
+    queueRecords: [closed('2026-08-20', 'usage-fold', 'done')],
+    queueFoldedThrough: '2026-08-20T22:00:00Z',
+  });
+  assert.equal(first.generated, '2026-08-21T11:00:00Z');
+  assert.equal(first.runsFoldedThrough, '2026-08-21T10:03:00Z');
+  assert.equal(first.queueFoldedThrough, '2026-08-20T22:00:00Z');
+  assert.equal(first.weeks['2026-W34'].queue['acme-pack-b/usage-fold'].done, 1,
+    'the day that closed carried its queue outcomes into its week');
+
+  // A fold that read nothing new leaves both marks and both sets of counts alone.
+  const second = foldUsage({
+    files: [], prior: first, today: '2026-08-21', now: '2026-08-21T12:00:00Z', generated: '2026-08-21T12:00:00Z',
+  });
+  assert.equal(second.runsFoldedThrough, '2026-08-21T10:03:00Z');
+  assert.equal(second.queueFoldedThrough, '2026-08-20T22:00:00Z');
+  assert.deepEqual(second.days['2026-08-20'].queue, first.days['2026-08-20'].queue);
+  assert.equal(second.weeks['2026-W34'].queue['acme-pack-b/usage-fold'].done, 1,
+    'and the closed week is not folded a second time');
+});
+
+test('foldUsage drops day rows past the day window', () => {
+  const prior = { days: { '2026-06-01': { captures: 1, tasks: {}, queue: {} } }, weeks: {}, foldedThrough: '2026-06-01' };
+  const folded = foldUsage({ files: [], prior, today: '2026-08-21', now: '2026-08-21T11:00:00Z' });
+  assert.equal(folded.days['2026-06-01'], undefined);
+});
+
+// --- the retired census -----------------------------------------------------------
+
+test('carryTaskRuns ages the slot scheduler\'s rows out and appends nothing', () => {
+  // Nothing writes these any more (#974) and the reader that did is gone. What is left
+  // is the ageing-out, which must not lose a row early or keep one forever.
+  const prior = {
+    '2026-07-28': { tasks: { 'p/fresh': { agent: 1 } } },
+    '2026-06-01': { tasks: { 'p/ancient': { agent: 9 } } },
+  };
+  const days = {};
+  carryTaskRuns(days, prior, '2026-07-28');
+  assert.deepEqual(days['2026-07-28'].tasks['p/fresh'], { agent: 1 });
+  assert.equal(days['2026-06-01'], undefined);
+});
+
+test('withinTaskWindow keeps the last 14 days and nothing older', () => {
+  assert.ok(withinTaskWindow('2026-07-29', '2026-07-29'), 'today is in');
+  assert.ok(withinTaskWindow('2026-07-16', '2026-07-29'), 'day 13 is in');
+  assert.ok(!withinTaskWindow('2026-07-15', '2026-07-29'), 'day 14 has aged out into its week row');
+  assert.ok(!withinTaskWindow('2026-07-30', '2026-07-29'), 'a future date is not a window this fold owns');
+});
+
+// --- executor execution statuses out of a captured session ----------------------
+// The exec records are printed by executor-side code (resolve-dispatch,
+// record-exec) into Bash tool results; the model may quote one back. The count
+// dedupes on the full tuple so one execution never counts twice.
+
+const execLine = (status, slot = 'd2026-08-06') => `claudinite-task-exec v1 tidy-repo/tidy-issues [${slot}] ${status}`;
+
+test('countTaskExecs reads exec records out of tool-result text', () => {
+  const entries = [
+    { type: 'user', message: { content: [{ type: 'tool_result', content: [{ type: 'text', text: `brief...\n${execLine('success')}\n` }] }] } },
+  ];
+  assert.deepEqual(countTaskExecs(entries), {
+    'tidy-repo/tidy-issues': { ...emptyTaskExec(), success: 1 },
+  });
+});
+
+test('countTaskExecs dedupes an echoed record, and keeps distinct statuses/slots', () => {
+  const entries = [
+    { type: 'user', message: { content: [{ type: 'tool_result', content: `${execLine('failed')}\n` }] } },
+    { type: 'assistant', message: { content: [{ type: 'text', text: `the run failed: ${execLine('failed')}` }] } },
+    { type: 'user', message: { content: `${execLine('failed', 'd2026-08-07')}` } },
+  ];
+  const counts = countTaskExecs(entries);
+  assert.equal(counts['tidy-repo/tidy-issues'].failed, 2); // two slots, echo collapsed
+});
+
+test('countEntries carries taskExec beside the other counters', () => {
+  const counts = countEntries([
+    { type: 'user', message: { content: `${execLine('task-gone')}` } },
+  ]);
+  assert.deepEqual(counts.taskExec, { 'tidy-repo/tidy-issues': { ...emptyTaskExec(), 'task-gone': 1 } });
+});
+
+// --- the file boundary ----------------------------------------------------------
+// The fold works in named counters; the file stores positional tuples. These are the
+// tests of the seam between the two.
+
+test('a fold round-trips through the file unchanged', () => {
+  const folded = foldUsage({
+    files: [
+      fileOf('2026-07-26', 1, 's1', { skillLoads: { 'acme-skill-h': 2 }, checks: { work: { runs: 5, failures: 1 } } }),
+      fileOf('2026-07-27', 2, 's2', { skillLoads: { 'acme-skill-i': 1 } }),
+    ],
+    prior: {}, today: '2026-07-28',
+  });
+  const reread = decodeUsage(JSON.parse(renderUsageFile(encodeUsage(folded))));
+  assert.equal(reread.foldedThrough, folded.foldedThrough);
+  assert.deepEqual(reread.days['2026-07-26'].skillLoads, { 'acme-skill-h': 2 });
+  assert.equal(reread.days['2026-07-26'].checks.work.failures, 1);
+  assert.equal(reread.weeks['2026-W30'].captures, 1);
+  // …and folding again from the re-read prior lands in the same place, which is what
+  // the next night's run actually does.
+  const again = foldUsage({ files: [], prior: reread, today: '2026-07-28' });
+  assert.deepEqual(again.weeks, folded.weeks);
+});
+
+test('the file states the vocabulary its tuples are spelled in', () => {
+  const file = encodeUsage(foldUsage({
+    files: [fileOf('2026-07-26', 1, 's1', { checks: { work: { runs: 5, failures: 1 } } })],
+    prior: {}, today: '2026-07-27',
+  }));
+  assert.equal(file.version, USAGE_VERSION);
+  assert.deepEqual(file.fields.checks, [...USAGE_FIELDS.checks]);
+  const tuple = file.days['2026-07-26'].checks.work;
+  assert.equal(tuple[file.fields.checks.indexOf('runs')], 5);
+  assert.equal(tuple[file.fields.checks.indexOf('failures')], 1);
+});
+
+test('an empty counter group is omitted from the file, never written as {}', () => {
+  const file = encodeUsage(foldUsage({
+    files: [fileOf('2026-07-26', 1, 's1', {})], prior: {}, today: '2026-07-27',
+  }));
+  const row = file.days['2026-07-26'];
+  assert.equal(row.tasks, undefined);
+  assert.equal(row.taskExec, undefined);
+  assert.deepEqual(decodeUsage(file).days['2026-07-26'].tasks, {}, 'and it reads back as the empty map it means');
+});
+
+test('a version-1 file decodes as itself — the fold reads back weeks it froze earlier', () => {
+  const v1 = {
+    version: 1,
+    foldedThrough: '2026-07-26',
+    runsFoldedThrough: '2026-07-26T00:00:00Z',
+    days: {},
+    weeks: {
+      '2026-W30': {
+        days: 3, captures: 4, merges: 4, sessionDays: 3, userMessages: 40, userCommands: 1,
+        skillLoads: { 'acme-skill-h': 3 }, checks: { work: { runs: 9, failures: 2 } }, checkFindings: {},
+      },
+    },
+  };
+  const decoded = decodeUsage(v1);
+  assert.equal(decoded.weeks['2026-W30'].skillLoads['acme-skill-h'], 3);
+  // …and the next fold writes it out in the new shape without recounting anything.
+  const folded = foldUsage({ files: [fileOf('2026-07-27', 1, 's1', {})], prior: decoded, today: '2026-07-28' });
+  const file = encodeUsage(folded);
+  assert.equal(file.version, USAGE_VERSION);
+  assert.equal(file.weeks['2026-W30'].totals[file.fields.week.indexOf('captures')], 4);
+});
+
+test('the first fold after the upgrade rewrites the whole file, losing nothing', () => {
+  // The answer to "is there a migration": no. The fold rewrites the file wholesale
+  // every run from its decoded prior, so the version-1 file a repo is carrying is
+  // converted by its next ordinary run — and the watermarks come across untouched, so
+  // nothing is re-counted and no day is re-folded into a week that already has it.
+  const v1 = {
+    version: 1,
+    foldedThrough: '2026-07-26',
+    runsFoldedThrough: '2026-07-26T03:00:00Z',
+    days: {
+      '2026-07-26': {
+        captures: 2, merges: 2, sessions: 1, userMessages: 9, userCommands: 1,
+        skillLoads: { 'acme-skill-h': 2 },
+        checks: { work: { runs: 9, failures: 2, errors: 0, blocking: 3, advisory: 0, ciRuns: 0, ciFailures: 0 } },
+        checkFindings: { 'task-lifecycle': { blocking: 3, advisory: 0 } },
+        tasks: { 'tidy-repo/tidy-issues': { agent: 1, 'code-work': 0, skipped: 5, failed: 0, deferred: 0 } },
+        taskExec: { 'tidy-repo/tidy-issues': { success: 1, failed: 0, 'task-gone': 0, invalid: 0 } },
+      },
+    },
+    weeks: {
+      '2026-W30': {
+        days: 3, captures: 4, merges: 4, sessionDays: 3, userMessages: 40, userCommands: 1,
+        skillLoads: { 'acme-skill-h': 3 },
+        checks: { work: { runs: 20, failures: 5, errors: 0, blocking: 8, advisory: 0, ciRuns: 0, ciFailures: 0 } },
+        checkFindings: { 'task-lifecycle': { blocking: 8, advisory: 0 } },
+        tasks: { 'tidy-repo/tidy-issues': { agent: 3, 'code-work': 0, skipped: 15, failed: 0, deferred: 0 } },
+        taskExec: { 'tidy-repo/tidy-issues': { success: 3, failed: 0, 'task-gone': 0, invalid: 0 } },
+      },
+    },
+  };
+  // No new sources at all: the run that finds nothing to count still converts the file.
+  const written = encodeUsage(foldUsage({ files: [], prior: decodeUsage(v1), today: '2026-07-27' }));
+  const back = decodeUsage(written);
+  assert.equal(written.version, USAGE_VERSION);
+  assert.equal(written.foldedThrough, v1.foldedThrough, 'the day watermark does not move');
+  assert.equal(written.runsFoldedThrough, v1.runsFoldedThrough, 'nor the run watermark');
+  // Every frozen week row survives intact. The sub-maps the file predates are the only
+  // addition: a group map always decodes present-and-empty, and an empty one carries
+  // nothing a reader cannot derive — the row's own numbers are untouched.
+  assert.deepEqual(back.weeks, {
+    '2026-W30': { ...emptyGroups(), ...v1.weeks['2026-W30'] },
+  });
+  // The day tier behaves exactly as it does on any other run — nothing about the
+  // conversion is special. The capture-derived counters recompute from the live files
+  // (none here), and the scheduler's task rows are carried forward on their own window,
+  // which is what keeps a repo whose sessions are all unattended from showing nothing.
+  assert.deepEqual(back.days['2026-07-26'].tasks, v1.days['2026-07-26'].tasks);
+  assert.equal(back.days['2026-07-26'].captures, 0, 'no capture file, no capture-derived count');
+  assert.deepEqual(back.days['2026-07-26'].taskExec, {}, 'and those come from captures too');
+});
+
+test('adding and removing a pack, skill or task is pure key presence', () => {
+  // Names are literal keys, never dictionary ids, precisely so this holds: a skill
+  // that appears carries a key from the day it appears, one that is retired simply
+  // stops having one, and no frozen row anywhere has to be renumbered.
+  const before = encodeUsage(foldUsage({
+    files: [fileOf('2026-07-26', 1, 's1', { skillLoads: { 'old-skill': 2 } })], prior: {}, today: '2026-07-27',
+  }));
+  const after = encodeUsage(foldUsage({
+    files: [fileOf('2026-07-26', 1, 's1', { skillLoads: { 'new-skill': 1 } })], prior: {}, today: '2026-07-27',
+  }));
+  assert.deepEqual(Object.keys(before.days['2026-07-26'].skillLoads), ['old-skill']);
+  assert.deepEqual(Object.keys(after.days['2026-07-26'].skillLoads), ['new-skill']);
+  // The one thing that must NOT move: every other row's encoding is untouched by it.
+  assert.deepEqual(before.days['2026-07-26'].totals, after.days['2026-07-26'].totals);
+  assert.deepEqual(before.fields, after.fields);
+});
+
+test('a counter a row predates stays unknown in the file, never a fabricated zero', () => {
+  // A week frozen before a field existed has no key for it. The tuple slot is `null`,
+  // and it decodes back to no key — the fold then starts that field from the first day
+  // that actually carried it, instead of claiming the week saw zero of them.
+  const prior = {
+    foldedThrough: '2026-07-26',
+    weeks: { '2026-W30': { days: 2, captures: 3, merges: 3, sessionDays: 2, skillLoads: {} } },
+    days: {},
+  };
+  const file = encodeUsage(foldUsage({ files: [], prior, today: '2026-07-27' }));
+  const totals = file.weeks['2026-W30'].totals;
+  assert.equal(totals[file.fields.week.indexOf('captures')], 3);
+  assert.equal(totals[file.fields.week.indexOf('userMessages')], null);
+  assert.ok(!('userMessages' in decodeUsage(file).weeks['2026-W30']));
+});

@@ -1,0 +1,98 @@
+## 2026-07-08 · born · Add executable-requirements pack; fill the flutter pack stub (#165)
+- **Source:** three worked implementations in the owner's fleet - GoogleCalendarEventCreator (the
+  origin: extension/jsdom rendering, pixel-exact snapshots), TLDR (the cross-tier `server` kind) and
+  ShoutsAndWhispers (the Flutter port: golden-file rendering, the fake-world harness and the first
+  `saga` implementation).
+- **Reason:** every new project, and every new stack inside one, re-derived the same mechanics for
+  running a numbered spec as tests; carried as a pack they are adopted by convention instead. The
+  judgment layer above them - doc-first discipline, owner-owned expecteds, honest-gap tracking - is
+  a separate pack's, so this one is the mechanics only.
+- **Actor:** @missingbulb (owner).
+- **Model:** Claude Fable 5, per the commit trailer.
+- **Mechanism:** the pack manifest, fingerprinted on `dev/requirements/requirements.md` - the
+  framework's one structural constant, since a repo running its spec as tests always has the spec
+  file.
+- **Landed:** #165 (Closes #180) · pack version 1.
+
+## 2026-07-29 · policy-changed · the pack asks its adoption interview (#401)
+- **Reason:** adopting the pack without deciding how a UI requirement becomes an assertion, and
+  where the requirements come from, defers the two choices that shape every requirement written
+  afterwards.
+- **Actor:** @missingbulb (owner).
+- **Model:** Claude, per the commit trailer.
+- **Mechanism:** two questions on the manifest, `ui_testing` and `requirements_source`, asked when
+  the pack is declared and enforced on the adding branch, where the owner is present; the second
+  sets `config.spec`.
+- **Landed:** #401 (Closes #400) · pack version 1.
+
+## 2026-08-19 · reworded · the pack's prose stops naming its neighbours (#1060)
+- **Reason:** boundary and turf prose is a second copy of what `ruleRoutingGuidance.excludes`
+  already carries in one machine-read field, the field a lesson is routed by; the README and
+  `RULES.md` now say what the pack does not cover without naming who does.
+- **Actor:** @missingbulb (owner).
+- **Model:** Claude Opus 5, per the commit trailer.
+- **Landed:** #1060 (Closes #1057) · pack version 3.
+
+## 2026-09-03 · reworded · `RULES.md` carries rules, not a description of the pack (#1634)
+- **Reason:** the file opened with a paragraph saying what the pack covers and naming its three
+  worked implementations. It changes nothing a session does, every session in every declaring repo
+  paid for it, and the README and the manifest's `ruleRoutingGuidance` already carried it.
+- **Actor:** @missingbulb (owner).
+- **Model:** Claude, per the commit trailer.
+- **Landed:** #1634 (Closes #1632) · pack version 60902.1.
+
+## 2026-09-05 · reworded · the describe-only mechanism prose moves to the README (#1667)
+- **Source:** the audit of every pack's `RULES.md` for rules that only matter while editing a
+  nameable file class (#1662).
+- **Reason:** the leaf-line regex, the coverage gate's inventory and the registry rule describe what
+  the declaring project's own gates must do rather than instructing the session reading them, so
+  every session in every declaring repo paid for prose it could not act on; the README carries them
+  for the adopter.
+- **Actor:** @missingbulb (owner).
+- **Model:** Claude Fable 5.1, per the commit trailer.
+- **Landed:** #1667 (Closes #1662) · pack version 60903.1.
+
+## 2026-09-25 · scope-changed · `minEngineVersion` rises to 60925.1
+- **Reason:** this pack's checks declare `on_fail`, which an older engine does not read; the pack
+  update holds this version until the member's engine is at 60925.1.
+- **Actor:** @missingbulb (owner).
+- **Mechanism:** the manifest's `minEngineVersion`, which the pack update enforces.
+
+## 2026-09-27 · born · a pitch paragraph for the dashboard's plain-repo view
+- **Reason:** the dashboard shows a repo that does not run Claudinite the packs that fit it, and the
+  owner asked for one paragraph per pack naming its main skills and process gains, with rough counts
+  so it outlives the pack's growth.
+- **Actor:** @missingbulb (owner).
+- **Mechanism:** the manifest's `pitch` field, beside `ruleRoutingGuidance`.
+
+## 2026-09-27 · scope-changed · the fingerprint is a `relevanceDetector` spec, not a function
+- **Reason:** the owner asked for fingerprints a reader holding only GitHub's API can judge cheaply
+  - a tree listing, a code search, then only the files that search names - which a function over a
+  synchronous `read` cannot offer.
+- **Actor:** @missingbulb (owner).
+- **Mechanism:** the manifest's `relevanceDetector` (engine/pack_loader/relevance-detector.mjs): `paths`, optional `text`,
+  `search` terms; it answers exactly what the retired `detect` answered, proven over 4,000 composed
+  repos before the change.
+
+## 2026-09-28 · reworded · the fingerprint's patterns are written as source strings
+- **Reason:** a manifest that is data cannot hold a RegExp; each pattern is its source string, or {
+  source, flags } where it carries a flag, and loads to the same RegExp.
+- **Actor:** @missingbulb (owner), asking for pack.json manifests.
+
+## 2026-09-28 · moved · the manifest becomes pack.json
+- **Reason:** a manifest that is data is read with no import and by any tool; the conversion wrote
+  the module's evaluated export, and the pack loads identically.
+- **Actor:** @missingbulb (owner), asking for pack.json manifests.
+- **Mechanism:** pack.json, which the loader prefers over pack.mjs; a canon pack now needs engine
+  60928.1, the first to read it.
+
+## 2026-09-28 · scope-changed · the fingerprint is dropped; the pack is declared by hand
+- **Reason:** no file shape identifies a repo that runs its spec this way;
+  dev/requirements/requirements.md was one project's layout.
+- **Actor:** @missingbulb (owner), in review of #2382.
+- **Mechanism:** no relevanceDetector, so --init and the fleet sweep never suggest it.
+
+## 2026-09-28 · reworded · the layout rule no longer calls the spec path the pack's fingerprint
+- **Reason:** the fingerprint is gone, so the sentence saying the pack activates on that path was
+  false.
+- **Actor:** @missingbulb (owner), in review of #2382.

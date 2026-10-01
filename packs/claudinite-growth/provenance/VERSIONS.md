@@ -1,0 +1,117 @@
+# Version history
+
+Records for `packs/claudinite-growth/pack.mjs`'s `version` field, one row per version, newest first.
+A version is cut on `main` after its changes land, so a row names the pull requests that
+landed between the previous version and this one; the weekly history task writes the rows
+a version is missing and leaves every row that already stands.
+
+| Version | Date | What changed |
+|---|---|---|
+| 60925.6 | 2026-09-25 | Flatten pack declarations into .claudinite/flat/, move rolling usage files into .claudinite/usage/ (#2322) |
+| 60925.5 | 2026-09-25 | Cut skill descriptions out of session-start context (#2325) |
+| 60925.4 | 2026-09-25 | Rename a check's severity to on_fail: block \| advise; retire the baseline/converge vocabulary (#2318) |
+| 60925.3 | 2026-09-25 | Provenance: settle conversion entries git dates at the birth, backfill the twelve it guessed (#2317) |
+| 60925.2 | 2026-09-25 | Provenance: members' local packs are backfilled by hand, not by revalidation (#2315) |
+| 60925.1 | 2026-09-25 | Provenance brief: follow a rule reworded in place, print a version row once (#2314) |
+| 60924.1 | 2026-09-24 | Estimate context tokens from characters, not words (#2296) |
+| 60923.3 | 2026-09-23 | Fold the task janitor into the scheduler run's repair phase (#2262) |
+| 60923.2 | 2026-09-23 | Provenance: backfill claudinite-growth (#2267) |
+| 60923.1 | 2026-09-23 | Name the queue mark literally, and guard the label an issue is filed with (#2264) |
+| 60922.11 | 2026-09-22 | Let the runner wrap every task's worker, and guard print-then-exit (#2225) |
+| 60922.10 | 2026-09-22 | Retire the frequency door: a declaration states its cadence as a condition (#2138) |
+| 60922.9 | 2026-09-22 | Provenance: the carrier follow reads content, not a pickaxe (#2260) |
+| 60922.8 | 2026-09-22 | Retire the task contract and queue vocabulary legacy tolerances (#1920) |
+| 60922.7 | 2026-09-22 | Dissolve docs/skill-usage-metrics/DESIGN.md into the packs that own its subjects (#1513) |
+| 60922.6 | 2026-09-22 | Account for what a session loads besides its rules (#2257) |
+| 60922.5 | 2026-09-22 | in-session-github-access scans where migration records live, and a provenance entry is sized to its decision (#2250) |
+| 60922.4 | 2026-09-22 | Promote 6 portable lessons from CrosswordChat, GCEC, LaughCounter, MissingBulbWebsite, Shepherd (#1886) |
+| 60922.3 | 2026-09-22 | Provenance: fix the brief's derivations, give the backfill its own lane, repoint a stale README (#2248) |
+| 60922.2 | 2026-09-22 | A rule's floor asks how busy the repo was, not how often the sweeps ran (#2244) |
+| 60922.1 | 2026-09-22 | Usage review: skills declare their expected usage, rules read it back (#2214) |
+| 60921.6 | 2026-09-21 | Retire the remaining scattered legacy residues (#1917); A task declaration states its own trigger; the door derives none (#2187); Growth: promote lessons from members' local packs (2026-09-21) (#2206) |
+| 60921.5 | 2026-09-21 | Backfill skill: step 10 said check reports nothing; it always prints (#2212) |
+| 60921.4 | 2026-09-21 | The backfill brief carries the evidence its first run derived by hand (#2207) |
+| 60921.3 | 2026-09-21 | Convert the instructions a repo already wrote into its pack (#2191) |
+| 60921.2 | 2026-09-21 | Move every pack's VERSIONS.md under its provenance/ folder (#2192) |
+| 60921.1 | 2026-09-21 | Provenance backfill: a brief the tool derives, and an apply that fans it out (#2190) |
+| 60920.7 | 2026-09-20 | A task cadence measures whole UTC periods, not a per-repo anchor (#2182) |
+| 60920.6 | 2026-09-20 | Provenance: a file grows by advice, and a guidelines skill's bullets are the skill's (#2185) |
+| 60920.5 | 2026-09-20 | Provenance: the marking pass, every rule marked and every references.md converted (#2178) |
+| 60920.4 | 2026-09-20 | Provenance: the mechanism - the grammar, the tool, the checks, the forced skill, the record (#2176) |
+| 60920.3 | 2026-09-20 | Skill frontmatter: a skill declares what its body is, workflow or guidelines (#2166) |
+| 60920.2 | 2026-09-20 | Claudinite tidy: improve comments (#2155); Claudinite canon: rule revalidation (#2157) |
+| 60920.1 | 2026-09-20 | Take logs-prune off the schedule: it deletes captures only when asked (#2135) |
+| 60915.5 | 2026-09-15 | Give the tasks pack one public surface, and make it enforceable in members (#2068) |
+| 60915.4 | 2026-09-15 | Claudinite canon: rule revalidation (#2058) |
+| 60915.3 | 2026-09-15 | Scope claudinite-growth to local packs, give the shelf its own tasks (#2047) |
+| 60915.2 | 2026-09-15 | Five canon tasks change what they do to their pull requests (#2045) |
+| 60915.1 | 2026-09-15 | Track a change worked on now by its PR, not an issue (#2016) |
+| 60914.1 | 2026-09-14 | claudinite-tasks: roles as folders — src/<role>/, typed world ports, queue/ frozen as ABI (#1890) |
+| 60913.5 | 2026-09-13 | State a rule's prose size as a band, not an exact word count (#2009) |
+| 60913.4 | 2026-09-13 | Drop pr_name; keep the rule, and simplify the growth policies (#1951) |
+| 60913.3 | 2026-09-13 | Fleet shepherd: every visible repo on the dashboard, each row with one thing to do; ignored and dormant out of the sweeps (#1976) |
+| 60913.2 | 2026-09-13 | Claudinite tidy: improve comments (#1970) |
+| 60913.1 | 2026-09-13 | growth-dedup auto-merges the whole local-pack tree (#1949) |
+| 60910.1 | 2026-09-10 | claudinite-growth: add the learning-a-technology skill (#1918) |
+| 60907.3 | 2026-09-07 | claudinite-tasks: PRINCIPLES.md as the spec, the two-way claim guard, seven design docs deleted (#1887) |
+| 60907.2 | 2026-09-07 | Move dormancy out of engine settings onto the scheduler's own pack (#1851) |
+| 60907.1 | 2026-09-07 | rule-revalidation lands its own local-pack corrections, canon stays reviewed (#1844) |
+| 60906.9 | 2026-09-06 | Retire the tidy-repo pack; absorb improve-comments into basics (#1842) |
+| 60906.8 | 2026-09-06 | Retire the task.mjs module form of a task declaration (#1795) |
+| 60906.7 | 2026-09-06 | Promote the validated survivors of four growth-promote PRs (#1828) |
+| 60906.6 | 2026-09-06 | Scheduling is the task's own precondition; the scheduler keeps no state (#1733) |
+| 60906.5 | 2026-09-06 | Janitor rule I: close a failure park nobody has answered in ten days (#1786) |
+| 60906.4 | 2026-09-06 | Claudinite: pack version history (#1776); Promote the reviewed survivors of nine growth-promote PRs (#1671) |
+| 60906.3 | 2026-09-06 | Read the whole session's transcripts when a skill load gates an edit (#1757) |
+| 60906.2 | 2026-09-06 | Group the tidy sweeps' fan-out, and keep the run bound covering it (#1740) |
+| 60906.1 | 2026-09-06 | Declared checks at every moment: schema rung, work and action scopes, skill triggers, and the creation path (#1711) |
+| 60905.2 | 2026-09-05 | Pack versions are cut on main by automation, never in the pull request (#1726) |
+| 60905.1 | 2026-09-05 | Task declarations name what the run does to pull requests in the four-value `expected_outcome` vocabulary (#1695): `pr` became `fresh_pr` and `none` became `no_code_changes`, the same behaviour under the word that now sits beside `amend_existing_or_create_new_pr` and `supersede_existing_pr` — except that `prose-to-checks-sweep` and `growth-extract` declare `amend_existing_or_create_new_pr` and `rule-revalidation` and `growth-dedup` declare `supersede_existing_pr` (owner, 2026-09-04), and their `task.md` files deliver on the branch and pull request the item names instead of searching for a standing pull request themselves. |
+| 60904.4 | 2026-09-04 | `writing-tasks` stops naming the schedule board's issue and state — a task author needs that a decline files no item, not where the record lives. A rule says so for any pack's prose (#1696). |
+| 60904.3 | 2026-09-04 | `writing-pack-prose` states when a rule may leave `RULES.md` for a skill: only where `force-load-on-file-edits-paths` covers every moment it is needed; a description-only trigger keeps it prose (#1662). |
+| 60904.2 | 2026-09-04 | `references-integrity` is declared as data — a two-pass check deriving the markers and check entries from lines (`extractValueSets`) and quantifying over them (`checkSetValues`) — in place of its rule module; `doc-pointers-resolve` (blocking, since 2026-09-04) holds every rule module's `doc:` pointer to a path the tree carries, and `routine-structure`'s own pointer is corrected by it (#1675). |
+| 60904.1 | 2026-09-04 | Path-scoped skills: a skill names the files the guard holds edits for until it is loaded (#1650); The schedule board is kept closed and out of the issue list (#1680) |
+| 60903.5 | 2026-09-03 | `logs-prune` carries a retention DEFAULT (`DEFAULT_RETENTION_DAYS` = 10, the floor the pack had recommended in prose and applied nowhere) instead of treating an undeclared `retention_days` as capture-only. Absence read as fail-safe and behaved as an unbounded leak: twelve of fourteen folding members had never pruned a capture, one holding 67 MB across 73 logs. `resolveRetentionDays` is the one policy, used by both the worker and the task's own precondition — undeclared takes the default, a non-positive value is the explicit capture-only opt-out that absence used to express, and anything unreadable stays UNKNOWN and prunes nothing rather than falling back to the default (#1620). Also: `writing-pack-prose` forces itself for every pack's `RULES.md` and `SKILL.md`, and `writing-tasks` for everything under a `tasks/` tree (`force-load-on-file-edits-paths`, #1648): the guard holds an edit there until the skill is loaded. |
+| 60903.4 | 2026-09-03 | A task's `task.md` opens on what the run does: the stage-labelling framing, the why-it-runs-centrally rationale and the skill procedure it already points at are gone. |
+| 60903.3 | 2026-09-03 | `legacy-check-spellings` — a declared check's pre-merge `eachValueInParsedArray` spelling is reported advisory, naming the `extractValueSets` + `eachValueOfSet` pair that replaces it. The normalizer that rewrites the old spelling at load is scheduled for removal, and a declaration left on it silently stops asserting the day that lands (#1637). |
+| 60903.2 | 2026-09-02 | `RULES.md` drops the descriptive framing the pack README already carries — the file carries rules only. |
+| 60903.1 | 2026-09-03 | A skill's `SKILL.md` opens on what to do, not on what the skill is: the self-describing framing and the pointers to prose the reader already holds are gone. |
+| 60902.6 | 2026-09-02 | The task-folder checks read `task.json` as well as the retired `task.mjs`, and read an omitted `agent_model` as no agent; the writing-tasks skill describes the data form and the `description` field (#1633). |
+| 60902.5 | 2026-09-02 | The rename's dual-root window closes: `dedup-integrity`, `growth-write-scope`, `references-integrity`, `merge-rules.json` and the two task declarations match only `.claudinite/local/packs/`, and a capture run writing the retired `.claudinite/local_packs/` root is now flagged as a stray write. `growth-dedup` and `prose-to-checks-sweep` lose their computed `automerge` scope with it, so every task declaration in the tree is now a plain literal object (#1627). |
+| 60902.4 | 2026-09-02 | `writing-tasks` states one gate mechanism: the retired `precondition` function and `precondition_signals` are named as rejected, and a gate the built-ins cannot express is a task-local term handed `{ arg, config, item, windowDays, now }` (#1617). |
+| 60902.3 | 2026-09-02 | `prose-to-checks-sweep` and `rule-revalidation` deliver into a STANDING PR: a round whose predecessor is still in review runs anyway and appends to it, under the subject its worker doc pins (`Claudinite growth: prose to checks`, `Claudinite growth: rule revalidation`), so one review covers several weeks of conversions or corrections. Neither is gated on the previous round, and neither may be narrowed to a movement gate — both work a standing backlog (#1611). |
+| 60902.2 | 2026-09-02 | `writing-pack-prose` records that a pack's `references.md` stays in the repo that owns the pack and never vendors — a member mounting a canon pack receives its rules, not the reasoning behind them (#1615). |
+| 60902.1 | 2026-09-02 | The five growth tasks convert to declarative `preconditions`, and two of them gain the silence gate. `rule-revalidation` and `prose-to-checks-sweep` state `repo-active`: their subject is the world, but their value is zero on a repo nobody works in, and the first active window resumes them — the `pack_paths` scope and the probe rules they used to hand over as Context move into their worker docs. `growth-extract` becomes `['substantive-change']`, with the rest of the window (its merged and touched PRs, its touched issues) now the worker's to read. `growth-dedup` becomes `['mount-moved || commits-under:.claudinite/local']`, and `logs-prune` keeps its retention arithmetic as a task-local term in `preconditions.mjs`. The `writing-tasks` skill gains the grammar, the silence gate, and the three things that are not preconditions (#1578). |
+| 60901.3 | 2026-09-01 | `growth-dedup` stops asking whether this repo has local packs: adoption seeds them and the nightly never removes them, so the arm only ever cost the read. Movement — a declared pack's vendored files moving, or the repo's own local packs moving — is the whole gate (#1562). |
+| 60901.2 | 2026-09-01 | `references-integrity` accepts slashed check ids (`check:aws-sam/handler-path`), and the pack adopts its own convention: `references.md` carries the worked examples behind `unattended-agents`, `writing-tasks`' timeout-design pointer (#394), `writing-pack-prose`'s fenced-command measurement and the `task-md-only-when-agentic` naming decision (#1055), cited by bare `(n)` markers (#1564). |
+| 60901.1 | 2026-09-01 | The new `writing-pack-prose` skill owns how pack prose is written — the rule format and ration (moved from `extracting-lessons.md`), the shape-a-rule-so-it-fires house style (moved from basics' `authoring-agent-docs`), and the per-pack `references.md` carrying each rule's reaffirmable rationale behind an end-of-line `(n)` marker, with `check:<id>` entries covering checks and a migration procedure for existing packs. `references-integrity` (blocking, `since` 2026-09-01) holds the marker↔entry resolution, and `rule-revalidation` reaffirms referenced rules and checks against their recorded reasons (#1560). |
+| 60831.1 | 2026-08-31 | `generate-project-instructions` leaves the pack: whether a project's insight becomes a pack every repo can declare is a canon-side decision, so a member has no business carrying the method for it. The pack also stops describing the promote stage's own gate — where it writes, which module certifies it, and which repo invokes it are that stage's details (#1537). |
+| 60830.8 | 2026-08-30 | `writing-tasks` chooses a task's `automerge` from the folder first — the write surface is a place the author knows while declaring it, where a kind class is repo-wide — intersecting by kind only where the task writes one, leaving the scope bare where it writes several, and reaching for a bare kind class only where the task genuinely writes repo-wide (#1486). |
+| 60830.7 | 2026-08-30 | The growth policies say the folder they are bounded to: `growth-dedup` authorizes Markdown trims only inside the local packs it prunes, where `markdown-trims` alone authorized a trim to any Markdown in the repo, and `prose-to-checks-sweep` says its prose side inline (`under:<local packs> && markdown-line-removals`), retiring the `claudinite-local-pack-md-deletions` rule that meant exactly that. Both build the scope from the engine's own local-pack root constants rather than a third copy of the paths (#1479). |
+| 60830.6 | 2026-08-30 | `writing-tasks` names the inline folder scope `under:<dir>` and the `&&` intersection as how a task states a folder boundary, and spells out that a policy list is a union (#1473). |
+| 60830.5 | 2026-08-30 | `writing-tasks` names a park's end condition beside the park it describes: `--pr` is what lets an item close by itself when its pull request resolves, `done` if it merged and `rejected` if it did not (#1468). |
+| 60830.4 | 2026-08-30 | The growth tasks state their change shape as auto-merge policy, measured by the policy engine instead of requested in prose: `growth-dedup` lands only `markdown-trims` (removals and in-line cuts, never growth), while `growth-extract`, `rule-revalidation` and `prose-to-checks-sweep` land only the local-pack prose/check classes this pack's `merge-rules.json` declares (where a run may write stays `growth-write-scope`'s). `writing-tasks` teaches the `automerge` contract, built-in classes first (#1459). |
+| 60830.3 | 2026-08-30 | A member repo no longer authors packs of its own: the weekly per-repo `growth-discover-packs` reflection is retired, leaving pack discovery to canon-curation's fleet sweep, which now carries the stack-manifest method itself. A repo's local packs stay what adoption seeded, with `growth-extract` writing rules into them (#1447). |
+| 60830.2 | 2026-08-30 | Local packs keep no `VERSIONS.md`: they are neither versioned nor distributed, so the commit and its PR are the record, and an append-at-the-top table several growth runs a day write to only manufactured merge conflicts. The growth tasks stop writing local rows, `seedRepoLocalPack` stops seeding the file, and the two tasks that also sweep canon `packs/` keep writing rows there (#1439). |
+| 60830.1 | 2026-08-30 | `writing-tasks` and the `task-phase-discipline` remedy state today's terminal and park spellings (#1395). |
+| 60827.1 | 2026-08-27 | A new check declares `since` and lands at its real severity even where the tree still violates it, so "the tree isn't clean yet" stops forcing a lesson down to prose. Prose is rationed at two one-sentence rules per run, and two check shapes are named below the bar. A lesson tied to one call site is dropped rather than inflated into a pack rule: a repo's own comments belong to tidy-repo's `improve-comments`, never to a capture run (#1378). `writing-tasks` states the vocabulary the engine now writes — one `task:status:*` per item, the origin beside it, and a park as one label rather than a pair (#1119). Two changes claimed this number (#1482), so a member that converged between the two merges took only one of them; both are in every mount from the next version on. |
+| 60824.1 | 2026-08-24 | `usage-fold` and the two task-declaration checks move to the new `claudinite-tasks` pack, which owns the mechanism they are about (#1317). |
+| 60823.3 | 2026-08-23 | `writing-tasks` states the secrets path as it now works: the executor holds every repo secret and hands each task's code-work exactly the names its own declaration lists, rather than a converge stamping names into the workflows (#1301). |
+| 60823.2 | 2026-08-23 | Prose and task docs name the member settings file by its current name, `.claudinite-settings.json` (#1252). |
+| 60823.1 | 2026-08-23 | The growth tasks drop their standing tracker issues: every change automatic work makes to a local pack is a row in that pack's own `VERSIONS.md`, written in the same commit. `rule-revalidation` stops slicing by longest-since-probed and takes every environment-fact claim each run, so it holds no state between runs. `growth-dedup`'s window brief moves onto the run's own work item as a comment. |
+| 60822.2 | 2026-08-23 | The manifest stops restating its own tree (#1246): `id`, `prose`, `badge`, `skills`, `worldRules` and `workRules` are resolved from the pack directory and an absent `detect`/`marker` means no fingerprint. Coded rules move into `worldRules/`/`workRules/` and tests into `test/`, which no vendor set ships. `minEngineVersion` rises to the engine release that reads all of it. |
+| 60822.1 | — | `usage-fold` folds daily rather than hourly, and its signal window moves with it — a frequency finer than the cron's two ticks a day cannot be honoured, and a window still sized to an hour would never see a captured session again (§17.1). `growth-extract`'s anchor offset retires; the `schedule_after:` it already declared is what orders it. The ordering field is renamed `after` → `schedule_after`: it names task ids, not a time, and what it steers is when the item is scheduled onto an executor. `after` is normalized at the door forever and draws an advisory rename, so a member's own task file keeps working. |
+| 60821.2 | 2026-08-21 | This pack's inline version-history comments moved out of `pack.mjs` into this file. |
+| 60821.1 | — | Usage-fold becomes the dashboard's past-data plane — hourly on a movement precondition, an hour tier, the queue's own closed-item outcomes in place of the retired slot-scheduler census, and the git/rule-token/token series (#1158). The file's readers accept every earlier version, so nothing in a member has to be rewritten and there is no migration record. |
+| 60820.2 | — | Writing-tasks stops teaching the roll — a decline is a schedule-board row at the anchor, and a pick-time no-go closes its item (#1115). |
+| 60820.1 | 2026-08-20 | Engine and pack versions become date-anchored `<day>.<n>` (#1105) |
+| 16 | 2026-08-20 | The tick becomes the scheduler run, and the janitor stops parking finished work (#1108) |
+| 15 | 2026-08-20 | task.md describes only its own task; .claudinite/-only commits stop counting as project work (#1110) |
+| 14 | 2026-08-20 | Pack reorganization: two collapses and two renames (#1081) |
+| 13 | — | The task contract's prose carries the queue's current label vocabulary and the precondition's two additions — the occurrence argument, and the verdict a precondition gives when it cannot answer. |
+| 12 | 2026-08-20 | writing-tasks: correct the workflow carve-out's stated grounds (#1071) |
+| 11 | 2026-08-19 | Collapse chrome-extension-release into chrome-extension, and stop packs discussing each other (#1060) |
+| 10 | 2026-08-19 | Give every pack file one of the four sanctioned shapes (#1056) |
+| 9 | 2026-08-19 | Make the task contract a skill, and fix the framing it still carried (#975) |
+| 8 | 2026-08-19 | Split needs-human into four triage sub-labels (#1051) |
+| 7 | 2026-08-19 | Rename core → claudinite-lifecycle, grow_with_claudinite → claudinite-growth, and move the scheduled-task contract between them (#1029) |

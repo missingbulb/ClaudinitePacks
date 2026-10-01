@@ -1,0 +1,54 @@
+## 2026-08-12 · born · Claudinite growth: discover canon pack web-scraping (#739)
+- **Source:** the #717 fleet sweep, which found three members taking data from a site they don't own
+  (EdFringeNow's GraphQL scraper, EdFringeAllocator's hydration-blob fetcher and
+  GoogleCalendarEventCreator's extractor pipeline), and no canon pack homing the facet.
+- **Reason:** every line of the pack traces to a named member's real files; the two rules resting on
+  a single member were flagged rather than dropped.
+- **Actor:** @missingbulb (owner).
+- **Model:** Claude Sonnet 5, Claude Opus 5, per the commit trailer.
+- **Mechanism:** the pack manifest, with no `detect` and no `marker`: declaration is authoritative.
+  A scraper is ordinary HTTP client code in whatever language the project already uses, and the same
+  call sites appear in any project talking to an API it *does* own, so every candidate signature
+  suspects the pack in repos that want nothing to do with it.
+- **Rejected:** checks, and a fingerprint. Every rule here is about a *remote* service's behaviour
+  (which field is authoritative, whether an instant is UTC, when a 200 is a bot wall), none of it
+  written into repo state in a shape a deterministic check could read without firing on ordinary
+  HTTP code. Prose plus one skill instead: the one-off reconnaissance procedure has a nameable
+  trigger, so it descends to a skill rather than sitting in always-loaded prose.
+- **Landed:** #739 (Refs #717) · pack version 1.
+
+## 2026-08-23 · reworded · Pack manifests by convention: the tree declares the pack (#1248)
+- **Reason:** the manifest stops restating its own tree (`id`, `prose`, `badge`, `skills`,
+  `worldRules` and `workRules` resolve from the pack directory), and an absent `detect`/`marker` now
+  *means* no fingerprint, so this pack's declaration-only stance is carried by absence rather than
+  by an explicit `null`.
+- **Actor:** @missingbulb (owner).
+- **Model:** Claude Opus 5, per the commit trailer.
+- **Landed:** #1248 · pack version 60822.1.
+
+## 2026-09-03 · reworded · Every pack's RULES.md carries rules, not a description of the pack (#1634)
+- **Reason:** the facet paragraph, the "a default to adapt, not a contract" line and the
+  language-agnostic note left `RULES.md`; the README already carries them, and every session in
+  every declaring repo paid for them in always-loaded prose.
+- **Actor:** @missingbulb (owner).
+- **Landed:** #1634 · pack version 60902.1.
+
+## 2026-09-25 · scope-changed · `minEngineVersion` rises to 60925.1
+- **Reason:** this pack's checks declare `on_fail`, which an older engine does not read; the pack
+  update holds this version until the member's engine is at 60925.1.
+- **Actor:** @missingbulb (owner).
+- **Mechanism:** the manifest's `minEngineVersion`, which the pack update enforces.
+
+## 2026-09-27 · born · a pitch paragraph for the dashboard's plain-repo view
+- **Reason:** the dashboard shows a repo that does not run Claudinite the packs that fit it, and the
+  owner asked for one paragraph per pack naming its main skills and process gains, with rough counts
+  so it outlives the pack's growth.
+- **Actor:** @missingbulb (owner).
+- **Mechanism:** the manifest's `pitch` field, beside `ruleRoutingGuidance`.
+
+## 2026-09-28 · moved · the manifest becomes pack.json
+- **Reason:** a manifest that is data is read with no import and by any tool; the conversion wrote
+  the module's evaluated export, and the pack loads identically.
+- **Actor:** @missingbulb (owner), asking for pack.json manifests.
+- **Mechanism:** pack.json, which the loader prefers over pack.mjs; a canon pack now needs engine
+  60928.1, the first to read it.

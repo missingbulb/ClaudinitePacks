@@ -1,0 +1,88 @@
+## 2026-09-03 · born · telling the repo that still holds a legacy shape (#1645)
+- **Source:** an audit of about 28 legacy declaration sites across the engine and the packs, none
+  with a scheduled removal and one carrying a stated end date that had passed with nothing arranged
+  to notice.
+- **Reason:** every tolerance in the tree was silent. A member reading its own declaration had no
+  way to learn it was on a shape scheduled for removal, and the removal is gated on those members
+  letting go.
+- **Actor:** @missingbulb (owner).
+- **Model:** Claude Opus 5, per the commit trailer.
+- **Mechanism:** a world advisory firing in the repo that holds the old shape rather than in the
+  canon that tolerates it, naming the edit that moves it forward. Permanently advisory: the old
+  shape works, so it may not stop a member's build. Every engine constant it reads is
+  namespace-imported and guarded, because the two lanes converge on separate cycles and this pack
+  spends windows beside an engine that predates one of the symbols.
+- **Landed:** #1645 (Closes #1637) · pack version 60903.3.
+
+## 2026-09-03 · reworded · it states the window the repo has to act (#1652)
+- **Reason:** claiming the removal waits on nobody carrying the shape makes the finding sound
+  optional, and the canon cannot see which repos are active anyway.
+- **Actor:** @missingbulb (owner).
+- **Landed:** #1652 · pack version 60903.4.
+
+## 2026-09-21 · reaffirmed · the advisory outlives the constant it was named for
+- **Source:** the fourth of the residues #1643 lists, read while the `updates` mechanism alias left
+  `engine/served-by.mjs`.
+- **Reason:** the rule read the alias off `servedBy.LEGACY_MECHANISM`, so deleting that constant
+  would have made the advisory inert at the moment it became the only thing still watching for the
+  shape - retiring the warning together with the thing it warns about. A member file that still says
+  `updates` is exactly what the rule exists to find, and the value is historical and cannot move, so
+  it is carried as a literal instead of read from the engine. The remedy text changed with it: the
+  declaration no longer reads as one spelling of two the flows still serve, it reads as
+  unrecognised, resolving to the default rather than to anything the repo said.
+- **Actor:** @missingbulb (owner), through the queue item implementing #1643.
+- **Landed:** #1917 (Refs #1643; the work item's own converge closes that issue, so the body carries
+  no closing keyword).
+
+## 2026-09-22 · policy-changed · one settings-file name, now the rename's window has passed (#1919)
+- **Reason:** `.claudinite-checks.json` was read everywhere beside `.claudinite-settings.json` while
+  members converged onto the new name, and every reader that asked "is this the declaration" carried
+  its own copy of the two-name loop. The convergence window `legacy-shape-in-use` opened has passed,
+  so each of those readers now names one file. A member still carrying the retired name reads as
+  having no declaration at all - the stated cost of the retirement, and why its policy is nothing.
+- **Mechanism:** the reader takes `SETTINGS_FILE` rather than iterating `SETTINGS_FILES`, which is
+  now a one-element list kept only as a link-time shim for fielded pack versions (#1911).
+- **Actor:** claudinite/engine implement-request run, rebased and reconciled in an owner session.
+- **Model:** claude-opus-5
+- **Landed:** #1919
+
+## 2026-09-25 · scope-changed · also names a check's retired `severity` spelling
+- **Reason:** `severity: blocking|advisory` became `on_fail: block|advise` (owner decision,
+  2026-09-25); the engine still reads the old spelling in a settings override, a local pack's
+  declared check and a local pack's coded check, and a tolerance needs an advisory reaching whoever
+  holds it.
+- **Actor:** @missingbulb (owner).
+- **Mechanism:** this check: it already owns every declaration-shape tolerance's advisory, and it
+  reads the member's own files only, so a vendored pack's old spelling is left to that pack's
+  update.
+
+## 2026-09-25 · reworded · "converge" in the nightly-update sense reads "update"
+- **Reason:** owner decision: the mechanism that re-vendors a mount is called update; "converge"
+  stays only for a work item reaching its end state.
+- **Actor:** @missingbulb (owner).
+
+## 2026-09-25 · scope-changed · names files left at the pre-flat and pre-usage paths (#2322)
+- **Reason:** readers and writers tolerate the old paths until #2323, and the holders need telling
+  first.
+- **Mechanism:** unchanged, the advisory world check; it now reads the tracked tree as well as the
+  declaration.
+- **Retire when:** #2323 takes the tolerances out.
+- **Landed:** #2322
+
+## 2026-09-27 · scope-changed · it names a local manifest still spelling `detect` or `marker`
+- **Reason:** the manifest spec tolerates the retired fingerprint fields only until members drop
+  them (#2374), and a tolerance needs the advisory that tells each holder.
+- **Actor:** @missingbulb (owner).
+- **Mechanism:** a clause of this advisory over `.claudinite/local/packs/*/pack.mjs`.
+
+## 2026-09-28 · scope-changed · reads a pack.json manifest as well as a pack.mjs
+- **Reason:** a manifest may now be data, pack.json preferred, and this element selected manifests
+  by the pack.mjs name alone.
+- **Actor:** @missingbulb (owner), asking for pack.json manifests.
+- **Mechanism:** unchanged carrier; its path and field patterns name both spellings.
+
+## 2026-09-28 · scope-changed · names a local manifest still carrying contributes or contributedRules
+- **Reason:** both fields are retired and tolerated for one window (#2395); a member carrying one
+  has a barrier that enforces nothing and needs telling.
+- **Actor:** @missingbulb (owner), asking to drop pack contributions altogether.
+- **Mechanism:** unchanged carrier; one more pattern over local manifests.

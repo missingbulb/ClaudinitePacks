@@ -1,0 +1,114 @@
+## 2026-07-12 · born · the fleet enforcer marker becomes a pack (#242)
+- **Source:** the fleet maintenance planner's design, #241.
+- **Reason:** fleet coverage was bespoke Claudinite infrastructure. Making the enforcer a declared
+  pack let the cross-repo sweeps register as ordinary pack tasks, discovered by the engine with no
+  orchestrator edit.
+- **Actor:** @missingbulb (owner).
+- **Model:** Claude, per the commit trailer.
+- **Mechanism:** a manifest with no `detect` fingerprint and no marker, declared by hand: being the
+  fleet enforcer is a choice one repo makes, never a property of a repository's shape, so nothing
+  may suspect it.
+- **Landed:** #242 (Refs #241).
+
+## 2026-08-17 · promoted · the fleet-digest task arrives from the enforcer's local pack (#958)
+- **Source:** the daily operations brief kept as a local pack in the enforcer repo.
+- **Reason:** its case for staying local was that a brief carries one fleet's address and one
+  owner's taste. Neither survived the code: the task ends at a written file, so it holds no
+  recipient and no transport, and the taste is two defaulted knobs. What is left is fleet-shaped. A
+  second enforcer repo was coming, and a second local copy of the mechanic is the tell that it
+  belongs centrally.
+- **Actor:** @missingbulb (owner).
+- **Model:** Claude Opus 5, per the commit trailer.
+- **Landed:** #958 (Closes #954).
+
+## 2026-08-19 · moved · the fleet-digest task leaves for claudinite-dashboard (#1053)
+- **Reason:** the dashboard page is the only reader of the series the task writes.
+- **Actor:** @missingbulb (owner).
+- **Mechanism:** the task moves whole to `claudinite-dashboard`; what stays here is the enforcer's
+  `digest`, `owner` and `exclude` config, still read off this pack's entry as the legacy source, so
+  no enforcer declaration had to change.
+- **Landed:** #1053.
+
+## 2026-08-20 · moved · renamed from sheepdog to claudinite-fleet-sheepdog (#1081)
+- **Reason:** a pack whose subject is a Claudinite feature rather than a technology or a way of
+  working carries the prefix that says so, and fleet enforcement is one.
+- **Actor:** @missingbulb (owner).
+- **Model:** Claude, per the commit trailer.
+- **Mechanism:** the engine's rename map, plus a declaration-converging record. The enforcer's own
+  config is the part a rename can break, because it is a fact the enforcer wrote and a declaration
+  converges on its own schedule, so the config reader and the dashboard's legacy lookup both resolve
+  the entry under either spelling and the old `packConfig` key is still read as written.
+- **Landed:** #1081 (Closes #1079) · pack version 18.
+
+## 2026-08-21 · moved · the inline version history leaves pack.mjs for VERSIONS.md (#1181)
+- **Reason:** every pack gets one version-history file, checked by `pack-version-bumped`, so the
+  manifest's header stops carrying a log that grows without bound.
+- **Actor:** @missingbulb (owner).
+- **Mechanism:** `VERSIONS.md` beside the manifest, one row per version.
+- **Landed:** #1181 · pack version 60821.2.
+
+## 2026-08-23 · moved · the manifest stops restating its own tree (#1248)
+- **Reason:** `id`, `prose`, `badge`, `skills`, `worldRules` and `workRules` were each spelled in
+  the manifest and also visible in the directory, so the two could disagree.
+- **Actor:** @missingbulb (owner).
+- **Mechanism:** the pack directory is the declaration: those fields are resolved from the tree, an
+  absent `detect`/`marker` means no fingerprint, coded rules live under `worldRules/`/`workRules/`
+  and tests under `test/`, which no vendor set ships. `minEngineVersion` rises to the engine release
+  that reads all of it.
+- **Landed:** #1248 · pack version 60822.2.
+
+## 2026-08-27 · moved · the fleet-usage task leaves; the dashboard reads each member directly (#1358)
+- **Reason:** the fleet aggregate existed so one page could see usage across members. The
+  dashboard's fleet page now reads each member's own usage file as the viewer and derives coverage
+  live, so the aggregate file and the task that wrote it were a second copy on a slower clock.
+- **Actor:** @missingbulb (owner).
+- **Mechanism:** the task and `usage-fleet.GENERATED.json` are deleted; the reading moves to
+  `claudinite-dashboard`.
+- **Landed:** #1358.
+
+## 2026-09-03 · reworded · RULES.md drops the framing the README already carries (#1634)
+- **Reason:** the file loads into every enforcer session, so it carries what a session has to get
+  right and nothing that describes the pack. The description was already in the README.
+- **Actor:** @missingbulb (owner).
+- **Landed:** #1634 · pack version 60902.3.
+
+## 2026-09-25 · scope-changed · `minEngineVersion` rises to 60925.1
+- **Reason:** this pack's checks declare `on_fail`, which an older engine does not read; the pack
+  update holds this version until the member's engine is at 60925.1.
+- **Actor:** @missingbulb (owner).
+- **Mechanism:** the manifest's `minEngineVersion`, which the pack update enforces.
+
+## 2026-09-27 · born · a pitch paragraph for the dashboard's plain-repo view
+- **Reason:** the dashboard shows a repo that does not run Claudinite the packs that fit it, and the
+  owner asked for one paragraph per pack naming its main skills and process gains, with rough counts
+  so it outlives the pack's growth.
+- **Actor:** @missingbulb (owner).
+- **Mechanism:** the manifest's `pitch` field, beside `ruleRoutingGuidance`.
+
+## 2026-09-27 · scope-changed · the pack requires engine 60927.1
+- **Reason:** its missing-packs sweep reads the `relevanceDetector` spec, which no older engine
+  carries.
+- **Actor:** @missingbulb (owner).
+- **Mechanism:** `minEngineVersion`, which the pack update enforces.
+
+## 2026-09-28 · reworded · the manifest spells out the value it imported
+- **Reason:** a manifest that is data cannot import; the value is written out, and the pack's test
+  holds it equal to the module it came from.
+- **Actor:** @missingbulb (owner), asking for pack.json manifests with imported values inlined and a
+  check against drift.
+
+## 2026-09-28 · reworded · the manifest's comments leave it, their decisions recorded here
+- **Reason:** a manifest that is data carries no comments. What they decided: it requires
+  claudinite-tasks because every sweep reads the queue's published vocabulary to ask whether a
+  member's scheduler is dormant, and an enforcer mounting the sweeps without it would fail its own
+  update on a dangling import. The token handover is the union of every sweep's grant, spelled out
+  as fleet-token.mjs renders it and held equal by the pack's test.
+- **Actor:** @missingbulb (owner), asking for pack.json manifests, their comments deleted or moved
+  to a README or provenance.
+
+## 2026-09-28 · moved · the manifest becomes pack.json
+- **Reason:** a manifest that is data is read with no import and by any tool; the conversion wrote
+  the module's evaluated export, and the pack loads identically.
+- **Actor:** @missingbulb (owner), asking for pack.json manifests.
+- **Mechanism:** pack.json, which the loader prefers over pack.mjs; a canon pack now needs engine
+  60928.1, the first to read it.

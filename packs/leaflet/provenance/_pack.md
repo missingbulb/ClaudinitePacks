@@ -1,0 +1,80 @@
+## 2026-07-23 · born · Add leaflet pack (distilled from EdFringeNow) (#403)
+- **Source:** missingbulb/EdFringeNow, the "Fringe Discover" static site - its `index.html` CDN
+  wiring and the map, marker and cluster code in `js/app.js`; the first fleet member seen using
+  Leaflet.
+- **Reason:** no canon pack owned Leaflet, and the member's usage yielded gotchas true of any
+  Leaflet map read cold rather than anything about that site; the member's own scraping is its
+  one-off and stayed there.
+- **Actor:** the weekly pack-discovery run, merged by @missingbulb (owner).
+- **Model:** Claude Opus 4.8, per the commit trailer.
+- **Mechanism:** the pack manifest, fingerprinted by an actual Leaflet reference - a CDN asset
+  (`leaflet@` / `leaflet.js` / `leaflet.css`) in HTML, or an `L.map` / `L.tileLayer` /
+  `L.markerClusterGroup` call in source; the marker only suspects the pack, and declaring it stays
+  the project's call.
+- **Landed:** #403 (Refs #303) · pack version 1.
+
+## 2026-07-27 · reworded · the rules shed their "Grounded in <project file>" notes (#467)
+- **Reason:** the notes restate the rule and point at one project's tree from a project-agnostic
+  pack. The same sweep cut every rule to its trigger, its instruction and at most one clause of why.
+- **Actor:** @missingbulb (owner).
+- **Model:** Claude Opus 5, per the commit trailer.
+- **Landed:** #467 (Refs #123, #466) · pack version 1.
+
+## 2026-09-01 · reaffirmed · the rationale #467 cut is recovered; the grounded-in notes stay cut (#1575)
+- **Reason:** the two rules that argue from a ground - the mid-page scroll trap and the OSM
+  attribution licence term - lost that ground to the tightening sweep, and a rule whose reason
+  nothing records can be reaffirmed on the wrong basis. The per-project "Grounded in" notes were
+  re-examined in the same pass and stayed cut.
+- **Actor:** @missingbulb (owner).
+- **Model:** Claude, per the commit trailer.
+- **Landed:** #1575 (Refs #1571) · pack version 60901.1.
+
+## 2026-09-03 · reworded · `RULES.md` carries rules, not a description of the pack (#1634)
+- **Reason:** the file opened with a paragraph saying what the pack covers. It changes nothing a
+  session does, every session in every declaring repo paid for it, and the README and the manifest's
+  `ruleRoutingGuidance` already carried it.
+- **Actor:** @missingbulb (owner).
+- **Model:** Claude, per the commit trailer.
+- **Landed:** #1634 (Closes #1632) · pack version 60902.1.
+
+## 2026-09-25 · scope-changed · `minEngineVersion` rises to 60925.1
+- **Reason:** this pack's checks declare `on_fail`, which an older engine does not read; the pack
+  update holds this version until the member's engine is at 60925.1.
+- **Actor:** @missingbulb (owner).
+- **Mechanism:** the manifest's `minEngineVersion`, which the pack update enforces.
+
+## 2026-09-27 · born · a pitch paragraph for the dashboard's plain-repo view
+- **Reason:** the dashboard shows a repo that does not run Claudinite the packs that fit it, and the
+  owner asked for one paragraph per pack naming its main skills and process gains, with rough counts
+  so it outlives the pack's growth.
+- **Actor:** @missingbulb (owner).
+- **Mechanism:** the manifest's `pitch` field, beside `ruleRoutingGuidance`.
+
+## 2026-09-27 · scope-changed · the fingerprint is a `relevanceDetector` spec, not a function
+- **Reason:** the owner asked for fingerprints a reader holding only GitHub's API can judge cheaply
+  - a tree listing, a code search, then only the files that search names - which a function over a
+  synchronous `read` cannot offer.
+- **Actor:** @missingbulb (owner).
+- **Mechanism:** the manifest's `relevanceDetector` (engine/pack_loader/relevance-detector.mjs): `paths`, optional `text`,
+  `search` terms; it answers exactly what the retired `detect` answered, proven over 4,000 composed
+  repos before the change.
+
+## 2026-09-28 · reworded · the fingerprint's patterns are written as source strings
+- **Reason:** a manifest that is data cannot hold a RegExp; each pattern is its source string, or {
+  source, flags } where it carries a flag, and loads to the same RegExp.
+- **Actor:** @missingbulb (owner), asking for pack.json manifests.
+
+## 2026-09-28 · reworded · the manifest's comments leave it, their decisions recorded here
+- **Reason:** a manifest that is data carries no comments. What they decided: the fingerprint's text
+  spells leaflet in either case letter by letter because its L.map( half must not ignore case, and a
+  page calling only L.map( loads Leaflet from a file that names it, so the search terms still reach
+  the repo.
+- **Actor:** @missingbulb (owner), asking for pack.json manifests, their comments deleted or moved
+  to a README or provenance.
+
+## 2026-09-28 · moved · the manifest becomes pack.json
+- **Reason:** a manifest that is data is read with no import and by any tool; the conversion wrote
+  the module's evaluated export, and the pack loads identically.
+- **Actor:** @missingbulb (owner), asking for pack.json manifests.
+- **Mechanism:** pack.json, which the loader prefers over pack.mjs; a canon pack now needs engine
+  60928.1, the first to read it.

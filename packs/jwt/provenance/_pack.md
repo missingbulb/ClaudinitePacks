@@ -1,0 +1,75 @@
+## 2026-08-08 · born · Add the jwt pack, distilled from The JWT Handbook (#705)
+- **Source:** The JWT Handbook (Sebastián E. Peyrott, Auth0, v0.14.2): chapters 2-6 for
+  applications and JWS/JWE/JWK structure, Annex A for the pitfalls, attacks and best current
+  practices.
+- **Reason:** token budget was the design constraint, so the pack injects no session-start prose at
+  all and the book's teaching lands in deterministic-first layers instead: five checks whose failure
+  message is the rule, and two action skills read only at usage time for what a static sweep cannot
+  judge. Scoped to generic JWT practice, leaving the Google-issuer validator's own config and
+  browser-client OAuth token acquisition to the packs that own them.
+- **Actor:** @missingbulb (owner).
+- **Model:** Claude Opus 5, per the commit trailer.
+- **Mechanism:** the pack manifest, fingerprinted by a JWT library reference (`jsonwebtoken`,
+  `jose`, PyJWT and their kin) in JS/TS/Python source. The marker only suspects the pack; declaring
+  it stays the project's call.
+- **Rejected:** a migration record to carry members across the three new blocking checks. The pack
+  is opt-in, a fingerprint only suspects and baselining never auto-declares, so no existing member
+  could turn red; a rehearsal fixture proving a member that does opt in converges green was the
+  additive answer, negative-probed by hand against a hardcoded secret and an unpinned verify.
+- **Landed:** #705 (Closes #706) · pack version 1.
+
+## 2026-09-01 · moved · the pack's advisory watch becomes canon curation's upstream-watch (#1569)
+- **Reason:** a pack's `tasks/` are work every member repo runs, so the monthly `jwt-advisory-watch`
+  charged the fleet for a duty that is the canon's, and made it unrepeatable: one bespoke watcher
+  per pack that wanted one. Deliberately dropped with it: scanning a member's own lockfiles for JWT
+  libraries inside an advisory's affected range, which is dependency-update tooling rather than pack
+  content, and nothing replaces it.
+- **Actor:** @missingbulb (owner).
+- **Model:** Claude, per the commit trailer.
+- **Mechanism:** the README's `## Upstream` section, one line per source naming what to watch, where
+  it publishes and the state this pack's content was last reconciled against; presence of the
+  section is the whole opt-in, and the canon's own monthly task reads it. The pack now declares
+  three sources: RFC 8725, the GitHub Advisory Database's JWT libraries for the classes of flaw the
+  skills teach against, and the Handbook itself.
+- **Landed:** #1569 (Closes #1568) · pack version 60901.1.
+
+## 2026-09-25 · scope-changed · `minEngineVersion` rises to 60925.1
+- **Reason:** this pack's checks declare `on_fail`, which an older engine does not read; the pack
+  update holds this version until the member's engine is at 60925.1.
+- **Actor:** @missingbulb (owner).
+- **Mechanism:** the manifest's `minEngineVersion`, which the pack update enforces.
+
+## 2026-09-27 · born · a pitch paragraph for the dashboard's plain-repo view
+- **Reason:** the dashboard shows a repo that does not run Claudinite the packs that fit it, and the
+  owner asked for one paragraph per pack naming its main skills and process gains, with rough counts
+  so it outlives the pack's growth.
+- **Actor:** @missingbulb (owner).
+- **Mechanism:** the manifest's `pitch` field, beside `ruleRoutingGuidance`.
+
+## 2026-09-27 · scope-changed · the fingerprint is a `relevanceDetector` spec, not a function
+- **Reason:** the owner asked for fingerprints a reader holding only GitHub's API can judge cheaply
+  - a tree listing, a code search, then only the files that search names - which a function over a
+  synchronous `read` cannot offer.
+- **Actor:** @missingbulb (owner).
+- **Mechanism:** the manifest's `relevanceDetector` (engine/pack_loader/relevance-detector.mjs): `paths`, optional `text`,
+  `search` terms; it answers exactly what the retired `detect` answered, proven over 4,000 composed
+  repos before the change.
+
+## 2026-09-28 · reworded · the fingerprint's patterns are written as source strings
+- **Reason:** a manifest that is data cannot hold a RegExp; each pattern is its source string, or {
+  source, flags } where it carries a flag, and loads to the same RegExp.
+- **Actor:** @missingbulb (owner), asking for pack.json manifests.
+
+## 2026-09-28 · moved · the manifest becomes pack.json
+- **Reason:** a manifest that is data is read with no import and by any tool; the conversion wrote
+  the module's evaluated export, and the pack loads identically.
+- **Actor:** @missingbulb (owner), asking for pack.json manifests.
+- **Mechanism:** pack.json, which the loader prefers over pack.mjs; a canon pack now needs engine
+  60928.1, the first to read it.
+
+## 2026-09-28 · scope-changed · the fingerprint reads the dependency manifests, not the source
+- **Reason:** a library a repo uses is declared in its package.json, requirements*.txt or
+  pyproject.toml; reading those is one near-root file each rather than every source file, and a
+  usage no manifest backs is not an adoption.
+- **Actor:** @missingbulb (owner), in review of #2382.
+- **Mechanism:** paths over near-root dependency manifests, text over the declared package names.

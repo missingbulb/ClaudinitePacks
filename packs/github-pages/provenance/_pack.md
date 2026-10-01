@@ -1,0 +1,68 @@
+## 2026-09-18 · born · Split the website packs by ownership: public-website, github-pages, cloudflare-site (#2101)
+- **Source:** the owner's boundary, 2026-09-17: a hosting pack "needs to only care itself with how
+  to serve, wire release, maintain a release ... not anything else that deals 'being a website' like
+  versions".
+- **Reason:** `static-website` conflated what is true of a static site with what is true of one
+  served from GitHub Pages, so a repo hosting its site anywhere else could take only half the pack,
+  and the half it left behind was where three of the four checks lived. The serving half becomes its
+  own pack, rebuilt in the shape `cloudflare-site`'s release already had: a Pages deploy is made of
+  marketplace actions only a workflow job can run, so that is all the one vendored workflow carries,
+  dispatch-only, and everything else about a release is the `site-release` task. Four workflows and
+  three composite actions become one workflow and two scripts; the GitHub Release, the tag and the
+  bump dispatch go with the versions they carried, which are `public-website`'s now. The pack names
+  no other host: a site is served from Pages or from something else, never both.
+- **Actor:** @missingbulb (owner).
+- **Model:** Claude Opus 5, Claude Fable 5.1, per the commit trailers.
+- **Mechanism:** the pack manifest, fingerprinted by `.github/site.config`, the pack's own central
+  artifact, and requiring `claudinite-tasks` because the release is a work item rather than a
+  workflow.
+- **Landed:** #2101 · pack version 60917.1.
+
+## 2026-09-25 · scope-changed · `minEngineVersion` rises to 60925.1
+- **Reason:** this pack's checks declare `on_fail`, which an older engine does not read; the pack
+  update holds this version until the member's engine is at 60925.1.
+- **Actor:** @missingbulb (owner).
+- **Mechanism:** the manifest's `minEngineVersion`, which the pack update enforces.
+
+## 2026-09-27 · born · a pitch paragraph for the dashboard's plain-repo view
+- **Reason:** the dashboard shows a repo that does not run Claudinite the packs that fit it, and the
+  owner asked for one paragraph per pack naming its main skills and process gains, with rough counts
+  so it outlives the pack's growth.
+- **Actor:** @missingbulb (owner).
+- **Mechanism:** the manifest's `pitch` field, beside `ruleRoutingGuidance`.
+
+## 2026-09-27 · scope-changed · the fingerprint is a `relevanceDetector` spec, not a function
+- **Reason:** the owner asked for fingerprints a reader holding only GitHub's API can judge cheaply
+  - a tree listing, a code search, then only the files that search names - which a function over a
+  synchronous `read` cannot offer.
+- **Actor:** @missingbulb (owner).
+- **Mechanism:** the manifest's `relevanceDetector` (engine/pack_loader/relevance-detector.mjs): `paths`, optional `text`,
+  `search` terms; it answers exactly what the retired `detect` answered, proven over 4,000 composed
+  repos before the change.
+
+## 2026-09-28 · reworded · the manifest spells out the value it imported
+- **Reason:** a manifest that is data cannot import; the value is written out, and the pack's test
+  holds it equal to the module it came from.
+- **Actor:** @missingbulb (owner), asking for pack.json manifests with imported values inlined and a
+  check against drift.
+
+## 2026-09-28 · reworded · the fingerprint's patterns are written as source strings
+- **Reason:** a manifest that is data cannot hold a RegExp; each pattern is its source string, or {
+  source, flags } where it carries a flag, and loads to the same RegExp.
+- **Actor:** @missingbulb (owner), asking for pack.json manifests.
+
+## 2026-09-28 · reworded · the manifest's comments leave it, their decisions recorded here
+- **Reason:** a manifest that is data carries no comments. What they decided: the release is a task
+  so the queue owns its trigger, gate and park lanes. The one question's answer, what is published,
+  lives in the repo's own .github/site.config rather than on the pack entry, where the deploy's
+  build step and the gp/site-config check both read it. The handover steps are repository settings
+  no workflow, check or agent can turn on.
+- **Actor:** @missingbulb (owner), asking for pack.json manifests, their comments deleted or moved
+  to a README or provenance.
+
+## 2026-09-28 · moved · the manifest becomes pack.json
+- **Reason:** a manifest that is data is read with no import and by any tool; the conversion wrote
+  the module's evaluated export, and the pack loads identically.
+- **Actor:** @missingbulb (owner), asking for pack.json manifests.
+- **Mechanism:** pack.json, which the loader prefers over pack.mjs; a canon pack now needs engine
+  60928.1, the first to read it.

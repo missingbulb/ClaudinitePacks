@@ -1,0 +1,110 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
+import { makeRepo, cleanup, declaredCheck } from '../../../../../engine-tests/helpers.mjs';
+import { buildContext } from '../../../../../engine/checks/helpers/repo-context.mjs';
+
+const rule = declaredCheck('packs/claudinite-growth/skills/unattended-agents', 'in-session-github-access');
+
+// Co-located with the check it exercises (skills own their test-the-world checks).
+const run = (root) => rule.run(buildContext({ root, mode: 'all' }));
+
+test('in-session-github-access: in-session code using injected MCP I/O passes', () => {
+  const root = makeRepo({ changed: {
+    'packs/acme-pack-a/migrations/2026-01-01-demo/migration.mjs': 'export async function apply(io, r) { return io.commit(r, "main", [], "m"); }\n',
+  } });
+  try {
+    assert.equal(run(root).length, 0);
+  } finally { cleanup(root); }
+});
+
+test('in-session-github-access: flags a GITHUB_TOKEN read in migration-pass code', () => {
+  const root = makeRepo({ changed: {
+    'packs/acme-pack-a/migrations/2026-01-01-demo/migration.mjs': 'const token = process.env.GITHUB_TOKEN;\nexport const t = token;\n',
+  } });
+  try {
+    const f = run(root);
+    assert.equal(f.length, 1);
+    assert.match(f[0].what, /REST token/);
+  } finally { cleanup(root); }
+});
+
+test('in-session-github-access: flags a REST client (makeGh / fleet-api) in a migration pass', () => {
+  const file = 'engine/migrations/some-pass.mjs';
+  const root = makeRepo({ changed: {
+    [file]: "import { makeGh } from '../packs/acme-pack-c/fleet-api.mjs';\nexport const gh = makeGh('t');\n",
+  } });
+  try {
+    const f = run(root);
+    assert.ok(f.length >= 1);
+    assert.ok(f.every((x) => x.file === file));
+    assert.match(f[0].what, /REST client/);
+  } finally { cleanup(root); }
+});
+
+test('in-session-github-access: a run_daily/ path is no longer an in-session surface', () => {
+  // The central planner that dispatched run_daily descriptors into an MCP-only
+  // session retired with #394, and no repo carries them any more — so the scope
+  // arm went with it. Drift guard: if run_daily/ is ever re-added to IN_SESSION
+  // without a planner to justify it, this fails.
+  const root = makeRepo({ changed: {
+    '.claudinite/local/packs/x/run_daily/worker.mjs': 'const t = process.env.GITHUB_TOKEN;\nexport const y = t;\n',
+  } });
+  try {
+    assert.equal(run(root).length, 0);
+  } finally { cleanup(root); }
+});
+
+test('in-session-github-access: a scheduled task\'s preprocessing worker keeps its REST client', () => {
+  // code-work runs Action-side as a subprocess with an injected
+  // GITHUB_TOKEN — the one sanctioned non-MCP surface — so tasks/ is deliberately
+  // outside the in-session scope.
+  const root = makeRepo({ changed: {
+    'packs/acme-pack-b/tasks/acme-task-c/worker.mjs': "const t = process.env.GITHUB_TOKEN;\nconst r = await fetch('https://api.github.com/repos/x');\nexport const y = [t, r];\n",
+  } });
+  try {
+    assert.equal(run(root).length, 0, 'a task worker is Action-side code, not in-session code');
+  } finally { cleanup(root); }
+});
+
+test('in-session-github-access: flags a raw api.github.com fetch in a migration', () => {
+  const root = makeRepo({ changed: {
+    'packs/acme-pack-a/migrations/2026-01-01-demo/migration.mjs': 'const r = await fetch(`https://api.github.com/repos/${x}`);\nexport const y = r;\n',
+  } });
+  try {
+    const f = run(root);
+    assert.equal(f.length, 1);
+    assert.match(f[0].what, /api\.github\.com/);
+  } finally { cleanup(root); }
+});
+
+test('in-session-github-access: a dispatch-only executor outside the in-session trees is not scanned', () => {
+  const root = makeRepo({ changed: {
+    'packs/acme-pack-c/tasks/acme-task-e/check-fleet-roster.mjs': 'const token = process.env.FLEET_GITHUB_TOKEN;\nexport const t = token;\n',
+  } });
+  try {
+    assert.equal(run(root).length, 0, 'the roster sweep (a workflow-invoked executor) keeps its REST client');
+  } finally { cleanup(root); }
+});
+
+test('in-session-github-access: the scope names real migration records in this tree', () => {
+  // The scope arm is only live while the tree still holds files it selects: a pattern
+  // a layout change left behind matches nothing and reads as enforcement. Every fixture
+  // above spells a layout this assertion has confirmed against the real tree.
+  const tracked = execFileSync('git', ['ls-files'], { encoding: 'utf8' }).split('\n');
+  const inScope = tracked.filter((p) => rule.spec.scanMatchers.some((m) => m.test(p)));
+  assert.ok(inScope.length >= 20, `the migration records are the scope, matched ${inScope.length}`);
+  assert.ok(inScope.some((p) => p.startsWith('engine/migrations/')), 'the engine flow owns records');
+  assert.ok(inScope.some((p) => /^packs\/[^/]+\/migrations\//.test(p)), 'so does each pack');
+  // Silence proved against those real records, not only against a clean fixture.
+  assert.deepEqual(run(process.cwd()), []);
+});
+
+test('in-session-github-access: a comment mentioning GITHUB_TOKEN does not false-positive', () => {
+  const root = makeRepo({ changed: {
+    'packs/acme-pack-a/migrations/2026-01-01-demo/migration.mjs': '// There is no GITHUB_TOKEN here and no fetch to api.github.com.\nexport const ok = true;\n',
+  } });
+  try {
+    assert.equal(run(root).length, 0);
+  } finally { cleanup(root); }
+});

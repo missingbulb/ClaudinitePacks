@@ -1,0 +1,48 @@
+## 2026-07-19 · born · web-speech pack: browser voice I/O - 2 skill-owned checks + runtime-gotcha prose (#346)
+- **Source:** missingbulb/CrosswordChat, a Chrome extension that solves the NYT crossword
+  conversationally: its `extension/src/speech/` ports, the service-worker TTS relay, and its
+  `dev/docs/FEASIBILITY.md` speech-API analysis.
+- **Reason:** browser voice I/O is a facet of its own - the runtime behaviour of the recognition and
+  synthesis APIs - and one project had accumulated enough of it to be portable.
+- **Actor:** @missingbulb (owner).
+- **Model:** claude, per the commit trailer.
+- **Mechanism:** the pack manifest, fingerprinted by a browser speech-API reference in JS/TS source.
+  The marker only suspects the pack; declaring it stays the project's call, as for every pack.
+- **Rejected:** making the pack checks-only. Of the seventeen gotchas only two had a file-scoped
+  signature; the rest are runtime and behavioural, with no repo state a static check could read, so
+  the pack is mostly prose by design rather than by omission.
+- **Landed:** #346 (Refs #303) · pack version 1.
+
+## 2026-09-25 · scope-changed · `minEngineVersion` rises to 60925.1
+- **Reason:** this pack's checks declare `on_fail`, which an older engine does not read; the pack
+  update holds this version until the member's engine is at 60925.1.
+- **Actor:** @missingbulb (owner).
+- **Mechanism:** the manifest's `minEngineVersion`, which the pack update enforces.
+
+## 2026-09-27 · born · a pitch paragraph for the dashboard's plain-repo view
+- **Reason:** the dashboard shows a repo that does not run Claudinite the packs that fit it, and the
+  owner asked for one paragraph per pack naming its main skills and process gains, with rough counts
+  so it outlives the pack's growth.
+- **Actor:** @missingbulb (owner).
+- **Mechanism:** the manifest's `pitch` field, beside `ruleRoutingGuidance`.
+
+## 2026-09-27 · scope-changed · the fingerprint is a `relevanceDetector` spec, not a function
+- **Reason:** the owner asked for fingerprints a reader holding only GitHub's API can judge cheaply
+  - a tree listing, a code search, then only the files that search names - which a function over a
+  synchronous `read` cannot offer.
+- **Actor:** @missingbulb (owner).
+- **Mechanism:** the manifest's `relevanceDetector` (engine/pack_loader/relevance-detector.mjs): `paths`, optional `text`,
+  `search` terms; it answers exactly what the retired `detect` answered, proven over 4,000 composed
+  repos before the change.
+
+## 2026-09-28 · reworded · the fingerprint's patterns are written as source strings
+- **Reason:** a manifest that is data cannot hold a RegExp; each pattern is its source string, or {
+  source, flags } where it carries a flag, and loads to the same RegExp.
+- **Actor:** @missingbulb (owner), asking for pack.json manifests.
+
+## 2026-09-28 · moved · the manifest becomes pack.json
+- **Reason:** a manifest that is data is read with no import and by any tool; the conversion wrote
+  the module's evaluated export, and the pack loads identically.
+- **Actor:** @missingbulb (owner), asking for pack.json manifests.
+- **Mechanism:** pack.json, which the loader prefers over pack.mjs; a canon pack now needs engine
+  60928.1, the first to read it.
