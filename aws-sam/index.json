@@ -1,0 +1,18 @@
+{
+  "v": 1,
+  "pack": "aws-sam",
+  "serial": 1,
+  "versions": [
+    {
+      "version": "60928.1",
+      "sha256": "20f48213f6d6fd51b33644cd72911c5c1b5a0eb521d68b2220fee6108ba1ec1e",
+      "size": 6121,
+      "minEngineVersion": "60928.1",
+      "requires": [],
+      "channel": "canary",
+      "revoked": false,
+      "publishedAt": "2026-10-01T14:32:10Z",
+      "sourceCommit": "27612838c695d2d6704966572cd86d34485e4751"
+    }
+  ]
+}
