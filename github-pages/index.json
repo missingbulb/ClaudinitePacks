@@ -1,0 +1,20 @@
+{
+  "v": 1,
+  "pack": "github-pages",
+  "serial": 1,
+  "versions": [
+    {
+      "version": "60928.1",
+      "sha256": "4a3c8d264f10b2fae977ce734109ff1d7433f736fa0052480238ba0d19ecca88",
+      "size": 19871,
+      "minEngineVersion": "60928.1",
+      "requires": [
+        "claudinite-tasks"
+      ],
+      "channel": "canary",
+      "revoked": false,
+      "publishedAt": "2026-10-01T14:32:10Z",
+      "sourceCommit": "27612838c695d2d6704966572cd86d34485e4751"
+    }
+  ]
+}
