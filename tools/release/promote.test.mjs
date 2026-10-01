@@ -247,6 +247,45 @@ test('the GitHub reader asks for completed runs on the default branch and open r
   await assert.rejects(r.openIssues('acme/private', 'release-blocker'), /404/);
 });
 
+// GitHub answering the issues list in two pages linked by Link: rel="next", the blocker on page
+// two, and passing runs for every canary workflow.
+function pagedGithub() {
+  const urls = [];
+  const filler = Array.from({ length: 100 }, (_, i) => ({ number: 1000 + i, title: `unrelated ${i}`, body: null, author_association: 'OWNER', html_url: 'u' }));
+  const fetch = async (url) => {
+    urls.push(url);
+    const u = new URL(url);
+    if (u.pathname === '/repos/acme/engine/issues' && !u.searchParams.has('page')) {
+      return Response.json(filler, { headers: { link: '<https://api.github.com/repos/acme/engine/issues?labels=release-blocker&state=open&per_page=100&page=2>; rel="next", <https://api.github.com/repos/acme/engine/issues?labels=release-blocker&state=open&per_page=100&page=2>; rel="last"' } });
+    }
+    if (u.pathname === '/repos/acme/engine/issues' && u.searchParams.get('page') === '2') {
+      return Response.json([{ number: 7, title: 'acme-pack 60101.2 breaks the canary', body: null, author_association: 'MEMBER', html_url: 'u7' }], { headers: { link: '<https://api.github.com/repos/acme/engine/issues?per_page=100&page=1>; rel="prev"' } });
+    }
+    if (/^\/repos\/acme\/canary-[ab]$/.test(u.pathname)) return Response.json({ default_branch: 'main' });
+    const m = u.pathname.match(/^\/repos\/(acme\/canary-[ab])\/actions\/workflows\/([\w.]+)\/runs$/);
+    if (m) return Response.json({ workflow_runs: passingRuns[`${m[1]} ${m[2]}`] ?? [] });
+    return new Response('{"message":"Not Found"}', { status: 404 });
+  };
+  return { urls, fetch };
+}
+
+test('openIssues follows Link: rel="next" and returns every page', async () => {
+  const gh = pagedGithub();
+  const issues = await githubReader({ token: 'acme-token', fetch: gh.fetch }).openIssues('acme/engine', 'release-blocker');
+  assert.equal(issues.length, 101);
+  assert.equal(issues.at(-1).number, 7);
+  assert.equal(gh.urls.filter((x) => x.includes('/issues')).length, 2);
+});
+
+test('a blocker on the second page of issues blocks the promotion', async () => {
+  const gh = pagedGithub();
+  const ev = await readEvidence({ indexes: [index('acme-pack', [['60101.2']])], config: CONFIG, reader: githubReader({ token: 'acme-token', fetch: gh.fetch }) });
+  assert.deepEqual(ev.candidates[0].blockers.map((b) => b.number), [7]);
+  const decision = choosePromotions(ev, CONFIG);
+  assert.deepEqual(decision.promote, []);
+  assert.match(decision.declined[0].reason, /blocked by acme\/engine#7/);
+});
+
 test('canaries.json names the canaries and the blockers repository in the shape the evidence reader takes', async () => {
   const config = JSON.parse(readFileSync(new URL('./canaries.json', import.meta.url), 'utf8'));
   const reader = fakeReader();

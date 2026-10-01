@@ -22,13 +22,25 @@ export function namesVersion(text, pack, version) {
 
 // GitHub's REST API with the job's token; every non-2xx fails, so an unreadable blockers
 // repository is an error rather than "no blockers".
+// A list follows Link: rel="next" to its last page, and only to a URL on the same API.
 export function githubReader({ token, fetch = globalThis.fetch }) {
-  const get = async (path) => {
-    const res = await fetch(`${API}${path}`, {
+  const request = async (url) => {
+    const res = await fetch(url, {
       headers: { accept: 'application/vnd.github+json', 'x-github-api-version': '2022-11-28', ...(token ? { authorization: `Bearer ${token}` } : {}) },
     });
-    if (!res.ok) throw new ReleaseError(`GET ${path}: ${res.status} ${res.statusText} ${(await res.text()).slice(0, 500)}`.trim());
-    return res.json();
+    if (!res.ok) throw new ReleaseError(`GET ${url.slice(API.length)}: ${res.status} ${res.statusText} ${(await res.text()).slice(0, 500)}`.trim());
+    return res;
+  };
+  const get = async (path) => (await request(`${API}${path}`)).json();
+  const getAll = async (path) => {
+    const items = [];
+    for (let url = `${API}${path}`; url;) {
+      const res = await request(url);
+      items.push(...await res.json());
+      url = /<([^>]+)>;\s*rel="next"/.exec(res.headers.get('link') ?? '')?.[1] ?? null;
+      if (url && !url.startsWith(`${API}/`)) throw new ReleaseError(`GET ${path}: the next page points off ${API}: ${url}`);
+    }
+    return items;
   };
   return {
     async defaultBranch(repo) { return (await get(`/repos/${repo}`)).default_branch; },
@@ -36,7 +48,7 @@ export function githubReader({ token, fetch = globalThis.fetch }) {
       return (await get(`/repos/${repo}/actions/workflows/${encodeURIComponent(file)}/runs?branch=${encodeURIComponent(branch)}&status=completed&per_page=10`)).workflow_runs;
     },
     async openIssues(repo, label) {
-      return (await get(`/repos/${repo}/issues?labels=${encodeURIComponent(label)}&state=open&per_page=100`)).filter((i) => !i.pull_request);
+      return (await getAll(`/repos/${repo}/issues?labels=${encodeURIComponent(label)}&state=open&per_page=100`)).filter((i) => !i.pull_request);
     },
   };
 }
