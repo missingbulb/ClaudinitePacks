@@ -23,7 +23,9 @@ node tools/vendor/vendor.mjs --all packs <out dir>
 ```
 
 `.github/workflows/release-packs.yml` publishes each new pack version to the `vendored` branch
-with a signed pack index; `docs/release.md` describes the branch, the index format, the keys and
-how to run a release locally.
+with a signed pack index and uploads it to R2, and `promote-packs.yml` moves a version from
+`canary` to `stable`; `docs/release.md` describes the branch, the index format, the keys and how
+to run a release locally. Members read a pack's index at
+`https://packs.claudinite.com/packs/<id>/index.json`.
 
 Run the tools' tests with `node --test $(git ls-files 'tools/*.test.mjs')`.

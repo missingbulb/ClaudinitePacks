@@ -1,21 +1,30 @@
 # Pack release
 
 `.github/workflows/release-packs.yml` publishes every pack version not yet on the `vendored`
-branch, on each push to `main` touching `packs/`, `tools/` or the workflow, and on dispatch. What
-to publish is read from the world: a pack whose `pack.json` version is absent from `vendored` is
-published; one already there is rebuilt and compared by SHA-256, equal bytes skipped and
-different bytes failing the run, since a version is published once. The first run seeds every
-pack.
+branch and makes the R2 bucket behind `https://packs.claudinite.com/` hold what the branch holds,
+on each push to `main` touching `packs/`, `tools/` or the workflow, and on dispatch. What to
+publish is read from the world: a pack whose `pack.json` version is absent from `vendored` is
+published; one already there is rebuilt and its unpacked files compared with the branch's, equal
+files skipped (the gzip bytes may differ, say under another zlib) and a differing, missing or
+extra path failing the run, since a version is published once. The first run seeds every pack.
 
-The workflow has two jobs. `build` (read-only, no secrets) runs the tools' tests and
-`release.mjs build`, which vendors every pack with `tools/vendor` and writes `packs.json` and a
-`SHA256SUMS` beside the archives. `publish` (the `release` environment, `contents: write`) runs
-only `tools/release` and `tools/sign`: it checks `SHA256SUMS` before anything else, writes the
-branch, signs each index, verifies every index it wrote against the roots before one push, and
-records the signing key id and the published versions in the job summary. `SHA256SUMS` checks
-the transfer between the jobs and is not a trust boundary: whoever could change an archive could
-change its sum. The concurrency group
-`release-packs` is the single writer; nothing force-pushes.
+The workflow has three jobs:
+
+- `build` (read-only, no secrets) runs the release, signing and vendor tests and
+  `release.mjs build`, which vendors every pack with `tools/vendor` and writes `packs.json` and a
+  `SHA256SUMS` beside the archives.
+- `publish` (the `release` environment, `contents: write`) runs only `tools/release` and
+  `tools/sign`: it checks `SHA256SUMS` before anything else, writes the branch, signs each index,
+  verifies every index it wrote against the roots before one push, and records the signing key id
+  and the published versions in the job summary. `SHA256SUMS` checks the transfer between the jobs
+  and is not a trust boundary: whoever could change an archive could change its sum.
+- `upload` (the `release` environment, `contents: read`, only `CLOUDFLARE_API_TOKEN` and
+  `CLOUDFLARE_ACCOUNT_ID`) runs `release.mjs upload --r2 claudinite-packs`, described under
+  "The R2 upload". It runs after `publish` and derives its work from the branch, so a failed
+  upload never loses a published version and the next run heals it.
+
+The concurrency group `release-packs`, shared with `promote-packs.yml`, is the single writer;
+nothing force-pushes.
 
 ## The `vendored` branch
 
@@ -89,10 +98,31 @@ the index bytes. There is no canonical JSON: the signature covers the file's byt
 
 ## Promotion and revocation
 
-Promotion and revocation rewrite one entry, bump the serial and re-sign, as their own commit on
-`vendored`: `setChannel(index, version, 'stable')` and `setRevoked(index, version, true)` in
-`tools/release/index.mjs`. The promotion job that calls them is a later chunk of
-missingbulb/ClaudinitePacks#2.
+`.github/workflows/promote-packs.yml` rewrites one index entry per commit on `vendored`, bumps the
+serial, re-signs, self-checks against the roots and pushes without force, then runs the same
+`upload` job so the CDN follows the branch in the same run. A promotion changes only the index,
+never the vendored set. A push rejected because the branch moved fails the run; the next run
+re-derives from the new tip.
+
+- **Hourly** (minute 17) it runs `release.mjs evidence` and `release.mjs promote --evidence`. The
+  candidates are every entry with `channel: canary` and `revoked: false`. For each,
+  `tools/release/canaries.json` lists the canary repositories and the workflow files whose
+  conclusions count; the evidence is the latest completed run of each on the canary's default
+  branch started after the entry's `publishedAt`, plus the open `release-blocker` issues in the
+  `blockers` repository (missingbulb/ClaudiniteEngine) by an owner, member or collaborator whose
+  title or body names `<id> <version>` as a whole token. A candidate is promoted when every listed
+  workflow of every listed canary concluded `success` and no blocker names it; a canary with no
+  such run counts as not passed. Each promotion is a commit `Promote <id> <version>`. While no
+  canary lists a workflow, the run declines with `no canary workflow is configured; promotion
+  needs a dispatch` and exits 0. The blockers read fails on a non-2xx answer, so a repository the
+  token cannot read is an error, never "no blockers".
+- **On dispatch** with `pack` and `version`, `action: promote` promotes that entry regardless of
+  evidence, refusing a version not in the index, already `stable` or revoked, and
+  `action: revoke` sets `revoked: true`, refusing one already revoked; the commit is
+  `Promote <id> <version> (dispatched by <login>)` or `Revoke … (dispatched by <login>)`. Nothing
+  revokes automatically. A dispatch without a pack takes the hourly path.
+
+The job summary records the evidence read and every promotion or revocation.
 
 ## Keys
 
@@ -101,7 +131,12 @@ The publish job signs with `CN_PACKS_KEY` (the key file's content) and `CN_PACKS
 and the run fails. With neither, it signs with the development key under `keys/dev/`, prints
 `signing with the development key keys/dev/packs.key (trusted by no member)` and annotates the run
 with a warning. The development certificate expires 90 days after issue; `keys/dev/README.md` says
-how to renew it.
+how to renew it, and `.github/workflows/dev-key-expiry.yml` (weekly, and on dispatch) runs
+`tools/release/dev-key-expiry.mjs`, which prints the expiry and goes red once it is 14 days away
+or less. The tests verify the development certificate at an instant read from its own window, so
+they do not go red on expiry; `publish --now <instant>` moves only the self-check's instant, for
+tests, and `publishedAt` always reads the clock. The workflow goes in the change that removes
+`keys/dev/`.
 
 When ClaudiniteEngine#5 provides the real `packs` key: add the two secrets, add protection rules
 to the `release` environment, replace `keys/dev/roots/` with the real roots for the self-check,
@@ -109,9 +144,37 @@ delete `keys/dev/` and the development fallback, and re-sign every index.
 
 ## The R2 upload
 
-Until missingbulb/ClaudinitePacks#1, the upload is a dry run: per published version the publish
-job prints `would PUT packs/<id>/<version>.tar.gz (<size> bytes, sha256 <hex>)`,
-`would PUT packs/<id>/index.json` and `would PUT packs/<id>/index.sig.json`.
+The bucket `claudinite-packs`, served at `https://packs.claudinite.com/`, holds the design's object
+keys, so the URL repeats `packs/` (`https://packs.claudinite.com/packs/basics/index.json`):
+
+```
+packs/<id>/<version>.tar.gz    application/gzip   public, max-age=31536000, immutable   written once
+packs/<id>/index.json          application/json   public, max-age=300                   rewritten
+packs/<id>/index.sig.json      application/json   public, max-age=300                   rewritten
+```
+
+`release.mjs upload` (`tools/release/r2.mjs`):
+
+1. Fails with an `::error::` before any request unless `CLOUDFLARE_API_TOKEN` and
+   `CLOUDFLARE_ACCOUNT_ID` are set.
+2. Sets up, idempotently: reads the token's id, reads the bucket and creates it if absent, finds
+   the `claudinite.com` zone, and reads the bucket's custom domain `packs.claudinite.com`,
+   attaching it if absent (Cloudflare writes the DNS record). A domain attached but disabled fails
+   the run; so does any unexpected status, with the response body.
+3. Plans from the branch, never from what a run published: every version in every index, and each
+   index pair. An archive absent from the bucket is PUT with `If-None-Match: *`; one present with
+   equal bytes is skipped; one present with other bytes fails the run naming the key and both
+   SHA-256s before anything is written. An index pair differing from the branch is rewritten,
+   `index.json` then `index.sig.json`. A `412` on an archive is a race with another writer, which
+   the concurrency group rules out, so it fails rather than being retried as an overwrite.
+4. Reads every object back through the CDN, the index pair with `?s=<serial>` so the 300-second
+   cache cannot answer with an older serial, compares bytes with the branch and verifies each
+   signature against `--roots`. The summary lists per pack what it PUT and skipped.
+
+The S3 credentials derive from the one token: the access key id is the token's id and the secret
+the SHA-256 of its value. Requests are signed with SigV4 (`r2.mjs`, proven by AWS's published
+examples in `sigv4.test-vectors.json`); the CDN is never purged, since archives never change and
+indexes expire in five minutes. A reader needing the newest index sooner reads `vendored`.
 
 ## Running it locally
 
@@ -123,11 +186,16 @@ git init --bare "$WORK/remote.git"
 node tools/release/release.mjs plan --remote "$WORK/remote.git"
 node tools/release/release.mjs build --out "$WORK/archives"
 node tools/release/release.mjs publish --archives "$WORK/archives" --remote "$WORK/remote.git" --roots keys/dev/roots
+node tools/release/release.mjs upload --r2 dry-run --remote "$WORK/remote.git" --roots keys/dev/roots
+node tools/release/release.mjs promote --pack basics --version 60928.1 --by local --remote "$WORK/remote.git" --roots keys/dev/roots
 git clone -q --branch vendored "$WORK/remote.git" "$WORK/vendored"
 for d in "$WORK"/vendored/*/; do node tools/sign/sign.mjs verify-index --roots keys/dev/roots "$d/index.json" "$d/index.sig.json" || break; done
+node tools/release/dev-key-expiry.mjs
 ```
 
 `--key` and `--cert` (or the files `CN_PACKS_KEY` and `CN_PACKS_CERT` name) sign with another
 key; `--repo` names the checkout whose git directory holds the work, by default the current one.
-Check the development certificate with
+`upload --r2 dry-run` lists every object as `would PUT`; `--r2 claudinite-packs` with the two
+Cloudflare variables set uploads for real. `evidence --out <file>` reads the canary evidence with
+`GITHUB_TOKEN` when set. Check the development certificate with
 `node tools/sign/sign.mjs verify-cert --roots keys/dev/roots keys/dev/packs.cert.json`.

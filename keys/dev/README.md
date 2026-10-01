@@ -13,8 +13,8 @@ outside a development build.
 - `packs.cert.json`: its `packs`-use certificate, issued by the Engine's development root for 90
   days, until 2026-12-30T14:12:48Z.
 
-Until ClaudiniteEngine#5 lands, renew the certificate before it expires, from an Engine checkout,
-and commit the new file:
+Until ClaudiniteEngine#5 lands, renew the certificate before it expires (`dev-key-expiry.yml`
+goes red 14 days ahead), from an Engine checkout, and commit the new file:
 
 ```
 rm <packs repo>/keys/dev/packs.cert.json
@@ -22,5 +22,5 @@ go run ./cmd/cn-keys certify --root keys/dev/root.key --subject <packs repo>/key
 go run ./cmd/cn-keys verify --roots license/roots <packs repo>/keys/dev/packs.cert.json
 ```
 
-This folder and the release program's fallback to it are removed in the change that puts
-`CN_PACKS_KEY` and `CN_PACKS_CERT` into the `release` environment.
+This folder, the release program's fallback to it and `dev-key-expiry.yml` are removed in the
+change that puts `CN_PACKS_KEY` and `CN_PACKS_CERT` into the `release` environment.
