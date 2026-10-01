@@ -28,4 +28,8 @@ with a signed pack index and uploads it to R2, and `promote-packs.yml` moves a v
 to run a release locally. Members read a pack's index at
 `https://packs.claudinite.com/packs/<id>/index.json`.
 
+`docs/porting-inventory.GENERATED.md` classifies every file under `packs/` for porting to the
+Engine, with the files that still import Claudinite's `engine/`; regenerate it with
+`node tools/port/inventory.mjs` after changing a pack.
+
 Run the tools' tests with `node --test $(git ls-files 'tools/*.test.mjs')`.
