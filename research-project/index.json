@@ -1,0 +1,18 @@
+{
+  "v": 1,
+  "pack": "research-project",
+  "serial": 1,
+  "versions": [
+    {
+      "version": "60928.1",
+      "sha256": "4b4c0b8be851761c9bd980e8ad9549e140538ca0dc0f21acfbb7d7657161965a",
+      "size": 11779,
+      "minEngineVersion": "60928.1",
+      "requires": [],
+      "channel": "canary",
+      "revoked": false,
+      "publishedAt": "2026-10-01T14:32:10Z",
+      "sourceCommit": "27612838c695d2d6704966572cd86d34485e4751"
+    }
+  ]
+}
