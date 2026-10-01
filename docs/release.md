@@ -175,8 +175,11 @@ packs/<id>/index.sig.json      application/json   public, max-age=300           
    attaching it if absent (Cloudflare writes the DNS record). A domain attached but disabled fails
    the run; so does any unexpected status, with the response body.
 3. Plans from the branch, never from what a run published: every version in every index, and each
-   index pair. An archive absent from the bucket is PUT with `If-None-Match: *`; one present with
-   equal bytes is skipped; one present with other bytes fails the run naming the key and both
+   index pair. Each object is first read with a HEAD: an ETag equal to the quoted MD5 hex of the
+   branch's bytes (R2's ETag for a single PUT) shows it equal with nothing downloaded; any other
+   ETag (a multipart upload, other bytes) falls back to a GET and a byte compare. The log says how
+   many objects each way compared. An archive absent from the bucket is PUT with
+   `If-None-Match: *`; one present with equal bytes is skipped; one present with other bytes fails the run naming the key and both
    SHA-256s before anything is written. An index pair differing from the branch is rewritten,
    `index.json` then `index.sig.json`. A `412` on an archive is a race with another writer, which
    the concurrency group rules out, so it fails rather than being retried as an overwrite.

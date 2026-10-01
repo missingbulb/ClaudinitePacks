@@ -87,6 +87,13 @@ export function s3Bucket({ accountId, bucket, credentials, fetch = globalThis.fe
     return fetch(`https://${host}${path.split('/').map(encodeSegment).join('/')}`, { method, headers: send, body });
   };
   return {
+    // The object's ETag, or null when it is absent.
+    async head(key) {
+      const res = await request('HEAD', key);
+      if (res.status === 404) return null;
+      if (!res.ok) throw new R2Error(await failure(`HEAD ${key}`, res));
+      return { etag: res.headers.get('etag') };
+    },
     async get(key) {
       const res = await request('GET', key);
       if (res.status === 404) return null;
@@ -118,20 +125,32 @@ export function branchObjects(read, ids) {
 
 // Compares every object with the bucket. An archive is written once: present with other bytes
 // fails the whole plan before anything is written. The index pair is rewritten when it differs,
-// index.json first.
+// index.json first. Each action records how it was compared: `etag` when R2's ETag is the quoted
+// MD5 hex of the branch bytes (a single PUT's ETag), so nothing is downloaded; `get` when the ETag
+// says nothing (a multipart upload, other bytes, a bucket without head) and the bytes are fetched;
+// `absent` when the object is not there.
 export async function planUpload(objects, bucket) {
   const actions = [];
   const conflicts = [];
   let indexPut = new Set();
   for (const o of objects) {
-    const current = await bucket.get(o.key);
+    const meta = bucket.head ? await bucket.head(o.key) : undefined;
+    let compared = 'absent';
+    let current = null;
+    if (meta && meta.etag === `"${createHash('md5').update(o.body).digest('hex')}"`) {
+      compared = 'etag';
+      current = o.body;
+    } else if (meta !== null) {
+      current = await bucket.get(o.key);
+      if (current !== null) compared = 'get';
+    }
     const same = current !== null && Buffer.compare(current, o.body) === 0;
     if (o.kind === 'archive' && current !== null && !same) {
       conflicts.push(`${o.key} is on R2 with sha256 ${sha256(current)}; the branch has sha256 ${sha256(o.body)}`);
     }
     const put = o.kind === 'sig' ? !same || indexPut.has(o.id) : current === null || (o.kind === 'index' && !same);
     if (o.kind === 'index' && put) indexPut.add(o.id);
-    actions.push({ ...o, put });
+    actions.push({ ...o, put, compared });
   }
   if (conflicts.length) throw new R2Error(`refusing to overwrite a published archive:\n${conflicts.join('\n')}`);
   return actions;
@@ -228,8 +247,8 @@ export function missingCredentials(env) {
 
 const describe = (o) => (o.kind === 'archive' ? `${o.key} (${o.body.length} bytes, sha256 ${sha256(o.body)})` : o.key);
 
-// The whole upload: target is a bucket name or `dry-run`. Returns, per pack, the keys it PUT and
-// the keys it skipped.
+// The whole upload: target is a bucket name or `dry-run`. Returns, per pack, the keys it PUT, the
+// keys it skipped and how many objects its ETag alone showed equal.
 export async function runUpload({ objects, target, env, fetch = globalThis.fetch, roots, now, log }) {
   const ids = [...new Set(objects.map((o) => o.id))];
   if (target === 'dry-run') {
@@ -243,11 +262,14 @@ export async function runUpload({ objects, target, env, fetch = globalThis.fetch
   const { tokenId } = await setup({ accountId, token, bucket: target, fetch, log });
   const bucket = s3Bucket({ accountId, bucket: target, credentials: deriveCredentials({ id: tokenId, value: token }), fetch });
   const actions = await planUpload(objects, bucket);
+  const by = (how) => actions.filter((a) => a.compared === how).length;
+  log(`compared ${by('etag')} object(s) by ETag, ${by('get')} by GET; ${by('absent')} absent`);
   await applyUpload(actions, bucket, log);
   await verifyCdn(objects, { fetch, roots, now, log });
   return ids.map((id) => ({
     id,
     put: actions.filter((a) => a.id === id && a.put).map((a) => a.key),
     skipped: actions.filter((a) => a.id === id && !a.put).map((a) => a.key),
+    byEtag: actions.filter((a) => a.id === id && a.compared === 'etag').length,
   }));
 }

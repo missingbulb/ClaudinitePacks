@@ -307,8 +307,9 @@ async function upload(opts) {
     if (opts.r2 === 'dry-run') lines.push(`Dry run: ${objects.length} object(s) would be PUT.`);
     else {
       const puts = report.reduce((n, r) => n + r.put.length, 0);
-      lines.push(`Bucket \`${opts.r2}\` at ${tip.slice(0, 12)} of ${BRANCH}: ${puts} object(s) PUT, every object read back through the CDN.`, '');
-      for (const r of report) lines.push(`- ${r.id}: ${r.put.length ? `PUT ${r.put.map((k) => `\`${k}\``).join(', ')}` : 'nothing PUT'}; ${r.skipped.length} skipped`);
+      const byEtag = report.reduce((n, r) => n + r.byEtag, 0);
+      lines.push(`Bucket \`${opts.r2}\` at ${tip.slice(0, 12)} of ${BRANCH}: ${puts} object(s) PUT, ${byEtag} found equal by ETag alone, every object read back through the CDN.`, '');
+      for (const r of report) lines.push(`- ${r.id}: ${r.put.length ? `PUT ${r.put.map((k) => `\`${k}\``).join(', ')}` : 'nothing PUT'}; ${r.skipped.length} skipped (${r.byEtag} by ETag)`);
     }
     appendFileSync(opts.summary, lines.join('\n') + '\n\n');
   }
