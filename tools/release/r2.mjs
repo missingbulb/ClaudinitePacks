@@ -175,9 +175,10 @@ const LONGEST_WAIT_MS = 60e3;
 
 // Reads every object back through the CDN, the index pair with ?s=<serial> so no cache rule can
 // answer with the previous serial, and verifies each index's signature. With retry (the run that
-// attached the custom domain, which answers 403 or 404 until Cloudflare has provisioned it), a 403
-// or 404 is retried with doubling waits until retry.windowMs has passed since the first read;
-// without it, every failure is final at once.
+// attached the custom domain, which answers 403 or 404 until Cloudflare has provisioned it, and
+// whose name may not resolve yet, so fetch rejects), a 403, a 404 or a rejected fetch is retried
+// with doubling waits until retry.windowMs has passed since the first read; without it, every
+// failure is final at once.
 export async function verifyCdn(objects, { fetch = globalThis.fetch, base = `https://${DOMAIN}`, roots, now = new Date(), log, retry }) {
   const problems = [];
   const byPack = new Map();
@@ -185,13 +186,20 @@ export async function verifyCdn(objects, { fetch = globalThis.fetch, base = `htt
   let wait = FIRST_WAIT_MS;
   const read = async (o, url) => {
     for (;;) {
-      const res = await fetch(url);
-      if (res.ok || !retry || (res.status !== 403 && res.status !== 404)) return res;
+      let res;
+      let thrown;
+      try {
+        res = await fetch(url);
+      } catch (e) {
+        if (!retry) throw e;
+        thrown = [e.message, e.cause?.message].filter(Boolean).join(': ');
+      }
+      if (res && (res.ok || !retry || (res.status !== 403 && res.status !== 404))) return res;
       if (retry.clock() - started + wait > retry.windowMs) {
-        const what = await failure(`CDN ${o.key}`, res);
+        const what = res ? await failure(`CDN ${o.key}`, res) : `CDN ${o.key}: ${thrown}`;
         return { gaveUp: `${what} (still failing ${Math.round((retry.clock() - started) / 1000)}s after this run attached the domain; that is a statement about the clock, not about the objects)` };
       }
-      log(`verify-cdn ${o.key}: ${res.status}, retrying in ${wait / 1000}s while the custom domain attached this run provisions`);
+      log(`verify-cdn ${o.key}: ${res ? res.status : thrown}, retrying in ${wait / 1000}s while the custom domain attached this run provisions`);
       await retry.sleep(wait);
       wait = Math.min(wait * 2, LONGEST_WAIT_MS);
     }

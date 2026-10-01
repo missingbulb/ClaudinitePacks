@@ -381,6 +381,39 @@ test('a real upload sets up, writes what the bucket lacks, reads it back through
   assert.ok(again.includes('compared 4 object(s) by ETag, 0 by GET; 0 absent'), again.join('\n'));
 });
 
+test('verify-cdn, after a run created the domain, retries a fetch that throws (NXDOMAIN while DNS propagates)', async () => {
+  const objects = branch(['60101.1']);
+  const cdn = fakeCdn(objects);
+  let thrown = 0;
+  const fetch = async (url) => {
+    if (thrown < 3) { thrown++; throw new TypeError('fetch failed', { cause: new Error('getaddrinfo ENOTFOUND packs.claudinite.com') }); }
+    return cdn.fetch(url);
+  };
+  const time = fakeTime();
+  const lines = [];
+  await verifyCdn(objects, { fetch, roots: ROOTS, now: NOW, log: (l) => lines.push(l), retry: { windowMs: 300e3, clock: time.clock, sleep: time.sleep } });
+  assert.equal(time.waits.length, 3);
+  assert.ok(lines.includes('verify-cdn acme-pack ok'), lines.join('\n'));
+  assert.ok(lines.some((l) => /^verify-cdn .*ENOTFOUND.*retrying/.test(l)), lines.join('\n'));
+});
+
+test('verify-cdn gives up on a fetch that keeps throwing once the window has passed, naming the error', async () => {
+  const objects = branch(['60101.1']);
+  const time = fakeTime();
+  const fetch = async () => { throw new TypeError('fetch failed', { cause: new Error('getaddrinfo ENOTFOUND packs.claudinite.com') }); };
+  await assert.rejects(
+    verifyCdn(objects, { fetch, roots: ROOTS, now: NOW, log: () => {}, retry: { windowMs: 300e3, clock: time.clock, sleep: time.sleep } }),
+    /60101\.1\.tar\.gz.*ENOTFOUND.*statement about the clock/,
+  );
+  assert.ok(time.clock() <= 300e3, `waited ${time.clock()} ms`);
+});
+
+test('without the retry, a fetch that throws fails at once', async () => {
+  const objects = branch(['60101.1']);
+  const fetch = async () => { throw new TypeError('fetch failed'); };
+  await assert.rejects(verifyCdn(objects, { fetch, roots: ROOTS, now: NOW, log: () => {} }), /fetch failed/);
+});
+
 // An injected clock that sleep() advances, recording every wait.
 function fakeTime() {
   let t = 0;

@@ -185,9 +185,10 @@ packs/<id>/index.sig.json      application/json   public, max-age=300           
    the concurrency group rules out, so it fails rather than being retried as an overwrite.
 4. Reads every object back through the CDN, the index pair with `?s=<serial>`, compares bytes
    with the branch and verifies each signature against `--roots`. The summary lists per pack what
-   it PUT and skipped. In the run whose setup attached the custom domain, a `403` or `404` is
-   retried with doubling waits (5 seconds up to a minute) for up to 5 minutes, since a new domain
-   answers `403` ("CNAME Cross-User Banned") until Cloudflare has provisioned it; every other run
+   it PUT and skipped. In the run whose setup attached the custom domain, a `403`, a `404` or a
+   request that fails outright is retried with doubling waits (5 seconds up to a minute) for up to
+   5 minutes, since a new domain answers `403` ("CNAME Cross-User Banned") until Cloudflare has
+   provisioned it, and may not resolve at all until its DNS record propagates; every other run
    fails on the first such answer.
 
 By default Cloudflare's edge caches the archives on the custom domain but not JSON, so
