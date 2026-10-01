@@ -1,0 +1,18 @@
+{
+  "v": 1,
+  "pack": "host-page",
+  "serial": 1,
+  "versions": [
+    {
+      "version": "60928.1",
+      "sha256": "a21a751ffba535ae8ed1f512cbb040caebf6a7118378e386d8022afb89717895",
+      "size": 11043,
+      "minEngineVersion": "60928.1",
+      "requires": [],
+      "channel": "canary",
+      "revoked": false,
+      "publishedAt": "2026-10-01T14:32:10Z",
+      "sourceCommit": "27612838c695d2d6704966572cd86d34485e4751"
+    }
+  ]
+}
