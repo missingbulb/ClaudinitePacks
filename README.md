@@ -22,4 +22,8 @@ node tools/vendor/vendor.mjs packs/<id> <out dir>
 node tools/vendor/vendor.mjs --all packs <out dir>
 ```
 
+`.github/workflows/release-packs.yml` publishes each new pack version to the `vendored` branch
+with a signed pack index; `docs/release.md` describes the branch, the index format, the keys and
+how to run a release locally.
+
 Run the tools' tests with `node --test $(git ls-files 'tools/*.test.mjs')`.
