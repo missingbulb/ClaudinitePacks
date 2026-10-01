@@ -1,0 +1,106 @@
+# core
+
+Claudinite's own surface in a repo that runs it: the vendored mount, the declaration that activates a
+pack, adopting Claudinite and adopting a pack, and the contract every scheduled task is written to.
+
+**Mandatory.** `basics` `requires` this pack, so the closure vendors its content and materializes its
+declaration wherever a declaration is written; the one-time `core-seed` migration record declares it
+into members that already exist. Removing the entry is not an opt-out — it is drift, and `claudinite-lifecycle-declared`
+reports it.
+
+## Rules (`RULES.md`)
+
+| Rule | Severity | Reason | Enforcement |
+|---|---|---|---|
+| Reading a rule that arrived from Claudinite | high | correctness | prose: <50 words + checks (`shared-tree-edit-guard`, `shared-tree-immutable`, `claudinite-isolation`) |
+| Finding a mounted skill's real path | medium | complexity | prose: <100 words |
+| Wanting a pack's rules to apply here | high | correctness | prose: <50 words + check (`claudinite-lifecycle-declared`) |
+| Adding a pack | medium | complexity | prose: <50 words |
+| Setting a project up on Claudinite | medium | complexity | prose: <20 words |
+| Deciding which pack owns a lesson | medium | complexity | prose: <100 words |
+| Judging whether Claudinite is current here | medium | correctness | prose: <100 words |
+| Answering "why did the mount not update" | medium | correctness | prose: <50 words |
+| A referenced file absent from the mount | medium | correctness | prose: <100 words |
+| Judging canon's current behavior | high | correctness | prose: <200 words |
+| An engine comment citing a design doc | low | complexity | prose: <100 words |
+| A silent check run is clean | low | complexity | prose: <50 words |
+| Verifying the Stop hook won't block you | medium | correctness | prose: <100 words |
+| Pushing a change the world sweep scans | medium | complexity | prose: <50 words |
+
+## Checks
+
+Each of these asks the same kind of question: **is Claudinite working in this repo** — declared,
+converged, gated, scheduled. A repo can fail any of them silently, which is why they are checks and
+not prose: the session that has lost its rules is the session least able to notice.
+
+| Check | Severity | Reason | Enforcement |
+|---|---|---|---|
+| `claudinite-lifecycle-declared` | critical | correctness | check: blocking |
+| `rules-index-current` | critical | correctness | check: blocking |
+| `claudinite-isolation` | high | complexity | check: blocking |
+| `shared-tree-edit-guard` | high | correctness | check: blocking |
+| `shared-tree-immutable` | high | correctness | check: advisory |
+| `conformance-workflow` | high | correctness | check: advisory |
+| `conformance-work-scope` | high | correctness | check: advisory |
+| `seeded-file-stale` | high | correctness | check: advisory |
+| `scheduler-workflow-shape` | high | correctness | check: blocking |
+| `legacy-shape-in-use` | medium | complexity | check: advisory |
+| `skill-loaded-before-editing` | high | correctness | check: blocking |
+| `skills-index-current` | medium | correctness | check: blocking |
+| `flat-declarations-current` | medium | correctness | check: blocking |
+
+What goes wrong when one fires:
+
+- `claudinite-lifecycle-declared` — this pack's entry is gone from `.claudinite-settings.json`, so none of the rules above run and the session cannot tell.
+- `rules-index-current` — the generated index is missing, stale or unimported: the repo's packs contribute no prose to any session.
+- `claudinite-isolation` — the repo's own code reaches into `.claudinite/`, so the next canon refactor is a breaking migration for code the canon does not own (a declared `forbidReferences` barrier edge).
+- `conformance-workflow` — nothing in CI runs the world sweep unfiltered on a pull request, so conformance is ungated and the maintenance PR never lands.
+- `conformance-work-scope` — CI gates the tree but not the change, so every commit-scoped rule is enforced only where a session's Stop hook happens to run.
+- `seeded-file-stale` — a file some pack seeded at adoption has fallen behind that pack's template, and since a seeded file is never converged nothing else would ever say so: the member goes on running a copy whose pack has moved.
+- `scheduler-workflow-shape` — the vendored scheduler's cron, concurrency or dispatch guard has drifted: staggering, double-run safety or manual runs break.
+- `flat-declarations-current` - `.claudinite/flat/tasks.GENERATED.json` or `dashboard.GENERATED.json` no longer matches a declared pack's `task.json` or `dashboard.json`, so the dashboard and a session asking what runs here read a roster that is not the repo's. Regenerate with `generate-flat-declarations.mjs --write`.
+
+The **task contract** and its checks are deliberately NOT here. Those ask whether a task is
+*written* correctly, which is authoring; every check above asks whether Claudinite is *working* in
+this repo. They live with the rest of the authoring surface.
+
+The scope cuts the other way too: a rule about how the **canon's own** content is maintained is not
+this pack's, however much it looks like one.
+
+`skill-loaded-before-editing` is the Stop-time half of **path-scoped skills**: a skill names
+the files it must be loaded for under `force-load-on-file-edits-paths` in its SKILL.md frontmatter
+`metadata` (the harness's own `paths` is a limiter on when it offers a skill, so it cannot carry
+this), the engine's PreToolUse guard holds a file tool aimed there until the session has
+loaded that skill, and this rule catches the edits the guard never saw (a `sed`, a heredoc) by
+asking the diff the same question. Both read one resolver,
+`engine/pack_loader/path-scoped-skills.mjs`. A load is a `Skill` tool call or a `Read` of the
+skill's own SKILL.md. `skills-index-current` keeps the generated
+`.claudinite/flat/claudinite-skills.GENERATED.md` — every mounted skill with what loads it, the
+scoped ones first — naming what the declared packs actually bundle.
+
+## Skills
+
+| Skill | For |
+|---|---|
+| [`adopt-claudinite`](skills/adopt-claudinite/SKILL.md) | setting a project up on Claudinite for the first time — mount, hooks, checks, skills — and re-vendoring one to pick up updates |
+| [`adopt-pack`](skills/adopt-pack/SKILL.md) | adding a pack to a repo that already runs Claudinite: declare, interview, re-vendor, scaffold, land |
+
+The adoption skills bundle two more checks of the same kind, over the answers a member stores
+against each declared pack's questions:
+
+| Check | Severity | Reason | Enforcement |
+|---|---|---|---|
+| `adoption-answers-pending` | medium | complexity | check: blocking |
+| `interview-answer-stale` | low | complexity | check: advisory |
+
+## Tasks
+
+| Task | when it runs | Runs when |
+|---|---|---|
+| `update` | `due:daily` | the mount is behind the canon, or a declared pack moved |
+| `adopt-requested-packs` | never — no `preconditions`; only from the item the fleet places | the repo carries an open pack-adoption request |
+
+`update` is the per-repo self-refresh — the task that converges a member's mount and stamps it. It
+is why `claudinite-lifecycle-declared` is blocking: a member runs `update` from its **vendored** copy, and
+`discoverTasks` finds only a literally-declared pack's tasks, so a repo that loses this pack's entry
+loses its self-refresh, and nothing is left that could deliver it one.
