@@ -1,0 +1,18 @@
+{
+  "v": 1,
+  "pack": "jwt",
+  "serial": 1,
+  "versions": [
+    {
+      "version": "60928.1",
+      "sha256": "7e4373529dc4a94de24951a8ac551d192e6dd7d4f7b0204a914661f77677faf9",
+      "size": 5274,
+      "minEngineVersion": "60928.1",
+      "requires": [],
+      "channel": "canary",
+      "revoked": false,
+      "publishedAt": "2026-10-01T14:32:10Z",
+      "sourceCommit": "27612838c695d2d6704966572cd86d34485e4751"
+    }
+  ]
+}
