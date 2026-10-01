@@ -1,0 +1,95 @@
+name: promote-packs
+
+# Rewrites pack index entries on the `vendored` branch and then on R2: hourly, promotes the canary
+# versions every configured canary workflow passed (tools/release/canaries.json); on dispatch with
+# a pack and version, promotes or revokes that one entry. docs/release.md.
+on:
+  schedule:
+    - cron: '17 * * * *'
+  workflow_dispatch:
+    inputs:
+      action:
+        description: promote or revoke the version below; with no pack, read the canary evidence
+        type: choice
+        options: [promote, revoke]
+        default: promote
+      pack:
+        description: pack id, for example basics
+        type: string
+        required: false
+      version:
+        description: the version to promote or revoke
+        type: string
+        required: false
+
+concurrency:
+  group: release-packs
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: release
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version-file: .node-version
+      - name: Promote or revoke
+        env:
+          PACKS_KEY: ${{ secrets.CN_PACKS_KEY }}
+          PACKS_CERT: ${{ secrets.CN_PACKS_CERT }}
+          GITHUB_TOKEN: ${{ github.token }}
+          ACTION: ${{ inputs.action }}
+          PACK: ${{ inputs.pack }}
+          VERSION: ${{ inputs.version }}
+          ACTOR: ${{ github.actor }}
+        run: |
+          signing=()
+          if [ -n "$PACKS_KEY" ] || [ -n "$PACKS_CERT" ]; then
+            if [ -z "$PACKS_KEY" ] || [ -z "$PACKS_CERT" ]; then
+              echo "::error::the release environment holds only one of CN_PACKS_KEY and CN_PACKS_CERT"
+              exit 1
+            fi
+            umask 077
+            printf '%s\n' "$PACKS_KEY" > "$RUNNER_TEMP/packs.key"
+            printf '%s\n' "$PACKS_CERT" > "$RUNNER_TEMP/packs.cert.json"
+            signing=(--key "$RUNNER_TEMP/packs.key" --cert "$RUNNER_TEMP/packs.cert.json")
+          else
+            echo "::warning::signed with the development key"
+          fi
+          if [ -n "$PACK" ]; then
+            node tools/release/release.mjs "$ACTION" --pack "$PACK" --version "$VERSION" --by "$ACTOR" --roots keys/dev/roots --summary "$GITHUB_STEP_SUMMARY" "${signing[@]}"
+          else
+            node tools/release/release.mjs evidence --out "$RUNNER_TEMP/evidence.json" --summary "$GITHUB_STEP_SUMMARY"
+            node tools/release/release.mjs promote --evidence "$RUNNER_TEMP/evidence.json" --roots keys/dev/roots --summary "$GITHUB_STEP_SUMMARY" "${signing[@]}"
+          fi
+
+  upload:
+    needs: promote
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: release
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version-file: .node-version
+      - name: Upload to R2 and read back through the CDN
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: node tools/release/release.mjs upload --r2 claudinite-packs --roots keys/dev/roots --remote origin --summary "$GITHUB_STEP_SUMMARY"

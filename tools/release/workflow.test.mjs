@@ -113,7 +113,7 @@ test('the build job reads only and holds no environment; publish holds release a
 });
 
 test('both jobs take Node from .node-version, and every action is pinned to a commit sha', () => {
-  for (const file of ['release-packs.yml', 'verify-import.yml', 'dev-key-expiry.yml']) {
+  for (const file of ['release-packs.yml', 'verify-import.yml', 'dev-key-expiry.yml', 'promote-packs.yml']) {
     const w = workflow(file);
     for (const [name, job] of Object.entries(w.jobs)) {
       for (const step of job.steps.filter((s) => s.uses)) {
@@ -170,4 +170,37 @@ test('upload runs after publish in the release environment, reads only, and gets
   assert.match(runs(upload), /node tools\/release\/release\.mjs upload --r2 claudinite-packs --roots keys\/dev\/roots --remote origin --summary "\$GITHUB_STEP_SUMMARY"/);
   assert.doesNotMatch(runs(upload), /node --test|release\.mjs (build|publish)|vendor\.mjs/);
   assert.doesNotMatch(runs(publish), /release\.mjs upload/);
+});
+
+test('promote-packs runs hourly off the hour and on dispatch with action, pack and version, in the release concurrency group', () => {
+  const w = workflow('promote-packs.yml');
+  assert.deepEqual(Object.keys(w.on).sort(), ['schedule', 'workflow_dispatch']);
+  const [minute, hour] = w.on.schedule[0].cron.split(' ');
+  assert.notEqual(minute, '0', 'GitHub drops on-the-hour crons under load');
+  assert.equal(hour, '*');
+  assert.deepEqual(Object.keys(w.on.workflow_dispatch.inputs).sort(), ['action', 'pack', 'version']);
+  assert.deepEqual(w.on.workflow_dispatch.inputs.action.options, ['promote', 'revoke']);
+  assert.equal(w.concurrency.group, workflow('release-packs.yml').concurrency.group);
+  assert.equal(w.concurrency['cancel-in-progress'], false);
+});
+
+test('promote-packs: the promote job writes in the release environment; upload follows with only the Cloudflare secrets', () => {
+  const { promote, upload } = workflow('promote-packs.yml').jobs;
+  assert.equal(promote.environment, 'release');
+  assert.deepEqual(promote.permissions, { contents: 'write' });
+  assert.equal(upload.needs, 'promote');
+  assert.equal(upload.environment, 'release');
+  assert.deepEqual(upload.permissions, { contents: 'read' });
+  const runs = (job) => job.steps.map((s) => s.run ?? '').join('\n');
+  const r = runs(promote);
+  assert.match(r, /node tools\/release\/release\.mjs evidence --out /);
+  assert.match(r, /node tools\/release\/release\.mjs promote --evidence /);
+  assert.match(r, /node tools\/release\/release\.mjs "\$ACTION" --pack "\$PACK" --version "\$VERSION" --by "\$ACTOR"/);
+  assert.doesNotMatch(r, /\$\{\{/, 'inputs reach the script through env, never interpolated into it');
+  assert.doesNotMatch(r, /node --test|release\.mjs (build|publish)|vendor\.mjs/);
+  const env = Object.assign({}, ...promote.steps.map((s) => s.env ?? {}));
+  assert.equal(env.ACTOR, '${{ github.actor }}');
+  assert.match(runs(upload), /node tools\/release\/release\.mjs upload --r2 claudinite-packs --roots keys\/dev\/roots --remote origin --summary "\$GITHUB_STEP_SUMMARY"/);
+  const secrets = upload.steps.flatMap((s) => Object.entries(s.env ?? {})).filter(([, v]) => String(v).includes('secrets.'));
+  assert.deepEqual(secrets.map(([k]) => k).sort(), ['CLOUDFLARE_ACCOUNT_ID', 'CLOUDFLARE_API_TOKEN']);
 });
