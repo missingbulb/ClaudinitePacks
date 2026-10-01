@@ -161,6 +161,15 @@ test('head() HEADs the object and returns its ETag, or null when R2 answers 404'
   assert.deepEqual(seen, ['HEAD', 'HEAD']);
 });
 
+test('head() asks for the identity encoding, signed, so Cloudflare never weakens the ETag by compressing', async () => {
+  const seen = [];
+  const fetch = async (url, init) => { seen.push(init.headers); return new Response(null, { status: 200, headers: { etag: '"acme-etag"' } }); };
+  const bucket = s3Bucket({ accountId: 'acme0123', bucket: 'claudinite-packs', credentials: VECTORS.credentials, fetch });
+  await bucket.head('packs/acme-pack/index.json');
+  assert.equal(seen[0]['accept-encoding'], 'identity');
+  assert.match(seen[0].authorization, /SignedHeaders=accept-encoding;host;/);
+});
+
 // fakeBucket plus head(), answering the single-PUT ETag (the quoted MD5 hex) unless etags overrides
 // it, and counting GETs.
 function etagBucket(initial = {}, etags = {}) {
@@ -350,7 +359,9 @@ function fakeWorld({ domain = true, cdnFailures = 0 } = {}) {
       }
       if (init.method === 'HEAD') {
         if (!store.has(key)) return new Response(null, { status: 404 });
-        return new Response(null, { status: 200, headers: { etag: `"${createHash('md5').update(store.get(key)).digest('hex')}"` } });
+        // Cloudflare compresses a JSON answer when the request accepts it, weakening the ETag.
+        const weak = key.endsWith('.json') && init.headers['accept-encoding'] !== 'identity' ? 'W/' : '';
+        return new Response(null, { status: 200, headers: { etag: `${weak}"${createHash('md5').update(store.get(key)).digest('hex')}"` } });
       }
       return store.has(key) ? new Response(store.get(key)) : new Response('', { status: 404 });
     }

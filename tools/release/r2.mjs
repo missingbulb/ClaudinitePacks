@@ -87,9 +87,11 @@ export function s3Bucket({ accountId, bucket, credentials, fetch = globalThis.fe
     return fetch(`https://${host}${path.split('/').map(encodeSegment).join('/')}`, { method, headers: send, body });
   };
   return {
-    // The object's ETag, or null when it is absent.
+    // The object's ETag, or null when it is absent. Asking for the identity encoding keeps the
+    // ETag strong: fetch otherwise accepts gzip and br, Cloudflare then compresses a compressible
+    // type such as application/json and answers W/"<md5>", which no longer equals the MD5.
     async head(key) {
-      const res = await request('HEAD', key);
+      const res = await request('HEAD', key, { headers: { 'accept-encoding': 'identity' } });
       if (res.status === 404) return null;
       if (!res.ok) throw new R2Error(await failure(`HEAD ${key}`, res));
       return { etag: res.headers.get('etag') };

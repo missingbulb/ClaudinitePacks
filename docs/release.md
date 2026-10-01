@@ -175,8 +175,10 @@ packs/<id>/index.sig.json      application/json   public, max-age=300           
    attaching it if absent (Cloudflare writes the DNS record). A domain attached but disabled fails
    the run; so does any unexpected status, with the response body.
 3. Plans from the branch, never from what a run published: every version in every index, and each
-   index pair. Each object is first read with a HEAD: an ETag equal to the quoted MD5 hex of the
-   branch's bytes (R2's ETag for a single PUT) shows it equal with nothing downloaded; any other
+   index pair. Each object is first read with a HEAD, sent with `Accept-Encoding: identity` since
+   Cloudflare weakens the ETag of a JSON answer it compresses to `W/"<md5>"`: an ETag equal to the
+   quoted MD5 hex of the branch's bytes (R2's ETag for a single PUT) shows it equal with nothing
+   downloaded; any other
    ETag (a multipart upload, other bytes) falls back to a GET and a byte compare. The log says how
    many objects each way compared. An archive absent from the bucket is PUT with
    `If-None-Match: *`; one present with equal bytes is skipped; one present with other bytes fails the run naming the key and both
