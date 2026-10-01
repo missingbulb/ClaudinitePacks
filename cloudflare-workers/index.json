@@ -1,0 +1,18 @@
+{
+  "v": 1,
+  "pack": "cloudflare-workers",
+  "serial": 1,
+  "versions": [
+    {
+      "version": "60928.1",
+      "sha256": "0d4b882f77326506d778a7dda06a2b6246ff7016cbac455a32bc7c9137384420",
+      "size": 3860,
+      "minEngineVersion": "60928.1",
+      "requires": [],
+      "channel": "canary",
+      "revoked": false,
+      "publishedAt": "2026-10-01T14:32:10Z",
+      "sourceCommit": "27612838c695d2d6704966572cd86d34485e4751"
+    }
+  ]
+}
