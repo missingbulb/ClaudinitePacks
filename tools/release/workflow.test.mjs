@@ -190,6 +190,23 @@ test('verify-import\'s ancestry step passes a branch carrying the import tip and
   assert.match(bad.stdout, /::error::the import tip [0-9a-f]{40} is not in this branch's history/);
 });
 
+test('release-plan runs on every pull request and on dispatch, reads only, holds no secret and runs plan --content', () => {
+  const w = workflow('verify-import.yml');
+  assert.ok('pull_request' in w.on && 'workflow_dispatch' in w.on);
+  const job = w.jobs['release-plan'];
+  assert.ok(job, 'verify-import.yml has a release-plan job');
+  assert.equal(job.if, "github.event_name != 'push'");
+  assert.deepEqual(job.permissions, { contents: 'read' });
+  assert.equal(job.environment, undefined);
+  const checkout = job.steps.find((s) => s.uses?.startsWith('actions/checkout@'));
+  assert.equal(checkout.with['fetch-depth'], 0);
+  assert.equal(checkout.with['persist-credentials'], false);
+  assert.ok(job.steps.some((s) => s.with?.['node-version-file'] === '.node-version'));
+  assert.doesNotMatch(JSON.stringify(job), /secrets\./);
+  const runs = job.steps.map((s) => s.run ?? '').join('\n');
+  assert.match(runs, /^node tools\/release\/release\.mjs plan --content --remote origin$/m);
+});
+
 test('dev-key-expiry runs weekly off the hour and on dispatch, reads only, and runs the expiry script', () => {
   const w = workflow('dev-key-expiry.yml');
   assert.deepEqual(Object.keys(w.on).sort(), ['schedule', 'workflow_dispatch']);

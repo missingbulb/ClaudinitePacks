@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // The pack release program, split so the job holding the signing key never runs pack code:
 //
-//   node tools/release/release.mjs plan [--packs <dir>] [--repo <dir>] [--remote <name|url>]
+//   node tools/release/release.mjs plan [--content] [--packs <dir>] [--repo <dir>] [--remote <name|url>]
 //   node tools/release/release.mjs build --out <dir> [--packs <dir>]
 //   node tools/release/release.mjs publish --archives <dir> --roots <dir> [--key <file> --cert <file>]
 //                                  [--repo <dir>] [--remote <name|url>] [--summary <file>] [--now <instant>]
@@ -11,7 +11,9 @@
 //   node tools/release/release.mjs promote --evidence <file> --roots <dir> [--canaries <file>] [...]
 //   node tools/release/release.mjs promote|revoke --pack <id> --version <v> --by <login> --roots <dir> [...]
 //
-// `build` vendors every pack under --packs (default: this repo's packs/) into --out, with a
+// `plan` says per pack whether its version is to publish or already on `vendored`; with
+// --content it also vendors each published pack afresh and exits 1 when the files differ from the
+// branch's, the pull-request half of "a version is published once". `build` vendors every pack under --packs (default: this repo's packs/) into --out, with a
 // packs.json describing them and a SHA256SUMS over both. `publish` checks SHA256SUMS first, then
 // for each pack whose version is absent on the remote's `vendored` branch writes the unpacked set,
 // the archive and a newly signed index as one commit, refuses a published version whose unpacked
@@ -24,7 +26,8 @@
 // the layout and formats.
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { appendFileSync, copyFileSync, existsSync, lstatSync, mkdirSync, readdirSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs';
+import { appendFileSync, copyFileSync, existsSync, lstatSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, unlinkSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { keyId, parsePrivateKey, readRoots, SignError } from '../sign/sign.mjs';
@@ -82,12 +85,38 @@ const onBranch = (repo, commit, path) => commit !== null && (() => {
   try { git(repo, ['cat-file', '-e', `${commit}:${path}`]); return true; } catch { return false; }
 })();
 
-function plan(opts) {
-  const packs = readPacks(resolve(opts.packs ?? join(REPO_ROOT, 'packs')));
+// With content, each published pack is vendored afresh and compared with its unpacked set on the
+// branch: a change to shipped content under a published version fails, naming the paths.
+async function plan(opts, { content = false } = {}) {
+  const packsDir = resolve(opts.packs ?? join(REPO_ROOT, 'packs'));
+  const packs = readPacks(packsDir);
   const repo = resolve(opts.repo ?? '.');
   const tip = fetchVendored(repo, opts.remote ?? 'origin');
-  for (const p of packs) console.log(`${onBranch(repo, tip, `${p.id}/${p.version}`) ? 'published' : 'publish'} ${p.id} ${p.version}`);
-  return 0;
+  const vendorPack = content ? (await import('../vendor/vendor.mjs')).vendorPack : null;
+  const scratch = content ? mkdtempSync(join(tmpdir(), 'release-plan-')) : null;
+  let changed = 0;
+  try {
+    for (const p of packs) {
+      if (!onBranch(repo, tip, `${p.id}/${p.version}`)) { console.log(`publish ${p.id} ${p.version}`); continue; }
+      if (!content) { console.log(`published ${p.id} ${p.version}`); continue; }
+      const work = join(scratch, p.id);
+      const candidate = join(work, 'candidate');
+      const published = join(work, 'published');
+      mkdirSync(candidate, { recursive: true });
+      mkdirSync(published);
+      vendorPack(join(packsDir, p.id), work);
+      execFileSync('tar', ['-xzf', join(work, `${p.id}-${p.version}.tar.gz`), '-C', candidate]);
+      git(repo, ['archive', '--format=tar', '-o', join(work, 'published.tar'), `${tip}:${p.id}/${p.version}`]);
+      execFileSync('tar', ['-xf', join(work, 'published.tar'), '-C', published]);
+      const d = compareTrees(published, candidate);
+      if (d) changed++;
+      console.log(`published ${p.id} ${p.version} ${d ? `CHANGED: ${d}` : 'unchanged'}`);
+    }
+  } finally {
+    if (scratch) rmSync(scratch, { recursive: true, force: true });
+  }
+  if (changed) console.log(`::error::${changed} pack(s) changed shipped content under a published version; bump each one's pack.json version`);
+  return changed ? 1 : 0;
 }
 
 async function build(opts) {
@@ -355,7 +384,7 @@ function writeSummary(file, written, key, dev) {
 }
 
 async function main([cmd, ...args]) {
-  if (cmd === 'plan') return plan(parseArgs(args, ['packs', 'repo', 'remote']));
+  if (cmd === 'plan') return plan(parseArgs(args.filter((a) => a !== '--content'), ['packs', 'repo', 'remote']), { content: args.includes('--content') });
   if (cmd === 'build') return build(parseArgs(args, ['packs', 'out']));
   if (cmd === 'evidence') return evidence(parseArgs(args, ['out', 'canaries', 'repo', 'remote', 'summary']));
   if (cmd === 'promote') return rewrite('promote', parseArgs(args, ['evidence', 'canaries', 'pack', 'version', 'by', 'roots', 'key', 'cert', 'repo', 'remote', 'summary']));

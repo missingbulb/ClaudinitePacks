@@ -48,3 +48,23 @@ jobs:
         run: |
           git fetch -q "$RUNNER_TEMP/import/out" import:refs/ci/import
           git merge-base --is-ancestor refs/ci/import HEAD || { echo "::error::the import tip $(git rev-parse refs/ci/import) is not in this branch's history; merge the import branch as docs/import.md shows"; exit 1; }
+
+  # The pull-request half of "a version is published once": a pack whose shipped content changed
+  # under a version already on `vendored` fails here, before the merge; release-packs' publish job
+  # refuses the same thing after it. No secrets, so a fork's pull request runs it too.
+  release-plan:
+    if: github.event_name != 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version-file: .node-version
+      - name: Every changed pack carries a new version
+        run: node tools/release/release.mjs plan --content --remote origin

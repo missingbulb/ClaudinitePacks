@@ -256,3 +256,49 @@ test('plan lists every pack and whether its version is already on vendored', () 
   const after = run(['plan', '--packs', join(w.src, 'packs'), '--repo', w.src, '--remote', w.remote]);
   assert.equal(after.stdout, 'published acme-pack 60101.1\npublish acme-pack-two 60101.2\n');
 });
+
+const planContent = (w) => run(['plan', '--content', '--packs', join(w.src, 'packs'), '--repo', w.src, '--remote', w.remote]);
+
+test('plan --content after a publish says every pack is unchanged and exits 0', () => {
+  const w = world();
+  assert.equal(publish(w, build(w).archives, testChain(scratch())).status, 0);
+  const p = planContent(w);
+  assert.equal(p.status, 0, p.out);
+  assert.equal(p.stdout, 'published acme-pack 60101.1 unchanged\npublished acme-pack-two 60101.1 unchanged\n');
+});
+
+test('plan --content fails a shipped file changed without a bump, naming the pack and every differing, missing or extra path', () => {
+  const w = world();
+  assert.equal(publish(w, build(w).archives, testChain(scratch())).status, 0);
+  put(w.src, 'packs/acme-pack/RULES.md', '# changed without a bump\n');
+  put(w.src, 'packs/acme-pack/skills/acme-skill/EXTRA.md', 'new\n');
+  git(w.src, 'rm', '-q', 'packs/acme-pack-two/RULES.md');
+  commitAll(w.src, 'edit');
+  const p = planContent(w);
+  assert.equal(p.status, 1, p.out);
+  assert.match(p.stdout, /^published acme-pack 60101\.1 CHANGED: differing: RULES\.md; extra: skills\/acme-skill\/EXTRA\.md$/m);
+  assert.match(p.stdout, /^published acme-pack-two 60101\.1 CHANGED: missing: RULES\.md$/m);
+});
+
+test('plan --content ignores a change to a file the vendored set drops, so a test-only change needs no bump', () => {
+  const w = world();
+  assert.equal(publish(w, build(w).archives, testChain(scratch())).status, 0);
+  put(w.src, 'packs/acme-pack/test/acme.test.mjs', 'changed\n');
+  put(w.src, 'packs/acme-pack/test/x.mjs', 'new\n');
+  commitAll(w.src, 'tests only');
+  const p = planContent(w);
+  assert.equal(p.status, 0, p.out);
+  assert.match(p.stdout, /^published acme-pack 60101\.1 unchanged$/m);
+});
+
+test('plan --content: a bumped version or a pack absent from vendored is to publish, exit 0', () => {
+  const w = world();
+  assert.equal(publish(w, build(w).archives, testChain(scratch())).status, 0);
+  put(w.src, 'packs/acme-pack/pack.json', packJson('60101.2', { requires: ['acme-pack-two'] }));
+  put(w.src, 'packs/acme-pack/RULES.md', '# revised\n');
+  put(w.src, 'packs/acme-pack-three/pack.json', packJson('60101.1'));
+  commitAll(w.src, 'bump and add');
+  const p = planContent(w);
+  assert.equal(p.status, 0, p.out);
+  assert.equal(p.stdout, 'publish acme-pack 60101.2\npublish acme-pack-three 60101.1\npublished acme-pack-two 60101.1 unchanged\n');
+});

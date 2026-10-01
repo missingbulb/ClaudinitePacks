@@ -26,6 +26,17 @@ The workflow has three jobs:
 The concurrency group `release-packs`, shared with `promote-packs.yml`, is the single writer;
 nothing force-pushes.
 
+## Before a change merges
+
+The `release-plan` job in `.github/workflows/verify-import.yml` runs on every pull request, with
+no secrets, so a pull request from a fork runs it too: `release.mjs plan --content --remote origin`
+vendors each pack whose version is already on `vendored` and compares the files with the branch's
+unpacked set. A differing, missing or extra path fails the job with
+`published <id> <version> CHANGED: differing: <path>` (or `missing:`, `extra:`); bump that pack's
+`pack.json` version. A change only to what the vendored set drops (`test/`, `docs/`,
+`provenance/` at the pack root) needs no bump. The publish job's own refusal is the backstop after
+the merge.
+
 ## The `vendored` branch
 
 An orphan branch, written only by the workflow:
