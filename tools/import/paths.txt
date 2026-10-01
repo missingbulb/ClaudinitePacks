@@ -35,7 +35,6 @@ updates/terminals.mjs
 .github/actions/bump-extension-patch/bump.mjs
 .github/actions/read-release-config/action.yml
 .github/actions/read-release-config/read-config.mjs
-.github/actions/report-failure/action.yml
 .github/workflows/chrome-extension-daily-release.yml
 .github/workflows/chrome-extension-publish-store.yml
 .github/workflows/chrome-extension-release.yml
@@ -49,3 +48,5 @@ updates/terminals.mjs
 # dropped: docs/
 # dropped: .claudinite/
 # dropped: routines/
+# Still live at Claudinite's head, so carrying it would put a non-pack file at the tip.
+# dropped: .github/actions/report-failure/action.yml
