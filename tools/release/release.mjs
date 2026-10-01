@@ -9,8 +9,8 @@
 // `build` vendors every pack under --packs (default: this repo's packs/) into --out, with a
 // packs.json describing them and a SHA256SUMS over both. `publish` checks SHA256SUMS first, then
 // for each pack whose version is absent on the remote's `vendored` branch writes the unpacked set,
-// the archive and a newly signed index as one commit, refuses a published version whose bytes
-// differ, re-verifies every index it wrote against --roots, and pushes once. The signing key is
+// the archive and a newly signed index as one commit, refuses a published version whose unpacked
+// files differ (gzip bytes alone may differ), re-verifies every index it wrote against --roots, and pushes once. The signing key is
 // --key/--cert, else the files CN_PACKS_KEY/CN_PACKS_CERT name, else the development key under
 // keys/dev/. The R2 upload is a dry run listing the objects it would send. docs/release.md has
 // the branch layout and index format.
@@ -145,6 +145,35 @@ function checkSums(dir) {
   return manifest;
 }
 
+// Every regular file under dir as path -> "sha256 mode", mode reduced to 644 or 755 as the
+// vendored set and git both record it.
+function treeManifest(dir) {
+  const out = new Map();
+  const walk = (rel) => {
+    for (const name of readdirSync(join(dir, rel)).sort()) {
+      const path = rel ? `${rel}/${name}` : name;
+      const st = lstatSync(join(dir, path));
+      if (st.isDirectory()) walk(path);
+      else out.set(path, `${sha256(readFileSync(join(dir, path)))} ${st.mode & 0o111 ? '755' : '644'}`);
+    }
+  };
+  walk('');
+  return out;
+}
+
+// What differs between the published tree and a candidate one, as "differing: …; missing: …;
+// extra: …" with paths in byte order, or null when the two hold the same files.
+export function compareTrees(published, candidate) {
+  const a = treeManifest(published);
+  const b = treeManifest(candidate);
+  const byBytes = (x, y) => Buffer.compare(Buffer.from(x), Buffer.from(y));
+  const differing = [...a.keys()].filter((k) => b.has(k) && a.get(k) !== b.get(k)).sort(byBytes);
+  const missing = [...a.keys()].filter((k) => !b.has(k)).sort(byBytes);
+  const extra = [...b.keys()].filter((k) => !a.has(k)).sort(byBytes);
+  const parts = [['differing', differing], ['missing', missing], ['extra', extra]].filter(([, l]) => l.length).map(([n, l]) => `${n}: ${l.join(', ')}`);
+  return parts.length ? parts.join('; ') : null;
+}
+
 function signingKey(opts) {
   const keyPath = opts.key ?? process.env.CN_PACKS_KEY;
   const certPath = opts.cert ?? process.env.CN_PACKS_CERT;
@@ -187,7 +216,14 @@ function publish(opts) {
       const entry = previous?.versions.find((e) => e.version === p.version);
       if (entry || existsSync(join(tree, p.id, p.version))) {
         if (!entry) conflicts.push(`${p.id} ${p.version} is on ${BRANCH} but not in its index`);
-        else if (entry.sha256 !== p.sha256) conflicts.push(`${p.id} ${p.version} is already published with sha256 ${entry.sha256}; this build has sha256 ${p.sha256}. Bump the version.`);
+        else if (!existsSync(join(tree, p.id, p.version))) conflicts.push(`${p.id} ${p.version} is in its index but its unpacked set is not on ${BRANCH}`);
+        else if (entry.sha256 !== p.sha256) {
+          const unpacked = join(scratch, 'compare', p.id);
+          mkdirSync(unpacked, { recursive: true });
+          execFileSync('tar', ['-xzf', join(archives, p.archive), '-C', unpacked]);
+          const d = compareTrees(join(tree, p.id, p.version), unpacked);
+          if (d) conflicts.push(`${p.id} ${p.version} is already published with different content (${d}). Bump the version.`);
+        }
         continue;
       }
       pending.push({ ...p, previous });

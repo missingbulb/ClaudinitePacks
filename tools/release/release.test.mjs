@@ -5,6 +5,7 @@ import { createHash, generateKeyPairSync, sign as edSign } from 'node:crypto';
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
+import { gunzipSync, gzipSync } from 'node:zlib';
 import { DOMAINS, keyId, readRoots } from '../sign/sign.mjs';
 import { readIndex, verifyIndex } from './index.mjs';
 
@@ -160,19 +161,51 @@ test('a version bump publishes exactly one commit; the other index keeps its byt
   assert.deepEqual(show(w, 'acme-pack-two/index.json'), otherIndex);
 });
 
-test('the same version with different content fails naming pack, version and SHA-256s, branch untouched', () => {
+// Rewrites one archive with a different gzip level, keeping packs.json and SHA256SUMS consistent:
+// the tar inside is unchanged, the gzip bytes are not.
+function regzip(archives, id, version) {
+  const name = `${id}-${version}.tar.gz`;
+  const file = join(archives, name);
+  const before = readFileSync(file);
+  const after = gzipSync(gunzipSync(before), { level: 1 });
+  assert.notDeepEqual(after, before);
+  writeFileSync(file, after);
+  const manifest = JSON.parse(readFileSync(join(archives, 'packs.json'), 'utf8'));
+  const p = manifest.packs.find((x) => x.archive === name);
+  p.sha256 = sha256(after);
+  p.size = after.length;
+  writeFileSync(join(archives, 'packs.json'), JSON.stringify(manifest, null, 2) + '\n');
+  const sums = readFileSync(join(archives, 'SHA256SUMS'), 'utf8').split('\n').filter(Boolean)
+    .map((l) => (l.endsWith(`  ${name}`) ? `${p.sha256}  ${name}` : l.endsWith('  packs.json') ? `${sha256(readFileSync(join(archives, 'packs.json')))}  packs.json` : l));
+  writeFileSync(join(archives, 'SHA256SUMS'), sums.join('\n') + '\n');
+}
+
+test('the same version re-gzipped differently is nothing to publish: the unpacked tree is compared', () => {
   const w = world();
   const chain = testChain(scratch());
   assert.equal(publish(w, build(w).archives, chain).status, 0);
   const tip = git(w.remote, 'rev-parse', 'vendored');
-  const published = readIndex(show(w, 'acme-pack/index.json')).versions[0].sha256;
-  put(w.src, 'packs/acme-pack/RULES.md', '# changed without a bump\n');
-  commitAll(w.src, 'edit');
   const b = build(w);
+  regzip(b.archives, 'acme-pack', '60101.1');
   const p = publish(w, b.archives, chain);
+  assert.equal(p.status, 0, p.out);
+  assert.match(p.out, /^nothing to publish$/m);
+  assert.equal(git(w.remote, 'rev-parse', 'vendored'), tip);
+});
+
+test('the same version with different content fails naming pack, version and the differing path, branch untouched', () => {
+  const w = world();
+  const chain = testChain(scratch());
+  assert.equal(publish(w, build(w).archives, chain).status, 0);
+  const tip = git(w.remote, 'rev-parse', 'vendored');
+  put(w.src, 'packs/acme-pack/RULES.md', '# changed without a bump\n');
+  put(w.src, 'packs/acme-pack/skills/acme-skill/EXTRA.md', 'new\n');
+  commitAll(w.src, 'edit');
+  const p = publish(w, build(w).archives, chain);
   assert.notEqual(p.status, 0);
-  const rebuilt = readFileSync(join(b.archives, 'SHA256SUMS'), 'utf8').match(/^([0-9a-f]{64})  acme-pack-60101\.1\.tar\.gz$/m)[1];
-  assert.match(p.out, new RegExp(`acme-pack 60101\\.1 .*${published}.*${rebuilt}`));
+  assert.match(p.out, /acme-pack 60101\.1 .*differing: RULES\.md/);
+  assert.match(p.out, /extra: skills\/acme-skill\/EXTRA\.md/);
+  assert.doesNotMatch(p.out, /[0-9a-f]{64}/, 'the message names paths, not gzip hashes');
   assert.equal(git(w.remote, 'rev-parse', 'vendored'), tip);
 });
 
