@@ -6,9 +6,19 @@ import { keyId, parsePrivateKey, parsePublicKey, readRoots, verifyCertificate, d
 const DEV = new URL('../../keys/dev/', import.meta.url);
 const read = (rel) => readFileSync(new URL(rel, DEV), 'utf8');
 
-test('the development packs certificate verifies against keys/dev/roots for use packs today', () => {
-  const body = verifyCertificate(JSON.parse(read('packs.cert.json')), readRoots(new URL('roots/', DEV).pathname), 'packs', new Date());
+// The window comes from the certificate's own payload, so these cases do not go red when the
+// development certificate expires; dev-key-expiry.yml is what reminds about the renewal.
+const cert = () => JSON.parse(read('packs.cert.json'));
+const window = () => JSON.parse(decodeB64(cert().payload).toString('utf8'));
+const roots = () => readRoots(new URL('roots/', DEV).pathname);
+
+test('the development packs certificate verifies against keys/dev/roots for use packs a day after notBefore', () => {
+  const body = verifyCertificate(cert(), roots(), 'packs', new Date(Date.parse(window().notBefore) + 86400e3));
   assert.equal(body.use, 'packs');
+});
+
+test('the development packs certificate is not valid a second after its notAfter', () => {
+  assert.throws(() => verifyCertificate(cert(), roots(), 'packs', new Date(Date.parse(window().notAfter) + 1000)), /certificate has expired/);
 });
 
 test('the certified public key is keys/dev/packs.pub, and packs.key is its private half', () => {

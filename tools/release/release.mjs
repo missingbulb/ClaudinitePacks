@@ -4,7 +4,7 @@
 //   node tools/release/release.mjs plan [--packs <dir>] [--repo <dir>] [--remote <name|url>]
 //   node tools/release/release.mjs build --out <dir> [--packs <dir>]
 //   node tools/release/release.mjs publish --archives <dir> --roots <dir> [--key <file> --cert <file>]
-//                                  [--repo <dir>] [--remote <name|url>] [--summary <file>]
+//                                  [--repo <dir>] [--remote <name|url>] [--summary <file>] [--now <instant>]
 //
 // `build` vendors every pack under --packs (default: this repo's packs/) into --out, with a
 // packs.json describing them and a SHA256SUMS over both. `publish` checks SHA256SUMS first, then
@@ -174,6 +174,15 @@ export function compareTrees(published, candidate) {
   return parts.length ? parts.join('; ') : null;
 }
 
+// The instant the self-check verifies at: the clock, or --now, which exists for tests that sign
+// with a certificate whose window is not today's. publishedAt never reads it.
+function selfCheckInstant(now) {
+  if (now === undefined) return new Date();
+  const t = Date.parse(now);
+  if (Number.isNaN(t)) throw new ReleaseError(`--now "${now}" is not a date`);
+  return new Date(t);
+}
+
 function signingKey(opts) {
   const keyPath = opts.key ?? process.env.CN_PACKS_KEY;
   const certPath = opts.cert ?? process.env.CN_PACKS_CERT;
@@ -259,7 +268,7 @@ function publish(opts) {
       console.log(`Release ${p.id} ${p.version}`);
     }
 
-    const now = new Date();
+    const now = selfCheckInstant(opts.now);
     for (const p of written) {
       const bytes = Buffer.from(execFileSync('git', [`--git-dir=${gitDir}`, 'show', `${parent}:${p.id}/index.json`]));
       const sig = JSON.parse(execFileSync('git', [`--git-dir=${gitDir}`, 'show', `${parent}:${p.id}/index.sig.json`], { encoding: 'utf8' }));
@@ -305,7 +314,7 @@ function writeSummary(file, written, key, dev) {
 async function main([cmd, ...args]) {
   if (cmd === 'plan') return plan(parseArgs(args, ['packs', 'repo', 'remote']));
   if (cmd === 'build') return build(parseArgs(args, ['packs', 'out']));
-  if (cmd === 'publish') return publish(parseArgs(args, ['archives', 'roots', 'key', 'cert', 'repo', 'remote', 'summary']));
+  if (cmd === 'publish') return publish(parseArgs(args, ['archives', 'roots', 'key', 'cert', 'repo', 'remote', 'summary', 'now']));
   console.error('usage: release.mjs plan | build --out <dir> | publish --archives <dir> --roots <dir> (see the header)');
   return 2;
 }

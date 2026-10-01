@@ -12,6 +12,13 @@ import { readIndex, verifyIndex } from './index.mjs';
 const RELEASE = new URL('./release.mjs', import.meta.url).pathname;
 const REPO_ROOT = new URL('../../', import.meta.url).pathname;
 const DEV_ROOTS = join(REPO_ROOT, 'keys/dev/roots');
+// The development certificate's notBefore plus one day: an instant inside its window that does
+// not move with the clock, so the dev-key case stays green past the certificate's expiry.
+function devCertInstant() {
+  const cert = JSON.parse(readFileSync(join(REPO_ROOT, 'keys/dev/packs.cert.json'), 'utf8'));
+  const body = JSON.parse(Buffer.from(cert.payload, 'base64url').toString('utf8'));
+  return new Date(Date.parse(body.notBefore) + 86400e3).toISOString();
+}
 const scratch = () => mkdtempSync(join(tmpdir(), 'acme-release-'));
 
 const GIT_ENV = {
@@ -221,11 +228,28 @@ test('a pack.json without minEngineVersion fails the build naming the pack', () 
 
 test('without CN_PACKS_KEY and CN_PACKS_CERT it signs with the development key and says so', () => {
   const w = world();
-  const p = publish(w, build(w).archives, { roots: DEV_ROOTS });
+  const p = publish(w, build(w).archives, { roots: DEV_ROOTS }, ['--now', devCertInstant()]);
   assert.equal(p.status, 0, p.out);
   assert.match(p.out, /^signing with the development key keys\/dev\/packs\.key \(trusted by no member\)$/m);
   const devCert = JSON.parse(readFileSync(join(REPO_ROOT, 'keys/dev/packs.cert.json'), 'utf8'));
   assert.deepEqual(JSON.parse(show(w, 'acme-pack/index.sig.json')).certificate, devCert);
+});
+
+test('--now moves only the self-check instant; publishedAt stays the real clock', () => {
+  const chain = testChain(scratch());
+  const late = new Date(Date.now() + 60 * 86400e3).toISOString();
+  const w = world();
+  const expired = publish(w, build(w).archives, chain, ['--now', late]);
+  assert.notEqual(expired.status, 0);
+  assert.match(expired.out, /self-check failed .*certificate has expired/);
+  assert.equal(spawnSync('git', ['rev-parse', '--verify', '-q', 'vendored'], { cwd: w.remote }).status, 1);
+
+  const w2 = world();
+  const early = new Date(Date.now() + 86400e3).toISOString();
+  const p = publish(w2, build(w2).archives, chain, ['--now', early]);
+  assert.equal(p.status, 0, p.out);
+  const publishedAt = Date.parse(readIndex(show(w2, 'acme-pack/index.json')).versions[0].publishedAt);
+  assert.ok(Math.abs(publishedAt - Date.now()) < 60e3, `publishedAt ${publishedAt} is not the real clock`);
 });
 
 test('only one of CN_PACKS_KEY and CN_PACKS_CERT set fails before anything is pushed', () => {
