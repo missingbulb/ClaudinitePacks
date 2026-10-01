@@ -1,0 +1,18 @@
+{
+  "v": 1,
+  "pack": "headless-browser",
+  "serial": 1,
+  "versions": [
+    {
+      "version": "60928.1",
+      "sha256": "3d80946e3d9ba08a031dde53c7989d865ae5bb6a86ef01e48cdb1d585828bbe3",
+      "size": 7500,
+      "minEngineVersion": "60928.1",
+      "requires": [],
+      "channel": "canary",
+      "revoked": false,
+      "publishedAt": "2026-10-01T14:32:10Z",
+      "sourceCommit": "27612838c695d2d6704966572cd86d34485e4751"
+    }
+  ]
+}
