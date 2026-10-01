@@ -178,13 +178,13 @@ packs/<id>/index.sig.json      application/json   public, max-age=300           
    index pair. Each object is first read with a HEAD, sent with `Accept-Encoding: identity` since
    Cloudflare weakens the ETag of a JSON answer it compresses to `W/"<md5>"`: an ETag equal to the
    quoted MD5 hex of the branch's bytes (R2's ETag for a single PUT) shows it equal with nothing
-   downloaded; any other
-   ETag (a multipart upload, other bytes) falls back to a GET and a byte compare. The log says how
-   many objects each way compared. An archive absent from the bucket is PUT with
-   `If-None-Match: *`; one present with equal bytes is skipped; one present with other bytes fails the run naming the key and both
-   SHA-256s before anything is written. An index pair differing from the branch is rewritten,
-   `index.json` then `index.sig.json`. A `412` on an archive is a race with another writer, which
-   the concurrency group rules out, so it fails rather than being retried as an overwrite.
+   downloaded; any other ETag (a multipart upload, other bytes) falls back to a GET and a byte
+   compare. The log says how many objects each way compared. An archive absent from the bucket is
+   PUT with `If-None-Match: *`; one present with equal bytes is skipped; one present with other
+   bytes fails the run naming the key and both SHA-256s before anything is written. An index pair
+   differing from the branch is rewritten, `index.json` then `index.sig.json`. A `412` on an
+   archive is a race with another writer, which the concurrency group rules out, so it fails
+   rather than being retried as an overwrite.
 4. Reads every object back through the CDN, the index pair with `?s=<serial>`, compares bytes
    with the branch and verifies each signature against `--roots`. The summary lists per pack what
    it PUT and skipped. In the run whose setup attached the custom domain, a `403`, a `404` or a

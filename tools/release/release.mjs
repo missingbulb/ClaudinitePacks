@@ -1,29 +1,34 @@
 #!/usr/bin/env node
 // The pack release program, split so the job holding the signing key never runs pack code:
 //
-//   node tools/release/release.mjs plan [--content] [--packs <dir>] [--repo <dir>] [--remote <name|url>]
+//   node tools/release/release.mjs plan [--content] [--packs <dir>] [--repo <dir>]
+//                                  [--remote <name|url>]
 //   node tools/release/release.mjs build --out <dir> [--packs <dir>]
-//   node tools/release/release.mjs publish --archives <dir> --roots <dir> [--key <file> --cert <file>]
-//                                  [--repo <dir>] [--remote <name|url>] [--summary <file>] [--now <instant>]
+//   node tools/release/release.mjs publish --archives <dir> --roots <dir>
+//                                  [--key <file> --cert <file>] [--repo <dir>]
+//                                  [--remote <name|url>] [--summary <file>] [--now <instant>]
 //   node tools/release/release.mjs upload --r2 <bucket|dry-run> --roots <dir>
 //                                  [--repo <dir>] [--remote <name|url>] [--summary <file>]
-//   node tools/release/release.mjs evidence --out <file> [--canaries <file>] [--repo] [--remote] [--summary]
-//   node tools/release/release.mjs promote --evidence <file> --roots <dir> [--canaries <file>] [...]
-//   node tools/release/release.mjs promote|revoke --pack <id> --version <v> --by <login> --roots <dir> [...]
+//   node tools/release/release.mjs evidence --out <file> [--canaries <file>]
+//                                  [--repo] [--remote] [--summary]
+//   node tools/release/release.mjs promote --evidence <file> --roots <dir>
+//                                  [--canaries <file>] [...]
+//   node tools/release/release.mjs promote|revoke --pack <id> --version <v> --by <login>
+//                                  --roots <dir> [...]
 //
 // `plan` says per pack whether its version is to publish or already on `vendored`; with
 // --content it also vendors each published pack afresh and exits 1 when the files differ from the
-// branch's, the pull-request half of "a version is published once". `build` vendors every pack under --packs (default: this repo's packs/) into --out, with a
-// packs.json describing them and a SHA256SUMS over both. `publish` checks SHA256SUMS first, then
-// for each pack whose version is absent on the remote's `vendored` branch writes the unpacked set,
-// the archive and a newly signed index as one commit, refuses a published version whose unpacked
-// files differ (the gzip bytes alone may), re-verifies every index it wrote against --roots, and
-// pushes once. --now moves only that self-check's instant, for tests. The signing key is
-// --key/--cert, else the files CN_PACKS_KEY/CN_PACKS_CERT name, else the development key under
-// keys/dev/. `upload` makes the R2 bucket hold every object on the branch and reads them back
-// through the CDN (r2.mjs); `dry-run` lists them. `evidence`, `promote` and `revoke` read canary
-// evidence and rewrite index entries (promote.mjs), signing as publish does. docs/release.md has
-// the layout and formats.
+// branch's, the pull-request half of "a version is published once". `build` vendors every pack
+// under --packs (default: this repo's packs/) into --out, with a packs.json describing them and a
+// SHA256SUMS over both. `publish` checks SHA256SUMS first, then for each pack whose version is
+// absent on the remote's `vendored` branch writes the unpacked set, the archive and a newly signed
+// index as one commit, refuses a published version whose unpacked files differ (the gzip bytes
+// alone may), re-verifies every index it wrote against --roots, and pushes once. --now moves only
+// that self-check's instant, for tests. The signing key is --key/--cert, else the files
+// CN_PACKS_KEY/CN_PACKS_CERT name, else the development key under keys/dev/. `upload` makes the
+// R2 bucket hold every object on the branch and reads them back through the CDN (r2.mjs);
+// `dry-run` lists them. `evidence`, `promote` and `revoke` read canary evidence and rewrite index
+// entries (promote.mjs), signing as publish does. docs/release.md has the layout and formats.
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { appendFileSync, copyFileSync, existsSync, lstatSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, unlinkSync, writeFileSync } from 'node:fs';

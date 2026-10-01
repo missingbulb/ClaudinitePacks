@@ -31,3 +31,24 @@ test('docs/release.md says the token is a user token, what max-age=300 governs, 
   assert.ok(sameParagraph(doc, /\bedge\b|Cache\s+Everything/, /max-age=300/), 'the edge cache beside max-age=300');
   assert.ok(sameParagraph(doc, /60\s+days/, /schedule/), '60 days beside schedule');
 });
+
+const WIDTH = 100;
+const overLong = (lines) => lines.filter(([, l]) => l.length > WIDTH).map(([n, l]) => `${n}: ${l.length} chars`);
+
+test(`docs/release.md wraps its prose at ${WIDTH} columns; code blocks may run longer`, () => {
+  let fenced = false;
+  const prose = [];
+  readFileSync(DOC, 'utf8').split('\n').forEach((l, i) => {
+    if (l.startsWith('```')) fenced = !fenced;
+    else if (!fenced) prose.push([i + 1, l]);
+  });
+  assert.deepEqual(overLong(prose), []);
+});
+
+test(`release.mjs wraps its header comment at ${WIDTH} columns`, () => {
+  const lines = readFileSync(new URL('./release.mjs', import.meta.url), 'utf8').split('\n');
+  const header = [];
+  for (let i = 1; i < lines.length && lines[i].startsWith('//'); i++) header.push([i + 1, lines[i]]);
+  assert.ok(header.length > 10, 'the header comment was found');
+  assert.deepEqual(overLong(header), []);
+});
