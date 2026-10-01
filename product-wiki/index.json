@@ -1,0 +1,18 @@
+{
+  "v": 1,
+  "pack": "product-wiki",
+  "serial": 1,
+  "versions": [
+    {
+      "version": "60928.1",
+      "sha256": "d754f49d33f039261a32a29c763f2cb6e2cd973dc3cc17dac7cc1684fa50712c",
+      "size": 13973,
+      "minEngineVersion": "60928.1",
+      "requires": [],
+      "channel": "canary",
+      "revoked": false,
+      "publishedAt": "2026-10-01T14:32:10Z",
+      "sourceCommit": "27612838c695d2d6704966572cd86d34485e4751"
+    }
+  ]
+}
