@@ -1,0 +1,20 @@
+{
+  "v": 1,
+  "pack": "spec-driven-product",
+  "serial": 1,
+  "versions": [
+    {
+      "version": "60928.1",
+      "sha256": "2128aeb846257fc6844439bc6e029e12699a8a81f4539248b642f98e440f2e46",
+      "size": 5400,
+      "minEngineVersion": "60928.1",
+      "requires": [
+        "executable-requirements"
+      ],
+      "channel": "canary",
+      "revoked": false,
+      "publishedAt": "2026-10-01T14:32:10Z",
+      "sourceCommit": "27612838c695d2d6704966572cd86d34485e4751"
+    }
+  ]
+}
