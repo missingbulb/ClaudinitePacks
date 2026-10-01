@@ -1,0 +1,25 @@
+name: dev-key-expiry
+
+# Goes red once the development packs certificate is 14 days from expiry; keys/dev/README.md has
+# the renewal. Removed in the change that removes keys/dev/.
+on:
+  schedule:
+    - cron: '23 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version-file: .node-version
+      - name: Development certificate expiry
+        run: node tools/release/dev-key-expiry.mjs

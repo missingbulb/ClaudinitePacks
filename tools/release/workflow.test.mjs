@@ -113,7 +113,7 @@ test('the build job reads only and holds no environment; publish holds release a
 });
 
 test('both jobs take Node from .node-version, and every action is pinned to a commit sha', () => {
-  for (const file of ['release-packs.yml', 'verify-import.yml']) {
+  for (const file of ['release-packs.yml', 'verify-import.yml', 'dev-key-expiry.yml']) {
     const w = workflow(file);
     for (const [name, job] of Object.entries(w.jobs)) {
       for (const step of job.steps.filter((s) => s.uses)) {
@@ -143,4 +143,14 @@ test('build runs the release, sign and vendor tests and the build; publish runs 
 
 test('verify-import still runs on main only, so pushes to vendored trigger nothing', () => {
   assert.deepEqual(workflow('verify-import.yml').on.push.branches, ['main']);
+});
+
+test('dev-key-expiry runs weekly off the hour and on dispatch, reads only, and runs the expiry script', () => {
+  const w = workflow('dev-key-expiry.yml');
+  assert.deepEqual(Object.keys(w.on).sort(), ['schedule', 'workflow_dispatch']);
+  const [minute] = w.on.schedule[0].cron.split(' ');
+  assert.notEqual(minute, '0', 'GitHub drops on-the-hour crons under load');
+  assert.deepEqual(w.permissions, { contents: 'read' });
+  const runs = Object.values(w.jobs).flatMap((j) => j.steps.map((s) => s.run ?? '')).join('\n');
+  assert.match(runs, /^node tools\/release\/dev-key-expiry\.mjs$/m);
 });
