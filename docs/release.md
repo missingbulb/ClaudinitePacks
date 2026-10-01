@@ -86,7 +86,9 @@ plus a newline, keys in this order, and never re-serialized by anything else:
   A version already present is refused.
 - `version`, `minEngineVersion` and `requires` are copied from `packs/<id>/pack.json`; absent
   `requires` becomes `[]`; a pack without a string `version` or `minEngineVersion` fails the run.
-  `minEngineVersion` is a minimum, not interpreted here.
+  `minEngineVersion` is a minimum, not interpreted here, except that a new version must spell it
+  as three dot-separated numbers (`<day>.<n>.<patch>`, the Engine release it needs); an entry
+  already published is rewritten as it is.
 - `channel` is `canary` or `stable`, and a new version is always `canary`. `revoked` is a boolean.
 - `sha256` and `size` describe `<id>/<version>.tar.gz`; `publishedAt` is the publish job's clock,
   RFC 3339 UTC seconds; `sourceCommit` is the `main` commit the run built.

@@ -34,7 +34,7 @@ test('first run publishes every pack: unpacked set, archive, signed index, one c
     assert.equal(ix.serial, 1);
     assert.equal(ix.versions.length, 1);
     assert.deepEqual({ ...ix.versions[0], publishedAt: 'x' }, {
-      version: '60101.1', sha256: sha256(archive), size: archive.length, minEngineVersion: '60101.1',
+      version: '60101.1', sha256: sha256(archive), size: archive.length, minEngineVersion: '60101.1.0',
       requires: id === 'acme-pack' ? ['acme-pack-two'] : [], channel: 'canary', revoked: false, publishedAt: 'x', sourceCommit: srcHead,
     });
     assert.match(ix.versions[0].publishedAt, /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ$/);

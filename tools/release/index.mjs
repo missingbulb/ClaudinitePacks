@@ -7,6 +7,8 @@ export const INDEX_KEYS = ['v', 'pack', 'serial', 'versions'];
 export const ENTRY_KEYS = ['version', 'sha256', 'size', 'minEngineVersion', 'requires', 'channel', 'revoked', 'publishedAt', 'sourceCommit'];
 const CHANNELS = ['canary', 'stable'];
 const VERSION = /^\d+(\.\d+)*$/;
+// The Engine's release version, <day>.<n>.<patch>: what a new version's minEngineVersion names.
+const ENGINE_VERSION = /^\d+\.\d+\.\d+$/;
 
 export class IndexError extends Error {}
 
@@ -28,13 +30,18 @@ export function newIndex(pack) {
 const bumped = (index, versions) => ({ ...index, serial: index.serial + 1, versions });
 
 // packJson is `packs/<id>/pack.json` as data; the archive fields come from the build.
-// The fields of pack.json an index entry copies, with `requires` absent read as [].
-export function packFields(id, packJson) {
+// The fields of pack.json an index entry copies, with `requires` absent read as []. A version not
+// yet on the branch (isNew) must name its engine as three dot-separated numbers; an entry already
+// published keeps whatever it carries.
+export function packFields(id, packJson, { isNew = false } = {}) {
   for (const field of ['version', 'minEngineVersion']) {
     if (typeof packJson?.[field] !== 'string' || !packJson[field]) throw new IndexError(`${id}: pack.json has no string ${field}`);
   }
   const { version, minEngineVersion } = packJson;
   if (!VERSION.test(version)) throw new IndexError(`${id}: pack.json version "${version}" is not dot-separated numbers`);
+  if (isNew && !ENGINE_VERSION.test(minEngineVersion)) {
+    throw new IndexError(`${id} ${version}: minEngineVersion "${minEngineVersion}" is not three dot-separated numbers (<day>.<n>.<patch>, the Engine release it needs)`);
+  }
   const requires = packJson.requires ?? [];
   if (!Array.isArray(requires) || requires.some((r) => typeof r !== 'string')) throw new IndexError(`${id}: pack.json requires is not a list of pack ids`);
   return { version, minEngineVersion, requires: [...requires] };
@@ -42,7 +49,7 @@ export function packFields(id, packJson) {
 
 export function addVersion(index, { packJson, sha256, size, publishedAt, sourceCommit }) {
   const id = index.pack;
-  const { version, minEngineVersion, requires } = packFields(id, packJson);
+  const { version, minEngineVersion, requires } = packFields(id, packJson, { isNew: true });
   if (index.versions.some((e) => e.version === version)) throw new IndexError(`${id} ${version} is already published`);
   const entry = { version, sha256, size, minEngineVersion, requires, channel: 'canary', revoked: false, publishedAt, sourceCommit };
   return bumped(index, [...index.versions, entry].sort((a, b) => compareVersions(a.version, b.version)));
