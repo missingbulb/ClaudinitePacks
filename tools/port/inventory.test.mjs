@@ -38,6 +38,8 @@ function acmeShelf() {
   p('acme.schema.json', '{}\n');
   p('worldRules/acme-world.mjs', ENGINE);
   p('workRules/acme-work.mjs');
+  p('checks/acme.mjs');
+  p('hooks/acme.mjs');
   p('tasks/acme-task/task.json', '{}\n');
   p('tasks/acme-task/worker.mjs', "import {\n  a,\n  b,\n} from '../../../../engine/acme.mjs';\n");
   p('tasks/acme-task/task.md');
@@ -69,7 +71,7 @@ test('every file of a synthetic pack lands in the class its path says, engine im
     declared: ['acme.schema.json', 'declared-checks.json', 'merge-rules.json', 'pack.json', 'skills/acme-skill/declared-checks.json', 'tasks/acme-task/params.json'],
     'coded-check': ['skills/acme-skill/acme-check.mjs', 'skills/acme-skill/checks.mjs', 'workRules/acme-work.mjs', 'worldRules/acme-world.mjs'],
     task: ['tasks/acme-task/preconditions.mjs', 'tasks/acme-task/task.json', 'tasks/acme-task/task.md', 'tasks/acme-task/worker.mjs'],
-    src: ['migrations/2026-01-01-acme/migration.mjs', 'skills/acme-skill/interview.mjs', 'src/acme.mjs', 'tasks/acme-task/helper.mjs'],
+    src: ['checks/acme.mjs', 'hooks/acme.mjs', 'migrations/2026-01-01-acme/migration.mjs', 'skills/acme-skill/interview.mjs', 'src/acme.mjs', 'tasks/acme-task/helper.mjs'],
     test: ['test/README.md', 'test/acme.test.mjs', 'worldRules/acme-world.test.mjs'],
     workflow: ['stubs/actions/acme/action.yml', 'stubs/workflows/acme.yml'],
     other: ['favicon.svg', 'setup.sh'],

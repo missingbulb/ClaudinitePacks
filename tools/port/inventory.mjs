@@ -6,10 +6,10 @@
 //   node tools/port/inventory.mjs [--check] [--packs <dir>] [--out <file>]
 //
 // Writes the doc, or with --check exits 1 when the doc differs from a fresh render. The coded-check
-// class follows the frozen Claudinite's engine/pack_loader/pack-conventions.mjs: rule modules are
-// the non-test *.mjs directly under worldRules/ or workRules/, and a skill's checks.mjs (with the
-// sibling modules it imports) is gathered as that skill's checks. A file matching two classes
-// fails the run rather than being counted twice.
+// class follows the frozen Claudinite's engine/pack_loader/: rule modules are the non-test *.mjs
+// directly under worldRules/ or workRules/ (pack-conventions.mjs), and a skill's checks.mjs, with
+// the sibling modules it imports, is gathered as that skill's checks (pack-registry.mjs). A file
+// matching two classes fails the run rather than being counted twice.
 import { lstatSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, posix } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -27,7 +27,7 @@ const TASK_FILE = /^(?:queue\/)?tasks\/[^/]+\/(?:task\.json|task\.md|worker\.mjs
 const isTaskFile = (rel) => TASK_FILE.test(rel);
 const DECLARED_NAMES = new Set(['declared-checks.json', 'merge-rules.json', 'pack.json']);
 const isCodedCheck = (rel, ctx) => rel.endsWith('.mjs') && !isTest(rel)
-  && (/^(?:worldRules|workRules|checks|hooks)\/[^/]+\.mjs$/.test(rel) || ctx.skillChecks.has(rel));
+  && (/^(?:worldRules|workRules)\/[^/]+\.mjs$/.test(rel) || ctx.skillChecks.has(rel));
 
 // Each rule is judged on its own; the inventory fails a file more than one accepts.
 export const RULES = [
@@ -133,8 +133,8 @@ export function render(inv, { frozenAt }) {
     '',
     'Classes: `content` (`RULES.md`, `README.md`, every other `.md`, `provenance/**`, `badge.svg`);',
     '`declared` (`pack.json`, `declared-checks.json`, `merge-rules.json`, any other `.json` at the pack',
-    'root or under `tasks/`); `coded-check` (non-test `.mjs` directly under `worldRules/`, `workRules/`,',
-    "`checks/` or `hooks/`, and a skill's `checks.mjs` with the sibling modules it imports); `task`",
+    'root or under `tasks/`); `coded-check` (non-test `.mjs` directly under `worldRules/` or',
+    "`workRules/`, and a skill's `checks.mjs` with the sibling modules it imports); `task`",
     '(`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `preconditions.mjs`); `src` (every other',
     'non-test `.mjs`); `test` (`test/**`, `*.test.mjs`); `workflow` (`.yml` under `stubs/` or',
     '`.github/`); `other` (the rest, listed below by path).',

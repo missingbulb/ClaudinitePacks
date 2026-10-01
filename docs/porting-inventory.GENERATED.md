@@ -16,8 +16,8 @@ These are Claudinite's Node engine versions; the Engine's `shared/version` parse
 
 Classes: `content` (`RULES.md`, `README.md`, every other `.md`, `provenance/**`, `badge.svg`);
 `declared` (`pack.json`, `declared-checks.json`, `merge-rules.json`, any other `.json` at the pack
-root or under `tasks/`); `coded-check` (non-test `.mjs` directly under `worldRules/`, `workRules/`,
-`checks/` or `hooks/`, and a skill's `checks.mjs` with the sibling modules it imports); `task`
+root or under `tasks/`); `coded-check` (non-test `.mjs` directly under `worldRules/` or
+`workRules/`, and a skill's `checks.mjs` with the sibling modules it imports); `task`
 (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `preconditions.mjs`); `src` (every other
 non-test `.mjs`); `test` (`test/**`, `*.test.mjs`); `workflow` (`.yml` under `stubs/` or
 `.github/`); `other` (the rest, listed below by path).
