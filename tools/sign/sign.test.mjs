@@ -15,6 +15,7 @@ test('keyId matches the key id vector', () => {
 test('the copied domains match the ones sign.mjs uses', () => {
   assert.equal(DOMAINS.certificate, V.domains.certificate);
   assert.equal(DOMAINS.manifest, V.domains.manifest);
+  assert.equal(DOMAINS.packIndex, V.domains.packIndex);
 });
 
 for (const c of V.certificateCases) {
@@ -29,6 +30,14 @@ for (const c of V.messageCases) {
   test(`message case: ${c.name}`, () => {
     const verify = () => verifyMessage(c.signed, decodeB64(c.message), rootKey(c.root), 'manifest', V.domains.manifest, new Date(c.now));
     if (c.valid) assert.equal(verify().use, 'manifest');
+    else assert.throws(verify);
+  });
+}
+
+for (const c of V.packIndexCases) {
+  test(`pack index case: ${c.name}`, () => {
+    const verify = () => verifyMessage(c.signed, decodeB64(c.index), rootKey(c.root), 'packs', DOMAINS.packIndex, new Date(c.now));
+    if (c.valid) assert.equal(verify().use, 'packs');
     else assert.throws(verify);
   });
 }
