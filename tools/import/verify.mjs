@@ -15,6 +15,7 @@ import { createHash } from 'node:crypto';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { cpus } from 'node:os';
 import { promisify } from 'node:util';
+import { fileURLToPath } from 'node:url';
 
 const run = promisify(execFile);
 const MAX = 1 << 30;
@@ -22,7 +23,7 @@ const BEGIN = '<!-- BEGIN GENERATED: verify -->';
 const END = '<!-- END GENERATED: verify -->';
 
 function parseArgs(argv) {
-  const opts = { ref: 'import', landed: false, paths: new URL('./paths.txt', import.meta.url).pathname };
+  const opts = { ref: 'import', landed: false, paths: fileURLToPath(new URL('./paths.txt', import.meta.url)) };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     const take = () => { if (i + 1 >= argv.length) usage(`${a} needs a value`); return argv[++i]; };

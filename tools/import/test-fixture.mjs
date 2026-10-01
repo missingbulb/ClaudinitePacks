@@ -6,9 +6,10 @@ import { execFileSync } from 'node:child_process';
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync, renameSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-export const IMPORT_SH = new URL('./import.sh', import.meta.url).pathname;
-export const VERIFY_MJS = new URL('./verify.mjs', import.meta.url).pathname;
+export const IMPORT_SH = fileURLToPath(new URL('./import.sh', import.meta.url));
+export const VERIFY_MJS = fileURLToPath(new URL('./verify.mjs', import.meta.url));
 
 let clock = 1780000000;
 function env() {

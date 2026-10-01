@@ -5,8 +5,9 @@ import { createHash } from 'node:crypto';
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, chmodSync, utimesSync, statSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const VENDOR = new URL('./vendor.mjs', import.meta.url).pathname;
+const VENDOR = fileURLToPath(new URL('./vendor.mjs', import.meta.url));
 const scratch = () => mkdtempSync(join(tmpdir(), 'acme-vendor-'));
 
 function put(root, path, content) {

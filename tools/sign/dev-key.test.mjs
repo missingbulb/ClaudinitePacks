@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { keyId, parsePrivateKey, parsePublicKey, readRoots, verifyCertificate, decodeB64 } from './sign.mjs';
 
 const DEV = new URL('../../keys/dev/', import.meta.url);
@@ -10,7 +11,7 @@ const read = (rel) => readFileSync(new URL(rel, DEV), 'utf8');
 // development certificate expires; dev-key-expiry.yml is what reminds about the renewal.
 const cert = () => JSON.parse(read('packs.cert.json'));
 const window = () => JSON.parse(decodeB64(cert().payload).toString('utf8'));
-const roots = () => readRoots(new URL('roots/', DEV).pathname);
+const roots = () => readRoots(fileURLToPath(new URL('roots/', DEV)));
 
 test('the development packs certificate verifies against keys/dev/roots for use packs a day after notBefore', () => {
   const body = verifyCertificate(cert(), roots(), 'packs', new Date(Date.parse(window().notBefore) + 86400e3));

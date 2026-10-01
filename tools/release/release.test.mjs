@@ -6,11 +6,12 @@ import { mkdtempSync, mkdirSync, writeFileSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { gunzipSync, gzipSync } from 'node:zlib';
+import { fileURLToPath } from 'node:url';
 import { DOMAINS, keyId, readRoots } from '../sign/sign.mjs';
 import { readIndex, verifyIndex } from './index.mjs';
 
-const RELEASE = new URL('./release.mjs', import.meta.url).pathname;
-const REPO_ROOT = new URL('../../', import.meta.url).pathname;
+const RELEASE = fileURLToPath(new URL('./release.mjs', import.meta.url));
+const REPO_ROOT = fileURLToPath(new URL('../../', import.meta.url));
 const DEV_ROOTS = join(REPO_ROOT, 'keys/dev/roots');
 // The development certificate's notBefore plus one day: an instant inside its window that does
 // not move with the clock, so the dev-key case stays green past the certificate's expiry.
