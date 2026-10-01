@@ -144,3 +144,15 @@ test('readIndex parses what serialize wrote and refuses another format version',
   assert.deepEqual(readIndex(serialize(ix)), ix);
   assert.throws(() => readIndex(Buffer.from(JSON.stringify({ ...ix, v: 2 }))), /index format v2/);
 });
+
+test('a rewrite keeps unknown top-level and entry fields: known keys first in format order, unknown after in their order', () => {
+  const ix = JSON.parse(serialize(three()).toString('utf8'));
+  const withUnknown = { x: { nested: true }, ...ix, z: 1, versions: ix.versions.map((e, i) => (i === 1 ? { y: 'kept', ...e, w: [2] } : e)) };
+  const out = JSON.parse(serialize(setChannel(readIndex(Buffer.from(JSON.stringify(withUnknown))), '60101.2', 'stable')).toString('utf8'));
+  assert.deepEqual(Object.keys(out), [...INDEX_KEYS, 'x', 'z']);
+  assert.deepEqual(out.x, { nested: true });
+  assert.deepEqual(Object.keys(out.versions[1]), [...ENTRY_KEYS, 'y', 'w']);
+  assert.equal(out.versions[1].y, 'kept');
+  assert.equal(out.versions[1].channel, 'stable');
+  assert.deepEqual(Object.keys(out.versions[0]), ENTRY_KEYS);
+});

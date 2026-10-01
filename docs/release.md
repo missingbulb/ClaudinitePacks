@@ -12,7 +12,9 @@ The workflow has two jobs. `build` (read-only, no secrets) runs the tools' tests
 `SHA256SUMS` beside the archives. `publish` (the `release` environment, `contents: write`) runs
 only `tools/release` and `tools/sign`: it checks `SHA256SUMS` before anything else, writes the
 branch, signs each index, verifies every index it wrote against the roots before one push, and
-records the signing key id and the published versions in the job summary. The concurrency group
+records the signing key id and the published versions in the job summary. `SHA256SUMS` checks
+the transfer between the jobs and is not a trust boundary: whoever could change an archive could
+change its sum. The concurrency group
 `release-packs` is the single writer; nothing force-pushes.
 
 ## The `vendored` branch
@@ -68,6 +70,12 @@ plus a newline, keys in this order, and never re-serialized by anything else:
 - `channel` is `canary` or `stable`, and a new version is always `canary`. `revoked` is a boolean.
 - `sha256` and `size` describe `<id>/<version>.tar.gz`; `publishedAt` is the publish job's clock,
   RFC 3339 UTC seconds; `sourceCommit` is the `main` commit the run built.
+
+The reader contract: a reader ignores unknown top-level and entry fields, so a newer writer may add
+one without breaking an older `cn`, and the writer keeps fields it does not know on a rewrite. `v`
+changes only when a reader must refuse the index. `index.json` and `index.sig.json` are written one
+after the other, so a reader that fetched them during a rewrite may hold a mismatched pair; it
+retries once.
 
 `<id>/index.sig.json` has the shape of the Engine's `manifest.sig.json`, with its own domain:
 

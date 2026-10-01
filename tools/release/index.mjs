@@ -63,7 +63,9 @@ export function setRevoked(index, version, revoked) {
   return rewriteEntry(index, version, { revoked });
 }
 
-const ordered = (obj, keys) => Object.fromEntries(keys.map((k) => [k, obj[k]]));
+// Known keys in format order, then any key this writer does not know in its original order, so a
+// rewrite by an older writer never drops a field a newer one added.
+const ordered = (obj, keys) => Object.fromEntries([...keys.map((k) => [k, obj[k]]), ...Object.entries(obj).filter(([k]) => !keys.includes(k))]);
 
 export function serialize(index) {
   const out = ordered(index, INDEX_KEYS);

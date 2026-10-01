@@ -15,3 +15,9 @@ test('the index example in docs/release.md is exactly what the writer serializes
   for (const e of ix.versions) assert.deepEqual(Object.keys(e), ENTRY_KEYS);
   assert.equal(serialize(ix).toString('utf8'), examples[0]);
 });
+
+test('docs/release.md states the reader contract and what SHA256SUMS is for', () => {
+  const doc = readFileSync(DOC, 'utf8');
+  assert.match(doc, /ignores unknown/);
+  assert.match(doc, /SHA256SUMS[^\n]*\n?[^\n]*not a trust boundary/);
+});
