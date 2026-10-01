@@ -126,10 +126,12 @@ test('both jobs take Node from .node-version, and every action is pinned to a co
   for (const job of [build, publish]) assert.ok(job.steps.some((s) => s.with?.['node-version-file'] === '.node-version'));
 });
 
-test('build runs the tools tests and the build; publish runs only the publish program', () => {
+test('build runs the release, sign and vendor tests and the build; publish runs only the publish program', () => {
   const { build, publish } = workflow('release-packs.yml').jobs;
   const runs = (job) => job.steps.map((s) => s.run ?? '').join('\n');
-  assert.match(runs(build), /node --test \$\(git ls-files 'tools\/\*\.test\.mjs'\)/);
+  // The import tests need git-filter-repo, which only verify-import installs.
+  assert.match(runs(build), /node --test \$\(git ls-files 'tools\/release\/\*\.test\.mjs' 'tools\/sign\/\*\.test\.mjs' 'tools\/vendor\/\*\.test\.mjs'\)/);
+  assert.doesNotMatch(runs(build), /tools\/import|'tools\/\*\.test\.mjs'/);
   assert.match(runs(build), /node tools\/release\/release\.mjs build --out /);
   assert.doesNotMatch(runs(publish), /node --test|release\.mjs build|vendor\.mjs/);
   assert.match(runs(publish), /node tools\/release\/release\.mjs publish --archives .* --roots keys\/dev\/roots --summary "\$GITHUB_STEP_SUMMARY"/);

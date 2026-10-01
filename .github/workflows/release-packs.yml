@@ -28,8 +28,8 @@ jobs:
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
         with:
           node-version-file: .node-version
-      - name: Tools' tests
-        run: node --test $(git ls-files 'tools/*.test.mjs')
+      - name: Release, signing and vendor tests
+        run: node --test $(git ls-files 'tools/release/*.test.mjs' 'tools/sign/*.test.mjs' 'tools/vendor/*.test.mjs')
       - name: Build the vendored archives
         run: node tools/release/release.mjs build --out "$RUNNER_TEMP/archives"
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
