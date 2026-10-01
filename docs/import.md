@@ -3,14 +3,25 @@
 `packs/` here is Claudinite's `packs/` with its full history, produced by `tools/import/import.sh`
 and proven complete by `tools/import/verify.mjs`.
 
-## Status
+## Frozen at `057841ac43de1f90b821f7a57e0f3d21eb6ff0e7`
 
-Not frozen; rerun with `tools/import/import.sh` when Claudinite's packs/ moves.
+Claudinite's `packs/` was frozen on 2026-10-01 at missingbulb/Claudinite@057841ac, the `main`
+commit the final rerun verified (after ClaudiniteEngine#3 disabled Claudinite's canon-curation
+tasks; no commit touched a kept path after the previous import). The rerun from it produced the
+same import tip, `6c00d0fc`, and `main` carries it. From here `packs/` in this repository is the
+tree that changes, and Claudinite's copy is a frozen mirror.
 
-Until Claudinite's packs/ is frozen (ClaudiniteEngine#3), nothing here edits `packs/`: it changes
-only by a rerun of the import. CI's `packs-untouched-before-freeze` job enforces that.
+An urgent fix to a pack lands here first, as an ordinary pull request with a version bump in its
+`pack.json`. If Claudinite's frozen copy also needs it, file it for the owner, or report it to
+them, saying which pack and which commit here; never cherry-pick or push to Claudinite yourself.
 
-## Rerunning
+## How the tree was produced
+
+`import.sh` and `verify.mjs` stay as the record of how `packs/` was produced. A rerun after the
+freeze is not expected: this tree now diverges from Claudinite on purpose, so `--landed` against
+the recorded commit would fail on the first edited pack file. CI still rebuilds the import from
+the recorded commit, verifies it, and checks that the branch carries the import tip. The final
+rerun was:
 
 ```
 pip install git-filter-repo==2.47.0
@@ -18,15 +29,14 @@ SRC=$(mktemp -d)
 git clone --no-local https://github.com/missingbulb/Claudinite "$SRC/src"
 git -C "$SRC/src" fetch --depth=6000 origin main
 COMMIT=$(git -C "$SRC/src" rev-parse origin/main)
-tools/import/import.sh "$COMMIT" "$SRC" --push
-git fetch "$SRC/out" +import:import
-git merge --no-ff import -m "Merge the Claudinite packs/ import at missingbulb/Claudinite@$COMMIT"
+tools/import/import.sh "$COMMIT" "$SRC"
+node tools/import/verify.mjs --source "$SRC/src" --commit "$COMMIT" --import "$SRC/out"
 node tools/import/verify.mjs --source "$SRC/src" --commit "$COMMIT" --import . --ref HEAD --landed --write-doc docs/import.md
 ```
 
-Commit the rewritten `docs/import.md` and push `main`. The first landing merged with
-`--allow-unrelated-histories`; every rerun is a plain merge, because a later source commit only
-appends to the import history (the earlier tip is an ancestor of the later one).
+The first landing merged the `import` branch with `--allow-unrelated-histories`; each earlier
+rerun was a plain `git merge --no-ff import`, because a later source commit only appended to the
+import history (the earlier tip is an ancestor of the later one).
 
 `import.sh` builds `<workdir>/out` from a fresh, non-shallow clone of Claudinite, keeping the
 paths in `tools/import/paths.txt`, and prints the tip. It refuses a source clone with local
@@ -61,7 +71,7 @@ Against the source clone at the source commit, `verify.mjs` checks that:
 It exits 1 on any gap. `--landed` verifies a branch that merged the import beside its own files.
 
 <!-- BEGIN GENERATED: verify -->
-Source commit: `219161dbb5c6072a0abb67dd2ed7235e395e270e`
+Source commit: `057841ac43de1f90b821f7a57e0f3d21eb6ff0e7`
 
 Verified at that commit: 38 packs, 1929 files byte-identical, 861 non-merge commits touching a kept path all carried.
 

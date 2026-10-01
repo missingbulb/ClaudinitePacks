@@ -1,8 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { git, scratch, sourceRepo, runImport, tipOf } from './test-fixture.mjs';
+import { git, scratch, sourceRepo, runImport, runVerify, tipOf } from './test-fixture.mjs';
 
 test('two runs from the same source commit give the same tip, holding only packs/', () => {
   const { commits } = sourceRepo();
@@ -104,4 +104,28 @@ test('--push lands the tip on the target, and a later run updates it there', () 
   const l = runImport([commits.c7, scratch(), '--push'], { IMPORT_PUSH_URL: target });
   assert.equal(l.status, 0, l.stderr);
   assert.equal(git(target, 'rev-parse', 'refs/heads/import'), tipOf(l.stdout));
+});
+
+test('--write-doc keeps a "Frozen at" heading and the commit it records, rewriting only the generated section', () => {
+  const { commits } = sourceRepo();
+  const work = scratch();
+  const r = runImport([commits.c7, work]);
+  assert.equal(r.status, 0, r.stderr);
+  const doc = join(scratch(), 'import.md');
+  const status = `## Frozen at\n\nFrozen at \`${commits.c5}\` on 2026-10-01. Hand-written rule text.\n`;
+  writeFileSync(doc, `# Import\n\n${status}\n<!-- BEGIN GENERATED: verify -->\nold\n<!-- END GENERATED: verify -->\n`);
+  const v = runVerify(['--source', join(work, 'src'), '--commit', commits.c7, '--import', join(work, 'out'), '--write-doc', doc]);
+  assert.equal(v.status, 0, v.stdout);
+  const text = readFileSync(doc, 'utf8');
+  assert.ok(text.includes(status), text);
+  assert.match(text, new RegExp(`Source commit: \`${commits.c7}\``));
+  assert.doesNotMatch(text, /\nold\n/);
+});
+
+test('docs/import.md records the freeze at the commit its generated section verified', () => {
+  const doc = readFileSync(new URL('../../docs/import.md', import.meta.url), 'utf8');
+  const frozen = doc.match(/^## Frozen at `([0-9a-f]{40})`/m);
+  assert.ok(frozen, 'docs/import.md has no "## Frozen at `<sha>`" heading');
+  assert.equal(doc.match(/^Source commit: `([0-9a-f]{40})`$/m)?.[1], frozen[1]);
+  assert.doesNotMatch(doc, /^Not frozen/m);
 });

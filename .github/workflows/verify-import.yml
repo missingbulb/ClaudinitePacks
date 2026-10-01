@@ -10,6 +10,9 @@ permissions:
   contents: read
 
 jobs:
+  # Claudinite's packs/ is frozen at the commit docs/import.md records, and packs/ here now diverges
+  # from it on purpose: this job proves the record still reproduces the import and that the branch
+  # carries the import history, never that packs/ still equals Claudinite's.
   verify:
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -41,34 +44,7 @@ jobs:
         run: tools/import/import.sh "${{ steps.source.outputs.commit }}" "$RUNNER_TEMP/import"
       - name: Verify the fresh import
         run: node tools/import/verify.mjs --source "$RUNNER_TEMP/import/src" --commit "${{ steps.source.outputs.commit }}" --import "$RUNNER_TEMP/import/out"
-      - name: Verify this branch's packs/
-        run: node tools/import/verify.mjs --source "$RUNNER_TEMP/import/src" --commit "${{ steps.source.outputs.commit }}" --import . --ref HEAD --landed
       - name: This branch carries the import history
         run: |
           git fetch -q "$RUNNER_TEMP/import/out" import:refs/ci/import
           git merge-base --is-ancestor refs/ci/import HEAD || { echo "::error::the import tip $(git rev-parse refs/ci/import) is not in this branch's history; merge the import branch as docs/import.md shows"; exit 1; }
-
-  # Until Claudinite's packs/ is frozen, packs/ here changes only by merging a rerun of the import.
-  # Remove this job in the same PR that writes the "Frozen at" heading into docs/import.md.
-  packs-untouched-before-freeze:
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
-        with:
-          fetch-depth: 0
-          persist-credentials: false
-      - name: No direct change to packs/
-        env:
-          BASE: ${{ github.event.pull_request.base.sha }}
-          HEAD: ${{ github.event.pull_request.head.sha }}
-        run: |
-          if grep -q '^## Frozen at' docs/import.md; then exit 0; fi
-          # A rerun lands as a merge of the import branch; any other commit touching packs/ is an edit.
-          edits=$(git log --first-parent --no-merges --format='%h %s' "$BASE..$HEAD" -- packs/)
-          if [ -n "$edits" ]; then
-            echo "$edits"
-            echo "::error::packs/ is an import of Claudinite's packs/ until the freeze (missingbulb/ClaudinitePacks#2, missingbulb/ClaudiniteEngine#3): make the change in Claudinite and rerun the import instead"
-            exit 1
-          fi

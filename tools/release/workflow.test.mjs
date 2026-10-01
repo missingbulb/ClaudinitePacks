@@ -1,6 +1,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { execFileSync, spawnSync } from 'node:child_process';
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { GIT_ENV } from './test-fixture.mjs';
 
 const WORKFLOWS = new URL('../../.github/workflows/', import.meta.url);
 
@@ -143,6 +147,47 @@ test('build runs the release, sign and vendor tests and the build; publish runs 
 
 test('verify-import still runs on main only, so pushes to vendored trigger nothing', () => {
   assert.deepEqual(workflow('verify-import.yml').on.push.branches, ['main']);
+});
+
+test('verify-import, after the freeze: the fresh import is verified against the recorded commit, the branch only for ancestry', () => {
+  const w = workflow('verify-import.yml');
+  assert.deepEqual(Object.keys(w.jobs).filter((j) => j !== 'release-plan'), ['verify']);
+  const runs = w.jobs.verify.steps.map((s) => s.run ?? '').join('\n');
+  assert.doesNotMatch(runs, /--landed/);
+  assert.match(runs, /node tools\/import\/verify\.mjs --source "\$RUNNER_TEMP\/import\/src" --commit "\$\{\{ steps\.source\.outputs\.commit \}\}" --import "\$RUNNER_TEMP\/import\/out"$/m);
+  assert.ok(w.jobs.verify.steps.some((s) => s.name === 'This branch carries the import history'));
+});
+
+// Runs the workflow's own ancestry step against a branch that merged a synthetic import and one
+// that did not, so the history guarantee is proven by the text CI executes.
+test('verify-import\'s ancestry step passes a branch carrying the import tip and fails one that does not', () => {
+  const step = workflow('verify-import.yml').jobs.verify.steps.find((s) => s.name === 'This branch carries the import history');
+  const root = mkdtempSync(join(tmpdir(), 'acme-ancestry-'));
+  const g = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], env: { ...process.env, ...GIT_ENV } }).trim();
+  const out = join(root, 'import', 'out');
+  mkdirSync(join(out, 'packs', 'acme-pack'), { recursive: true });
+  g(out, 'init', '-q', '-b', 'import');
+  writeFileSync(join(out, 'packs', 'acme-pack', 'RULES.md'), '# acme\n');
+  g(out, 'add', '-A');
+  g(out, 'commit', '-qm', 'acme import');
+  const branch = (merge) => {
+    const dir = mkdtempSync(join(root, 'branch-'));
+    g(dir, 'init', '-q', '-b', 'main');
+    writeFileSync(join(dir, 'README.md'), 'acme\n');
+    g(dir, 'add', '-A');
+    g(dir, 'commit', '-qm', 'tooling');
+    if (merge) {
+      g(dir, 'fetch', '-q', out, 'import:import');
+      g(dir, 'merge', '-q', '--allow-unrelated-histories', '--no-ff', '-m', 'Merge import', 'import');
+    }
+    return dir;
+  };
+  const exec = (dir) => spawnSync('bash', ['-e', '-c', step.run], { cwd: dir, encoding: 'utf8', env: { ...process.env, ...GIT_ENV, RUNNER_TEMP: root } });
+  const ok = exec(branch(true));
+  assert.equal(ok.status, 0, ok.stdout + ok.stderr);
+  const bad = exec(branch(false));
+  assert.equal(bad.status, 1, bad.stdout + bad.stderr);
+  assert.match(bad.stdout, /::error::the import tip [0-9a-f]{40} is not in this branch's history/);
 });
 
 test('dev-key-expiry runs weekly off the hour and on dispatch, reads only, and runs the expiry script', () => {

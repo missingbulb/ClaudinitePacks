@@ -136,6 +136,17 @@ test('a branch that merged the import beside its own tooling passes with --lande
   assert.match(strict.stdout, /outside packs\/: README\.md/);
 });
 
+// Why verify-import.yml no longer runs --landed on the branch: after the freeze any edit to a
+// pack file is a byte difference from the recorded commit, so the first porting PR would go red.
+test('--landed fails a branch that merged the import and then edited one pack file', () => {
+  const dir = landed(true);
+  writeFileSync(join(dir, 'packs', 'a', 'x.md'), readFileSync(join(dir, 'packs', 'a', 'x.md'), 'utf8') + 'ported\n');
+  git(dir, 'commit', '-qam', 'port x');
+  const r = verify(dir, '--ref', 'main', '--landed');
+  assert.equal(r.status, 1, r.stdout);
+  assert.match(r.stdout, /content differs: packs\/a\/x\.md/);
+});
+
 test('--landed still fails a branch whose packs/ did not come from the import history', () => {
   const dir = landed(false);
   execFileSync('git', ['--work-tree', dir, 'checkout', `${sourceRepo().commits.c7}`, '--', 'packs'], { cwd: imported().src });
