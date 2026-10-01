@@ -1,0 +1,18 @@
+{
+  "v": 1,
+  "pack": "claudinite-canary-repo",
+  "serial": 1,
+  "versions": [
+    {
+      "version": "60928.1",
+      "sha256": "cbbec691846ac1faf20b5961686f49e7733153f42b93729e45c1b7e8cf4ed24e",
+      "size": 4329,
+      "minEngineVersion": "60928.1",
+      "requires": [],
+      "channel": "canary",
+      "revoked": false,
+      "publishedAt": "2026-10-01T14:32:10Z",
+      "sourceCommit": "27612838c695d2d6704966572cd86d34485e4751"
+    }
+  ]
+}
