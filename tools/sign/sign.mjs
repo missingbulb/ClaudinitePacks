@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // testdata/vectors.json is a copy of ClaudiniteEngine's shared/sign/testdata/vectors.json at Engine
-// commit 5ea75af350e9140687a4b657abfca836e4064569; regenerate it there with
+// commit 888a71f9a8379d35a60bf7dbbdd2b729077ae659; regenerate it there with
 // `go test ./shared/sign -run TestVectorsFileIsCurrent -update` and copy the file here whole.
 //
 // The Engine's Ed25519 signing chain (shared/sign/sign.go), byte-compatible with it: key files,
