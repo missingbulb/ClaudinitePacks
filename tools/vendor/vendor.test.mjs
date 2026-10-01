@@ -2,12 +2,13 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, chmodSync, utimesSync, statSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, chmodSync, utimesSync, statSync, readdirSync, lstatSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const VENDOR = fileURLToPath(new URL('./vendor.mjs', import.meta.url));
+const PACKS = fileURLToPath(new URL('../../packs/', import.meta.url));
 const scratch = () => mkdtempSync(join(tmpdir(), 'acme-vendor-'));
 
 function put(root, path, content) {
@@ -122,4 +123,34 @@ test('--all fails naming the pack that has no pack.json', () => {
   const r = vendor('--all', root, scratch());
   assert.notEqual(r.status, 0);
   assert.match(r.stdout, /acme-broken/);
+});
+
+// Every test/, docs/, provenance/ or updates/ folder below a pack root but not at it: the depth at
+// which the design's root-only rule and Claudinite's any-depth rule would vendor different sets.
+function nestedDroppedFolders(packsDir) {
+  const names = new Set(['test', 'docs', 'provenance', 'updates']);
+  const found = [];
+  const walk = (dir, rel, depth) => {
+    for (const name of readdirSync(dir).sort()) {
+      if (!lstatSync(join(dir, name)).isDirectory()) continue;
+      const path = `${rel}/${name}`;
+      if (depth >= 2 && names.has(name)) found.push(path);
+      walk(join(dir, name), path, depth + 1);
+    }
+  };
+  for (const id of readdirSync(packsDir).sort()) {
+    if (lstatSync(join(packsDir, id)).isDirectory()) walk(join(packsDir, id), id, 1);
+  }
+  return found;
+}
+
+test('the real shelf holds no test/, docs/, provenance/ or updates/ folder below a pack root, so the two vendoring rules agree', () => {
+  assert.deepEqual(nestedDroppedFolders(PACKS), [],
+    'a nested folder makes the design\'s root-only rule and Claudinite\'s any-depth rule vendor different sets: move the folder, or decide the rule (missingbulb/ClaudinitePacks#3 item 1, #9)');
+});
+
+test('nestedDroppedFolders finds a nested test/ in a synthetic pack and ignores the root-level ones', () => {
+  const root = scratch();
+  acmePack(root);
+  assert.deepEqual(nestedDroppedFolders(root), ['acme-pack/skills/acme-skill/provenance', 'acme-pack/skills/acme-skill/test']);
 });

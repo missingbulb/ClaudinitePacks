@@ -15,6 +15,10 @@
 // Archive bytes depend on the zlib bundled with Node, so that gate runs under the Node major
 // pinned in `.node-version`.
 //
+// Dropping at the root only is the design's rule; Claudinite's Node engine drops `test/`, `docs/`
+// and `updates/` at any depth. The two agree while no such folder sits below a pack root, and the
+// vendor test that asserts so on the real shelf is where the first nested one surfaces.
+//
 // `updates/` and `migrations/` ship: the rule names three folders and this tool follows it, while
 // Claudinite's Node engine also drops `updates/` (only claudinite-lifecycle has one, and that pack
 // folds into the engine; its phase-6 slice decides what of it survives).
