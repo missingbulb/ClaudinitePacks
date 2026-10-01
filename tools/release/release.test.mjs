@@ -267,6 +267,14 @@ test('plan --content after a publish says every pack is unchanged and exits 0', 
   assert.equal(p.stdout, 'published acme-pack 60101.1 unchanged\npublished acme-pack-two 60101.1 unchanged\n');
 });
 
+test('plan --content against a remote with no vendored branch says it compared nothing, rather than passing silently', () => {
+  const w = world();
+  const p = planContent(w);
+  assert.equal(p.status, 0, p.out);
+  assert.match(p.stdout, /^::notice::.*no `vendored` branch.*nothing was compared/m);
+  assert.match(p.stdout, /^publish acme-pack 60101\.1$/m);
+});
+
 test('plan --content fails a shipped file changed without a bump, naming the pack and every differing, missing or extra path', () => {
   const w = world();
   assert.equal(publish(w, build(w).archives, testChain(scratch())).status, 0);

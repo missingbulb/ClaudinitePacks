@@ -92,6 +92,7 @@ async function plan(opts, { content = false } = {}) {
   const packs = readPacks(packsDir);
   const repo = resolve(opts.repo ?? '.');
   const tip = fetchVendored(repo, opts.remote ?? 'origin');
+  if (content && tip === null) console.log(`::notice::the remote has no \`${BRANCH}\` branch, so nothing was compared: every pack is to publish`);
   const vendorPack = content ? (await import('../vendor/vendor.mjs')).vendorPack : null;
   const scratch = content ? mkdtempSync(join(tmpdir(), 'release-plan-')) : null;
   let changed = 0;
