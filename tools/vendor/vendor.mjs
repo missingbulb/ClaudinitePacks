@@ -12,6 +12,8 @@
 //
 // A stand-in for `cn vendor`: the pack release workflow swaps to `cn vendor` once the binary
 // exists, gated on the two producing byte-identical archives for every pack.
+// Archive bytes depend on the zlib bundled with Node, so that gate runs under the Node major
+// pinned in `.node-version`.
 //
 // `updates/` and `migrations/` ship: the rule names three folders and this tool follows it, while
 // Claudinite's Node engine also drops `updates/` (only claudinite-lifecycle has one, and that pack
