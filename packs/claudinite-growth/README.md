@@ -173,13 +173,6 @@ machine halves.
 | A task writes only local packs | high | correctness | prose: <50 words + check (`growth-write-scope`) |
 | Describing another pack's artifact | medium | complexity | prose: <50 words |
 
-## Coded rules
-
-| Rule | Kind | What |
-|---|---|---|
-| `dedup-prune-integrity` | work-scope ([dedup-integrity.mjs](workRules/dedup-integrity.mjs)) | a dedup edit only removes portable text: it never grows a local pack's prose beyond its provenance logs, or re-imports a canon rule |
-| `growth-write-scope` | work-scope ([growth-write-scope.mjs](workRules/growth-write-scope.mjs)) | a growth run (extract, dedup, either sweep) writes only the repo's own local packs |
-
 Every run this pack schedules writes the local packs and nothing else. `growth-write-scope` is the
 machine guarantee behind that, keyed on those runs' pinned commit titles; the same actions over a
 canon's `packs/` shelf are `claudinite-canon-curation` tasks, titled so this gate reads them as
@@ -249,3 +242,14 @@ Relevance-first: all five are inert until the repo carries a `tasks/<name>/task.
 - `task-declaration-matches-folder` - a declaration disagrees with its folder: discovery drops it into `errors` and every run keeps reporting healthy without it.
 - `task-md-only-when-agentic` - an agentless task carries a `task.md`, which the corpus reads as "an agent runs here": prose no session will ever open, judged by the routine contract and named by every work item as the file the run is about.
 - `task-phase-discipline` - a task decides not to run after its precondition already said run, hiding the decision from the run records.
+
+Where each one runs:
+
+- **Inside `cn`.** `dedup-prune-integrity`, `growth-write-scope`, `provenance-integrity`,
+  `provenance-change-recorded` and `routine-structure` are `cn` built-ins tagged with this pack: they
+  run only where the pack is declared and list under it in `cn check list`; the pack carries no code
+  for them.
+- **Ports with the task runner slice.** `task-declaration-matches-folder`, `task-md-only-when-agentic`
+  and `task-worker-restores-main` assert the task contract, which the engine's task runner slice
+  writes in Go; they port beside it and do not run until then.
+- **Declared.** The rest are this pack's `declared-checks.json`.

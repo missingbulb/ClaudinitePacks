@@ -1,6 +1,6 @@
 {
-  "version": "60930.1",
-  "minEngineVersion": "60928.1",
+  "version": "61002.1",
+  "minEngineVersion": "61001.1.0",
   "ruleRoutingGuidance": {
     "belongs": "authoring Claudinite content here — lesson extraction, dedup, revalidation, conversation logs, skill-usage folding, the task contract",
     "excludes": "this repo's Claudinite status — mount, declaration, adoption, update — claudinite-lifecycle; code comments — basics; fleet sweeps — claudinite-fleet-sheepdog"

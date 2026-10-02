@@ -9,3 +9,8 @@
 - **Reason:** owner decision, 2026-09-25: the field names what happens when the check fails, and
   *severity* keeps its impact sense; what this element enforces is unchanged.
 - **Actor:** @missingbulb (owner).
+
+## 2026-10-02 · retired · `cn verify` answers it (missingbulb/ClaudiniteEngine#41)
+- **Reason:** verify's `member-workflows` rule and `cn workflows diff` judge the member's CI workflow against the engine's template, which runs `cn check world` over the change on every pull request; a port would be a second check over the same file, written for the Node
+  member's shape.
+- **Actor:** @missingbulb (owner), through the chunk 9 plan.

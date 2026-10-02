@@ -3,93 +3,11 @@ import assert from 'node:assert/strict';
 import { makeRepo, cleanup } from '../../../engine-tests/helpers.mjs';
 import { buildContext } from '../../../engine/checks/helpers/repo-context.mjs';
 import { runRule } from '../../../engine/checks/helpers/work.mjs';
-import rulesIndexCurrent from '../worldRules/rules-index-current.mjs';
 
 function run(rule, root, mode = 'changed') {
   const ctx = buildContext({ root, mode });
   return runRule(rule, ctx);
 }
-
-// --- rules-index-current (#807) ----------------------------------------------
-// The rules index is the ONLY channel a pack's prose reaches a session on, so every
-// case below is one where a repo silently runs with no rules at all.
-
-const INDEX = '.claudinite/flat/claudinite-rules.GENERATED.md';
-// A converged member: acme-pack vendored, the index importing it, CLAUDE.md loading it.
-const converged = (over = {}) => ({
-  '.claudinite-settings.json': JSON.stringify({ packs: ['acme-pack'] }),
-  '.claudinite/shared/packs/acme-pack/RULES.md': 'BASICS\n',
-  [INDEX]: '@../shared/packs/acme-pack/RULES.md\n',
-  'CLAUDE.md': '@.claudinite/flat/claudinite-rules.GENERATED.md\n',
-  ...over,
-});
-
-test('rules-index-current: a converged member is clean', () => {
-  const root = makeRepo({ changed: converged() });
-  try {
-    assert.deepEqual(run(rulesIndexCurrent, root, 'all'), []);
-  } finally { cleanup(root); }
-});
-
-test('rules-index-current: inert when the repo holds no prose for any declared pack', () => {
-  // Relevance first. A declaration whose packs are not vendored yet is a mount that
-  // has not converged — a different problem, already reported by the engine's own
-  // unknown-pack error, and one this rule would only add noise to.
-  const root = makeRepo({ changed: { '.claudinite-settings.json': JSON.stringify({ packs: ['acme-pack'] }) } });
-  try {
-    assert.deepEqual(run(rulesIndexCurrent, root, 'all'), []);
-  } finally { cleanup(root); }
-});
-
-test('rules-index-current: a missing index is blocking', () => {
-  const c = converged(); delete c[INDEX];
-  const root = makeRepo({ changed: c });
-  try {
-    const f = run(rulesIndexCurrent, root, 'all');
-    assert.equal(f.length, 1, JSON.stringify(f, null, 2));
-    assert.equal(f[0].on_fail, 'block');
-    assert.match(f[0].what, /missing/);
-  } finally { cleanup(root); }
-});
-
-test('rules-index-current: a declared, held pack the index omits is blocking', () => {
-  // The staleness case: a pack declared since the last converge. Its RULES.md is right
-  // there in the mount, and nothing loads it.
-  const root = makeRepo({ changed: converged({
-    '.claudinite-settings.json': JSON.stringify({ packs: ['acme-pack', 'acme-pack-f'] }),
-    '.claudinite/shared/packs/acme-pack-f/RULES.md': 'TIDY\n',
-  }) });
-  try {
-    const f = run(rulesIndexCurrent, root, 'all');
-    assert.equal(f.length, 1, JSON.stringify(f, null, 2));
-    assert.match(f[0].what, /acme-pack-f/);
-  } finally { cleanup(root); }
-});
-
-test('rules-index-current: an import resolving to nothing is blocking', () => {
-  // #807 in a new costume — the channel works, the rules still do not arrive.
-  const root = makeRepo({ changed: converged({
-    [INDEX]: '@../shared/packs/acme-pack/RULES.md\n@../shared/packs/gone/RULES.md\n',
-  }) });
-  try {
-    const f = run(rulesIndexCurrent, root, 'all');
-    assert.equal(f.length, 1, JSON.stringify(f, null, 2));
-    assert.match(f[0].what, /gone/);
-  } finally { cleanup(root); }
-});
-
-test('rules-index-current: a CLAUDE.md that only documents the import does not count', () => {
-  // The harness skips `@` mentions inside code spans, so a quoted line is one it never
-  // follows — and reading that as wired would be the silent failure again.
-  const root = makeRepo({ changed: converged({
-    'CLAUDE.md': 'Claudinite loads via `@.claudinite/flat/claudinite-rules.GENERATED.md`.\n',
-  }) });
-  try {
-    const f = run(rulesIndexCurrent, root, 'all');
-    assert.equal(f.length, 1, JSON.stringify(f, null, 2));
-    assert.equal(f[0].file, 'CLAUDE.md');
-  } finally { cleanup(root); }
-});
 
 // Built through the real path: a forbidReferences entry in the pack's own
 // declared-checks.json, compiled by the declarative engine.

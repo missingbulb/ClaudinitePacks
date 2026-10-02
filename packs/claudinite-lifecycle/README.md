@@ -36,26 +36,35 @@ not prose: the session that has lost its rules is the session least able to noti
 | Check | Severity | Reason | Enforcement |
 |---|---|---|---|
 | `claudinite-lifecycle-declared` | critical | correctness | check: blocking |
-| `rules-index-current` | critical | correctness | check: blocking |
 | `claudinite-isolation` | high | complexity | check: blocking |
 | `shared-tree-edit-guard` | high | correctness | check: blocking |
 | `shared-tree-immutable` | high | correctness | check: advisory |
-| `conformance-workflow` | high | correctness | check: advisory |
-| `conformance-work-scope` | high | correctness | check: advisory |
 | `seeded-file-stale` | high | correctness | check: advisory |
 | `scheduler-workflow-shape` | high | correctness | check: blocking |
-| `legacy-shape-in-use` | medium | complexity | check: advisory |
 | `skill-loaded-before-editing` | high | correctness | check: blocking |
 | `skills-index-current` | medium | correctness | check: blocking |
 | `flat-declarations-current` | medium | correctness | check: blocking |
 
+Where each one runs:
+
+- **Inside `cn`.** `shared-tree-immutable` is a `cn` built-in tagged with this pack: it runs only
+  where the pack is declared and lists under it in `cn check list`; the pack carries no code for
+  it. `skill-loaded-before-editing` is a `cn` built-in on every member.
+- **Ports with a later slice.** `seeded-file-stale` and `skills-index-current` (and the adoption
+  skills' two below) port with the engine's `init` and adoption slice; `flat-declarations-current`
+  with the task runner slice, which writes the flat file it compares. Until then they do not run.
+- **Declared.** `claudinite-lifecycle-declared`, `claudinite-isolation`, `shared-tree-edit-guard`
+  and `scheduler-workflow-shape` are this pack's `declared-checks.json`.
+- **Answered by `cn verify`, no longer checks here.** `rules-index-current` (verify's
+  `rules-index-current` and `claude-md-import`), `conformance-workflow` and
+  `conformance-work-scope` (verify's `member-workflows`, against the engine's CI template, which
+  runs `cn check world` over the change on every pull request), and `legacy-shape-in-use` (verify's
+  `settings-checks` deprecations and `min-engine-version-legacy`).
+
 What goes wrong when one fires:
 
 - `claudinite-lifecycle-declared` — this pack's entry is gone from `.claudinite-settings.json`, so none of the rules above run and the session cannot tell.
-- `rules-index-current` — the generated index is missing, stale or unimported: the repo's packs contribute no prose to any session.
 - `claudinite-isolation` — the repo's own code reaches into `.claudinite/`, so the next canon refactor is a breaking migration for code the canon does not own (a declared `forbidReferences` barrier edge).
-- `conformance-workflow` — nothing in CI runs the world sweep unfiltered on a pull request, so conformance is ungated and the maintenance PR never lands.
-- `conformance-work-scope` — CI gates the tree but not the change, so every commit-scoped rule is enforced only where a session's Stop hook happens to run.
 - `seeded-file-stale` — a file some pack seeded at adoption has fallen behind that pack's template, and since a seeded file is never converged nothing else would ever say so: the member goes on running a copy whose pack has moved.
 - `scheduler-workflow-shape` — the vendored scheduler's cron, concurrency or dispatch guard has drifted: staggering, double-run safety or manual runs break.
 - `flat-declarations-current` - `.claudinite/flat/tasks.GENERATED.json` or `dashboard.GENERATED.json` no longer matches a declared pack's `task.json` or `dashboard.json`, so the dashboard and a session asking what runs here read a roster that is not the repo's. Regenerate with `generate-flat-declarations.mjs --write`.
