@@ -1,10 +1,8 @@
 // A `task.json`'s text as the declaration the page renders, with the defaults the
-// queue's loader fills. THE DASHBOARD'S OWN COPY of the queue's reader
-// (`packs/claudinite-tasks/src/contract/task-declaration-text.mjs` and
-// `task-defaults.mjs`): packs share no code, so the page carries the two steps it needs
-// and reads the default values themselves from the queue's vocabulary.
-// `test/declaration-text-drift.test.mjs` runs both sides over the same texts.
-import { DEFAULT_AUTOMERGE, DEFAULT_AGENT_MODEL } from '../../../claudinite-tasks/public/task-constants.mjs';
+// engine's contract fills. THE DASHBOARD'S OWN COPY of those two steps: the page reads
+// a member's declarations in a browser. `test/declaration-text-drift.test.mjs` runs it
+// and the engine (`cn tasks contract`) over the same texts.
+import { DEFAULT_AUTOMERGE, DEFAULT_AGENT_MODEL } from '../read/queue-vocabulary.mjs';
 
 // `$schema` is the editor's pointer, not a field of the contract, and leaves here.
 export function parseTaskDeclaration(text) {

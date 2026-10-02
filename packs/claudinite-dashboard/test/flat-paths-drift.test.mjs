@@ -4,9 +4,12 @@ import { FLAT_TASKS_PATH, FLAT_DASHBOARD_PATH } from '../src/read/flat.mjs';
 import { USAGE_PATH, LEGACY_USAGE_PATH, TASKS_USAGE_PATH, LEGACY_TASKS_USAGE_PATH } from '../src/read/usage.mjs';
 import { valuesPath, legacyValuesPath } from '../src/read/contributions.mjs';
 import * as flat from '../../../engine/pack_loader/generate-flat-declarations.mjs';
-import * as fold from '../../claudinite-tasks/tasks/usage-fold/worker.mjs';
-import * as tasksFormat from '../../claudinite-tasks/src/items/tasks-usage-format.mjs';
+import * as tasksFormat from '../../claudinite-tasks/tasks/usage-fold/tasks-usage-format.mjs';
 import * as review from '../../claudinite-growth/tasks/usage-review/report.mjs';
+import { installSdk } from '../../../tools/test/sdk-stand-in.mjs';
+
+installSdk();
+const fold = await import('../../claudinite-tasks/tasks/usage-fold/worker.mjs');
 
 // The page reads files other packs write, and cannot import them: it runs in the
 // viewer's browser against other repos. So each path is spelled on both sides, and this

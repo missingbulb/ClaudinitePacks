@@ -74,12 +74,12 @@ test('every module the page loads is browser-pure', async () => {
   }
 });
 
-// The reach into the engine is the design, so the walk has to prove it happened: a page
-// that stopped importing the engine would satisfy every assertion above trivially.
-test('the walk reaches the engine modules the page renders', async () => {
+// The queue's vocabulary is what the page renders, so the walk has to prove it reached
+// it: a page that stopped importing it would satisfy every assertion above trivially.
+test('the walk reaches the queue vocabulary the page renders', async () => {
   const files = [...(await graph()).keys()].map((f) => relative(ROOT, f));
   assert.ok(
-    files.some((f) => f.startsWith('packs/claudinite-tasks/public/')), // @real-entity the pack whose public assets this publishes
-    'the page no longer imports the queue modules it renders',
+    files.includes('packs/claudinite-dashboard/src/read/queue-vocabulary.mjs'),
+    'the page no longer imports the queue vocabulary it renders',
   );
 });

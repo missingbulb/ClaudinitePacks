@@ -1,6 +1,5 @@
 // Which issue a merged pull request closes, by the keyword GitHub itself acts on. THE
-// DASHBOARD'S OWN COPY of the queue's parse (`packs/claudinite-tasks/src/items/pr-fields.mjs`),
-// which the usage fold files a merged PR's lead times under: the page drawing the
+// DASHBOARD'S OWN COPY of the usage fold's parse, which the fold files a merged PR's lead times under: the page drawing the
 // same series for the days the fold has not reached yet must find the issue by the
 // same rule, or the two halves of one series disagree about which PRs have a lead
 // time at all. `test/pr-fields-drift.test.mjs` runs both sides over the same bodies.

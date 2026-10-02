@@ -18,7 +18,7 @@
 // day at the far end of the window is under-read rather than empty, and every series
 // carries the horizon past which it stops being a count and starts being a floor.
 
-import { isParked, outcomeOf } from '../../../claudinite-tasks/public/work-item-grammar.mjs';
+import { isParked, outcomeOf } from '../read/queue-vocabulary.mjs';
 import { isSubstantiveCommit } from './substantive-commit.mjs';
 import { isWorkItem } from './model.mjs';
 

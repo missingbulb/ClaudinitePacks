@@ -23,9 +23,8 @@ import { deploymentConfig } from './deployment-config.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 
-// The page imports the queue's own modules by relative path — the tasks pack's published
-// `public/`, and the engine surface beneath it — precisely so it cannot drift from
-// them. The published tree therefore has to preserve that shape: flattening the dashboard
+// The page imports the engine surface by relative path, precisely so it cannot drift
+// from it. The published tree therefore has to preserve that shape: flattening the dashboard
 // to the site root sends those imports above the root and the page does not boot. So every
 // directory it reaches is staged at the depth it already has, and the site root is a redirect.
 const HOME = 'packs/claudinite-dashboard';
@@ -35,7 +34,6 @@ const HOME = 'packs/claudinite-dashboard';
 // staging step below moves it up so the two agree; serve.mjs does the same for local runs.
 const PAGE_AT = 'src/index.html';
 const ENGINE = 'engine';
-const TASKS = 'packs/claudinite-tasks';
 
 // Local-only or explanatory files. None belong on a published site — `tooling/` least of
 // all, being this build's own source and a file server's, sitting where they read as part
@@ -62,7 +60,6 @@ const OUT = resolve(repoRoot, arg('out', '_site'));
 // no path guessing, and it stays right if the pack is ever renamed.
 const pageSource = resolve(HERE, '..');
 const engineSource = join(mountRoot, ENGINE);
-const tasksSource = join(mountRoot, TASKS);
 
 if (!await exists(join(pageSource, PAGE_AT)) || !await exists(engineSource)) {
   process.stdout.write(
@@ -93,8 +90,6 @@ await cp(pageSource, join(OUT, HOME), { recursive: true });
 // the first time it did. It discloses nothing — the mount is already committed in this
 // repo, so every byte is as public as the repo is.
 await cp(engineSource, join(OUT, ENGINE), { recursive: true });
-// The queue modules the page reads, at the same depth, for the same reason.
-if (await exists(tasksSource)) await cp(tasksSource, join(OUT, TASKS), { recursive: true });
 
 // The page up to the root it is served from, so its own `./src/app.mjs` resolves. A copy
 // would leave a second, broken entry at `src/index.html` for anyone who found it.

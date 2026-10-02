@@ -1,21 +1,19 @@
-// Is a member's SCHEDULER dormant? THE DASHBOARD'S OWN COPY of the queue's predicate
-// (`packs/claudinite-tasks/src/contract/dormancy.mjs`), read off the member's own
-// declaration: packs share no code, so this pack carries the one test the member's
-// scheduler stops itself with and reads only the pack id and the config key from the
-// queue's vocabulary. `test/dormancy-drift.test.mjs` runs both sides over the same
-// declarations and fails the moment they disagree.
+// Is a member's SCHEDULER dormant? THE DASHBOARD'S OWN COPY of the scheduler's predicate,
+// read off the member's own declaration: packs share no code, so this pack carries the
+// one test the member's scheduler stops itself with. The dashboard and the sheepdog
+// both read it cross-repo, and each one's `test/dormancy-drift.test.mjs` runs both
+// copies over the same declarations and fails the moment they disagree.
 //
 // It reads a raw parsed `.claudinite-settings.json` and the normalized config
 // `loadConfig` returns alike, because a cross-repo reader fetches another repo's
 // declaration over the API with no engine loaded against that tree. Strictly `=== true`,
 // so every malformed value reads as awake — the conservative direction.
-import { RENAMED_PACKS } from '../../../../engine/pack_loader/renamed-packs.mjs';
-import { TASKS_PACK_ID, DORMANT_CONFIG_KEY } from '../../../claudinite-tasks/public/task-constants.mjs';
+import { TASKS_PACK_ID, DORMANT_CONFIG_KEY, canonicalPackId } from './queue-vocabulary.mjs';
 
 // A declared id as it resolves today. A member's declaration can carry a spelling from
 // before a rename, and the config of a pack a member writes into its own repo must keep
 // resolving under every spelling it was ever written under.
-const resolves = (id) => typeof id === 'string' && (RENAMED_PACKS[id] ?? id) === TASKS_PACK_ID;
+const resolves = (id) => typeof id === 'string' && canonicalPackId(id) === TASKS_PACK_ID;
 
 // This pack's parameters, from whichever shape the caller holds.
 //
