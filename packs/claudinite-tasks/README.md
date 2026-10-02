@@ -97,14 +97,14 @@ pack paths behind which everything updates nightly.
 
 | Rule | Confidence | Dimension | Enforcement |
 |---|---|---|---|
-| `task-declaration-shape` | high | correctness | check: blocking |
-| `task-code-work-env` | high | correctness | check: blocking |
-| `automerge-policy-scope` | high | correctness | check: blocking |
-| `executor-workflow-secrets` | high | correctness | check: advisory |
-| `tasks-pack-read-through-its-surface` | high | correctness | declared check: blocking |
-| `repo-variables-through-the-bag` | high | correctness | declared check: blocking |
-| `issue-label-outside-the-queue-vocabulary` | high | correctness | declared check: blocking |
-| `queue-mark-named-literally` | high | correctness | declared check: blocking |
+| `task-declaration-shape` | high | correctness | cn built-in: blocking |
+| `task-code-work-env` | high | correctness | cn built-in: blocking |
+| `automerge-policy-scope` | high | correctness | cn built-in: blocking |
+| `executor-workflow-secrets` | high | correctness | cn built-in: advisory |
+| `tasks-pack-read-through-its-surface` | high | correctness | declared: blocking |
+| `repo-variables-through-the-bag` | high | correctness | declared: blocking |
+| `issue-label-outside-the-queue-vocabulary` | high | correctness | declared: blocking |
+| `queue-mark-named-literally` | high | correctness | declared: blocking |
 
 `tasks-pack-read-through-its-surface` is this pack's, not the canon's, because the consumers that
 can get it wrong are members: it scans a repo's own `packs/` **and** its `.claudinite/local/packs/`,

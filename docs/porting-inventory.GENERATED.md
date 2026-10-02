@@ -9,7 +9,7 @@ coded checks become Go; tasks stay Node against `@claudinite/sdk`; tests are rew
 the pinned `cn`, or dropped when they check only file shapes or doc text. A file that imports
 Claudinite's `engine/` by relative path does not run here until its slice replaces the import.
 
-`minEngineVersion` across the shelf: `60928.1` (28 packs), `61001.1.0` (11 packs).
+`minEngineVersion` across the shelf: `60928.1` (27 packs), `61001.1.0` (12 packs).
 A two-part one is a Claudinite Node engine version, which the Engine's `shared/version` (three
 parts, `<day>.<n>.0`) does not read; a ported pack's first version sets `minEngineVersion` to the
 `cn` version it was tested on.
@@ -34,9 +34,9 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 | claudinite-canon-curation | 60928.1 | 65 | 3 | 6 | 18 | 4 | 10 | 0 | 0 | 14 |
 | claudinite-dashboard | 60928.2 | 16 | 3 | 1 | 4 | 42 | 41 | 1 | 4 | 11 |
 | claudinite-fleet-sheepdog | 60928.1 | 29 | 1 | 1 | 8 | 23 | 22 | 0 | 0 | 10 |
-| claudinite-growth | 61002.1 | 159 | 8 | 0 | 18 | 13 | 16 | 0 | 0 | 10 |
-| claudinite-lifecycle | 61002.1 | 44 | 3 | 0 | 5 | 10 | 8 | 0 | 0 | 11 |
-| claudinite-tasks | 60928.2 | 24 | 4 | 4 | 8 | 87 | 91 | 2 | 0 | 37 |
+| claudinite-growth | 61002.2 | 159 | 8 | 0 | 18 | 13 | 16 | 0 | 0 | 10 |
+| claudinite-lifecycle | 61002.2 | 44 | 3 | 0 | 5 | 10 | 8 | 0 | 0 | 11 |
+| claudinite-tasks | 61002.1 | 24 | 4 | 4 | 8 | 87 | 91 | 2 | 0 | 37 |
 | cloudflare-site | 60928.1 | 16 | 1 | 3 | 3 | 4 | 7 | 0 | 0 | 5 |
 | cloudflare-workers | 60928.1 | 16 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | executable-requirements | 61002.1 | 21 | 1 | 1 | 0 | 0 | 2 | 0 | 0 | 0 |
@@ -46,7 +46,7 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 | github-pages | 60928.1 | 13 | 1 | 2 | 3 | 3 | 3 | 1 | 0 | 5 |
 | google-identity | 61002.1 | 9 | 2 | 1 | 0 | 0 | 3 | 0 | 0 | 0 |
 | headless-browser | 60928.1 | 31 | 2 | 0 | 0 | 0 | 4 | 0 | 0 | 1 |
-| hello | 1.3 | 12 | 2 | 4 | 0 | 0 | 0 | 0 | 0 | 0 |
+| hello | 1.4 | 14 | 3 | 4 | 4 | 0 | 0 | 0 | 0 | 0 |
 | host-page | 60928.1 | 19 | 1 | 3 | 0 | 1 | 1 | 0 | 0 | 4 |
 | html | 60928.1 | 9 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | ios | 60928.1 | 7 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -63,7 +63,7 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 | spec-driven-product | 60928.1 | 31 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | web-scraping | 60928.1 | 35 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | web-speech | 60928.1 | 33 | 3 | 6 | 0 | 1 | 5 | 0 | 0 | 10 |
-| **39 packs** | | 1199 | 72 | 66 | 77 | 209 | 266 | 14 | 5 | 152 |
+| **39 packs** | | 1201 | 73 | 66 | 81 | 209 | 266 | 14 | 5 | 152 |
 
 ## aws-sam
 
@@ -845,6 +845,13 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 - `checks/config.go`
 - `checks/hello.go`
 - `checks/judge.go`
+
+### task (4)
+
+- `tasks/hello-agent/task.json`
+- `tasks/hello-agent/task.md`
+- `tasks/hello-fold/task.json`
+- `tasks/hello-fold/worker.mjs`
 
 ## host-page
 

@@ -14,3 +14,14 @@
 - **Mechanism:** none until that slice; ClaudiniteEngine's `parity/deferred.txt` names it, and
   the differential refuses any subtraction it does not explain.
 - **Landed:** pending.
+
+## 2026-10-02 · ported · A `cn` built-in tagged with this pack, beside the task contract it asserts (missingbulb/ClaudiniteEngine#43)
+- **Reason:** the task runner slice brought the task contract into the Go engine, so the check
+  ports with it: same id, on_fail, why and finding text, run by `cn` wherever this pack is
+  declared. Its remedy names `cn tasks flat --write` and its doc this pack's README, since the Node
+  generator it pointed at is gone; the Node rule's probe for an engine that writes no flat files is
+  dropped, because every `cn` converge writes them.
+- **Actor:** @missingbulb (owner), through the chunk 10 plan.
+- **Mechanism:** a `cn` built-in (ClaudiniteEngine `checks/builtin/`), compared against the frozen
+  Node rule by the parity differential.
+- **Landed:** missingbulb/ClaudiniteEngine#44.

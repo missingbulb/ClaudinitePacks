@@ -219,22 +219,22 @@ and reads the same subtree over the GitHub API.
 
 | Check | Severity | Reason | Enforcement |
 |---|---|---|---|
-| `dedup-prune-integrity` | high | correctness | check: blocking |
-| `doc-pointers-resolve` | high | correctness | check: blocking |
-| `growth-write-scope` | high | correctness | check: blocking |
-| `task-worker-restores-main` | high | correctness | check: blocking |
-| `legacy-check-spellings` | low | complexity | check: advisory |
-| `in-session-github-access` | high | correctness | check: blocking |
-| `technology-skill-cites-dated-sources` | high | correctness | check: blocking |
-| `technology-skill-links-inside-its-folder` | medium | complexity | check: blocking |
-| `technology-skill-code-imports-inside-its-folder` | medium | complexity | check: blocking |
-| `provenance-integrity` | high | correctness | check: blocking |
-| `provenance-change-recorded` | high | correctness | check: blocking |
-| `routine-structure` | medium | complexity | check: blocking |
-| `task-declaration-matches-folder` | high | correctness | check: blocking |
-| `task-md-only-when-agentic` | high | correctness | check: blocking |
-| `task-phase-discipline` | medium | complexity | check: advisory |
-| `check-ships-with-test` | high | correctness | check: blocking |
+| `dedup-prune-integrity` | high | correctness | cn built-in: blocking |
+| `doc-pointers-resolve` | high | correctness | declared: blocking |
+| `growth-write-scope` | high | correctness | cn built-in: blocking |
+| `task-worker-restores-main` | high | correctness | cn built-in: blocking |
+| `legacy-check-spellings` | low | complexity | declared: advisory |
+| `in-session-github-access` | high | correctness | declared: blocking |
+| `technology-skill-cites-dated-sources` | high | correctness | declared: blocking |
+| `technology-skill-links-inside-its-folder` | medium | complexity | declared: blocking |
+| `technology-skill-code-imports-inside-its-folder` | medium | complexity | declared: blocking |
+| `provenance-integrity` | high | correctness | cn built-in: blocking |
+| `provenance-change-recorded` | high | correctness | cn built-in: blocking |
+| `routine-structure` | medium | complexity | cn built-in: blocking |
+| `task-declaration-matches-folder` | high | correctness | cn built-in: blocking |
+| `task-md-only-when-agentic` | high | correctness | cn built-in: blocking |
+| `task-phase-discipline` | medium | complexity | declared: advisory |
+| `check-ships-with-test` | high | correctness | declared: blocking |
 
 The last five are the **task contract** ([the writing-tasks skill](skills/writing-tasks/SKILL.md)).
 Relevance-first: all five are inert until the repo carries a `tasks/<name>/task.json` of its own.

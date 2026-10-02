@@ -20,3 +20,13 @@
 - **Mechanism:** none until that slice; ClaudiniteEngine's `parity/deferred.txt` names it, and
   the differential refuses any subtraction it does not explain.
 - **Landed:** pending.
+
+## 2026-10-02 · ported · A `cn` built-in tagged with this pack, beside the task contract it asserts (missingbulb/ClaudiniteEngine#43)
+- **Reason:** the task runner slice brought the task contract into the Go engine, so the check
+  ports with it: same id, on_fail, since, why, doc and finding text, run by `cn` wherever this pack
+  is declared. The legacy `.claudinite/local_packs/` path the Node rule still accepted is no
+  longer read.
+- **Actor:** @missingbulb (owner), through the chunk 10 plan.
+- **Mechanism:** a `cn` built-in (ClaudiniteEngine `checks/builtin/`), compared against the frozen
+  Node rule by the parity differential.
+- **Landed:** missingbulb/ClaudiniteEngine#44.
