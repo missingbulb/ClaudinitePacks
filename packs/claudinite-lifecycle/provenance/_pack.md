@@ -78,6 +78,11 @@
 - **Mechanism:** pack.json, which the loader prefers over pack.mjs; a canon pack now needs engine
   60928.1, the first to read it.
 
+## 2026-10-02 · ported · adopt-requested-packs drops its `$schema` key
+- **Reason:** the `$schema` key pointed at `claudinite-tasks/task.schema.json`, which left with the Node runner; the engine validates a declaration itself (`cn tasks contract`) and publishes no schema file, so the key is dropped as the hello pack's tasks do.
+- **Actor:** build lead, completing ClaudinitePacks #20 so the runner's removal lands with every importer ported.
+- **Mechanism:** the declaration loses the key and the pack's task tests read the contract, the precondition and the merge policy through `cn tasks`; `updates/`, `tasks/update/` and `test/update-worker.test.mjs` are Engine chunk 11's and untouched. lifecycle 61002.3.
+
 ## 2026-10-02 · reworded · the pack says it is the engine's own: `"engine": true`
 - **Reason:** which packs' tasks run as the engine's own, under the license, was a literal list
   in the engine; reading it off the manifest makes it a property of the pack (ClaudiniteEngine

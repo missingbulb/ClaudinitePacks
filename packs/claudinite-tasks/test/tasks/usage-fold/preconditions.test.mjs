@@ -9,7 +9,7 @@ import { join, dirname } from 'node:path';
 import { terms } from '../../../tasks/usage-fold/preconditions.mjs';
 import {
   TASKS_USAGE_PATH, encodeTasksUsageFile, renderTasksUsageFile,
-} from '../../../src/items/tasks-usage-format.mjs';
+} from '../../../tasks/usage-fold/tasks-usage-format.mjs';
 
 const SCHEDULE = { dailyHour: 5, weeklyDay: 'Sun', monthlyDay: 1 };
 const NOW = new Date('2026-09-15T12:00:00Z');   // today's 05:00 anchor has passed

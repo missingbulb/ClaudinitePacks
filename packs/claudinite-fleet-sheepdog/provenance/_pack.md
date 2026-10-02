@@ -112,3 +112,8 @@
 - **Actor:** @missingbulb (owner), asking for pack.json manifests.
 - **Mechanism:** pack.json, which the loader prefers over pack.mjs; a canon pack now needs engine
   60928.1, the first to read it.
+
+## 2026-10-02 · ported · the fleet tasks stop importing the tasks pack
+- **Reason:** the `$schema` key pointed at `claudinite-tasks/task.schema.json`, which left with the Node runner; the engine validates a declaration itself (`cn tasks contract`) and publishes no schema file, so the key is dropped as the hello pack's tasks do. dormancy and the add-packs work list imported the queue's vocabulary from the removed public modules.
+- **Actor:** build lead, completing ClaudinitePacks #20 so the runner's removal lands with every importer ported.
+- **Mechanism:** each carries its own copy, drift-guarded against the dashboard's and `cn tasks grammar`; the fleet-update lever is `cn work create`. sheepdog 61002.1.

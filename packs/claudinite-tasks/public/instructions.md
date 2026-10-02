@@ -196,7 +196,10 @@ that will repeat on every tick until a person clears it. It is the `no-trigger` 
 
    The `claudinite-task-exec` record goes onto the item, in the same comment, and
    the command writes it — Actions logs expire and the item does not, so the item
-   is where a record has to live. Nothing here is yours to print by hand.
+   is where a record has to live. Nothing here is yours to print by hand. The one
+   exception is a convergence the command refused or could not run: then print the
+   record on its own with `.claudinite/bin/cn work record-exec <pack>/<task> #<n> failed`
+   and output its line in your reply, so the census still counts the run.
 
 7. **Capture this session before you end it.** Last step, after the item is
    converged, and run it whichever way step 6 went:

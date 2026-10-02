@@ -8,7 +8,7 @@ import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { parseRequestFields } from '../../claudinite-tasks/public/work-item-grammar.mjs';
+import { requestFieldsOf, needsCn } from '../../../tools/test/cn-tasks.mjs';
 import {
   parseVerificationSpec, parseRetryEvery, RETRY_FIELD,
 } from '../../claudinite-tasks/tasks/verify-production/probes.mjs';
@@ -38,7 +38,7 @@ test('the skill prescribes one coded template and one agentic one', () => {
   assert.equal(templates.length, 2, 'a third would be a form nobody defined');
 });
 
-test('the coded template parses into a complete probe spec, routed to a task that exists, with no session', () => {
+test('the coded template parses into a complete probe spec, routed to a task that exists, with no session', needsCn, () => {
   const coded = fill(templates[0]);
   const spec = parseVerificationSpec(coded);
   assert.deepEqual(spec.problems, []);
@@ -46,7 +46,7 @@ test('the coded template parses into a complete probe spec, routed to a task tha
   assert.equal(spec.verify.length, 1, 'the assertion the probes exist for');
   assert.equal(spec.originalIssue, 1286, 'a failing run reopens the original issue');
   assert.equal(spec.retryEveryMs, 6 * 3_600_000);
-  const fields = parseRequestFields(coded, { gated: true });
+  const fields = requestFieldsOf(coded);
   assert.ok(fields.task, 'nothing routes the issue to the coded runner');
   assert.ok(existsSync(join(here, '../../', fields.task.replace('/', '/tasks/'))), `${fields.task} names no task directory`);
   assert.equal(fields.model, null, 'no session ever runs a coded verification, so no family is chosen');
@@ -54,9 +54,9 @@ test('the coded template parses into a complete probe spec, routed to a task tha
   assert.equal(fields.notBefore, null, 'a coded run costs seconds — probing from the moment of filing is the point');
 });
 
-test('the agentic template parses into a sleeping session with a re-arm cadence and no blocker', () => {
+test('the agentic template parses into a sleeping session with a re-arm cadence and no blocker', needsCn, () => {
   const agentic = fill(templates[1]);
-  const fields = parseRequestFields(agentic, { gated: true });
+  const fields = requestFieldsOf(agentic);
   assert.equal(fields.model, 'sonnet');
   assert.equal(fields.notBefore, SAMPLES['Not-before'], 'without the delay the run fires before the release it waits on');
   assert.deepEqual(fields.blockedBy, [], 'filed after the merge, so nothing is left to wait on but the release');

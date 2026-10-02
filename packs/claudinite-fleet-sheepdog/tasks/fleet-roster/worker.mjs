@@ -11,7 +11,7 @@
 // ("unknown is neither uncovered nor behind") or when its config/token is unusable;
 // this worker turns that into a non-zero exit, and the executor treats a non-zero
 // code-work subprocess as a failed task — it converges the item to `needs-human`
-// (packs/claudinite-tasks/src/execute/loop.mjs) instead of handing off to any agent.
+// instead of handing off to any agent.
 
 import { main as sweep } from './check-fleet-roster.mjs';
 

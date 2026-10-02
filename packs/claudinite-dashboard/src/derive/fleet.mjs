@@ -28,8 +28,8 @@ import { stripComments } from '../../../../engine/checks/helpers/code-scanning.m
 import { periodMs } from './task-calendar.mjs';
 import {
   STATUS_BLOCKED, STATUS_READY, STATUS_RUNNING_EXECUTOR, STATUS_RUNNING_AGENT, URGENT, STATUS_NEEDS_HUMAN_APPROVAL, STATUS_NEEDS_HUMAN_ACTION,
-} from '../../../claudinite-tasks/public/task-constants.mjs';
-import { outcomeOf, isParked } from '../../../claudinite-tasks/public/work-item-grammar.mjs';
+} from '../read/queue-vocabulary.mjs';
+import { outcomeOf, isParked } from '../read/queue-vocabulary.mjs';
 import { installedVersions } from '../../../../engine/installed-versions.mjs';
 import { VERSION_SOURCE, versionFromLiteral, isVersion, versionAbove } from '../../../../engine/version.mjs';
 import { isDormant } from '../read/dormancy.mjs';

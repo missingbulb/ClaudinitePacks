@@ -18,7 +18,7 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
 import {
   STATUS_BLOCKED, STATUS_READY, STATUS_RUNNING_EXECUTOR, STATUS_RUNNING_AGENT, NEEDS_HUMAN, STATUS_NEEDS_HUMAN_APPROVAL, STATUS_NEEDS_HUMAN_DECISION,
   STATUS_NEEDS_HUMAN_ACTION, OUTCOME_DONE, OUTCOME_DELIVERED, OUTCOME_OBSOLETE, STATUS_DONE,
-} from '../../claudinite-tasks/public/task-constants.mjs';
+} from '../src/read/queue-vocabulary.mjs';
 
 const NOW = Date.parse('2026-08-17T12:00:00Z');
 const CANON = { repo: 'o/canon', ref: 'canonsha', engineVersion: 4, packVersions: { 'acme-pack-b': 3, 'acme-pack': 5 } };

@@ -1,10 +1,9 @@
 // The scheduling calendar as the dashboard reads it: which instant a task's window
 // last opened at or opens next, how long a cadence's period is, and which cadence
-// term a declaration states. THE DASHBOARD'S OWN COPY of the queue's arithmetic
-// (`packs/claudinite-tasks/src/contract/calendar.mjs` and `src/items/anchors.mjs`):
-// packs share no code, so the page talks to the queue only through its vocabulary and
-// carries the arithmetic it renders with. `test/task-calendar-drift.test.mjs` runs both
-// sides over the same instants and declarations and fails the moment they disagree.
+// term a declaration states. THE DASHBOARD'S OWN COPY of the engine's arithmetic:
+// the page renders in a browser, so it carries the arithmetic it renders with.
+// `test/task-calendar-drift.test.mjs` runs it and the engine (`cn tasks`) over the same
+// instants and declarations and fails the moment they disagree.
 //
 // All times are UTC. `now` is always injected, so every answer is deterministic.
 

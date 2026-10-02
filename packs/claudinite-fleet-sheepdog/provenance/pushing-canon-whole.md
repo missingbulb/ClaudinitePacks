@@ -29,3 +29,8 @@
 ## 2026-09-25 · reworded · the lever's id is now fleet-update
 - **Reason:** the task was renamed; the rule names the id it creates an item for.
 - **Actor:** @missingbulb (owner).
+
+## 2026-10-02 · reworded · the lever is `cn work create`
+- **Reason:** the Node `create-work-item.mjs` entry left with the task runner; the engine files a work item by hand with `cn work create <pack>/<task>`.
+- **Actor:** build lead, completing ClaudinitePacks #20 so the runner's removal lands with every importer ported.
+- **Mechanism:** the rule's command block names the engine command; the Context knobs are unchanged.

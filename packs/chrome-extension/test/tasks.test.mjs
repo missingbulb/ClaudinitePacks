@@ -4,21 +4,13 @@ import { existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import storeReleaseJson from '../tasks/store-release/task.json' with { type: 'json' };
-import {
-  evaluatePrecondition, loadTaskTerms,
-} from '../../claudinite-tasks/public/task-declaration.mjs';
-import { normalizeTaskDeclaration } from '../../claudinite-tasks/public/task-declaration.mjs';
-// The loader's door: the JSON says what is particular to the task, the defaults are the contract's.
-const storeRelease = normalizeTaskDeclaration(storeReleaseJson);
+import { verdictWithTerms, needsCn } from '../../../tools/test/cn-tasks.mjs';
 
 const TASK_DIR = join(dirname(fileURLToPath(import.meta.url)), '../../../packs/chrome-extension/tasks/store-release');
 
-// The `release` signal's shape (packs/claudinite-tasks/signals/index.mjs). This is a
-// UNIT seam over a pure precondition — it asserts the decision, never that the
-// scheduler can actually produce `manifestVersion`. It could not, for a while,
-// and these stayed green throughout. The reachability half lives in
-// packs/claudinite-tasks/test/signal-context.test.mjs (real checkout → real ctx →
-// this precondition); the two are only meaningful together.
+// The `release` signal's shape, as the engine's collector gives it. This is a UNIT
+// seam over a pure precondition — it asserts the decision, never that the scheduler
+// can actually produce `manifestVersion`.
 // `shipsPipeline: true` is the default here because these cases are all about the
 // version decision; the shipping gate has its own tests below.
 const S = (release = {}, commits = {}) => ({
@@ -26,13 +18,12 @@ const S = (release = {}, commits = {}) => ({
   commits: { substantiveChange: false, ...commits },
 });
 
-const terms = await loadTaskTerms(TASK_DIR);
 // The cadence term reads the task's own run history at a chosen instant: an empty
-// history holds, and the signal under test decides.
-const SCHEDULE = { dailyHour: 4, weeklyDay: 'Sun', monthlyDay: 1 };
+// history holds, and the signal under test decides. The built-in terms are the
+// engine's (`cn tasks precondition`); `manifest-ahead` is the task's preconditions.mjs.
 const AT = '2026-09-05T16:00:00Z';
 const NO_RUNS = { runs: { list: [] } };
-const verdict = (signals) => evaluatePrecondition({ decl: storeRelease, terms }, { ...NO_RUNS, ...signals }, {}, null, AT, SCHEDULE);
+const verdict = (signals) => verdictWithTerms(TASK_DIR, storeReleaseJson.preconditions, { ...NO_RUNS, ...signals }, { now: AT });
 
 test('store-release: the worker it names exists', () => {
   assert.ok(existsSync(join(TASK_DIR, 'worker.mjs')), 'the preprocessing worker must exist');
@@ -41,31 +32,31 @@ test('store-release: the worker it names exists', () => {
 // The precondition composes a pack-local term (manifest-ahead) with a built-in
 // one (substantive-change) via `||` — the pack's own design, so the cases below
 // are kept as a mechanism-level exercise rather than a unit test of either term.
-test('store-release: runs when the manifest version is ahead of the latest release', () => {
-  const v = verdict(S({ manifestVersion: '1.4.0', latestTag: 'v1.3.0' }));
+test('store-release: runs when the manifest version is ahead of the latest release', needsCn, async () => {
+  const v = await verdict(S({ manifestVersion: '1.4.0', latestTag: 'v1.3.0' }));
   assert.equal(v.run, true);
   assert.match(v.reason, /1\.4\.0 is ahead of released 1\.3\.0/);
 });
 
-test('store-release: silent when the shipped version equals the latest release and nothing shipped', () => {
+test('store-release: silent when the shipped version equals the latest release and nothing shipped', needsCn, async () => {
   // The legacy leading-v tolerance survives the conversion: v2.0.0 === 2.0.0.
-  assert.equal(verdict(S({ manifestVersion: '2.0.0', latestTag: 'v2.0.0' })).run, false);
+  assert.equal((await verdict(S({ manifestVersion: '2.0.0', latestTag: 'v2.0.0' }))).run, false);
 });
 
-test('store-release: runs when there is no release yet but a manifest version exists', () => {
-  const v = verdict(S({ manifestVersion: '0.1.0', latestTag: null }));
+test('store-release: runs when there is no release yet but a manifest version exists', needsCn, async () => {
+  const v = await verdict(S({ manifestVersion: '0.1.0', latestTag: null }));
   assert.equal(v.run, true);
   assert.match(v.reason, /manifest 0\.1\.0, and nothing released yet/);
 });
 
-test('store-release: silent when no manifest version can be found and nothing shipped', () => {
-  assert.equal(verdict(S()).run, false);
+test('store-release: silent when no manifest version can be found and nothing shipped', needsCn, async () => {
+  assert.equal((await verdict(S())).run, false);
 });
 
-test('store-release: a substantive default-branch move fires it even at the released version', () => {
+test('store-release: a substantive default-branch move fires it even at the released version', needsCn, async () => {
   // New in the conversion — the dispatched workflow does the authoritative
   // shipped-file diff, so the precondition is only the cheap pre-filter.
-  const v = verdict(S({ manifestVersion: '2.0.0', latestTag: 'v2.0.0' }, { substantiveChange: true }));
+  const v = await verdict(S({ manifestVersion: '2.0.0', latestTag: 'v2.0.0' }, { substantiveChange: true }));
   assert.equal(v.run, true);
   assert.match(v.reason, /substantive/);
 });

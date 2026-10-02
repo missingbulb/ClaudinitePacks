@@ -1,15 +1,27 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import {
   isShippingFile, declaredPackVersion, withPackVersion, shelfPacks, bumpCommits, planBumps,
   versionHistory, renderHistory, planHistory, rowVersions, pullNumber, BUMP_TASK, withDirectoryVersions,
 } from '../pack-versions.mjs';
-import { run, makeGit, pushOnto } from '../tasks/pack-version-bump/worker.mjs';
-import { removeTree } from '../../../engine/remove-tree.mjs';
+import { installSdk, gitIn } from '../../../tools/test/sdk-stand-in.mjs';
+
+// The worker reaches the remote through the engine's `git`; here that answer runs in
+// whichever checkout the test points it at.
+let answerGit = null;
+installSdk({
+  params: { pack: 'claudinite-canon-curation', task: 'pack-version-bump' }, // @real-entity the bump commit names its own task
+  answers: { git: (args) => answerGit(args) },
+});
+const { run: runBump, makeGit, pushOnto } = await import('../tasks/pack-version-bump/worker.mjs');
+const removeTree = (dir) => rmSync(dir, { recursive: true, force: true });
+// The remote is the checkout's own `origin`, as it is in an Actions checkout.
+const remoteIn = (work) => { const answer = gitIn(work); return (...args) => answer({ args }); };
+const run = ({ root, remote: _origin, ...rest }) => { answerGit = gitIn(root); return runBump({ root, remote: remoteIn(root), ...rest }); };
 
 // What is pinned: the version number is read OFF the base branch after a merge, never
 // written by the pull request — so the walk must find the last bump, count only
@@ -255,8 +267,8 @@ test('a push the branch moved under is refused, never forced, and run replans fr
   try {
     const git = makeGit(work);
     const before = sh(work, 'rev-parse', 'HEAD').trim();
-    const rejected = pushOnto(git, {
-      remote: origin, baseSha: sh(work, 'rev-parse', 'HEAD~1').trim(), branch: 'main',
+    const rejected = await pushOnto(git, remoteIn(work), {
+      baseSha: sh(work, 'rev-parse', 'HEAD~1').trim(), branch: 'main',
       files: { 'packs/alpha/pack.mjs': manifest('60905.1') }, message: 'stale',
     });
     assert.equal(rejected, null);

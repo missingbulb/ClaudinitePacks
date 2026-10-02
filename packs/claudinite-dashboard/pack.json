@@ -1,6 +1,9 @@
 {
   "version": "61002.1",
   "minEngineVersion": "60928.1",
+  "githubActions": [
+    "dispatchWorkflow"
+  ],
   "ruleRoutingGuidance": {
     "belongs": "the browser dashboard over Claudinite scheduler state and the site that publishes it",
     "excludes": "how the scheduler behaves — core; workflow practice — git-github; product sites — public-website"

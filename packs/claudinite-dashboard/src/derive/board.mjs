@@ -18,11 +18,11 @@
 
 import {
   isQueueItem, parseWorkItemBody, parseWorkItemTitle, outcomeOf, statusOf, labelNames,
-} from '../../../claudinite-tasks/public/work-item-grammar.mjs';
+} from '../read/queue-vocabulary.mjs';
 import {
   STATUS_NEEDS_HUMAN_APPROVAL, STATUS_NEEDS_HUMAN_FAILURE, STATUS_RUNNING_AGENT,
   STATUS_RUNNING_EXECUTOR, STATUS_READY, PARK_PREFIX, PARK_KINDS, ORIGIN_AD_HOC, ASKED_FOR_ORIGINS,
-} from '../../../claudinite-tasks/public/task-constants.mjs';
+} from '../read/queue-vocabulary.mjs';
 import { nextAnchor } from './task-calendar.mjs';
 
 // Every origin a person's action produces, as against the schedule's own.

@@ -78,3 +78,8 @@
 - **Actor:** @missingbulb (owner), asking for pack.json manifests.
 - **Mechanism:** pack.json, which the loader prefers over pack.mjs; a canon pack now needs engine
   60928.1, the first to read it.
+
+## 2026-10-02 · ported · the page and publish-pages stop importing the tasks pack
+- **Reason:** the page imported the queue's vocabulary from `claudinite-tasks/public/*.mjs`, which left with the Node runner, and publish-pages pushed and dispatched through the runner's GitHub client.
+- **Actor:** build lead, completing ClaudinitePacks #20 so the runner's removal lands with every importer ported.
+- **Mechanism:** the vocabulary is the pack's own `src/read/queue-vocabulary.mjs`, drift-guarded against `cn tasks grammar`; publish-pages pushes through the SDK's `git` and dispatches through `github.dispatchWorkflow` (granted in pack.json), its run and Pages reads a pack-local REST copy; the build no longer copies the tasks pack into the site. dashboard 61002.1.

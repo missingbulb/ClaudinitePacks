@@ -4,15 +4,23 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import {
-  summarize, median, runSeconds, slowestSteps, reportBody,
-  MIN_RUNS_PER_WINDOW, REGRESSION_SECONDS,
-} from '../tasks/ci-performance/worker.mjs';
 import declJson from '../tasks/ci-performance/task.json' with { type: 'json' };
-import { evaluatePrecondition } from '../../claudinite-tasks/public/task-declaration.mjs';
-import { normalizeTaskDeclaration } from '../../claudinite-tasks/public/task-declaration.mjs';
-// The loader's door: the JSON says what is particular to the task, the defaults are the contract's.
-const decl = normalizeTaskDeclaration(declJson);
+import { installSdk } from '../../../tools/test/sdk-stand-in.mjs';
+import { verdictOf, needsCn } from '../../../tools/test/cn-tasks.mjs';
+
+// The tracker is the engine's to find and write; its answers are scripted here.
+const trackers = [];
+const sdk = installSdk({
+  params: { pack: 'basics', task: 'ci-performance' },
+  answers: {
+    'github.findOrCreateTracker': ({ title }) => { trackers.push(title); return { number: 12, created: trackers.length === 1, duplicates: [], leftOpen: [] }; },
+    'github.writeTracker': () => ({}),
+  },
+});
+const {
+  summarize, median, runSeconds, slowestSteps, reportBody, worker, TRACKER_TITLE,
+  MIN_RUNS_PER_WINDOW, REGRESSION_SECONDS,
+} = await import('../tasks/ci-performance/worker.mjs');
 
 const NOW = Date.parse('2026-08-15T12:00:00Z');
 const daysAgo = (d) => new Date(NOW - d * 86400 * 1000).toISOString();
@@ -116,17 +124,12 @@ test('an empty ledger produces a report rather than an error', () => {
   assert.match(reportBody(summary, { repo: 'o/r', nowIso: 'now' }), /no completed runs/);
 });
 
-// Driven through evaluatePrecondition — the executor's own caller — rather than by
-// calling the precondition directly. Calling it directly proves only that it does
-// what the test imagines it is passed: this precondition was first written to take
-// `{ signals }`, its direct-call test passed, and the real caller (which passes the
-// signals object itself) got `precondition threw` on every run.
-// The cadence term reads an empty run history at a chosen instant, so it holds and
-// the movement signals decide.
-const SCHEDULE = { dailyHour: 4, weeklyDay: 'Sun', monthlyDay: 1 };
-
-test('the precondition gates on movement in the window, not on CI existing', () => {
-  const verdict = (signals) => evaluatePrecondition({ decl }, { runs: { list: [] }, ...signals }, {}, null, new Date(NOW), SCHEDULE);
+// Driven through the engine's own evaluator (`cn tasks precondition`) rather than by
+// reading the expression: what is asserted is the verdict a run gets. The cadence
+// term reads an empty run history at a chosen instant, so it holds and the movement
+// signals decide.
+test('the precondition gates on movement in the window, not on CI existing', needsCn, () => {
+  const verdict = (signals) => verdictOf(declJson.preconditions, { runs: { list: [] }, ...signals }, { now: new Date(NOW).toISOString() });
   assert.equal(verdict({ commits: { substantiveChange: false }, prs: { touched: [] } }).run, false);
   assert.equal(verdict({ commits: { substantiveChange: true }, prs: { touched: [] } }).run, true);
   assert.equal(verdict({ commits: { substantiveChange: false }, prs: { touched: [7] } }).run, true);
@@ -137,4 +140,24 @@ test('the precondition gates on movement in the window, not on CI existing', () 
   const empty = verdict({});
   assert.equal(empty.run, false);
   assert.doesNotMatch(empty.reason, /threw/);
+});
+
+test('a run rewrites the task\'s tracker through the engine, commenting only on a regression', async () => {
+  const quiet = async (path) => (path.includes('/jobs')
+    ? { status: 200, json: { jobs: [] } }
+    : { status: 200, json: { workflow_runs: [] } });
+  sdk.calls.length = 0;
+  await worker({ repo: 'o/r' }, quiet);
+  const calls = sdk.calls.map((c) => [c.method, c.args]);
+  assert.deepEqual(calls[0], ['github.findOrCreateTracker', { title: TRACKER_TITLE }]);
+  assert.equal(calls[1][0], 'github.writeTracker');
+  assert.equal(calls[1][1].number, 12);
+  assert.match(calls[1][1].body, /no completed runs/);
+  assert.equal('comment' in calls[1][1], false, 'a quiet run leaves no dated note');
+});
+
+test('an unreadable run ledger fails the run before the tracker is touched', async () => {
+  sdk.calls.length = 0;
+  await assert.rejects(worker({ repo: 'o/r' }, async () => ({ status: 403, json: null })), /run ledger unreadable/);
+  assert.deepEqual(sdk.calls, []);
 });

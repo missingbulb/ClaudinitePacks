@@ -7,7 +7,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { parseRequestFields } from '../../claudinite-tasks/public/work-item-grammar.mjs';
+import { requestFieldsOf, needsCn } from '../../../tools/test/cn-tasks.mjs';
 import {
   parseRetryEvery, RETRY_FIELD,
 } from '../../claudinite-tasks/tasks/verify-production/probes.mjs';
@@ -26,8 +26,8 @@ const filled = template.split('\n').map((line) => {
   return field && line.includes('<') && SAMPLES[field] ? `${field}: ${SAMPLES[field]}` : line.replace(/\s+\([a-z ]+ case\)\s*$/, '');
 }).join('\n');
 
-test('the queue reads the retrospective template back: both waits, an opus session, a re-arm cadence, nothing to merge', () => {
-  const fields = parseRequestFields(filled, { gated: true });
+test('the queue reads the retrospective template back: both waits, an opus session, a re-arm cadence, nothing to merge', needsCn, () => {
+  const fields = requestFieldsOf(filled);
   assert.deepEqual(fields.blockedBy, [1700], 'the chain case waits on the final link');
   assert.equal(fields.notBefore, SAMPLES['Not-before'], 'the merge case sleeps to the horizon');
   assert.equal(fields.model, 'opus', 'an open review is judgment work, not a field read');

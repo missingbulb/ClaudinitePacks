@@ -15,10 +15,10 @@
 
 import {
   parseWorkItemBody, parseWorkItemTitle, statusOf, labelNames, outcomeOf,
-} from '../../../claudinite-tasks/public/work-item-grammar.mjs';
+} from '../read/queue-vocabulary.mjs';
 import {
   PARK_PREFIX, CLAIM_MARKER, HANDOFF_MARKER,
-} from '../../../claudinite-tasks/public/task-constants.mjs';
+} from '../read/queue-vocabulary.mjs';
 import { holdsOnFailure } from './task-calendar.mjs';
 
 const NOT_READ = 'not read';
@@ -30,12 +30,11 @@ const days = (from, to) => (from == null || to == null ? null : Math.round((to -
 // keeps *not read* and *nothing there* apart on the page.
 const field = (label, value, note = null) => ({ label, value: value ?? null, note: value == null ? (note ?? NOT_READ) : note });
 
-// The command `converge-item.mjs` would print for this item, spelled exactly as its own
-// usage block spells it — so a reader can paste it, and so this page and the queue
-// cannot drift about what converging one item takes.
+// The command that converges this item, spelled as the executing session's
+// instructions spell it, so a reader can paste it.
 export function convergeCommand(item, repo, outcome = 'done') {
-  return `node .claudinite/shared/packs/claudinite-tasks/queue/converge-item.mjs \\\n`
-    + `  --issue ${item.number} --outcome ${outcome} --summary "<what happened>" \\\n`
+  return `.claudinite/bin/cn work converge --issue ${item.number} \\\n`
+    + `  --outcome ${outcome} --summary "<what happened>" \\\n`
     + `  --repo ${repo} --item-file <the issue as JSON>`;
 }
 

@@ -8,26 +8,19 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { fileURLToPath } from 'node:url';
 import { dirname } from 'node:path';
-import {
-  policyVerdict, declaredMergeRules,
-} from '../../claudinite-tasks/public/task-declaration.mjs';
-import adoptJson from '../tasks/adopt-requested-packs/task.json' with { type: 'json' };
-import { normalizeTaskDeclaration } from '../../claudinite-tasks/public/task-declaration.mjs';
-// The loader's door: the JSON says what is particular to the task, the defaults are the contract's.
-const adopt = normalizeTaskDeclaration(adoptJson);
+import { mergePolicy, needsCn } from '../../../tools/test/cn-tasks.mjs';
+import adopt from '../tasks/adopt-requested-packs/task.json' with { type: 'json' };
 
+// The declaration names its own policy, so the JSON's is the one the engine judges by.
 const packDir = dirname(dirname(fileURLToPath(import.meta.url)));
-const { rules, errors } = declaredMergeRules(
-  [{ id: 'claudinite-lifecycle', dir: packDir }],
-  { packs: ['claudinite-lifecycle'] },
-);
-const verdict = (entries) => policyVerdict({ policy: adopt.automerge, entries, declaredRules: rules });
+const policy = needsCn.skip ? null : mergePolicy([{ id: 'claudinite-lifecycle', dir: packDir }]);
+const verdict = (entries) => policy.verdict(adopt.automerge, entries);
 
-test('the pack\'s merge-rules.json compiles cleanly', () => {
-  assert.deepEqual(errors, []);
+test('the pack\'s merge-rules.json compiles cleanly', needsCn, () => {
+  assert.deepEqual(policy.errors, []);
 });
 
-test('an adoption-shaped diff lands: declaration, re-vendored mount (its policy files included), rules index', () => {
+test('an adoption-shaped diff lands: declaration, re-vendored mount (its policy files included), rules index', needsCn, () => {
   const v = verdict([
     { file: '.claudinite-settings.json', before: '{"packs":["acme-pack"]}\n', after: '{"packs":["acme-pack","acme-pack-j"]}\n' },
     { file: '.claudinite/shared/packs/acme-pack-j/pack.mjs', before: null, after: 'export default {};\n' },
@@ -41,7 +34,7 @@ test('an adoption-shaped diff lands: declaration, re-vendored mount (its policy 
   assert.equal(v.mergeable, true, v.why);
 });
 
-test('what an adoption does not write parks: repo source, workflows, repo-owned policy files', () => {
+test('what an adoption does not write parks: repo source, workflows, repo-owned policy files', needsCn, () => {
   assert.equal(verdict([
     { file: 'src/app.mjs', before: 'a\n', after: 'b\n' },
   ]).mergeable, false);

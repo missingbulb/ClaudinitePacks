@@ -3,9 +3,9 @@ import assert from 'node:assert/strict';
 import declJson from '../../../tasks/fleet-add-missing-packs/task.json' with { type: 'json' };
 import { parseParams } from '../../../tasks/fleet-add-missing-packs/params.mjs';
 import { SCHEDULED_ARGV } from '../../../tasks/fleet-add-missing-packs/worker.mjs';
-import { normalizeTaskDeclaration } from '../../../../claudinite-tasks/public/task-declaration.mjs';
-// The loader's door: the JSON says what is particular to the task, the defaults are the contract's.
-const decl = normalizeTaskDeclaration(declJson);
+import { declarationOf } from '../../../../../tools/test/cn-tasks.mjs';
+// The engine's contract: the JSON says what is particular to the task, the defaults are the engine's.
+const decl = declarationOf(declJson);
 
 // The claudinite-fleet-sheepdog pack's fleet-add-missing-packs task on the FAN-OUT model (#749):
 // the enforcer dispatches, the member executes. Everything asserted here is a

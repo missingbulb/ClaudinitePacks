@@ -1,10 +1,13 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import {
+import { installSdk } from '../../../../../tools/test/sdk-stand-in.mjs';
+import { parseLogFilename, logFilename } from '../../../../claudinite-growth/capture-log.mjs';
+
+installSdk();
+const {
   parseLogName, parseEntries,
   parseCommitLog, dayFieldsFrom, dayLadder, deepenHistory, deliverFolds,
-} from '../../../tasks/usage-fold/worker.mjs';
-import { parseLogFilename, logFilename } from '../../../../claudinite-growth/capture-log.mjs';
+} = await import('../../../tasks/usage-fold/worker.mjs');
 
 // The worker's I/O shell is exercised by the live run, not by a unit test (it fetches
 // a branch and opens a PR). What IS unit-testable is where it AGREES with something
@@ -90,29 +93,33 @@ test('dayLadder is a UTC ladder ending today', () => {
 
 // --- the deepen that makes the line series answerable at all ----------------------
 
-test('deepenHistory fetches the window on a shallow checkout — the normal Actions case', () => {
+// The local reads go to `git`, the fetch to the engine's (`fetch`).
+const engineFetch = (calls, fail = false) => async (...args) => {
+  calls.push(args);
+  if (fail) throw new Error('the server will not deepen');
+  return '';
+};
+
+test('deepenHistory fetches the window on a shallow checkout — the normal Actions case', async () => {
   const calls = [];
   const git = (root, args) => { calls.push(args); return args[0] === 'rev-parse' ? 'true\n' : ''; };
-  assert.equal(deepenHistory(git, '/r', 'https://x/y', 'main', '2026-07-22T00:00:00Z'), 'deepened');
-  assert.deepEqual(calls[1], ['fetch', '--quiet', '--shallow-since=2026-07-22T00:00:00Z', 'https://x/y', 'main']);
+  assert.equal(await deepenHistory(git, '/r', engineFetch(calls), 'main', '2026-07-22T00:00:00Z'), 'deepened');
+  assert.deepEqual(calls[1], ['fetch', '--quiet', '--shallow-since=2026-07-22T00:00:00Z', 'origin', 'main']);
 });
 
-test('deepenHistory leaves a COMPLETE clone alone — the same flag would truncate it', () => {
+test('deepenHistory leaves a COMPLETE clone alone — the same flag would truncate it', async () => {
   const calls = [];
   const git = (root, args) => { calls.push(args); return 'false\n'; };
-  assert.equal(deepenHistory(git, '/r', 'https://x/y', 'main', '2026-07-22T00:00:00Z'), 'complete');
+  assert.equal(await deepenHistory(git, '/r', engineFetch(calls), 'main', '2026-07-22T00:00:00Z'), 'complete');
   assert.equal(calls.length, 1, 'it asks, and then does nothing at all');
 });
 
-test('a deepen that could not run says so, rather than passing for one that did', () => {
+test('a deepen that could not run says so, rather than passing for one that did', async () => {
   // The series still reads whatever history is there and `coveredFrom` still states
   // where it starts — but a run where the deepen never engaged must not read in the
   // log like one where it did.
-  const git = (root, args) => {
-    if (args[0] === 'rev-parse') return 'true\n';
-    throw new Error('the server will not deepen');
-  };
-  assert.equal(deepenHistory(git, '/r', 'https://x/y', 'main', '2026-07-22T00:00:00Z'), 'unchanged');
+  const git = () => 'true\n';
+  assert.equal(await deepenHistory(git, '/r', engineFetch([], true), 'main', '2026-07-22T00:00:00Z'), 'unchanged');
 });
 
 // --- one delivery for both halves ------------------------------------------------
@@ -128,7 +135,7 @@ test('deliverFolds puts both halves\' files, and both moves, on ONE pull request
   const { calls, deliver } = recorder();
   await deliverFolds({
     halves: { sessions: half('a.json', 'A', { 'old-a': 'a.json' }), machinery: half('b.json', 'B', { 'old-b': 'b.json' }) },
-    deliver, automerge: 'x', log: () => {},
+    deliver, log: () => {},
   });
   assert.equal(calls.length, 1);
   assert.deepEqual(calls[0].files, { 'a.json': 'A', 'b.json': 'B' });
@@ -137,7 +144,7 @@ test('deliverFolds puts both halves\' files, and both moves, on ONE pull request
 
 test('deliverFolds opens nothing when neither half changed a byte', async () => {
   const { calls, deliver } = recorder();
-  await deliverFolds({ halves: { sessions: unchanged('s'), machinery: unchanged('m') }, deliver, automerge: 'x', log: () => {} });
+  await deliverFolds({ halves: { sessions: unchanged('s'), machinery: unchanged('m') }, deliver, log: () => {} });
   assert.equal(calls.length, 0);
 });
 
@@ -147,7 +154,7 @@ test('a half that throws costs only its own file: the other still lands, then th
   await assert.rejects(
     deliverFolds({
       halves: { sessions: async () => { throw new Error('logs branch unreadable'); }, machinery: half('b.json', 'B') },
-      deliver, automerge: 'x', log: (l) => lines.push(l),
+      deliver, log: (l) => lines.push(l),
     }),
     /sessions.*logs branch unreadable/,
   );
