@@ -1,11 +1,11 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { isDormant } from '../dormancy.mjs';
-import { isDormant as queueIsDormant } from '../../claudinite-tasks/src/contract/dormancy.mjs';
+import { isDormant as queueIsDormant } from '../../claudinite-dashboard/src/read/dormancy.mjs';
 
-// THE DRIFT GUARD for `dormancy.mjs`, this pack's own copy of the queue's dormancy
-// predicate. The split is forced — packs share no code — so both copies are run over
-// the same declarations, in both directions: a repo this pack reads as awake while its
+// THE DRIFT GUARD for `dormancy.mjs`, this pack's own copy of the scheduler's dormancy
+// predicate, against the dashboard's, the other cross-repo reader of it. The split is
+// forced — packs share no code — so both copies are run over the same declarations, in both directions: a repo this pack reads as awake while its
 // own scheduler has stopped is exactly the repo that then gets nagged for stopping.
 
 const DECLARATIONS = [
@@ -22,7 +22,7 @@ const DECLARATIONS = [
   { packConfig: { 'claudinite-tasks': null }, raw: { dormant: true } }, // @real-entity dormancy is that pack's own setting; the drift guard reads its real key
 ];
 
-test('this pack reads the dormancy of every declaration exactly as the queue does', () => {
+test('this pack reads the dormancy of every declaration exactly as the dashboard does', () => {
   const diffs = DECLARATIONS.filter((d) => isDormant(d) !== queueIsDormant(d)).map((d) => JSON.stringify(d));
   assert.deepEqual(diffs, []);
   assert.ok(DECLARATIONS.some((d) => queueIsDormant(d)) && DECLARATIONS.some((d) => !queueIsDormant(d)),

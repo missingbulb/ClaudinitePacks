@@ -1,9 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import declJson from '../../../tasks/fleet-update/task.json' with { type: 'json' };
-import { normalizeTaskDeclaration } from '../../../../claudinite-tasks/public/task-declaration.mjs';
-// The loader's door: the JSON says what is particular to the task, the defaults are the contract's.
-const decl = normalizeTaskDeclaration(declJson);
+import { declarationOf } from '../../../../../tools/test/cn-tasks.mjs';
+// The engine's contract: the JSON says what is particular to the task, the defaults are the engine's.
+const decl = declarationOf(declJson);
 
 // fleet-update as a MANUAL task (#749) — the first task on the non-cadence
 // frequency, replacing the pack's standalone workflow (and the `.github/` managed
