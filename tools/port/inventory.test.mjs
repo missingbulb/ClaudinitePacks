@@ -114,9 +114,9 @@ test('the rendered doc names the generator and the frozen commit, and lists per 
   assert.equal(render(inv, { frozenAt: 'a'.repeat(40) }), doc, 'rendering is deterministic');
 });
 
-test('the real shelf: 38 packs, every file in exactly one class, at least 200 engine importers, every other file listed', () => {
+test('the real shelf: 39 packs, every file in exactly one class, at least 200 engine importers, every other file listed', () => {
   const inv = inventory(join(REPO_ROOT, 'packs'));
-  assert.equal(inv.packs.length, 38);
+  assert.equal(inv.packs.length, 39);
   const files = inv.packs.flatMap((p) => p.files);
   assert.ok(files.length > 1900, `${files.length} files`);
   assert.ok(files.filter((f) => f.engine).length >= 200);

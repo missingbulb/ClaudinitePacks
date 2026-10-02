@@ -81,7 +81,7 @@ function branch(versions, { key = PACKS_KEY, cert = SIGN.certificates.packs } = 
   for (const v of versions) {
     const archive = Buffer.from(`archive ${v}`);
     files.set(`acme-pack/${v}.tar.gz`, archive);
-    ix = addVersion(ix, { packJson: { version: v, minEngineVersion: '60101.1' }, sha256: sha256(archive), size: archive.length, publishedAt: '2026-01-02T03:04:05Z', sourceCommit: 'b'.repeat(40) });
+    ix = addVersion(ix, { packJson: { version: v, minEngineVersion: '60101.1.0' }, sha256: sha256(archive), size: archive.length, publishedAt: '2026-01-02T03:04:05Z', sourceCommit: 'b'.repeat(40) });
   }
   const bytes = serialize(ix);
   files.set('acme-pack/index.json', bytes);

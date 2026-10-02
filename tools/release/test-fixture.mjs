@@ -32,7 +32,7 @@ export function put(root, path, content) {
 }
 
 export function packJson(version, extra = {}) {
-  return JSON.stringify({ version, minEngineVersion: '60101.1', ...extra }, null, 2) + '\n';
+  return JSON.stringify({ version, minEngineVersion: '60101.1.0', ...extra }, null, 2) + '\n';
 }
 
 // A source repo with two synthetic packs, and a bare remote with no `vendored` branch.

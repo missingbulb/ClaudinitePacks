@@ -9,7 +9,7 @@ coded checks become Go; tasks stay Node against `@claudinite/sdk`; tests are rew
 the pinned `cn`, or dropped when they check only file shapes or doc text. A file that imports
 Claudinite's `engine/` by relative path does not run here until its slice replaces the import.
 
-`minEngineVersion` across the shelf: `60928.1` (38 packs).
+`minEngineVersion` across the shelf: `60928.1` (38 packs), `61001.1.0` (1 pack).
 These are Claudinite's Node engine versions; the Engine's `shared/version` parses three parts
 (`<day>.<n>.0`), so no `cn` reads these manifests yet. A ported pack's first version sets
 `minEngineVersion` to the `cn` version it was tested on.
@@ -46,6 +46,7 @@ non-test `.mjs`); `test` (`test/**`, `*.test.mjs`); `workflow` (`.yml` under `st
 | github-pages | 60928.1 | 13 | 1 | 2 | 3 | 3 | 3 | 1 | 0 | 5 |
 | google-identity | 60928.1 | 9 | 2 | 2 | 0 | 0 | 3 | 0 | 0 | 4 |
 | headless-browser | 60928.1 | 31 | 2 | 0 | 0 | 0 | 4 | 0 | 0 | 1 |
+| hello | 1.0 | 4 | 1 | 0 | 0 | 0 | 0 | 0 | 1 | 0 |
 | host-page | 60928.1 | 19 | 1 | 3 | 0 | 1 | 1 | 0 | 0 | 4 |
 | html | 60928.1 | 9 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | ios | 60928.1 | 7 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -62,7 +63,7 @@ non-test `.mjs`); `test` (`test/**`, `*.test.mjs`); `workflow` (`.yml` under `st
 | spec-driven-product | 60928.1 | 31 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | web-scraping | 60928.1 | 35 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | web-speech | 60928.1 | 33 | 3 | 6 | 0 | 1 | 5 | 0 | 0 | 10 |
-| **38 packs** | | 1187 | 70 | 85 | 77 | 209 | 280 | 14 | 5 | 224 |
+| **39 packs** | | 1191 | 71 | 85 | 77 | 209 | 280 | 14 | 6 | 224 |
 
 ## aws-sam
 
@@ -879,6 +880,12 @@ non-test `.mjs`); `test` (`test/**`, `*.test.mjs`); `workflow` (`.yml` under `st
 - `test/insecure-fake-origin.test.mjs`
 - `test/networkidle-wait.test.mjs`
 - `test/pack.test.mjs` (imports `engine/`)
+
+## hello
+
+### other (1)
+
+- `checks/hello.go`
 
 ## host-page
 
