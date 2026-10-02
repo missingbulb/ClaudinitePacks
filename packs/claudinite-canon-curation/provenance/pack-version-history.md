@@ -63,3 +63,8 @@
 - **Reason:** pack.json is the preferred manifest; where the text told a reader to list a module in
   pack.mjs, rules are found in worldRules/ and workRules/ and nothing is listed.
 - **Actor:** @missingbulb (owner), asking for pack.json manifests.
+
+## 2026-10-02 · ported · pack-version-history delivers through `@claudinite/sdk`
+- **Reason:** the runner's generated-file lane it delivered through is gone.
+- **Actor:** build lead, completing ClaudinitePacks #20 so the runner's removal lands with every importer ported.
+- **Mechanism:** a pack-local delivery copy over the SDK's `git` and `github.openPr`.

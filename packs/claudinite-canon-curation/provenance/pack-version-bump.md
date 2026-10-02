@@ -59,3 +59,8 @@
 - **Actor:** @missingbulb (owner).
 - **Mechanism:** the worker patches `packs/directory.GENERATED.md` in the same commit; the
   renderer's drift guard holds the patch byte-identical to a fresh render.
+
+## 2026-10-02 · ported · pack-version-bump pushes through `@claudinite/sdk`
+- **Reason:** it pushed through the removed runner's git helpers.
+- **Actor:** build lead, completing ClaudinitePacks #20 so the runner's removal lands with every importer ported.
+- **Mechanism:** fetch and push through the SDK's `git`, the commit message from `commitMessage`, a rejected push retried from a fresh base.
