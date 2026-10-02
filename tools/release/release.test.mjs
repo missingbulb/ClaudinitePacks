@@ -310,3 +310,18 @@ test('plan --content: a bumped version or a pack absent from vendored is to publ
   assert.equal(p.status, 0, p.out);
   assert.equal(p.stdout, 'publish acme-pack 60101.2\npublish acme-pack-three 60101.1\npublished acme-pack-two 60101.1 unchanged\n');
 });
+
+test('plan fails a version to publish whose minEngineVersion publish would refuse, and passes once it names three parts', () => {
+  const w = world();
+  put(w.src, 'packs/acme-pack-two/pack.json', packJson('60101.1', { minEngineVersion: '60928.1' }));
+  commitAll(w.src, 'two-part floor');
+  assert.equal(publish(w, build(w).archives, testChain(scratch())).status, 1);
+  const before = planContent(w);
+  assert.equal(before.status, 1, before.out);
+  assert.match(before.stdout, /^::error::acme-pack-two 60101\.1: minEngineVersion "60928\.1" is not three dot-separated numbers/m);
+  put(w.src, 'packs/acme-pack-two/pack.json', packJson('60101.1'));
+  commitAll(w.src, 'three-part floor');
+  assert.equal(publish(w, build(w).archives, testChain(scratch())).status, 0);
+  const after = planContent(w);
+  assert.equal(after.status, 0, after.out);
+});

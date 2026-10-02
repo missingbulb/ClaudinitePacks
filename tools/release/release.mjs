@@ -16,7 +16,8 @@
 //   node tools/release/release.mjs promote|revoke --pack <id> --version <v> --by <login>
 //                                  --roots <dir> [...]
 //
-// `plan` says per pack whether its version is to publish or already on `vendored`; with
+// `plan` says per pack whether its version is to publish or already on `vendored`, and exits 1
+// when a version to publish carries a pack.json publish would refuse; with
 // --content it also vendors each published pack afresh and exits 1 when the files differ from the
 // branch's, the pull-request half of "a version is published once". `build` vendors every pack
 // under --packs (default: this repo's packs/) into --out, with a packs.json describing them and a
@@ -101,9 +102,20 @@ async function plan(opts, { content = false } = {}) {
   const vendorPack = content ? (await import('../vendor/vendor.mjs')).vendorPack : null;
   const scratch = content ? mkdtempSync(join(tmpdir(), 'release-plan-')) : null;
   let changed = 0;
+  let refused = 0;
   try {
     for (const p of packs) {
-      if (!onBranch(repo, tip, `${p.id}/${p.version}`)) { console.log(`publish ${p.id} ${p.version}`); continue; }
+      if (!onBranch(repo, tip, `${p.id}/${p.version}`)) {
+        console.log(`publish ${p.id} ${p.version}`);
+        try {
+          packFields(p.id, p, { isNew: true });
+        } catch (e) {
+          if (!(e instanceof IndexError)) throw e;
+          refused++;
+          console.log(`::error::${e.message}`);
+        }
+        continue;
+      }
       if (!content) { console.log(`published ${p.id} ${p.version}`); continue; }
       const work = join(scratch, p.id);
       const candidate = join(work, 'candidate');
@@ -122,7 +134,7 @@ async function plan(opts, { content = false } = {}) {
     if (scratch) rmSync(scratch, { recursive: true, force: true });
   }
   if (changed) console.log(`::error::${changed} pack(s) changed shipped content under a published version; bump each one's pack.json version`);
-  return changed ? 1 : 0;
+  return changed || refused ? 1 : 0;
 }
 
 async function build(opts) {

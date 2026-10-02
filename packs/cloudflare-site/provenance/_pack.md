@@ -95,3 +95,8 @@
 - **Reason:** the `$schema` key pointed at `claudinite-tasks/task.schema.json`, which left with the Node runner; the engine validates a declaration itself (`cn tasks contract`) and publishes no schema file, so the key is dropped as the hello pack's tasks do. The worker took the runner's `gh`/`token` parameters.
 - **Actor:** build lead, completing ClaudinitePacks #20 so the runner's removal lands with every importer ported.
 - **Mechanism:** the worker reads the SDK's params and git; the declaration drops `$schema`. cloudflare-site 61002.1.
+
+## 2026-10-02 · scope-changed · `minEngineVersion` moves to `61001.1.0`
+- **Reason:** `60928.1` is a Node engine version, which `cn` reads only as the legacy two-part form any engine satisfies (ClaudiniteEngine#18); a new version must name the `cn` release it needs, and release-packs refused cloudflare-site 61002.1 for carrying it. `61001.1.0` is the engine floor, below which no `cn` is released, so it holds back no engine the old value admitted.
+- **Actor:** build lead, repairing release-packs on main after ClaudinitePacks #20.
+- **Mechanism:** the manifest's `minEngineVersion`, which the pack update enforces; `release.mjs plan` now refuses a two-part value on a version to publish before the merge. cloudflare-site 61002.1.

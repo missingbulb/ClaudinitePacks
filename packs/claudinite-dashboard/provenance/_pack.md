@@ -83,3 +83,8 @@
 - **Reason:** the page imported the queue's vocabulary from `claudinite-tasks/public/*.mjs`, which left with the Node runner, and publish-pages pushed and dispatched through the runner's GitHub client.
 - **Actor:** build lead, completing ClaudinitePacks #20 so the runner's removal lands with every importer ported.
 - **Mechanism:** the vocabulary is the pack's own `src/read/queue-vocabulary.mjs`, drift-guarded against `cn tasks grammar`; publish-pages pushes through the SDK's `git` and dispatches through `github.dispatchWorkflow` (granted in pack.json), its run and Pages reads a pack-local REST copy; the build no longer copies the tasks pack into the site. dashboard 61002.1.
+
+## 2026-10-02 · scope-changed · `minEngineVersion` moves to `61001.1.0`
+- **Reason:** `60928.1` is a Node engine version, which `cn` reads only as the legacy two-part form any engine satisfies (ClaudiniteEngine#18); a new version must name the `cn` release it needs, and release-packs refused claudinite-dashboard 61002.1 for carrying it. `61001.1.0` is the engine floor, below which no `cn` is released, so it holds back no engine the old value admitted.
+- **Actor:** build lead, repairing release-packs on main after ClaudinitePacks #20.
+- **Mechanism:** the manifest's `minEngineVersion`, which the pack update enforces; `release.mjs plan` now refuses a two-part value on a version to publish before the merge. claudinite-dashboard 61002.1.

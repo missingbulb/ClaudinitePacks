@@ -33,7 +33,9 @@ no secrets, so a pull request from a fork runs it too: `release.mjs plan --conte
 vendors each pack whose version is already on `vendored` and compares the files with the branch's
 unpacked set. A differing, missing or extra path fails the job with
 `published <id> <version> CHANGED: differing: <path>` (or `missing:`, `extra:`); bump that pack's
-`pack.json` version. A change only to what the vendored set drops (`test/`, `docs/`,
+`pack.json` version. A version to publish whose `pack.json` the publish job would refuse fails
+too, with the same `::error::` line, such as a two-part `minEngineVersion`. A change only to what
+the vendored set drops (`test/`, `docs/`,
 `provenance/` at the pack root, and `checks/*_test.go`) needs no bump. The publish job's own
 refusal is the backstop after the merge.
 
