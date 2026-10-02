@@ -1,0 +1,759 @@
+<img src="badge.svg" width="24" height="24" alt=""> claudinite-dashboard
+
+A read-only view of what a repo's — or a fleet's — Claudinite is doing: what is stuck,
+what is queued, what has run, and what the corpus has been costing and catching.
+
+**Two modes, and a deployment states which one it is.** `mode` is `"repo"` — that
+repo's own page — or `"fleet"` — the overview across a roster. It is the one key with
+**no default**: the build refuses to publish a deployment that did not say, and refuses
+a mode that contradicts the rest of the config (`fleet` naming no roster source,
+`repo` naming one).
+
+The end-state specification of both pages, the fields the fold gains for them and the
+visual identity is [docs/](docs/README.md); this file describes what a reader of the
+pages sees.
+
+**Opt-in.** Nothing fingerprints it and `--init` never seeds it: a repo carries this
+because someone declared it. Adopting it wires the GitHub Pages deploy.
+
+## Adopting it
+
+```jsonc
+// .claudinite-settings.json
+{ "packs": ["claudinite-dashboard"] }
+```
+
+That is the whole of it for a member: the dashboard covers this repo and publishes to
+Pages. It also needs sign-in turned on before anyone can read it — the checklist is
+["Turning sign-in on"](#turning-sign-in-on) below. The
+[publish-pages task](tasks/publish-pages/README.md) builds the site whenever the
+page's sources move and fires
+[the deploy workflow](stubs/workflows/claudinite-dashboard-pages.yml) adoption seeds
+into `.github/workflows/` — four `uses:` steps and nothing else — and **you must enable
+Pages with source *GitHub Actions***, a repository setting no Action can flip; until
+then that task parks naming it, and nothing else is affected.
+
+Everything else is optional `config` on the declaration:
+
+| Key | Default | What it buys |
+|---|---|---|
+| `mode` | **none — required** | `"repo"` or `"fleet"`. The build fails without it, and fails when it disagrees with the roster keys below |
+| `owner` | — | Whose repos this deployment covers. The page **enumerates them in the browser, as the viewer** — so this is a fleet deployment, and the fleet a person sees is exactly the fleet they can read. The way to build a fleet dashboard |
+| `exclude` | none | Repos under that owner that are not members (either `owner/name` or the bare name). Archived and forked repos leave by their own state |
+| `repos` | — | An explicit member list instead, for a deployment that wants a fixed set |
+| `rosterFile` | — | A generated artifact in the repo listing members — the legacy shape, still read |
+| `canonRepo` | — | The repo whose live engine and pack versions member stamps are compared against; unset means freshness reads *unknown* rather than being guessed |
+| `clientId`, `exchangeUrl` | — | **Legacy.** Both together turn on **Sign in with GitHub**, but they live as the repository variables `CLAUDINITE_DASHBOARD_CLIENT_ID` and `CLAUDINITE_DASHBOARD_EXCHANGE_URL` now; a declaration still carrying them is read as the fallback and the build says so |
+| `redirectUri` | the page's URL | Override when the callback differs |
+| `defaultRepo` | this repo | Which repo a single-repo deployment shows |
+| `rates` | — | USD per **million** tokens, per model, per counter: `{ "claude-opus-5": { "in": 15, "cacheRead": 1.5, "out": 75 } }`. `cacheWrite` is optional and falls back to `in`. Unset is a supported deployment, not a broken one — every dollar figure then reads *unpriced* and names this key, and the token counts stand; a model the table does not name is an unpriced remainder, counted in tokens and never folded into the sum |
+
+It has **two views**, and which one you land on is the URL:
+
+- **Fleet** — every member at once, worst first. What a deployment with a roster
+  opens on.
+- **Repo** — one member's scheduler in full. Reached by clicking a member, or
+  `?repo=owner/name` directly.
+
+A deployment with one member (or none) goes straight to the repo view: a one-row
+fleet overview would be nothing but a click in the way.
+
+## How the code is laid out
+
+```
+src/index.html        the page; its one module script names ./src/app.mjs
+src/app.mjs           the shell — configure, authenticate, route between the two views
+src/derive/           pure: facts in, rows and figures out. No DOM, no fetch, no clock
+                      it was not handed, so all of it is testable in plain Node
+src/read/             the I/O plane — the credential, the one GitHub client, its cache,
+                      the rate-limit policy and sweep order, the per-file readers
+src/render/           the shared visual vocabulary and the drawing primitives
+src/views/            the two pages, which fetch through read/, derive through derive/
+                      and draw through render/
+tooling/              node-only: the dev server, the site build, the deployment-settings
+                      reader, and the serverless sign-in source. Never published
+favicon.svg           served beside the page, at the pack root
+```
+
+### The page is stored under `src/` and served from the pack root
+
+Everything the browser loads lives under `src/`, the page included — but the dashboard's
+URL stays `…/packs/claudinite-dashboard/`, one directory above it.
+
+That is worth knowing before editing `src/index.html`, because an HTML `src=` resolves
+against the **document's URL**, never the file's path on disk. The page's script tag
+therefore reads `./src/app.mjs` and its icon `./favicon.svg` — both written from the URL
+it is served at, both wrong relative to the directory it is stored in. Opening the file
+directly, or pointing a static server at `src/`, breaks every module it loads.
+
+Two places put it back where it belongs, and nothing else should serve it:
+[`tooling/serve.mjs`](tooling/serve.mjs) resolves a directory request to the page under
+`src/`, and [`tooling/build-site.mjs`](tooling/build-site.mjs) *moves* it up to the
+served root while staging — a move rather than a copy, so no second, broken entry is
+left behind at `src/index.html`. A staged tree that skipped either step is caught by
+`the staged tree mirrors the mount, with the root a redirect`.
+
+The layering runs one way: a view may reach any layer below it, and anything two views
+both need moves *down* rather than sideways. The one edge that crosses back is
+`read/contributions.mjs` reaching `render/ui.mjs` for `duration`, which its own header
+explains — the layout leaves that visible rather than hiding it.
+
+Depth stops at one level under `src/`: sibling layer folders sit at folder distance two
+of each other, and a second level would turn every cross-folder import into a reach and add
+another `../` to the climbs into `engine/`.
+
+Everything the browser loads is under `src/`, which is how the site build decides what to
+publish — a directory the tree already names, rather than a list of filenames to keep in
+step ([`tooling/build-site.mjs`](tooling/build-site.mjs)).
+
+## Running it locally
+
+```sh
+node packs/claudinite-dashboard/tooling/serve.mjs missingbulb/Claudinite
+```
+
+## Two kinds of data, read two different ways
+
+Everything on both pages is one of two things, and the difference is the whole reason
+the page can afford what it shows.
+
+**What is true right now** is a live read, and there are few of them: the repo, its
+head commit, one page of issues, one page of Actions runs. All are ETag-revalidated,
+and a `304` costs no rate-limit budget at all.
+
+**What happened before** is one file: the repo's own
+`.claudinite/usage/sessions-and-elements.json`, folded hourly by the
+[usage-fold task](../claudinite-tasks/tasks/usage-fold/README.md) in the
+claudinite-growth pack. It is content at a sha, so it is read once when the default
+branch moves and **not at all** while it has not. Reaching a month back over the API
+instead would be a paginated crawl per repo per load, which is exactly the shape this
+client is built to avoid.
+
+Measured against a stubbed API, one repo with five declared tasks:
+
+| | Requests | Of those, free |
+|---|---|---|
+| Cold (empty cache) | 14 | 0 |
+| Warm (same head sha) | 5 | **5** — every one a `304`, nothing spent |
+
+So a warm reload of a repo page costs **nothing** against the viewer's budget.
+
+The two freshnesses are reported separately in the footer, because they are not the
+same: the live half is as fresh as this load, the past half as fresh as the repo's last
+fold. A page that showed one timestamp for both would be claiming the older half is as
+current as the newer.
+
+A repo that does not fold the file is a normal state, not a fault: the panels that
+wanted it say so, and nothing else on the page is affected.
+
+## What the repo page shows
+
+| Panel | Answers |
+|---|---|
+| **Start here** | The one piece of work most worth doing in this repo, named with the issue to open and what it costs you — the top row of the same ranking the work table is ordered by |
+| **At a glance** | Minutes waiting on a person and what they are made of, items parked, open pull requests and issues, CI on the default branch, runs in flight, stars, and drift against the canon |
+| **Work** | One row per piece of work, in three views — **stuck** (what has stopped, and for how long), **pending** (what is moving, and what happens next), **all** (what each task is and what it has done). The page opens on the worst view that has anything in it |
+| **What the queue closed** | Per-day outcomes over a fortnight — today from the live issue page, the days before it from the fold |
+| **What ran** | 48 hours of scheduler runs, executor runs and agent sessions per hour; hovering an hour names the tasks that executed in it |
+| **What Claudinite is doing here** | 30 days of checks executed against the runs that caught something, on two stated scales — plus tokens spent, lines committed and releases where the fold carries them |
+| **What the packs report** | One card per declared pack that contributes — see [below](#what-a-pack-contributes). Last, because it is the only region whose contents differ from repo to repo |
+
+### One table, not two
+
+The roster and the queue used to be separate tables, and they were the same rows
+twice: a task's row could not say what its item was doing without repeating the item
+table, and an item's row could not say what it was *for* without repeating the roster.
+Worse, the reader had to join them by eye to answer the question they opened the page
+with — is anything stuck.
+
+So there is one row per piece of work and the **view decides which rows and which
+columns**. The three views are three genuinely different questions, which is why they
+do not share a column set. Switching between them moves the rows rather than redrawing
+them, so the row you were reading stays findable; a reader who has asked their platform
+for less motion gets the repaint and none of the movement.
+
+Two rows exist that neither old table could show. A **declared task that has never
+run** — usually the thing you opened the page for, and invisible in any list built from
+work items. And an **open item whose task this repo no longer declares**: nothing will
+ever pick it up, and no recovery rule will say so.
+
+Everything flagged mirrors a rule the engine will actually act on — a blown leash the
+next run reclaims, a dependency past the janitor's threshold, a park holding its task's
+lane — never a display heuristic.
+
+### Not read is not zero
+
+The rule that runs through every panel here. A day the fold has not reached is drawn
+**blank**, not at the floor; a line breaks over a day nothing answered for rather than
+dipping through it; a series the file does not carry is **named as absent** instead of
+rendering as an empty chart; and a total sums only the days that had an opinion, or
+reports nothing at all.
+
+This matters most where a number is a report card. "No session recorded its token
+spend" and "the sessions were free" are different facts, and a page that draws them
+identically is worse than one that omits the panel.
+
+## The fleet view
+
+A fleet page answers a different question from the per-repo one. Per repo it is
+"what is this scheduler doing"; across a fleet it is **"where do I need to look"** —
+and a page that answers the first question twelve times over does not answer the
+second. So nothing on it is a total for its own sake.
+
+| Panel | Answers |
+|---|---|
+| **Start here** | The one piece of work most worth doing across every member, named with the issue to open and what it costs you — the worst thing true of the fleet, and a link rather than a count |
+| **What Claudinite did this week** | The work the machinery did that nobody had to do — this week against last, including the check findings caught inside sessions and what the corpus costs each of them |
+| **What the corpus is doing across the fleet** | The detail behind the block above, from each member's usage fold: workload this week against last, the two check scopes side by side, which rules actually fire, which skills load and which are mounted everywhere and never do, and one row per member. A member that does not fold is named and counted in nothing |
+| **Fleet activity** | What the fleet *did* per day — work closed by outcome, runs and their pass rate, **how often the checks ran and caught something**, and which members moved at all |
+| **Rollup tiles** | How many *members* need a human — not how many items exist |
+| **Members** | Every member ranked worst-first, in three column groups asked in the order a reader asks them: **Activity** (90 days of commits, as a weekly curve, with a second line for the commits that were genuine project work), **Waiting on a person** (an estimate in minutes, what it is made of, then issues and pull requests) and **Claudinite** (packs wearing the mount's verdict, queue, outcomes, scheduler). Stars and CI ride in the member cell — they are how you recognise a row, not findings about it, and so do the state tags below |
+| **Tasks across the fleet** | One task, everywhere it runs — a shared pack's task parked in four members at once is a canon problem no single repo's page reveals |
+| **Pack adoption** | Which packs are in use and how widely — who a change to a pack would reach |
+| **What this deployment's packs report** | The fleet-scope cards, from the packs the deployment repo and the canon declare |
+
+Each member's row is followed by a **subrow** of what its own packs report — see
+[below](#what-a-pack-contributes).
+
+### The lead: what to do, before what happened
+
+Both pages open on the same block, because both were otherwise pages that only
+**report** — and a reader who came without a question in hand is asked by a wall of
+accurate panels to do the ranking themselves. [`next-work.mjs`](src/derive/next-work.mjs) does the
+ranking and names **one** piece of work: worst first, an issue ahead of a repo-level
+fault at the same severity because only the issue is something to open, and among equals
+the one that has been wrong longest.
+
+The card carries **what it costs you** beside the reason, because "one item is parked" is
+a fact and "fifteen minutes" is a decision about the next fifteen minutes. The figure is
+one term of the same sum the tiles total — the park's own rate, by what it asks of you
+([`PARK_MINUTES`](src/derive/fleet.mjs)) — so a card and a tile can never price one item
+differently. `next-work.mjs` holds no rates at all: a candidate carries the park's own
+classification and the view prices it. An approval is charged the floor of its rate,
+since no PR's size is read here, and the card says *at least*. Work the estimate does not
+cover — a scheduler fault, a recovery-rule trip — shows **no figure**, never a zero.
+
+It invents no judgement of its own. A candidate is the worst thing another module has
+already decided is wrong — an item's `troubles` (the queue's real recovery rules) or a
+member summary's `reasons` — so the block can never disagree with the row further down
+that says the same thing, and an `info`-level fact (a mount one pack behind) is reported
+below and never prodded about. Mid-sweep the fleet's block says it is still reading:
+"nothing is waiting on you" read off four of forty members is a wrong statement rather
+than a partial one.
+
+### The roster is enumerated, not stored
+
+A fleet deployment names an `owner`, and the page lists that owner's repos **as the
+viewer**. So membership is decided at read time by what this person can actually see: a
+repo outside their access is not in their fleet, rather than being in it as a row they
+cannot open. No repo list is baked into any file, which is also why a fleet's numbers
+cannot leak from a shared artifact to someone without access to the repos behind them.
+
+**Every repo the viewer can see is on the page**, and only a fork is not — that is
+someone else's project, and its work is upstream's. An enumeration that could not be read
+is said out loud, never rendered as a fleet that happens to be empty.
+
+Out of the fleet is a **state**, not a filter: an archived repo, and one on the
+deployment's `exclude` list, are drawn greyed with their core GitHub facts and nothing
+else, and counted in no figure above the grid. They are on the page because a repo the
+reader cannot find at all is indistinguishable from one that is gone — and because each
+carries the one action that brings it back.
+
+### What KIND of member a row is — private, dormant, sleepy
+
+Three tags sit beside a member's name, and they are deliberately unalike:
+
+- **private** — GitHub's own flag, carried through untouched. Who can see a member is part
+  of recognising it.
+- **dormant** — the member's own declaration (`dormant` on its `claudinite-tasks` entry).
+  Its scheduler is stopped, so the page measures **neither its mount nor its scheduler**
+  and no fleet-wide operation runs against it; the row says `dormant` where those two
+  verdicts would have sat, and the machine band's cells leave it out of their denominators
+  and name how many they left out. It is still a member: dormancy is about upkeep.
+- **sleepy** — nothing **meaningful** landed in the last 14 days. The test is the
+  claudinite-tasks pack's own `isSubstantiveCommit` over one page of the commit listing, so
+  a member reads quiet here exactly when its own preconditions read it quiet. It is **not**
+  dormancy: nobody declared it, it can change back tomorrow, and every fleet-wide operation
+  still reaches the repo. Drawn dashed for that reason.
+
+A member whose commit listing was not read (budget) is **unknown**, never sleepy: a repo
+nobody looked at and a repo nobody worked on are not the same fact. The one exclusion the
+cheap test cannot apply — a commit that touched only `.claudinite/` — is named on the tag's
+hover ([data-sources.md](docs/data-sources.md)).
+
+The chips above the grid filter it by those three states. "Which of my repos has nobody
+touched in a fortnight" is a morning question, and scanning a dozen rows for a dashed tag
+is not how it gets answered.
+
+### Three bands, and one thing to do per row
+
+The grid is the **fleet proper** ranked worst-first, then **Dormant** and **Out of the
+fleet**, each a collapsed band carrying its own count. Collapsed because those members are
+not being maintained and should not sit between the reader and the fleet; present because
+a page that hides them answers "where do I need to look" by pretending part of the account
+does not exist. Any filter opens the bands — a question about a state wants the rows, not
+a count.
+
+Every row ends in a **Next** cell, and what it offers follows the member's state, each a
+different kind of act:
+
+| Row | Next |
+|---|---|
+| archived | **Unarchive →**, GitHub's own settings page. Claudinite cannot undo an archive, and a button that pretended otherwise would send the reader somewhere that cannot work |
+| ignored | **Bring back — copy request**: the whole request to paste into a session, naming the repo and the `config.exclude` key. The enforcer's declaration is a file a person edits; this page reads it and must not write it |
+| dormant | **Wake — copy request**, the same shape against the member's own `claudinite-tasks` entry |
+| awake, something parked | **Advance #n →**, the member's own worst item, with the reason on the link |
+| awake, nothing parked | its open pull requests, else its open issues |
+| awake, nothing open | 🙂 — the one cell on this page that asks for nothing |
+
+A dormant row keeps its Claudinite columns and loses the **task-based delays**: no minutes
+estimate, no attention breakdown, and its queue as a plain count rather than a state mix.
+How many items are open there is an ordinary fact about the repo; which of them are
+blocked, ready or parked is the state of a queue that stopped, and colouring a row for
+delays the declaration asked for is exactly the nagging dormancy exists to prevent.
+
+### What only the members' own files can say
+
+Two figures used to be named as *absent* here, because nothing the page read could count
+them: how often each member's checks actually ran, and how much corpus each session is
+paying for. Both are in each member's usage file, which the sweep now reads at the head
+sha it already has — so both are panels rather than apologies.
+
+The same file carries the detail the benefits block only headlines, and the fleet is the
+one place it can be laid side by side: the `work` scope (the Stop hook, per turn) against
+the `world` scope (the full sweep wired into tests), each with its runs, catches, blocking
+and advisory volume and runner errors; the findings per rule, ranked; and the skill loads
+per skill against where each is mounted — the tree listing the sweep already holds says
+which `SKILL.md`s a member's declared packs mount, so a skill mounted in ten members and
+loaded in none is a fact no single repo's page can state. [`fleet-growth.mjs`](src/derive/fleet-growth.mjs)
+derives all of it; no read is added.
+
+A member with **no** usage file is named, never averaged in as a repo where nothing
+happens. That census is the same fact a fleet-wide aggregate would carry as
+`coverage.absent`, derived live from the members instead of stored in one file that
+shows everyone the whole fleet.
+
+Three rules shape it, and they are in [`fleet.mjs`](src/derive/fleet.mjs):
+
+**An estimate is published as an assumption, or not at all.** The Waiting group puts
+a number of minutes on each member, priced per park kind — the four parks are disjoint
+by remedy, and diagnosing a break is not merging a PR. The rates are exported constants
+and the page states the arithmetic in its own note, so the figure can be argued with
+rather than trusted. An approval is priced by the PR's size, which the page does not
+read: it charges the rate's floor and says so, which makes the total a lower bound
+rather than a guess that might be high.
+
+Two things are deliberately outside it, and both are still reported beside it: a broken
+scheduler, which is not a queue of work to get through, and a recovery-rule trip, which
+wears no label at all — it is derived from an item's age against the engine's leashes,
+and what clears it is the janitor or the next scheduler run rather than a person.
+
+**A count of members is not a description of the morning.** Every attention figure
+counts *members*, because "47 open items" is not a list anyone works through. But a
+member surfaces for one of several different reasons, and the rollup itemises which:
+three pull requests to approve and three broken task lanes are the same number and
+not the same day's work. The split comes from `summariseMember`, which already
+separates a failure park from an inbox park from an approval park; the tile reads it
+rather than re-merging it into one word.
+
+**Attention is earned, not counted.** A member surfaces because something is *true*
+of it — an item parked, a leash blown, a scheduler failing, a mount that stopped
+converging — and each arrives as a reason with a severity, never as a number to be
+summed. One parked item outranks forty healthy work items.
+
+**Absence is a state.** A member that does not run Claudinite, one you cannot read,
+and one that is running fine are three different answers and never collapse into
+"0". Not being able to see a repo is a permissions fact reported quietly, not an
+alarm competing with a genuinely broken member.
+
+**One member's failure is one row's problem.** Every member is summarised
+independently, so a private repo or a rate-limit stumble becomes a row that says so
+rather than a blank page.
+
+**A healthy fleet and a dead one look identical to a fault-finder.** Every panel that
+answers "where do I need to look" reads zero after a good week — and after a month of
+nobody touching anything. So two panels answer the other question instead. **Fleet
+activity** plots what happened per day: work closed by outcome, scheduler runs and
+their pass rate, and which members moved at all. Above them, **what Claudinite did
+this week** counts the work nobody had to do — completed items, how many of those
+closed with nobody in the loop, how many did need a person — this week against last.
+
+Two rules keep that block honest, and they are why some obvious figures are missing
+from it. **No vanity total**: every figure is bounded by a window, because a number
+that only grows says nothing about today. **Nothing invented**: no estimated hours
+saved, no score. Checks enforced are not there because no read this page makes can
+count them, and a plausible guess in a tile is worse than a gap.
+
+Every figure in both panels comes from reads the page already makes — the issue page,
+the runs list, and the head commit whose date arrives with the sha the cache is keyed
+by. What that costs is depth rather than requests: one issue page and thirty runs do
+not reach back a fortnight on a busy member, so each series states the day before
+which it is a floor rather than a count.
+
+Two signals are visible *only* here, because no single repo's page has the
+comparison:
+
+- **Mount drift** — each member's stamped `engineVersion` and `packVersions` against
+  the canon's live ones (`engine/version.mjs`, and each declared pack's version off
+  `packs/directory.GENERATED.md`, or its manifest where the catalog does not offer it).
+  Never judged on the stamp's `ref` or `updated`: the versioned flows stamp versions
+  and nothing else, so those two hold the provenance of the last *full* re-vendor and
+  read months stale on every healthy member. Needs `canonRepo` in the config; without
+  it freshness reads *unknown* rather than being guessed, and a pack the canon side
+  cannot price is counted unpriced, never judged current.
+- **A scheduler that never ran** — a member that declares tasks and has never
+  produced a work item is not idle, it is unwired. Every per-repo number for it is a
+  perfectly healthy zero.
+
+## What a pack contributes
+
+Every panel above is this pack's own. These are what a member's **other** packs have to
+say about it — `git-github` the repo's stars, a release pack its last release, a spec
+pack the requirements that moved. The contract in one line: **a pack contributes data,
+never code** — the page executes nothing a pack ships, because the fleet view renders
+repos the viewer merely has read access to, and importing their modules would run every
+member's code in the viewer's browser with the viewer's token in scope.
+
+A contributing pack ships one file, `packs/<id>/dashboard.json`, validated by
+[the schema beside this one](dashboard-descriptor.schema.json) and found **by that path**
+— nothing registers it, so adding a descriptor is the whole change. It declares the
+pack's widgets once, and the two views select from that list by id:
+
+```jsonc
+{
+  "widgets": [{ "id": "stars", "kind": "stat", "label": "stars", "noun": "stars",
+                "glyph": "★", "source": "repo-stars" }],
+  "repo": ["stars"],
+  "fleet": { "member": "stars" }
+}
+```
+
+Four kinds — `stat` (a fact true now), `event` (the last time something happened),
+`window` (a count, always against the window before it) and `list` (the few most recent
+named things). There is deliberately no shape a growing cumulative total fits.
+
+Values come from one of three **sources**. `generated` reads the pack's own
+`.claudinite/usage/<pack>-dashboard-values.json`, written by that pack's own task;
+`latest-release` and `repo-stars` are platform facts this page already reads for every
+member, so a pack using one ships a descriptor and no code at all.
+
+**On the fleet grid a card is a phrase, not a chip.** The page composes it from the
+parts the pack supplied — `★ 18 stars`, `5d ago · v1.33.102 live`, `12 reqs in last 2w` —
+and sets the quantity, the noun and the connective in three different registers, which
+is the reason the contract takes values rather than a finished string. Every card a
+member has renders in full: there is no `+n`, and nothing whose only content is that
+some pack has something to say. A `list` is the one kind that cannot be a line.
+
+Two things a pack cannot do. It cannot **colour** its own card — colour on that grid is
+the engine's severity edge, and a pack that could paint itself red would be claiming
+attention it did not earn — and it cannot reach the **ranking**: contributions never
+feed attention, member ordering or the rollup tiles.
+
+Costs are the same shape as everything else here: discovery is free (the declaration
+and the tree listing are already in hand), the descriptor and values are content at a
+sha and therefore free on a warm load, and `latest-release` is the one live request,
+withheld before anything the queue depends on.
+
+## Who it runs as
+
+**The viewer, and only the viewer.** There is no backend, no shared credential and
+no service account: the page calls `api.github.com` from the browser as whoever is
+using it, so it can show nobody anything their own GitHub account cannot already
+read.
+
+**The page is gated on a credential**, on a screen of its own that is all a viewer sees
+until they have one. There is no anonymous view to fall back to: every request is made
+as the viewer, so without a credential there is nothing to show and — at 60 requests an
+hour per IP — no budget worth showing it with. A `?repo=owner/name` deep link survives
+the gate; signing in lands on the view it named.
+
+One way to get one: **Sign in with GitHub** — a button, no typing, which needs the
+deployment to have configured `clientId` and `exchangeUrl`. There is no second route.
+A deployment that has not configured them cannot sign anybody in, and the gate says so,
+naming the two variables its owner sets: it is not finished being set up.
+
+**Locally**, `tooling/serve.mjs` takes the developer's own token out of the environment
+(`DASHBOARD_DEV_TOKEN`, else `GITHUB_TOKEN`/`GH_TOKEN`) and hands it to the page in the
+config it synthesizes — a checkout has no registered app behind it and no business
+registering one. The page keeps it for the tab only, and nothing published can carry
+one: the site build writes a fixed list of config keys and `devToken` is not among them.
+
+The credential dies with the tab unless the viewer ticks **Remember me**, which keeps it
+in this browser (`localStorage`) until they sign out. Signing out drops the cached data
+with it; clearing the cache does not sign you out.
+
+Everything that belongs to the viewer rather than to the view — who they are, the rate
+budget, **Reload**, **Clear cache**, **Sign out** and the note on how this page reads a
+repo — sits behind the avatar in the topbar, so the fleet and repo screens carry no
+account chrome at all.
+
+### What each credential is worth
+
+The reason sign-in is not a nicety. GitHub's limits, per hour:
+
+| Credential | Limit |
+|---|---|
+| unauthenticated | **60**, per IP address |
+| a user token — PAT, OAuth, or a GitHub App user token | **5,000**, shared across every app acting for that user |
+| a GitHub App *installation* token | 5,000 minimum, up to 12,500 by size |
+| an Actions `GITHUB_TOKEN` | 1,000, per repository |
+
+A twelve-member sweep costs around 85 requests cold — so 5,000/hour is not an
+optimisation over the anonymous 60, it is 83×. There is
+no higher tier available to a page that runs as its viewer: an installation token
+would raise the ceiling, but only by putting a shared credential behind a backend,
+which would show every viewer everything that app can see. That is a different
+product, not a bigger limit.
+
+### Who has to register the app — one owner, not one fleet
+
+Sign-in belongs to **whoever owns the deployment**, and it is not inheritable. A
+fleet's second, fifth and tenth dashboard reuse one registration: a GitHub App holds
+up to ten redirect URIs, and with wildcard matching a single `https://<user>.github.io/`
+covers every project Pages site on that host, so a new deployment only copies the two
+config keys.
+
+A **different** owner cannot reuse it, and the reason is not policy but mechanism:
+
+- a private App "can only be installed on the account that owns the app. Only members
+  of the organization that owns it can authorize it" — a stranger cannot even sign in;
+- making it public lets anyone authorize it, but a user access token "can only access
+  resources that both the user and app can access", so until they install that App on
+  their own account every member row still reads *not visible to you*;
+- and if they did install it, their redirect URI would have to live in someone else's
+  App and their tokens would be minted by someone else's endpoint. That is a trust
+  relationship, not a configuration.
+
+So an adopter with no app of their own registers one — the checklist below — and a
+dashboard is not readable until they have. That is the cost of the alternative being a
+paste box: a deployment can be up, deployed and serving a page that nobody but its
+owner can be asked to use.
+
+#### Turning sign-in on
+
+Copy this into the deployment's own issue, substituting its owner and repo — it is the
+checklist the adoption handover points at. Notes are below it, deliberately: a reader
+working through these has the settings page open in the next tab.
+
+- [ ] Register a GitHub App — `https://github.com/settings/apps/new`
+- [ ] Set its **Homepage URL** and **Redirect URI** to `https://<owner>.github.io/`, and tick **Enable wildcard matching** beneath the redirect URI
+- [ ] Tick *Request user authorization (OAuth) during installation*
+- [ ] Untick **Webhook → Active**
+- [ ] Under **Permissions → Repository**, set Contents, Issues, Metadata and Actions to **Read-only**, then press **Create GitHub App**
+- [ ] Copy the **Client ID** — the App's General page, under the app name; begins `Iv23`
+- [ ] Add it as the variable `CLAUDINITE_DASHBOARD_CLIENT_ID` — `<repo>/settings/variables/actions/new`
+- [ ] Press **Generate a new client secret**, and copy the value under **Client secrets** — shown once
+- [ ] Add it as the Actions secret `DASHBOARD_OAUTH_CLIENT_SECRET` — `<repo>/settings/secrets/actions/new`
+- [ ] Install the App on the account holding the repos — `https://github.com/settings/apps/<app-slug>/installations`
+- [ ] Copy your Cloudflare **Account ID** — `https://dash.cloudflare.com/?to=/:account/workers`, the right-hand sidebar under *Account details*; 32 hex characters
+- [ ] Add it as the variable `CLOUDFLARE_ACCOUNT_ID` — `<repo>/settings/variables/actions/new`
+- [ ] Create a Cloudflare API token — `https://dash.cloudflare.com/profile/api-tokens` — template **Edit Cloudflare Workers**, name `claudinite-dashboard-deploy`, **Account Resources** *Include* the hosting account, **Zone Resources** *Include · All zones*
+- [ ] Copy the token — shown once, on the confirmation screen
+- [ ] Add it as the Actions secret `CLOUDFLARE_API_TOKEN` — `<repo>/settings/secrets/actions/new`
+- [ ] Run `create-work-item claudinite-dashboard/deploy-oauth-exchange`, and copy the `workers.dev` URL it reports
+- [ ] Add it as the variable `CLAUDINITE_DASHBOARD_EXCHANGE_URL` — `<repo>/settings/variables/actions/new`
+
+**Done when** a signed-in viewer's rate pill reads `…/5000 · user`.
+
+Notes. **Webhook → Active** arrives ticked and the form then refuses to submit without a
+Webhook URL; this App is a sign-in credential and receives nothing, so unticking it is
+what lets the registration through. The token's **Zone Resources** are asked for because
+the template carries a zone-scoped permission, and *All zones* is the answer that always
+works: this deploy never exercises them, calling only `/accounts/<id>/workers/…`.
+Installing the App lands you on the redirect URI,
+and `https://<owner>.github.io/` is a **404** unless that owner happens to keep a
+user-site repo — expected, and not a failed step: the root is registered so that wildcard
+matching permits the project pages beneath it, and sign-in returns to the dashboard's own
+URL rather than to the root. The two Cloudflare credentials are the
+[deploy task](tasks/deploy-oauth-exchange/README.md)'s, which says why the API token is
+that narrow. The App is installed per *account*, not per repo — a user token reaches only what
+it is installed on, so an uninstalled account renders every member row as *not visible to
+you*. Wildcard matching on the `github.io` root covers every project Pages site on that
+host, so one App serves every dashboard you own. The sign-in pair are repository
+variables rather than config or secrets: they are what you set while standing in the
+App's settings, the exchange URL is minted by the deploy rather than authored, and
+neither is confidential — the client id is in every authorize URL and the exchange URL is
+fetched by the browser. The client id alone does nothing; the pair is what makes the
+button appear.
+
+### Why "just use my existing GitHub login" is not on that list
+
+It cannot be. A browser will not send github.com's session cookies to
+`api.github.com`, and the API does not accept cookie auth cross-origin at all —
+"already logged in to GitHub" is not a credential a web page can spend. Every
+GitHub-backed dashboard you have used either asked for a token or ran an OAuth
+sign-in; there is no third option.
+
+Sign-in is the closest thing, and it is genuinely *your* permissions: after one
+authorization, every call runs as you. The only piece that cannot live in the page
+is the `code` → token exchange, which needs the app's client secret **and** hits an
+endpoint that sends no CORS headers. That is what `exchangeUrl` points at —
+[`oauth-exchange.mjs`](tooling/oauth-exchange.mjs) is a deployable
+implementation. It sees one code, returns one token, and never touches repo data.
+
+## Caching
+
+A fleet view is only affordable because most of what it reads does not change.
+Three strategies, because the data has three shapes — see
+[`cache.mjs`](src/read/cache.mjs):
+
+| Data | Strategy | Why |
+|---|---|---|
+| Repo content (task declarations, the tree) | keyed by **commit SHA**, never expires | a path at a sha cannot change, so an unmoved `main` costs zero calls |
+| Open items, runs, repo metadata | **ETag** revalidation | a `304` is free — it does not count against the rate limit, so this is fresh data at no cost |
+| Closed-issue history pages | **24h TTL** | settled, but not addressable by a sha |
+| Merged pull requests, 14 days | kept in the projection above | the lead-time series for the days the fold has not reached — they arrive in the issues listing the page already fetches, so the viewer makes no new request, and the body is still dropped once the issue it closes has been read out of it |
+| A member's year of commit activity | **6h TTL**, and skipped entirely below `tight` | the only read here that is decoration; a few hours old is the same answer, and a tight budget goes without it before it goes without a queue |
+
+The **commit curve** is drawn by week, not by day. Ninety daily points across a table
+column is a sawtooth of weekends and Tuesdays, and a sawtooth has no shape to read —
+which is the whole reason the column exists rather than the single date it replaced.
+The daily counts are kept: they are the total, the peak and the hover.
+
+A fourth thing decides how hard those three are leaned on: **the budget policy**
+([`budget.mjs`](src/read/budget.mjs)), planned before a load starts and re-planned on every
+one. It exists because caching alone still *asks* — an ETag revalidation costs no
+primary budget but is still a request, and a cold entry has nothing to revalidate.
+
+| Budget, measured in whole page loads | Mode | What changes |
+|---|---|---|
+| 20 loads or more | `live` | everything revalidated — today's behaviour |
+| 6–20 | `tight` | anything read in the last 5m is served with no request |
+| 1–6 | `low` | …in the last 30m, and the commit graphs are not read at all |
+| under 1 | `scarce` | …until the rate limit resets, and the spend stops short of the viewer's last requests |
+| spent | `frozen` | no requests at all; the page serves what it has and says so |
+
+The rung that matters is `scarce`: the staleness floor reaches the **reset**, so a
+full page refresh costs nothing until the window rolls. Three supporting pieces make
+that hold up — the free `GET /rate_limit` preflight and a budget carried across page
+loads (so a fresh tab plans before it spends rather than learning the limit by hitting
+it), and a latch on a `403`/`429` with nothing left (so eleven more members do not each
+spend a request discovering the same thing; requests *made* are what the secondary
+limit counts). A withheld read is its own state everywhere it surfaces — a row that
+says the page declined to spend, never one that says the repo is broken.
+
+### The sweep reads the fleet sideways
+
+The ladder above decides *how much* a load may spend. What decides where that money
+goes when it runs out is the order the fleet is read in — and that order is
+**horizontal**: every member through one pass before any member starts the next
+([`fleet-sweep.mjs`](src/read/fleet-sweep.mjs)), cheapest and most load-bearing first.
+
+| Pass | What it reads | What it buys |
+|---|---|---|
+| identity | repo, head, the declaration | what this repo is, and whether it runs Claudinite at all — the only three calls a non-member ever costs |
+| attention | one issues page, one runs page | every fault a row can report: the lead card, the tiles, the ranking |
+| depth | the tree, the member's usage fold | declared tasks, and the month behind each row's figures |
+| packs | each declared pack's descriptor and values | the member's own cards, plus `latest-release` where a pack asks for it |
+| activity | a year of commit activity | the row's graph, and nothing else |
+
+Read a member end to end before starting the next and the budget is spent
+depth-first: the first members get their commit graphs before the last members have
+been looked at at all. A viewer then reads "nothing is on fire" off a fleet the page
+never finished reading, and the members it never reached are the ones it cannot tell
+from healthy. Sideways, the same shortfall costs the graphs on *every* row instead —
+a fleet missing its decoration still answers "where do I need to look".
+
+It is also why the page becomes useful where it does: the moment the attention pass
+clears the roster, every tile counts the whole fleet and every row is ranked, with
+three passes' worth of columns still filling in behind them. The progress line says
+which of the two states it is in, because "40 repos read" over a table still growing
+columns claims a completeness the page does not have yet.
+
+Measured on this repo, cold versus warm: **21 requests → 4**, and the warm load
+spends **zero** rate limit (its four requests are all 304s). The open queue is still
+never stale — only settled history ages.
+
+Stored payloads are compact projections, not API responses: a closed item's body is
+dropped and an open one's truncated past its scheduling fields, because
+`localStorage` gives about 5MB and a fleet's raw issue JSON is far more. A full
+quota degrades to "uncached", never to an error. **Clear cache** forces a cold read.
+
+## How publishing works
+
+[`build-site.mjs`](tooling/build-site.mjs) stages the page and the engine modules it imports
+into `_site/`, then writes the roster and the `dashboard.config.json` the page reads —
+derived from the declaration's `config`, so there is no second place to configure the
+same thing.
+
+Two things about that split are deliberate:
+
+- **The workflow is seeded; the build script is not.** `.github/workflows/` is the one
+  directory the nightly update cannot push to, so a deploy workflow can only arrive by
+  being written at adoption — and it never converges after. It is therefore a thin
+  shim that calls `build-site.mjs` out of the mount, exactly as the scheduler stub
+  calls the engine's scheduler run. Only the file that must be frozen is frozen.
+
+- **It follows the scheduler rather than only a push.** The mount is the page's
+  source, and the push that moves it is a Claudinite update PR auto-merged by the
+  Actions token — which fires no workflow, by GitHub's design. A deployment triggered
+  on `push` alone therefore keeps serving whatever the last *human* merge built, for
+  as long as nobody merges by hand: Shepherd's sat two pack versions behind for days,
+  still rendering a mount verdict the pack had already deleted. So the stub also
+  triggers on the vendored scheduler completing — the member's one permitted
+  schedule, followed rather than competed with — and asks an Actions cache entry,
+  keyed on the page's sources, whether this exact tree is already live before it
+  builds anything.
+
+  **An already-adopted deployment does not get this.** Nothing converges
+  `.github/workflows/`, so an existing member's copy has to be brought in line by
+  hand, once.
+- **The staged tree mirrors the mount's layout**, publishing at
+  `/packs/claudinite-dashboard/` with the root as a redirect. That is load-bearing, not
+  tidiness: the page imports the queue's modules by relative path so it cannot drift
+  from them, and flattening it to the site root sends those imports above the root —
+  the page would not boot.
+
+The build is inert until the mount carries the pack (adopted, not yet converged): it
+exits clean with no `_site`, and the workflow skips the deploy rather than replacing a
+working site with an empty artifact.
+
+`serve.mjs` is for local use only: it binds loopback, serves the checkout read-only,
+and never talks to GitHub.
+
+## Why it carries its own copy of the queue's vocabulary
+
+The queue's vocabulary — labels, the title grammar, the leash constants, the body
+fields — is the engine's, which a browser cannot import. The page reads it from its own
+[`queue-vocabulary.mjs`](src/read/queue-vocabulary.mjs), and everything it computes over
+that vocabulary — the anchor arithmetic, the substantive-commit test, dormancy, the
+declaration text reader, the closing-issue parse — is likewise its own copy under `src/`,
+because packs share no code. Each copy is held to the engine by a drift-guard test that
+runs both over the same inputs through `cn tasks`.
+
+ES module imports are CORS-checked, which is the one consequence: the page needs an
+`http(s)://` origin and will not run from `file://`. Any static server satisfies it.
+
+The tests pin both halves: that the modules the page loads stay free of `node:` imports (a
+**browser-only** breakage the Node suite would otherwise never catch), and that this
+tool hardcodes no queue label outside its vocabulary copy.
+
+## Limits it reports rather than hides
+
+- **Issue history is a window** — the most recent few hundred issues, not all of
+  them. Outside it, a task's history reads as "none in window", never "never run".
+  The footer states which.
+- **Declaration fields are lifted as text**, because there is nothing to `import`
+  when reading another repo over the API. A field it cannot read renders *unknown*
+  and is never defaulted — a confident wrong cadence would move a next-anchor the
+  roster is read for.
+- **The past-data half is only as fresh as the repo's last fold**, which the footer
+  states separately from this load's own time. A repo that folds nothing has no past
+  half at all, and the panels that wanted it say which task writes the file.
+- **Which tasks a given hour *evaluated* is not shown**, only what executed. Nothing in
+  a run listing names a task, and reading each run's job log to find out would be two
+  API calls per run — the cost the fold itself dropped for the same reason. Why a task
+  declined its last ask is on its own row instead, from the verdict the item carries.
+
+## Checks
+
+One check, and it holds another pack's `dashboard.json` to what this
+page's own reader accepts — not a second copy of the schema, which ordinary tooling
+already validates, but the thing a schema cannot check: that the file is usable, and
+that the ids its views select by resolve. The failure is otherwise silent, since a
+rejected descriptor renders as one apologetic line in a viewer's browser and nothing
+goes red where its author is looking.
+
+| Check | Severity | Reason | Enforcement |
+|---|---|---|---|
+| `descriptor-usable` | medium | correctness | check: blocking |
