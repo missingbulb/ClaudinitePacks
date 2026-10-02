@@ -7,7 +7,7 @@ import {
   makeReader, readRunCosts, billedMinutes, readCostFromLog,
   SCHEDULER_RUNS_PER_FOLD,
 } from '../../../tasks/usage-fold/read-run-costs.mjs';
-import { RUN_COST_TAG } from '../../../src/items/run-record.mjs';
+import { RUN_COST_TAG } from '../../../tasks/usage-fold/queue-wire.mjs';
 
 const NOW = '2026-09-15T12:00:00Z';
 

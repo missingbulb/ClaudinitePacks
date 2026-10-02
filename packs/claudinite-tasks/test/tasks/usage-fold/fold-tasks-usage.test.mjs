@@ -9,7 +9,7 @@ import {
 import {
   encodeTasksUsageFile, decodeTasksUsageFile, renderTasksUsageFile, withoutStamp,
   WEEK_GROUPS,
-} from '../../../src/items/tasks-usage-format.mjs';
+} from '../../../tasks/usage-fold/tasks-usage-format.mjs';
 
 const TODAY = '2026-09-15';
 const NOW = '2026-09-15T12:00:00Z';

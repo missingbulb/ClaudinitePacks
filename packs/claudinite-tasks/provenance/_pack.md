@@ -139,3 +139,8 @@
 - **Actor:** @missingbulb (owner), approving the removal held from packs PR #18.
 - **Mechanism:** the engine binary (`cn schedule`, `cn execute`, `cn work`, `cn tasks`); this
   pack's two task workers stay Node until their rewrite against `@claudinite/sdk`.
+
+## 2026-10-02 · ported · usage-fold and verify-production run on `@claudinite/sdk`
+- **Reason:** both workers imported the Node runner's modules this pack had just dropped, so neither ran.
+- **Actor:** build lead, completing ClaudinitePacks #20 so the runner's removal lands with every importer ported.
+- **Mechanism:** usage-fold carries its own copies of the run-record wire, the usage formats and a delivery module, pushing through the SDK's `git` and opening through `github.openPr`; verify-production comments through the SDK and reopens through a REST copy on the job's token; both declarations drop `$schema`. claudinite-tasks 61002.3.

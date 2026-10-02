@@ -160,3 +160,8 @@
   then fails the run. The gate is the union, `any-commit || session-captured || runs-since-fold`.
 - **Rejected:** folding the two files into one - their sources differ in read cost, and one outage
   would cost the other's rows.
+
+## 2026-10-02 · ported · usage-fold runs on `@claudinite/sdk`
+- **Reason:** its worker imported the queue wire, usage formats and delivery lane this pack dropped.
+- **Actor:** build lead, completing ClaudinitePacks #20 so the runner's removal lands with every importer ported.
+- **Mechanism:** local copies of each, the delivery over the SDK; forced-load declarations, hit predicates and check ownership are engine reads the SDK does not offer, so those fields record as absent.

@@ -10,28 +10,35 @@ import {
   parseVerificationSpec, parseAssertion, parseRetryEvery, evaluateAssertion,
   compareDotted, runProbes, renderResult,
 } from '../../tasks/verify-production/probes.mjs';
-import { runVerification } from '../../tasks/verify-production/worker.mjs';
 import declarationJson from '../../tasks/verify-production/task.json' with { type: 'json' };
-import { evaluatePrecondition } from '../../src/contract/precondition.mjs';
-import { planSchedulerRun } from '../../src/schedule/run.mjs';
-import { normalizeTaskDeclaration } from '../../src/contract/task-contract.mjs';
-// The loader's door: the JSON says what is particular to the task, the defaults are the contract's.
-const declaration = normalizeTaskDeclaration(declarationJson);
+import { contractOf, cnTasks, needsCn, verdictOf } from '../../../../tools/test/cn-tasks.mjs';
+import { installSdk } from '../../../../tools/test/sdk-stand-in.mjs';
+
+installSdk({ params: { pack: 'claudinite-tasks', task: 'verify-production' } });
+const { humanTextOf, runVerification, sdkIssues } = await import('../../tasks/verify-production/worker.mjs');
 
 // --- the declaration -----------------------------------------------------------
 
-test('the scheduler never files an item for this task on its own', async () => {
-  // Items exist only because a verification was filed: across a full day of anchors
-  // the scheduler run instantiates nothing for this task.
-  const { ops } = await planSchedulerRun({
-    tasks: [{ pack: 'claudinite-tasks', id: declaration.id, taskPath: 'packs/claudinite-tasks/tasks/verify-production/task.md', decl: declaration }],
-    items: [], now: '2026-08-14T10:00:00Z', schedule: { dailyHour: 4, weeklyDay: 'Sun', monthlyDay: 1 },
-  });
-  assert.deepEqual(ops.filter((o) => o.kind === 'create'), []);
+test('the scheduler never files an item for this task on its own', needsCn, () => {
+  // Items exist only because a verification was filed.
+  const { problems, scheduled } = contractOf(declarationJson);
+  assert.deepEqual(problems, []);
+  assert.equal(scheduled, false);
 });
 
-test('the precondition always runs — a filed verification is its own mandate', () => {
-  assert.equal(evaluatePrecondition({ decl: declaration }, {}, {}, { number: 1 }).run, true);
+test('the precondition always runs — a filed verification is its own mandate', needsCn, () => {
+  assert.equal(verdictOf(declarationJson.preconditions ?? [], {}, { item: { number: 1 } }).run, true);
+});
+
+// The spec is read from the person's half of the body, cut where the engine cuts it.
+test('the human half of a body is the one the engine reads', needsCn, () => {
+  const bodies = [
+    'Original-issue: #3\n\n<!-- claudinite-item -->\nTask: a/b\n<!-- /claudinite-item -->\n',
+    '<!-- claudinite-item -->Task: a/b<!-- /claudinite-item -->\nRetry-every: 6 hours',
+    'no block at all\n',
+  ];
+  const { bodies: read } = cnTasks('grammar', { bodies });
+  assert.deepEqual(bodies.map(humanTextOf), read.map((b) => b.human));
 });
 
 // --- the spec grammar ----------------------------------------------------------
@@ -172,21 +179,25 @@ test('a rendered result carries verdict, URL, assertion and observation', () => 
 
 // --- the worker's verdict flow -------------------------------------------------
 
-// A fake gh + issue store, shaped like the janitor tests' fakes: just enough REST.
+// An issue store behind the worker's issue port, as the SDK and the reopen call
+// answer it: the engine's listIssues and createComment, and the REST PATCH.
 function fakeIssues(issues) {
-  const calls = [];
   const find = (n) => issues.find((i) => i.number === n);
+  const sdk = installSdk({
+    params: { pack: 'claudinite-tasks', task: 'verify-production' },
+    answers: {
+      'github.listIssues': ({ state }) => issues.filter((i) => i.state === state)
+        .map(({ number, title = '', state: s, body }) => ({ number, title, state: s, labels: [], body })),
+      'github.createComment': ({ issue, body }) => { find(issue).comments.push(body); return { id: 1 }; },
+    },
+  });
   const gh = async (path, { method = 'GET', body } = {}) => {
-    calls.push(`${method} ${path}`);
-    const m = /^\/repos\/o\/r\/issues\/(\d+)(\/comments)?$/.exec(path);
-    if (!m) return { status: 404, json: null };
-    const issue = find(Number(m[1]));
-    if (!issue) return { status: 404, json: null };
-    if (m[2] && method === 'POST') { issue.comments.push(body.body); return { status: 201, json: {} }; }
-    if (method === 'PATCH') { Object.assign(issue, body); return { status: 200, json: issue }; }
-    return { status: 200, json: issue };
+    const m = /^\/repos\/o\/r\/issues\/(\d+)$/.exec(path);
+    if (!m || method !== 'PATCH' || !find(Number(m[1]))) return { status: 404, json: null };
+    Object.assign(find(Number(m[1])), body);
+    return { status: 200, json: find(Number(m[1])) };
   };
-  return { gh, calls, find };
+  return { issues: sdkIssues('o/r', gh), calls: sdk.calls, find };
 }
 
 const item = (body) => ({ number: 9, state: 'open', body, comments: [] });
@@ -206,7 +217,7 @@ const BODY = [
 const drive = async (responses, body = BODY) => {
   const repo = fakeIssues([item(body), original()]);
   const verdict = await runVerification({
-    gh: repo.gh, repo: 'o/r', itemNumber: 9,
+    issues: repo.issues, itemNumber: 9,
     fetchUrl: async (url) => {
       if (!(url in responses)) throw new Error(`unexpected fetch of ${url}`);
       return responses[url];

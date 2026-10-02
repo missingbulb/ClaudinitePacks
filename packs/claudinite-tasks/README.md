@@ -22,9 +22,10 @@ repo declares to turn it on, and what the engine reads from it:
 | `public/` | the documents a routine session reads from the member's mount: `instructions.md` (a repo's work-item routine, as a stored prompt in its console settings), `implement-request.md` (named by the machine block of every issue adopted into the queue), `deliver-pr.md` (the landing procedure every PR-delivering task's agent is pointed at) |
 | `merge-rules.json` | the pack's declared merge rules, which a task's `automerge` may name |
 | `declared-checks.json` | the declared checks below |
-| `tasks/` | this pack's own tasks: `usage-fold` (what the repo's sessions did, and what the machinery itself cost - runs, billed minutes, API calls, outcomes, parks, latencies) and `verify-production` (coded production validations - URL probes judged as code-work). Their workers still import Node modules this pack no longer carries, so neither runs until it is rewritten against `@claudinite/sdk` |
+| `tasks/` | this pack's own tasks: `usage-fold` (what the repo's sessions did, and what the machinery itself cost - runs, billed minutes, API calls, outcomes, parks, latencies) and `verify-production` (coded production validations - URL probes judged as code-work), each a `@claudinite/sdk` worker carrying its own copy of the queue vocabulary it reads |
+| `github-api.mjs` | the REST calls `verify-production` makes on the job's token that the SDK names no action for |
 | `migrations/` | the path and shape migrations the Node engine's members ran |
-| `test/tasks/` | the two tasks' unit tests, which move with their workers |
+| `test/tasks/` | the two tasks' unit tests, run against the SDK stand-in in `tools/test/` |
 | `docs/PRINCIPLES.md` | the mechanism's design record; its claims, each with its test, are the engine's `tasks/doc.go` |
 
 A name in `public/` does not move: a member's routine reads it from its mount by path. The pack

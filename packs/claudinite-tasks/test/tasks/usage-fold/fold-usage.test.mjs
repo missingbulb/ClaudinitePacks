@@ -11,12 +11,14 @@ import {
 } from '../../../tasks/usage-fold/fold-usage.mjs';
 import {
   USAGE_FIELDS, USAGE_VERSION, QUEUE_OUTCOMES, COUNTER_GROUPS, BARE_MAPS, renderUsageFile,
-} from '../../../src/items/usage-format.mjs';
+} from '../../../tasks/usage-fold/usage-format.mjs';
 import {
   OUTCOME_DONE, OUTCOME_DELIVERED, OUTCOME_OBSOLETE,
-} from '../../../public/task-constants.mjs';
-import { outcomeOf } from '../../../public/work-item-grammar.mjs';
-import { LEGACY_EXECUTOR_DOC } from '../../legacy-protocol.mjs';
+} from '../../../tasks/usage-fold/queue-wire.mjs';
+import { outcomeOf } from '../../../tasks/usage-fold/queue-wire.mjs';
+// The executor doc a usage row from before the task surface moved still names: data a
+// decoder keeps reading, not a pointer to a file.
+const LEGACY_EXECUTOR_DOC = 'engine/scheduler/executor.md';
 
 // A day row as `foldDays` builds an empty one: the capture-derived scalars zeroed and
 // every other field absent. Spelled here so a test about the absent ones does not have
