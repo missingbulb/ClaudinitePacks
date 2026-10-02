@@ -1,0 +1,18 @@
+{
+  "v": 1,
+  "pack": "hello",
+  "serial": 1,
+  "versions": [
+    {
+      "version": "1.0",
+      "sha256": "b6ce0e77545cd885e5d3fe8a110f116582e24b5e48911f23b2d51cb229ece32c",
+      "size": 1152,
+      "minEngineVersion": "61001.1.0",
+      "requires": [],
+      "channel": "canary",
+      "revoked": false,
+      "publishedAt": "2026-10-02T15:04:04Z",
+      "sourceCommit": "05c92e34bd55ac1afc0f132ac24a3543704e5182"
+    }
+  ]
+}
