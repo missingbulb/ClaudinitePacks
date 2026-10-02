@@ -144,6 +144,10 @@ func check(t *testing.T, cn, pack string, c Case) []string {
 	raw, _ := json.MarshalIndent(settings, "", "  ")
 	write(t, dir, map[string]string{".claudinite/settings.json": string(raw) + "\n"})
 	git(t, dir, "init", "-q", "-b", "main")
+	// A newer git runs its auto maintenance detached after a commit, and a
+	// repack still writing under .git fails the TempDir cleanup.
+	git(t, dir, "config", "maintenance.auto", "false")
+	git(t, dir, "config", "gc.auto", "0")
 	git(t, dir, "add", "-A")
 	git(t, dir, "commit", "-q", "--allow-empty", "-m", "base")
 	if c.Change != nil || c.Deleted != nil {
