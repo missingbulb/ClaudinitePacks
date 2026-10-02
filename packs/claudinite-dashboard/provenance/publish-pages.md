@@ -49,3 +49,10 @@
 - **Reason:** the worker pushed with a token remote and dispatched through the removed runner's GitHub client.
 - **Actor:** build lead, completing ClaudinitePacks #20 so the runner's removal lands with every importer ported.
 - **Mechanism:** a scratch-index commit force-pushed through the SDK's `git`, the deploy dispatched through `github.dispatchWorkflow` with a 404 parking at action.
+
+## 2026-10-02 · gate-changed · yields to the engine's `engine/update`
+- **Reason:** the update is the engine's built-in task now (ClaudiniteEngine design record row
+  71); `claudinite-lifecycle/update` is retired, so the `schedule_after` names the task that
+  refreshes the mount today.
+- **Actor:** @missingbulb (owner), through ClaudiniteEngine chunk 11 (#45).
+- **Model:** Claude Opus 5.5, per the commit trailer.

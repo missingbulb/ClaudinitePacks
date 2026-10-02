@@ -2,7 +2,7 @@
   "id": "publish-pages",
   "description": "Republishes the dashboard to GitHub Pages: builds the site, pushes the tree to gh-pages, fires the seeded four-step deploy workflow and follows its run. A failed deploy with Pages not enabled parks naming the setting. A changed sign-in variable is a forced run.",
   "schedule_after": [
-    "claudinite-lifecycle/update"
+    "engine/update"
   ],
   "trigger": "schedule",
   "preconditions": [

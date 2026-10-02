@@ -59,3 +59,11 @@
 - **Reason:** the `$schema` key pointed at `claudinite-tasks/task.schema.json`, which left with the Node runner; the engine validates a declaration itself (`cn tasks contract`) and publishes no schema file, so the key is dropped as the hello pack's tasks do. usage-review delivered through the runner's generated-file lane.
 - **Actor:** build lead, completing ClaudinitePacks #20 so the runner's removal lands with every importer ported.
 - **Mechanism:** usage-review carries its own delivery copy, pushing through the SDK's `git` and opening through `github.openPr` (granted in pack.json); the writing-tasks skill states the SDK worker contract. growth 61002.3.
+
+## 2026-10-02 · reworded · the pack says it is the engine's own: `"engine": true`
+- **Reason:** which packs' tasks run as the engine's own, under the license, was a literal list
+  in the engine; reading it off the manifest makes it a property of the pack (ClaudiniteEngine
+  design record row 75). Absent means not engine; there is no default.
+- **Actor:** @missingbulb (owner), through ClaudiniteEngine chunk 11 (#45).
+- **Model:** Claude Opus 5.5, per the commit trailer.
+- **Mechanism:** a boolean in pack.json, which an engine from chunk 11 on reads.

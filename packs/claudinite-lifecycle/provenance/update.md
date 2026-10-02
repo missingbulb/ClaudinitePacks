@@ -105,3 +105,12 @@
 - **Reason:** owner decision: the mechanism that re-vendors a mount is called update; "converge"
   stays only for a work item reaching its end state.
 - **Actor:** @missingbulb (owner).
+
+## 2026-10-02 · retired · the engine owns the update: its built-in `engine/update` task
+- **Reason:** the Go engine runs the nightly update as its own built-in task (ClaudiniteEngine
+  design record row 71, superseding row 61), with no agent stage and no migration records (row
+  32). The Node task, its worker, `updates/` and the three migration records leave the pack. A
+  member that still sees an `update` item queued from this pack has it repaired away; held for the
+  owner's merge for that reason.
+- **Actor:** @missingbulb (owner), through ClaudiniteEngine chunk 11 (#45).
+- **Model:** Claude Opus 5.5, per the commit trailer.

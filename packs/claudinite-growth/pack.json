@@ -1,5 +1,6 @@
 {
   "version": "61002.3",
+  "engine": true,
   "minEngineVersion": "61001.1.0",
   "githubActions": [
     "openPr"

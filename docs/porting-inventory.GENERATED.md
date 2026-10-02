@@ -9,7 +9,7 @@ coded checks become Go; tasks stay Node against `@claudinite/sdk`; tests are rew
 the pinned `cn`, or dropped when they check only file shapes or doc text. A file that imports
 Claudinite's `engine/` by relative path does not run here until its slice replaces the import.
 
-`minEngineVersion` across the shelf: `60928.1` (27 packs), `61001.1.0` (12 packs).
+`minEngineVersion` across the shelf: `60928.1` (26 packs), `61001.1.0` (12 packs).
 A two-part one is a Claudinite Node engine version, which the Engine's `shared/version` (three
 parts, `<day>.<n>.0`) does not read; a ported pack's first version sets `minEngineVersion` to the
 `cn` version it was tested on.
@@ -30,12 +30,11 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 | basics | 61002.2 | 189 | 2 | 13 | 5 | 2 | 8 | 0 | 0 | 0 |
 | chrome-extension | 61002.1 | 46 | 2 | 4 | 3 | 4 | 7 | 9 | 0 | 8 |
 | claude-code-web-users-support | 60928.1 | 13 | 1 | 4 | 0 | 8 | 7 | 0 | 1 | 8 |
-| claudinite-canary-repo | 60928.1 | 4 | 1 | 0 | 0 | 2 | 0 | 1 | 0 | 0 |
 | claudinite-canon-curation | 61002.1 | 65 | 3 | 6 | 18 | 5 | 10 | 0 | 0 | 13 |
 | claudinite-dashboard | 61002.1 | 16 | 3 | 1 | 4 | 44 | 42 | 1 | 4 | 10 |
 | claudinite-fleet-sheepdog | 61002.1 | 29 | 1 | 1 | 8 | 24 | 23 | 0 | 0 | 9 |
 | claudinite-growth | 61002.3 | 159 | 8 | 0 | 18 | 14 | 16 | 0 | 0 | 10 |
-| claudinite-lifecycle | 61002.3 | 44 | 3 | 0 | 5 | 10 | 8 | 0 | 0 | 11 |
+| claudinite-lifecycle | 61002.3 | 42 | 3 | 0 | 2 | 2 | 6 | 0 | 0 | 4 |
 | claudinite-tasks | 61002.3 | 23 | 3 | 0 | 5 | 26 | 14 | 0 | 0 | 1 |
 | cloudflare-site | 61002.1 | 16 | 1 | 3 | 3 | 4 | 7 | 0 | 0 | 3 |
 | cloudflare-workers | 60928.1 | 16 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -63,7 +62,7 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 | spec-driven-product | 60928.1 | 31 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | web-scraping | 60928.1 | 35 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | web-speech | 60928.1 | 33 | 3 | 6 | 0 | 1 | 5 | 0 | 0 | 10 |
-| **39 packs** | | 1200 | 72 | 62 | 78 | 155 | 191 | 12 | 5 | 110 |
+| **38 packs** | | 1194 | 71 | 62 | 75 | 145 | 189 | 11 | 5 | 103 |
 
 ## aws-sam
 
@@ -184,13 +183,6 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 ### other (1)
 
 - `environment-setup-command.sh`
-
-## claudinite-canary-repo
-
-### src (2)
-
-- `migrations/2026-08-14-workflow-probe-current/migration.mjs`
-- `migrations/2026-08-19-canary-probe-rename/migration.mjs`
 
 ## claudinite-canon-curation
 
@@ -488,37 +480,24 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 
 ## claudinite-lifecycle
 
-### task (5)
+### task (2)
 
 - `tasks/adopt-requested-packs/task.json`
 - `tasks/adopt-requested-packs/task.md`
-- `tasks/update/task.json`
-- `tasks/update/task.md`
-- `tasks/update/worker.mjs` (imports `engine/`)
 
-### src (10)
+### src (2)
 
-- `migrations/2026-08-14-core-seed/migration.mjs`
-- `migrations/2026-09-04-barriers-absorbed/migration.mjs`
-- `migrations/2026-09-06-tidy-repo-absorbed/migration.mjs`
 - `skills/adopt-claudinite/interview.mjs` (imports `engine/`)
 - `tasks/adopt-requested-packs/protocol.mjs`
-- `updates/converge-scope.mjs` (imports `engine/`)
-- `updates/engine-update.mjs` (imports `engine/`)
-- `updates/install.mjs` (imports `engine/`)
-- `updates/pack-update.mjs` (imports `engine/`)
-- `updates/terminals.mjs`
 
-### test (8)
+### test (6)
 
+- `test/declared_test.go`
 - `test/mandatory.test.mjs` (imports `engine/`)
 - `test/pack.test.mjs` (imports `engine/`)
-- `test/scheduler-workflow-shape.test.mjs` (imports `engine/`)
 - `test/skills/adopt-claudinite/interview.test.mjs` (imports `engine/`)
 - `test/task-policies.test.mjs`
-- `test/tasks.test.mjs`
 - `test/tasks/adopt-requested-packs/task.test.mjs`
-- `test/update-worker.test.mjs` (imports `engine/`)
 
 ## claudinite-tasks
 

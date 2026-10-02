@@ -31,7 +31,7 @@ No secret: the push, the dispatch and the follow use the Action's own token.
 
 ## When it runs
 
-Daily, after the `claudinite-lifecycle/update` task, and only when the mount or the
+Daily, after the engine's `engine/update` task, and only when the mount or the
 member's declaration moved in the window. A change to either repository variable is
 not a signal the queue sees — force a republish with `create-work-item --wake` on the
 task's standing item.

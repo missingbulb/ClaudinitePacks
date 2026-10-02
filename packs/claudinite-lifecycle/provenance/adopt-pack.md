@@ -44,3 +44,10 @@
   it.
 - **Mechanism:** the description, as before.
 - **Actor:** @missingbulb (owner).
+
+## 2026-10-02 · reworded · re-vendoring runs `cn adopt`, the Node install runner retired
+- **Reason:** the engine owns the update flow (ClaudiniteEngine design record row 71) and the
+  Node `updates/install.mjs` runner leaves with it; `cn adopt` declares, vendors and refuses a
+  pack already declared. The warning about burnt migration records goes too: no update migrates.
+- **Actor:** @missingbulb (owner), through ClaudiniteEngine chunk 11 (#45).
+- **Model:** Claude Opus 5.5, per the commit trailer.

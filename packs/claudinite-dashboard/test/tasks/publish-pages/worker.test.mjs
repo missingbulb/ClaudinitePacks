@@ -5,12 +5,6 @@ import { mkdtemp, writeFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { installSdk, gitIn, memberRepo } from '../../../../../tools/test/sdk-stand-in.mjs';
-import { cnTasks, contractOf, needsCn } from '../../../../../tools/test/cn-tasks.mjs';
-import declarationJson from '../../../tasks/publish-pages/task.json' with { type: 'json' };
-import updateJson from '../../../../claudinite-lifecycle/tasks/update/task.json' with { type: 'json' };
-import {
-  WORK_PREFIX, STATUS_READY, STATUS_RUNNING_EXECUTOR,
-} from '../../../src/read/queue-vocabulary.mjs';
 
 // The worker's engine half answered for real where it can be: `git` runs in the
 // member checkout, and the dispatch is scripted per test.
@@ -23,28 +17,6 @@ const sdk = installSdk({ answers: {
 const { publish, pushSite, NeedsHuman, WORKFLOW_FILE, PAGES_BRANCH, STAMP_FILE } = await import('../../../tasks/publish-pages/worker.mjs');
 
 const REPO = 'o/r';
-
-test('publish-pages yields to the update it publishes', needsCn, () => {
-  const decl = contractOf(declarationJson).normalized;
-  // Driven through the engine's real pick order: while the update's standing item
-  // is live this cycle, the Pages item is not picked; the moment it is gone, it is.
-  const update = contractOf(updateJson).normalized;
-  const byId = { 'claudinite-dashboard/publish-pages': decl, 'claudinite-lifecycle/update': update }; // @real-entity the update task whose real declaration this yields to
-  const taskAfter = Object.fromEntries(Object.entries(byId).map(([id, d]) => [id, d.schedule_after ?? []]));
-  const scheduled = Object.fromEntries(Object.entries(byId).map(([id, d]) => [id, d.trigger === 'schedule']));
-  const item = (number, key, status) => ({
-    number, title: `${WORK_PREFIX} ${key}`, body: `packs/${key.replace('/', '/tasks/')}/task.md\n`,
-    state: 'open', labels: [status], created_at: '2026-08-14T01:00:00Z', updated_at: '2026-08-14T01:00:00Z',
-  });
-  const pages = item(1, 'claudinite-dashboard/publish-pages', STATUS_READY);
-  const converging = item(2, 'claudinite-lifecycle/update', STATUS_RUNNING_EXECUTOR); // @real-entity the update task whose real declaration this yields to
-  const { picks } = cnTasks('queue', { picks: [
-    { open: [pages, converging], draws: [], taskAfter, scheduled },
-    { open: [pages], draws: [], taskAfter, scheduled },
-  ] });
-  assert.deepEqual(picks[0], [], 'the Pages item waits for the update');
-  assert.deepEqual(picks[1], [1], 'and is picked once it has gone');
-});
 
 // A member checkout cloned from a bare origin standing in for GitHub: what the worker
 // pushes is read back from the origin.

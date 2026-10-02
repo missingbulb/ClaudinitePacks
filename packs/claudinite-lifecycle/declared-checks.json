@@ -49,19 +49,9 @@
         "fix": "add a concurrency: group so overlapping runs serialize (double-run safety)"
       },
       {
-        "require": "/packs\\/claudinite-tasks\\/src\\/schedule\\/run\\.mjs/",
-        "what": "does not run the vendored scheduler entry",
-        "fix": "run the vendored scheduler entry: node .claudinite/shared/packs/claudinite-tasks/src/schedule/run.mjs"
-      },
-      {
-        "require": "/^\\s*contents:\\s*write\\b/m",
-        "what": "does not grant contents: write",
-        "fix": "set permissions.contents: write — the update runner pushes its delivery branch; without it the self-refresh 403s"
-      },
-      {
-        "require": "/^\\s*pull-requests:\\s*write\\b/m",
-        "what": "does not grant pull-requests: write",
-        "fix": "set permissions.pull-requests: write — the update runner opens its PR and arms auto-merge; without it the PR create 403s"
+        "require": "/\\bcn schedule run\\b/",
+        "what": "does not run the engine's scheduler",
+        "fix": "run `cn schedule run`"
       }
     ]
   },

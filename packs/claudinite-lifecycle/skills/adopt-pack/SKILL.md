@@ -65,30 +65,16 @@ A pack that asks nothing adopts fully unattended; this section costs it nothing.
 
 ## 3. Re-vendor
 
-The new packs' prose, checks, and skills must land under the tracked `.claudinite/shared/` mount,
-**and the repo must be stamped with the version it is now at.** Fetch a fresh canon to scratch and
-run its install runner against the checkout — sessions never fetch:
+The new packs' prose, checks, and skills must land under the tracked `.claudinite/shared/` mount.
+Run the engine's adopter against the checkout, once per pack:
 
 ```
-node <canon>/packs/claudinite-lifecycle/updates/install.mjs --target . <pack-id> [<pack-id>…]
+cn adopt <pack-id>
 ```
 
-**Do not hand-roll this with `apply-vendor-set.mjs`.** It lays the files down correctly and does one
-thing that nothing notices for weeks: it stamps **every declared pack** at the newest version,
-whether or not the records between were ever applied. `migrationApplies` is `want > have`, so once
-the stamp reaches a record's own version that record stops applying — not for this cycle, but
-permanently. Re-vendoring a repo to add one pack therefore silently burns every pending record for
-the packs it *already* had, and the repo is left claiming a version whose shape it was never
-migrated into.
-
-That is correct behaviour at version zero, where there is no older state to skip; it is wrong
-everywhere else, and adding a pack to a live repo is everywhere else.
-
-The runner declares each pack, vendors its content, stamps it and every pack in its `requires`
-closure at the newest version, runs any one-shot seed ops, and gates on the updated tree's own
-self-test. It exits non-zero on a refusal or an unanswered interview — a pack already installed is
-**refused**, because reinstalling would restamp the repo to the newest version while skipping every
-record in between.
+It declares the pack and everything in its `requires` closure, vendors them for the pinned engine
+and regenerates the rules index. A pack already declared is **refused**; never hand-copy a pack's
+files into the mount instead.
 
 **Adopting `claudinite-tasks` also scaffolds the two workflow files** — the scheduler run with
 its drain, and the label-event executor:
@@ -116,7 +102,7 @@ per the pack's own README template; the pack's rules are the checklist.
 ## 4b. File what adoption cannot do
 
 A pack may declare `adoptionHandover` — steps only a human can perform (a repository or
-console setting, a permission, a secret). The install runner prints them; they are not
+console setting, a permission, a secret). the pack's `pack.json` lists them; they are not
 optional and they are not PR-body notes. **Open one tracking issue per adopting repo**,
 a checkbox per step, written per
 [writing-handover-issues](../../../basics/skills/writing-handover-issues/SKILL.md) — so

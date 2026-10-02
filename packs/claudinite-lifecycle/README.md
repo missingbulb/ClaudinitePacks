@@ -4,8 +4,7 @@ Claudinite's own surface in a repo that runs it: the vendored mount, the declara
 pack, adopting Claudinite and adopting a pack, and the contract every scheduled task is written to.
 
 **Mandatory.** `basics` `requires` this pack, so the closure vendors its content and materializes its
-declaration wherever a declaration is written; the one-time `core-seed` migration record declares it
-into members that already exist. Removing the entry is not an opt-out — it is drift, and `claudinite-lifecycle-declared`
+declaration wherever a declaration is written. Removing the entry is not an opt-out — it is drift, and `claudinite-lifecycle-declared`
 reports it.
 
 ## Rules (`RULES.md`)
@@ -66,7 +65,7 @@ What goes wrong when one fires:
 - `claudinite-lifecycle-declared` — this pack's entry is gone from `.claudinite-settings.json`, so none of the rules above run and the session cannot tell.
 - `claudinite-isolation` — the repo's own code reaches into `.claudinite/`, so the next canon refactor is a breaking migration for code the canon does not own (a declared `forbidReferences` barrier edge).
 - `seeded-file-stale` — a file some pack seeded at adoption has fallen behind that pack's template, and since a seeded file is never converged nothing else would ever say so: the member goes on running a copy whose pack has moved.
-- `scheduler-workflow-shape` — the vendored scheduler's cron, concurrency or dispatch guard has drifted: staggering, double-run safety or manual runs break.
+- `scheduler-workflow-shape` — the scheduler's cron, concurrency or dispatch guard has drifted, or it no longer runs `cn schedule run`: staggering, double-run safety or manual runs break.
 - `flat-declarations-current` - `.claudinite/flat/tasks.GENERATED.json` or `dashboard.GENERATED.json` no longer matches a declared pack's `task.json` or `dashboard.json`, so the dashboard and a session asking what runs here read a roster that is not the repo's. Regenerate with `cn tasks flat --write`; every converge `cn` runs writes them beside the rules index.
 
 The **task contract** and its checks are deliberately NOT here. Those ask whether a task is
@@ -106,10 +105,7 @@ against each declared pack's questions:
 
 | Task | when it runs | Runs when |
 |---|---|---|
-| `update` | `due:daily` | the mount is behind the canon, or a declared pack moved |
 | `adopt-requested-packs` | never — no `preconditions`; only from the item the fleet places | the repo carries an open pack-adoption request |
 
-`update` is the per-repo self-refresh — the task that converges a member's mount and stamps it. It
-is why `claudinite-lifecycle-declared` is blocking: a member runs `update` from its **vendored** copy, and
-`discoverTasks` finds only a literally-declared pack's tasks, so a repo that loses this pack's entry
-loses its self-refresh, and nothing is left that could deliver it one.
+The per-repo update is not this pack's: the engine contributes it as its own `engine/update` task.
+This pack is marked `"engine": true` in `pack.json`, so the executor runs its tasks as the engine's own, under the license.

@@ -39,3 +39,10 @@
 ## 2026-09-20 · reworded · Claudinite canon: rule revalidation (#2157)
 - **Actor:** @missingbulb (owner).
 - **Landed:** #2157 · pack version 60920.2.
+
+## 2026-10-02 · gate-changed · yields to the engine's `engine/update`
+- **Reason:** the update is the engine's built-in task now (ClaudiniteEngine design record row
+  71); `claudinite-lifecycle/update` is retired, so the `schedule_after` names the task that
+  refreshes the mount today.
+- **Actor:** @missingbulb (owner), through ClaudiniteEngine chunk 11 (#45).
+- **Model:** Claude Opus 5.5, per the commit trailer.

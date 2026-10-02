@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -118,12 +118,14 @@ test('the rendered doc names the generator and the frozen commit, and lists per 
   assert.equal(render(inv, { frozenAt: 'a'.repeat(40) }), doc, 'rendering is deterministic');
 });
 
-test('the real shelf: 39 packs, every file in exactly one class, at least 100 engine importers, every other file listed', () => {
+// The counts fall as packs port, so the real shelf is asserted against itself, never a number.
+test('the real shelf: every pack, every file in exactly one class, every other file listed', () => {
   const inv = inventory(join(REPO_ROOT, 'packs'));
-  assert.equal(inv.packs.length, 39);
+  const shelf = readdirSync(join(REPO_ROOT, 'packs'), { withFileTypes: true })
+    .filter((d) => d.isDirectory() && existsSync(join(REPO_ROOT, 'packs', d.name, 'pack.json'))).map((d) => d.name).sort();
+  assert.deepEqual(inv.packs.map((p) => p.id).sort(), shelf);
   const files = inv.packs.flatMap((p) => p.files);
-  assert.ok(files.length > 1700, `${files.length} files`);
-  assert.ok(files.filter((f) => f.engine).length >= 100);
+  assert.ok(files.length > 0);
   const doc = readFileSync(join(REPO_ROOT, 'docs/porting-inventory.GENERATED.md'), 'utf8');
   for (const p of inv.packs) for (const f of p.files.filter((x) => x.class === 'other')) assert.ok(doc.includes(`\`${f.path}\``), `${p.id}/${f.path}`);
 });
@@ -132,7 +134,7 @@ test('inventory.mjs --check passes on the committed doc and fails, exit 1, on a 
   const ok = spawnSync(process.execPath, [INVENTORY, '--check'], { cwd: REPO_ROOT, encoding: 'utf8' });
   assert.equal(ok.status, 0, ok.stdout + ok.stderr);
   const drifted = join(scratch(), 'inventory.md');
-  writeFileSync(drifted, readFileSync(join(REPO_ROOT, 'docs/porting-inventory.GENERATED.md'), 'utf8').replace(/\| 38 \|/, '| 37 |') + '\nhand edit\n');
+  writeFileSync(drifted, readFileSync(join(REPO_ROOT, 'docs/porting-inventory.GENERATED.md'), 'utf8') + '\nhand edit\n');
   const bad = spawnSync(process.execPath, [INVENTORY, '--check', '--out', drifted], { cwd: REPO_ROOT, encoding: 'utf8' });
   assert.equal(bad.status, 1, bad.stdout + bad.stderr);
   assert.match(bad.stdout + bad.stderr, /porting inventory is stale/);
