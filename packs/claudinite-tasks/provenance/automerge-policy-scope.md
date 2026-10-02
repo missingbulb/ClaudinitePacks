@@ -18,3 +18,12 @@
 - **Reason:** owner decision, 2026-09-25: the field names what happens when the check fails, and
   *severity* keeps its impact sense; what this element enforces is unchanged.
 - **Actor:** @missingbulb (owner).
+
+## 2026-10-02 · ported · A `cn` built-in tagged with this pack, beside the task contract it reads (missingbulb/ClaudiniteEngine#43)
+- **Reason:** the task runner slice brought the task contract, the merge policy and the code-work
+  environment into the Go engine, so the check ports with them: same id, on_fail, why, doc and
+  finding text, run by `cn` wherever this pack is declared.
+- **Actor:** @missingbulb (owner), through the chunk 10 plan.
+- **Mechanism:** a `cn` built-in (ClaudiniteEngine `checks/builtin/`), compared against the frozen
+  Node rule by the parity differential.
+- **Landed:** missingbulb/ClaudiniteEngine#44.
