@@ -17,16 +17,12 @@
 
 import { execFileSync } from 'node:child_process';
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
-import { removeTree } from '../../../../engine/remove-tree.mjs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-// Reading a branch tip without disturbing the executor's checkout, and stamping the
-// trailer that says which task wrote a commit, are claudinite-tasks' to own; a local
-// copy would be a second implementation of the one thing that must not have two. The
-// published `public/` seam is the only way a pack may reach another's code, and
-// the relative path resolves the same from the canon and from a member's mount.
-import { baseTip, readAt, remoteUrl } from '../../../claudinite-tasks/public/delivery.mjs';
-import { withTaskTrailer } from '../../../claudinite-tasks/public/work-item-grammar.mjs';
+// The remote and the trailer that says which task wrote a commit are the engine's:
+// a fetch or a push goes through the SDK's `git`, which carries the job's token, and
+// `commitMessage` stamps the trailers. Everything local is plain git on the checkout.
+import { commitMessage, git as engineGit } from '@claudinite/sdk';
 import { BEACON_PLACEHOLDER, claimedHostnames, parseWranglerConfig, publishedDir, wranglerConfigPath } from '../../lib.mjs';
 import { preflight } from './preflight.mjs';
 
@@ -67,6 +63,25 @@ const log = (m) => console.log(`site-release: ${m}`);
 const git = (cwd, args, opts = {}) => execFileSync('git', ['-C', cwd, ...args], {
   encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, ...opts,
 });
+
+// A command that talks to the remote, through the engine; a non-zero exit is a throw.
+async function remoteGit(...args) {
+  const r = await engineGit(...args);
+  if (r.code !== 0) throw new Error(`git ${args[0]} exited ${r.code}: ${r.stderr.trim()}`);
+  return r.stdout;
+}
+
+// The base branch's remote tip, fetched into the checkout's object store: read from
+// the remote, never from HEAD, which the executor's other items share.
+export async function baseTip(root, base) {
+  await remoteGit('fetch', '--quiet', 'origin', base);
+  return git(root, ['rev-parse', 'FETCH_HEAD']).trim();
+}
+
+// One file's content at a commit, or null when the path does not exist there.
+export function readAt(root, sha, path) {
+  try { return git(root, ['show', `${sha}:${path}`], { stdio: ['ignore', 'pipe', 'ignore'] }); } catch { return null; }
+}
 
 // The deployment as the commit at `sha` declares it: which config wrangler will read,
 // which tree it uploads, and which hostnames it claims. Read from the commit rather
@@ -113,10 +128,10 @@ function commitOnto(root, { parent, files, message }) {
 //
 // Deliberately not `pushGenerated`: that lane force-pushes, which is correct for a
 // regenerate-not-reconcile branch and catastrophic for the default branch.
-export function pushRelease(root, { remote, base, taskId, versioning, now = new Date() }) {
+export async function pushRelease(root, { base, versioning, now = new Date() }) {
   let lastError = null;
   for (let attempt = 1; attempt <= PUSH_ATTEMPTS; attempt += 1) {
-    const parent = baseTip(root, remote, base);
+    const parent = await baseTip(root, base);
     const deployment = deploymentAt(root, parent);
     if (!versioning) return { version: null, commit: parent, attempts: attempt, deployment };
 
@@ -129,15 +144,12 @@ export function pushRelease(root, { remote, base, taskId, versioning, now = new 
     const commit = commitOnto(root, {
       parent,
       files: bump.files,
-      message: withTaskTrailer(`Release site version ${bump.version}`, taskId),
+      message: commitMessage(`Release site version ${bump.version}`),
     });
-    try {
-      git(root, ['push', '--quiet', remote, `${commit}:refs/heads/${base}`]);
-      return { version: bump.version, commit, attempts: attempt, deployment };
-    } catch (e) {
-      lastError = e;
-      log(`push rejected on attempt ${attempt} — ${base} moved; rebuilding on its new tip`);
-    }
+    const pushed = await engineGit('push', '--quiet', 'origin', `${commit}:refs/heads/${base}`);
+    if (pushed.code === 0) return { version: bump.version, commit, attempts: attempt, deployment };
+    lastError = new Error(pushed.stderr.trim());
+    log(`push rejected on attempt ${attempt} — ${base} moved; rebuilding on its new tip`);
   }
   throw new Error(`could not push the version bump after ${PUSH_ATTEMPTS} attempts: ${lastError?.message ?? 'unknown'}`);
 }
@@ -148,7 +160,7 @@ function withReleaseTree(root, commit, fn) {
   const dir = mkdtempSync(join(tmpdir(), 'claudinite-release-'));
   git(root, ['worktree', 'add', '--detach', '--quiet', dir, commit]);
   try { return fn(dir); } finally {
-    try { git(root, ['worktree', 'remove', '--force', dir]); } catch { removeTree(dir); }
+    try { git(root, ['worktree', 'remove', '--force', dir]); } catch { rmSync(dir, { recursive: true, force: true }); }
   }
 }
 
@@ -234,9 +246,8 @@ export async function reportServed(hostnames, { version = null, fetchImpl = fetc
   return served;
 }
 
-export async function worker({ root, repo, defaultBranch, pack, task, token, secrets }) {
+export async function worker({ root, defaultBranch, secrets }) {
   const base = defaultBranch ?? 'main';
-  const taskId = `${pack}/${task}`;
   const apiToken = secrets.CLOUDFLARE_API_TOKEN;
   const accountId = secrets.CLOUDFLARE_ACCOUNT_ID;
 
@@ -247,7 +258,7 @@ export async function worker({ root, repo, defaultBranch, pack, task, token, sec
 
   // Before the version is consumed: what the previous host left on the hostnames
   // this deploy claims.
-  const claimed = deploymentAt(root, baseTip(root, remoteUrl(repo, token), base)).hostnames;
+  const claimed = deploymentAt(root, await baseTip(root, base)).hostnames;
   const { blocked, unprobed } = await preflight(claimed);
   if (unprobed.length) log(`could not resolve ${unprobed.join(', ')} — the inherited-record probe did not run for ${unprobed.length === 1 ? 'it' : 'them'}`);
   if (blocked.length) {
@@ -261,7 +272,7 @@ export async function worker({ root, repo, defaultBranch, pack, task, token, sec
     ? 'public-website is declared — the release advances the version before uploading'
     : 'public-website is not declared — the release uploads the branch tip with no version bump');
 
-  const { version, commit, attempts, deployment } = pushRelease(root, { remote: remoteUrl(repo, token), base, taskId, versioning });
+  const { version, commit, attempts, deployment } = await pushRelease(root, { base, versioning });
   log(version
     ? `released version ${version} as ${commit.slice(0, 7)}${attempts > 1 ? ` (after ${attempts} push attempts)` : ''}`
     : `releasing ${commit.slice(0, 7)}`);

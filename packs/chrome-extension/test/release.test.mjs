@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { makeRepo, cleanup, declaredCheck } from '../../../engine-tests/helpers.mjs';
 import { buildContext } from '../../../engine/checks/helpers/repo-context.mjs';
-import { readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { runRule } from '../../../engine/checks/helpers/work.mjs';
@@ -412,8 +412,19 @@ test('shipping gate: the declared checks carry the same test as the coded predic
   }
 });
 
+// The engine's `release` signal reads `shipsPipeline` this way (tasks/signals,
+// `ReadLocal`): any workflow file, or the release config, holding the orchestrator's
+// name line or a `manifest_path=` line. cn answers it over no command, so it is
+// spelled here once, for the matrix below to hold the pack rules to.
+const ENGINE_SHIPS_RE = /^(?:name:\s*['"]?(?:Release to Chrome Store|Release)['"]?\s*|manifest_path=.*)$/m;
+function engineShipsPipeline(root) {
+  const dir = join(root, '.github/workflows');
+  const files = existsSync(dir) ? readdirSync(dir).filter((f) => /\.ya?ml$/.test(f)).map((f) => join(dir, f)) : [];
+  return [...files, join(root, '.github/release.config')]
+    .some((f) => existsSync(f) && ENGINE_SHIPS_RE.test(readFileSync(f, 'utf8')));
+}
+
 test('shipping gate: the scheduler signal answers what the pack rules answer', async () => {
-  const { localSignalContext } = await import('../../claudinite-tasks/src/world/git.mjs');
   // One matrix, both readers. Each row is a repo shape that has actually mattered:
   // a publisher, a publisher known only by its release config, the canon's own copies
   // of the reusable workflows, and a repo that just codes an extension.
@@ -435,7 +446,7 @@ test('shipping gate: the scheduler signal answers what the pack rules answer', a
     const root = makeRepo({ base: files });
     try {
       assert.equal(shipsReleasePipeline(buildContext({ root, mode: 'all' })), expected, `pack rules: ${why}`);
-      assert.equal(localSignalContext(root).shipsReleasePipeline, expected, `scheduler signal: ${why}`);
+      assert.equal(engineShipsPipeline(root), expected, `scheduler signal: ${why}`);
     } finally { cleanup(root); }
   }
 });

@@ -1,10 +1,16 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { removeTree } from '../../../../../engine/remove-tree.mjs';
-import { BEACON_PLACEHOLDER, injectBeacon, isOperatorFailure, loadVersioning, reportServed, VERSIONING_SEAM } from '../../../tasks/site-release/worker.mjs';
+import { gitIn, installSdk, memberRepo } from '../../../../../tools/test/sdk-stand-in.mjs';
+
+const removeTree = (dir) => rmSync(dir, { recursive: true, force: true });
+const sdk = installSdk({ params: { pack: 'cloudflare-site', task: 'site-release' } });
+const {
+  BEACON_PLACEHOLDER, injectBeacon, isOperatorFailure, loadVersioning, pushRelease, reportServed, VERSIONING_SEAM,
+} = await import('../../../tasks/site-release/worker.mjs');
 
 const REAL_TOKEN = '4f8b21ce9a7d4e0fb3c65a1d2e7f9081';
 
@@ -108,4 +114,68 @@ test('the versioning seam loads from beside the pack, and its absence is a null'
   assert.equal(await loadVersioning(async () => { throw absent; }), null);
   await assert.rejects(loadVersioning(async () => { throw new SyntaxError('broken seam'); }), /broken seam/);
   assert.match(VERSIONING_SEAM, /public-website\/public\/version\.mjs$/);
+});
+
+// The bump reaches the remote through the engine's `git`, stamped with the task that
+// wrote it, and the executor's checkout is left exactly as it was found.
+const SITE = {
+  'wrangler.json': JSON.stringify({ assets: { directory: 'site' }, routes: [{ pattern: 'acme.example', custom_domain: true }] }),
+  'site/index.html': '<p>hi</p>\n',
+  'package.json': '{ "version": "1.0.0" }\n',
+};
+const bumper = { bumpedFiles: ({ read }) => {
+  const next = `1.0.${Number(JSON.parse(read('package.json')).version.split('.')[2]) + 1}`;
+  return { version: next, files: { 'package.json': `{ "version": "${next}" }\n` } };
+} };
+
+function releaseRepo(answer = (git) => git) {
+  const dir = mkdtempSync(join(tmpdir(), 'site-release-push-'));
+  const repo = memberRepo(dir, SITE);
+  const local = installSdk({ params: { root: repo.root, pack: 'cloudflare-site', task: 'site-release' },
+    answers: { git: answer(gitIn(repo.root), repo) } });
+  return { dir, repo, local };
+}
+
+test('the version bump lands on the default branch through the engine, trailer stamped, checkout untouched', async () => {
+  const { dir, repo, local } = releaseRepo();
+  try {
+    const head = execFileSync('git', ['-C', repo.root, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
+    const out = await pushRelease(repo.root, { base: 'main', versioning: bumper });
+    assert.equal(out.version, '1.0.1');
+    assert.equal(out.attempts, 1);
+    assert.equal(repo.rev('main'), out.commit);
+    assert.equal(repo.show('main', 'package.json'), '{ "version": "1.0.1" }\n');
+    assert.match(repo.message('main'), /^Release site version 1\.0\.1\n\nClaudinite-Task: cloudflare-site\/site-release\n/);
+    assert.deepEqual(out.deployment.hostnames, ['acme.example']);
+    assert.equal(execFileSync('git', ['-C', repo.root, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(), head);
+    assert.deepEqual(local.calls.map((c) => c.args.args[0]), ['fetch', 'push']);
+  } finally { removeTree(dir); }
+});
+
+test('a push that lost the race rebuilds on the new tip and counts from it', async () => {
+  let raced = false;
+  const { dir, repo } = releaseRepo((git, r) => (args) => {
+    if (args.args[0] === 'push' && !raced) {
+      raced = true;
+      r.land({ 'package.json': '{ "version": "1.0.5" }\n' }, 'someone else released');
+    }
+    return git(args);
+  });
+  try {
+    const out = await pushRelease(repo.root, { base: 'main', versioning: bumper });
+    assert.equal(out.attempts, 2);
+    assert.equal(out.version, '1.0.6');
+    assert.equal(repo.show('main', 'package.json'), '{ "version": "1.0.6" }\n');
+  } finally { removeTree(dir); }
+});
+
+test('with no versioning the release is the tip as found and nothing is pushed', async () => {
+  const { dir, repo, local } = releaseRepo();
+  try {
+    const before = repo.rev('main');
+    const out = await pushRelease(repo.root, { base: 'main', versioning: null });
+    assert.equal(out.version, null);
+    assert.equal(out.commit, before);
+    assert.deepEqual(local.calls.map((c) => c.args.args[0]), ['fetch']);
+  } finally { removeTree(dir); }
 });

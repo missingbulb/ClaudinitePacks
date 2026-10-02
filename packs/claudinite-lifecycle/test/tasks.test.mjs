@@ -3,10 +3,7 @@ import assert from 'node:assert/strict';
 import { existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import updateJson from '../tasks/update/task.json' with { type: 'json' };
-import { normalizeTaskDeclaration } from '../../claudinite-tasks/public/task-declaration.mjs';
-// The loader's door: the JSON says what is particular to the task, the defaults are the contract's.
-const update = normalizeTaskDeclaration(updateJson);
+import update from '../tasks/update/task.json' with { type: 'json' };
 
 const TASK_DIR = join(dirname(fileURLToPath(import.meta.url)), '../../../packs/claudinite-lifecycle/tasks/update');
 

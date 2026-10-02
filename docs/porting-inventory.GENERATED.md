@@ -27,23 +27,23 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 | android | 60928.1 | 4 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | app-store-release | 60928.1 | 4 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | aws-sam | 61002.1 | 25 | 2 | 1 | 0 | 0 | 3 | 0 | 0 | 0 |
-| basics | 61002.1 | 189 | 2 | 13 | 5 | 1 | 8 | 0 | 0 | 0 |
-| chrome-extension | 60928.1 | 46 | 2 | 4 | 3 | 4 | 7 | 9 | 0 | 8 |
+| basics | 61002.2 | 189 | 2 | 13 | 5 | 2 | 8 | 0 | 0 | 0 |
+| chrome-extension | 61002.1 | 46 | 2 | 4 | 3 | 4 | 7 | 9 | 0 | 8 |
 | claude-code-web-users-support | 60928.1 | 13 | 1 | 4 | 0 | 8 | 7 | 0 | 1 | 8 |
 | claudinite-canary-repo | 60928.1 | 4 | 1 | 0 | 0 | 2 | 0 | 1 | 0 | 0 |
-| claudinite-canon-curation | 60928.1 | 65 | 3 | 6 | 18 | 4 | 10 | 0 | 0 | 14 |
-| claudinite-dashboard | 60928.2 | 16 | 3 | 1 | 4 | 42 | 41 | 1 | 4 | 11 |
-| claudinite-fleet-sheepdog | 60928.1 | 29 | 1 | 1 | 8 | 23 | 22 | 0 | 0 | 10 |
-| claudinite-growth | 61002.2 | 159 | 8 | 0 | 18 | 13 | 16 | 0 | 0 | 10 |
-| claudinite-lifecycle | 61002.2 | 44 | 3 | 0 | 5 | 10 | 8 | 0 | 0 | 11 |
-| claudinite-tasks | 61002.2 | 23 | 3 | 0 | 5 | 20 | 12 | 0 | 0 | 4 |
-| cloudflare-site | 60928.1 | 16 | 1 | 3 | 3 | 4 | 7 | 0 | 0 | 5 |
+| claudinite-canon-curation | 61002.1 | 65 | 3 | 6 | 18 | 5 | 10 | 0 | 0 | 13 |
+| claudinite-dashboard | 61002.1 | 16 | 3 | 1 | 4 | 44 | 42 | 1 | 4 | 10 |
+| claudinite-fleet-sheepdog | 61002.1 | 29 | 1 | 1 | 8 | 24 | 23 | 0 | 0 | 9 |
+| claudinite-growth | 61002.3 | 159 | 8 | 0 | 18 | 14 | 16 | 0 | 0 | 10 |
+| claudinite-lifecycle | 61002.3 | 44 | 3 | 0 | 5 | 10 | 8 | 0 | 0 | 11 |
+| claudinite-tasks | 61002.3 | 23 | 3 | 0 | 5 | 26 | 13 | 0 | 0 | 1 |
+| cloudflare-site | 61002.1 | 16 | 1 | 3 | 3 | 4 | 7 | 0 | 0 | 3 |
 | cloudflare-workers | 60928.1 | 16 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | executable-requirements | 61002.1 | 21 | 1 | 1 | 0 | 0 | 2 | 0 | 0 | 0 |
 | firebase | 61002.1 | 29 | 2 | 1 | 0 | 1 | 3 | 0 | 0 | 0 |
 | flutter | 60928.1 | 26 | 2 | 0 | 0 | 0 | 2 | 0 | 0 | 0 |
 | git-github | 60928.1 | 33 | 3 | 0 | 0 | 1 | 1 | 0 | 0 | 1 |
-| github-pages | 60928.1 | 13 | 1 | 2 | 3 | 3 | 3 | 1 | 0 | 5 |
+| github-pages | 61002.1 | 13 | 1 | 2 | 3 | 4 | 3 | 1 | 0 | 4 |
 | google-identity | 61002.1 | 9 | 2 | 1 | 0 | 0 | 3 | 0 | 0 | 0 |
 | headless-browser | 60928.1 | 31 | 2 | 0 | 0 | 0 | 4 | 0 | 0 | 1 |
 | hello | 1.4 | 14 | 3 | 4 | 4 | 0 | 0 | 0 | 0 | 0 |
@@ -56,14 +56,14 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 | node | 61002.1 | 20 | 2 | 2 | 0 | 0 | 3 | 0 | 0 | 0 |
 | numpy-image-processing | 60928.1 | 14 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | play-store-release | 60928.1 | 4 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| product-wiki | 60928.1 | 34 | 2 | 0 | 2 | 1 | 1 | 0 | 0 | 1 |
+| product-wiki | 61002.1 | 34 | 2 | 0 | 2 | 1 | 1 | 0 | 0 | 1 |
 | public-website | 61002.1 | 12 | 1 | 1 | 0 | 3 | 3 | 0 | 0 | 0 |
 | python | 61002.1 | 12 | 1 | 3 | 0 | 0 | 2 | 0 | 0 | 0 |
 | research-project | 60928.1 | 63 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | spec-driven-product | 60928.1 | 31 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | web-scraping | 60928.1 | 35 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | web-speech | 60928.1 | 33 | 3 | 6 | 0 | 1 | 5 | 0 | 0 | 10 |
-| **39 packs** | | 1200 | 72 | 62 | 78 | 142 | 187 | 12 | 5 | 119 |
+| **39 packs** | | 1200 | 72 | 62 | 78 | 155 | 190 | 12 | 5 | 110 |
 
 ## aws-sam
 
@@ -103,9 +103,10 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 - `tasks/improve-comments/task.json`
 - `tasks/improve-comments/task.md`
 
-### src (1)
+### src (2)
 
 - `migrations/2026-08-13-mechanism-versioned/migration.mjs`
+- `tasks/ci-performance/github-api.mjs`
 
 ### test (8)
 
@@ -223,12 +224,13 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 - `tasks/usage-triage/task.json`
 - `tasks/usage-triage/task.md`
 
-### src (4)
+### src (5)
 
 - `canon-config.mjs` (imports `engine/`)
 - `pack-surface.mjs`
 - `pack-versions.mjs` (imports `engine/`)
 - `promote-scope.mjs` (imports `engine/`)
+- `tasks/pack-version-history/deliver.mjs`
 
 ### test (10)
 
@@ -236,7 +238,7 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 - `test/pack-discovery-entry-await.test.mjs` (imports `engine/`)
 - `test/pack-surface.test.mjs`
 - `test/pack-version-log-ordered.test.mjs`
-- `test/pack-versions.test.mjs` (imports `engine/`)
+- `test/pack-versions.test.mjs`
 - `test/pack.test.mjs` (imports `engine/`)
 - `test/promote-scope.test.mjs` (imports `engine/`)
 - `test/skills/writing-claudinite-skills/no-enforcement-narration.test.mjs` (imports `engine/`)
@@ -256,7 +258,7 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 - `tasks/publish-pages/task.json`
 - `tasks/publish-pages/worker.mjs`
 
-### src (42)
+### src (44)
 
 - `src/app.mjs`
 - `src/derive/activity.mjs`
@@ -280,11 +282,12 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 - `src/read/canon.mjs` (imports `engine/`)
 - `src/read/config.mjs`
 - `src/read/contributions.mjs`
-- `src/read/dormancy.mjs` (imports `engine/`)
+- `src/read/dormancy.mjs`
 - `src/read/flat.mjs`
 - `src/read/fleet-sweep.mjs`
 - `src/read/github.mjs`
 - `src/read/pr-fields.mjs`
+- `src/read/queue-vocabulary.mjs`
 - `src/read/settings-read.mjs` (imports `engine/`)
 - `src/read/signin-vars.mjs`
 - `src/read/usage.mjs`
@@ -296,12 +299,13 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 - `src/views/view-fleet.mjs`
 - `src/views/view-repo.mjs`
 - `tasks/deploy-oauth-exchange/deploy.mjs`
+- `tasks/publish-pages/github-api.mjs`
 - `tooling/build-site.mjs`
 - `tooling/deployment-config.mjs` (imports `engine/`)
 - `tooling/oauth-exchange.mjs`
 - `tooling/serve.mjs`
 
-### test (41)
+### test (42)
 
 - `test/activity.test.mjs`
 - `test/auth.test.mjs`
@@ -332,6 +336,7 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 - `test/pack.test.mjs`
 - `test/pr-fields-drift.test.mjs`
 - `test/pricing.test.mjs`
+- `test/queue-vocabulary.test.mjs`
 - `test/rate-policy.test.mjs`
 - `test/sheet.test.mjs`
 - `test/substantive-commit-drift.test.mjs`
@@ -369,9 +374,9 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 - `tasks/fleet-update/task.json`
 - `tasks/fleet-update/worker.mjs`
 
-### src (23)
+### src (24)
 
-- `dormancy.mjs` (imports `engine/`)
+- `dormancy.mjs`
 - `fleet-api.mjs` (imports `engine/`)
 - `fleet-config.mjs`
 - `fleet-token.mjs`
@@ -386,6 +391,7 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 - `tasks/fleet-add-missing-packs/mark-work-list.mjs`
 - `tasks/fleet-add-missing-packs/params.mjs`
 - `tasks/fleet-add-missing-packs/protocol.mjs`
+- `tasks/fleet-add-missing-packs/queue-vocabulary.mjs`
 - `tasks/fleet-add-missing-packs/remote-context.mjs` (imports `engine/`)
 - `tasks/fleet-add-missing-packs/scan-for-needed-packs.mjs`
 - `tasks/fleet-pack-seeds/check-fleet-pack-seeds.mjs`
@@ -395,7 +401,7 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 - `tasks/fleet-update/follow-to-current.mjs`
 - `tasks/fleet-update/force-fleet-update.mjs`
 
-### test (22)
+### test (23)
 
 - `test/dormancy-drift.test.mjs`
 - `test/fleet-api.test.mjs`
@@ -407,6 +413,7 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 - `test/tasks/fleet-add-missing-packs/force-add-packs.test.mjs`
 - `test/tasks/fleet-add-missing-packs/params.test.mjs`
 - `test/tasks/fleet-add-missing-packs/protocol.test.mjs`
+- `test/tasks/fleet-add-missing-packs/queue-vocabulary.test.mjs`
 - `test/tasks/fleet-add-missing-packs/remote-context.test.mjs` (imports `engine/`)
 - `test/tasks/fleet-add-missing-packs/scan-for-needed-packs.test.mjs`
 - `test/tasks/fleet-add-missing-packs/task.test.mjs`
@@ -443,7 +450,7 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 - `tasks/usage-triage/task.json`
 - `tasks/usage-triage/task.md`
 
-### src (13)
+### src (14)
 
 - `capture-log.mjs`
 - `migrations/2026-09-21-provenance-marking/migration.mjs`
@@ -451,6 +458,7 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 - `provenance.mjs` (imports `engine/`)
 - `session-end.mjs`
 - `tasks/logs-prune/prune-logs.mjs`
+- `tasks/usage-review/deliver.mjs`
 - `tasks/usage-review/digests.mjs`
 - `tasks/usage-review/evaluate.mjs`
 - `tasks/usage-review/figures.mjs`
@@ -518,12 +526,13 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 
 - `tasks/usage-fold/preconditions.mjs`
 - `tasks/usage-fold/task.json`
-- `tasks/usage-fold/worker.mjs` (imports `engine/`)
+- `tasks/usage-fold/worker.mjs`
 - `tasks/verify-production/task.json`
 - `tasks/verify-production/worker.mjs`
 
-### src (20)
+### src (26)
 
+- `github-api.mjs`
 - `migrations/2026-08-24-claudinite-tasks-seed/migration.mjs`
 - `migrations/2026-08-31-executor-vars-bag/migration.mjs`
 - `migrations/2026-09-01-executor-vars-redelivery/migration.mjs`
@@ -535,19 +544,25 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 - `migrations/2026-09-25-rolling-usage-files/migration.mjs`
 - `tasks/usage-fold/capture-entries.mjs`
 - `tasks/usage-fold/corpus-use.mjs`
+- `tasks/usage-fold/deliver.mjs`
 - `tasks/usage-fold/fold-tasks-usage.mjs`
-- `tasks/usage-fold/fold-usage.mjs` (imports `engine/`)
-- `tasks/usage-fold/machinery-half.mjs` (imports `engine/`)
+- `tasks/usage-fold/fold-usage.mjs`
+- `tasks/usage-fold/machinery-half.mjs`
+- `tasks/usage-fold/pr-fields.mjs`
+- `tasks/usage-fold/queue-wire.mjs`
 - `tasks/usage-fold/read-items.mjs`
 - `tasks/usage-fold/read-prs.mjs`
 - `tasks/usage-fold/read-queue.mjs`
 - `tasks/usage-fold/read-run-costs.mjs`
 - `tasks/usage-fold/read-runs.mjs`
+- `tasks/usage-fold/tasks-usage-format.mjs`
+- `tasks/usage-fold/usage-format.mjs`
 - `tasks/verify-production/probes.mjs`
 
-### test (12)
+### test (13)
 
 - `test/tasks/usage-fold/corpus-use.test.mjs` (imports `engine/`)
+- `test/tasks/usage-fold/deliver.test.mjs`
 - `test/tasks/usage-fold/fold-tasks-usage.test.mjs`
 - `test/tasks/usage-fold/fold-usage.test.mjs`
 - `test/tasks/usage-fold/preconditions.test.mjs`
@@ -572,7 +587,7 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 
 - `tasks/site-release/preconditions.mjs`
 - `tasks/site-release/task.json`
-- `tasks/site-release/worker.mjs` (imports `engine/`)
+- `tasks/site-release/worker.mjs`
 
 ### src (4)
 
@@ -586,7 +601,7 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 - `test/lib.test.mjs`
 - `test/tasks/site-release/preconditions.test.mjs`
 - `test/tasks/site-release/preflight.test.mjs`
-- `test/tasks/site-release/worker.test.mjs` (imports `engine/`)
+- `test/tasks/site-release/worker.test.mjs`
 - `test/worldRules/beacon-token-is-not-committed.test.mjs`
 - `test/worldRules/no-second-publisher.test.mjs`
 - `test/worldRules/publishes-a-site-directory.test.mjs`
@@ -648,17 +663,18 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 - `tasks/site-release/task.json`
 - `tasks/site-release/worker.mjs`
 
-### src (3)
+### src (4)
 
 - `build-site.mjs` (imports `engine/`)
 - `lib.mjs`
 - `migrations/2026-09-17-github-pages-vendoring/migration.mjs`
+- `tasks/site-release/github-api.mjs`
 
 ### test (3)
 
 - `test/pack.test.mjs` (imports `engine/`)
 - `test/tasks/site-release/preconditions.test.mjs`
-- `test/tasks/site-release/worker.test.mjs` (imports `engine/`)
+- `test/tasks/site-release/worker.test.mjs`
 
 ## google-identity
 
