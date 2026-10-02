@@ -8,7 +8,7 @@ access is **MCP-only** (`mcp__github__*`).
 
 You open a pull request. What happens to it after that is not this file's
 subject: delivery and landing are the shared procedure's (`deliver-pr.md`, beside
-the delivery lane it describes), which reads your item's `Merge:` field as its
+this file), which reads your item's `Merge:` field as its
 authorization — never the request issue, a comment on it, or how small the
 change looks to you.
 
@@ -47,15 +47,16 @@ now re-opens that question.
    you changed, which reading of the ask you took, and anything you deliberately
    left out — the reviewer's decision is easier than their archaeology.
 
-5. **Deliver it** by the shared procedure — `src/deliver/deliver-pr.md` in the
+5. **Deliver it** by the shared procedure — `public/deliver-pr.md` in the
    claudinite-tasks pack (probe `.claudinite/shared/packs/claudinite-tasks/`,
    falling back to `packs/claudinite-tasks/` in the canon) — with your item's
-   `Merge:` field as the authorization it asks for. It landed the PR → close the
-   item `task:status:done` with a comment naming the merge and quoting its
-   verdict line. It left the PR open → go to step 6.
+   `Merge:` field as the authorization it asks for. It landed the PR → converge the
+   item `done` with `.claudinite/bin/cn work converge` (the routine's step 6), the
+   summary naming the merge. It left the PR open → go to step 6.
 
-6. **Converge the item**: `task:status:needs-human-approval`, left **open**,
-   with one comment naming the pull request. This is where a run ends whenever the
+6. **Converge the item** with `.claudinite/bin/cn work converge --outcome approval
+   --pr <n>`, which plans `task:status:needs-human-approval`, left **open**, with one
+   comment naming the pull request. This is where a run ends whenever the
    change was not authorized to land or was too wide to.
 
    The park lands on the marked issue itself, which is what tells the person who
@@ -67,6 +68,7 @@ now re-opens that question.
 A request you cannot implement is a **failure park**, not a quiet success: park the
 item `task:status:needs-human-failure` with what you found, and leave the
 issue itself open and untouched otherwise — never close somebody's issue because
-your run could not do it. The standing park status is deliberate: it is what stops
+your run could not do it. That park goes through `cn work converge --outcome failure` like
+any other. The standing park status is deliberate: it is what stops
 the next scheduler run adopting the same issue again, and clearing it is a person's
 decision made after reading what you said.

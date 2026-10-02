@@ -129,3 +129,13 @@
 - **Actor:** @missingbulb (owner), asking for pack.json manifests.
 - **Mechanism:** pack.json, which the loader prefers over pack.mjs; a canon pack now needs engine
   60928.1, the first to read it.
+
+## 2026-10-02 · moved · the task runner leaves the pack for the engine (missingbulb/ClaudiniteEngine#43)
+- **Reason:** the scheduler, the executor, the queue, the task contract, the landing lane, the two
+  workflow stubs and the built-in `implement-request` task are `cn`'s since the task runner slice,
+  so the Node copies here ran nowhere; the pack keeps what a declaring repo and the engine read
+  from it: the routine's documents in `public/` (`deliver-pr.md` joining them from `src/deliver/`,
+  since tasks in other packs point at it), the declared checks, `merge-rules.json` and its two tasks.
+- **Actor:** @missingbulb (owner), approving the removal held from packs PR #18.
+- **Mechanism:** the engine binary (`cn schedule`, `cn execute`, `cn work`, `cn tasks`); this
+  pack's two task workers stay Node until their rewrite against `@claudinite/sdk`.

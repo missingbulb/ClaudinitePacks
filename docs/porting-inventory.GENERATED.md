@@ -36,7 +36,7 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 | claudinite-fleet-sheepdog | 60928.1 | 29 | 1 | 1 | 8 | 23 | 22 | 0 | 0 | 10 |
 | claudinite-growth | 61002.2 | 159 | 8 | 0 | 18 | 13 | 16 | 0 | 0 | 10 |
 | claudinite-lifecycle | 61002.2 | 44 | 3 | 0 | 5 | 10 | 8 | 0 | 0 | 11 |
-| claudinite-tasks | 61002.1 | 24 | 4 | 4 | 8 | 87 | 91 | 2 | 0 | 37 |
+| claudinite-tasks | 61002.2 | 23 | 3 | 0 | 5 | 20 | 12 | 0 | 0 | 4 |
 | cloudflare-site | 60928.1 | 16 | 1 | 3 | 3 | 4 | 7 | 0 | 0 | 5 |
 | cloudflare-workers | 60928.1 | 16 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | executable-requirements | 61002.1 | 21 | 1 | 1 | 0 | 0 | 2 | 0 | 0 | 0 |
@@ -63,7 +63,7 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 | spec-driven-product | 60928.1 | 31 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | web-scraping | 60928.1 | 35 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | web-speech | 60928.1 | 33 | 3 | 6 | 0 | 1 | 5 | 0 | 0 | 10 |
-| **39 packs** | | 1201 | 73 | 66 | 81 | 209 | 266 | 14 | 5 | 152 |
+| **39 packs** | | 1200 | 72 | 62 | 78 | 142 | 187 | 12 | 5 | 119 |
 
 ## aws-sam
 
@@ -514,25 +514,15 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 
 ## claudinite-tasks
 
-### coded-check (4)
+### task (5)
 
-- `workRules/automerge-policy-scope.mjs` (imports `engine/`)
-- `worldRules/executor-workflow-secrets.mjs` (imports `engine/`)
-- `worldRules/task-code-work-env.mjs` (imports `engine/`)
-- `worldRules/task-declaration-shape.mjs` (imports `engine/`)
-
-### task (8)
-
-- `queue/tasks/implement-request/preconditions.mjs`
-- `queue/tasks/implement-request/task.json`
-- `queue/tasks/implement-request/task.md`
 - `tasks/usage-fold/preconditions.mjs`
 - `tasks/usage-fold/task.json`
 - `tasks/usage-fold/worker.mjs` (imports `engine/`)
 - `tasks/verify-production/task.json`
 - `tasks/verify-production/worker.mjs`
 
-### src (87)
+### src (20)
 
 - `migrations/2026-08-24-claudinite-tasks-seed/migration.mjs`
 - `migrations/2026-08-31-executor-vars-bag/migration.mjs`
@@ -543,73 +533,6 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 - `migrations/2026-09-20-cadence-without-anchors/migration.mjs`
 - `migrations/2026-09-24-executor-hold-through-the-bag/migration.mjs`
 - `migrations/2026-09-25-rolling-usage-files/migration.mjs`
-- `public/delivery.mjs` (imports `engine/`)
-- `public/github.mjs`
-- `public/task-constants.mjs`
-- `public/task-declaration.mjs`
-- `public/work-item-grammar.mjs` (imports `engine/`)
-- `queue/tasks/implement-request/narrow-diff.mjs`
-- `src/adopt/converge-workflows.mjs` (imports `engine/`)
-- `src/adopt/hash-minute.mjs`
-- `src/contract/built-in-tasks.mjs`
-- `src/contract/calendar.mjs`
-- `src/contract/discover.mjs` (imports `engine/`)
-- `src/contract/dormancy.mjs` (imports `engine/`)
-- `src/contract/merge-policy.mjs` (imports `engine/`)
-- `src/contract/model-map.mjs`
-- `src/contract/precondition-policy.mjs`
-- `src/contract/precondition.mjs`
-- `src/contract/task-contract.mjs`
-- `src/contract/task-declaration-text.mjs`
-- `src/contract/task-declaration.mjs`
-- `src/contract/task-defaults.mjs`
-- `src/contract/task-terms.mjs`
-- `src/deliver/land-pr.mjs`
-- `src/execute/code-work-run.mjs`
-- `src/execute/code-work.mjs`
-- `src/execute/loop.mjs` (imports `engine/`)
-- `src/execute/prework-run.mjs`
-- `src/execute/target.mjs`
-- `src/execute/worker-entry.mjs`
-- `src/items/anchors.mjs`
-- `src/items/apply-status.mjs`
-- `src/items/heartbeat.mjs`
-- `src/items/pick-order.mjs`
-- `src/items/pr-fields.mjs`
-- `src/items/read.mjs`
-- `src/items/run-record.mjs`
-- `src/items/tasks-usage-format.mjs`
-- `src/items/usage-format.mjs`
-- `src/recover/continuation.mjs`
-- `src/recover/workflow-failure.mjs`
-- `src/schedule/create-work-item.mjs` (imports `engine/`)
-- `src/schedule/drain-dispatch.mjs`
-- `src/schedule/readiness.mjs`
-- `src/schedule/repair-rules.mjs`
-- `src/schedule/repair.mjs`
-- `src/schedule/run.mjs` (imports `engine/`)
-- `src/session/converge-item.mjs`
-- `src/session/dispatch.mjs`
-- `src/session/merge-policy-run.mjs` (imports `engine/`)
-- `src/session/record-exec.mjs`
-- `src/session/resolve-dispatch.mjs` (imports `engine/`)
-- `src/session/validate-dispatch.mjs`
-- `src/session/verify-outcome.mjs`
-- `src/signals/context.mjs`
-- `src/signals/fleet.mjs` (imports `engine/`)
-- `src/signals/for-task.mjs`
-- `src/signals/index.mjs` (imports `engine/`)
-- `src/signals/substantive-commit.mjs`
-- `src/world/actions.mjs`
-- `src/world/clock.mjs`
-- `src/world/env-bag.mjs`
-- `src/world/git.mjs`
-- `src/world/github.mjs`
-- `src/world/hold.mjs`
-- `src/world/processes.mjs`
-- `src/world/secrets-bag.mjs`
-- `src/world/sessions.mjs` (imports `engine/`)
-- `src/world/vars-bag.mjs`
 - `tasks/usage-fold/capture-entries.mjs`
 - `tasks/usage-fold/corpus-use.mjs`
 - `tasks/usage-fold/fold-tasks-usage.mjs`
@@ -622,83 +545,8 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 - `tasks/usage-fold/read-runs.mjs`
 - `tasks/verify-production/probes.mjs`
 
-### test (91)
+### test (12)
 
-- `test/adopt/converge-workflows.test.mjs`
-- `test/adopt/hash-minute.test.mjs`
-- `test/contract/cadence-without-anchors.test.mjs`
-- `test/contract/contract.test.mjs` (imports `engine/`)
-- `test/contract/discover.test.mjs`
-- `test/contract/dormancy.test.mjs` (imports `engine/`)
-- `test/contract/legacy-precondition-retired.test.mjs`
-- `test/contract/manual-task-preconditions.test.mjs`
-- `test/contract/merge-policy.test.mjs` (imports `engine/`)
-- `test/contract/precondition-clock.test.mjs`
-- `test/contract/precondition-policy.test.mjs`
-- `test/contract/run-history-terms.test.mjs`
-- `test/contract/task-schema.test.mjs`
-- `test/contract/task-trailer.test.mjs`
-- `test/contract/task-trigger.test.mjs`
-- `test/deliver/deliver-generated.test.mjs` (imports `engine/`)
-- `test/deliver/land-pr.test.mjs`
-- `test/engine-pack-lane-shims.test.mjs`
-- `test/execute/code-work-run.test.mjs` (imports `engine/`)
-- `test/execute/code-work.test.mjs`
-- `test/execute/executor-rules.test.mjs`
-- `test/execute/loop.test.mjs`
-- `test/execute/target.test.mjs`
-- `test/execute/worker-entry.test.mjs` (imports `engine/`)
-- `test/executor-scope.test.mjs`
-- `test/items/heartbeat.test.mjs`
-- `test/items/run-cost.test.mjs`
-- `test/items/run-record.test.mjs`
-- `test/items/tasks-usage-format.test.mjs`
-- `test/items/tracker.test.mjs`
-- `test/items/usage-format.test.mjs`
-- `test/items/vocabulary.test.mjs`
-- `test/items/work-item.test.mjs`
-- `test/legacy-protocol.mjs`
-- `test/member-runnable-doc-paths.test.mjs`
-- `test/migrations/rolling-usage-files.test.mjs` (imports `engine/`)
-- `test/published-surface.test.mjs`
-- `test/rules/automerge-policy-scope.test.mjs` (imports `engine/`)
-- `test/rules/executor-workflow-secrets.test.mjs` (imports `engine/`)
-- `test/rules/issue-labels.test.mjs` (imports `engine/`)
-- `test/rules/task-code-work-env.test.mjs`
-- `test/rules/task-declaration-shape.test.mjs` (imports `engine/`)
-- `test/schedule/drain-gate.test.mjs`
-- `test/schedule/marked-issues.test.mjs`
-- `test/schedule/origin-manual.test.mjs`
-- `test/schedule/repair-phase.test.mjs`
-- `test/schedule/repair-rules.test.mjs`
-- `test/schedule/request-mode.test.mjs`
-- `test/schedule/run.test.mjs`
-- `test/schedule/wake-own-writes.test.mjs`
-- `test/schedule/workflow-runbook.test.mjs`
-- `test/session/converge-item.test.mjs`
-- `test/session/converge-session.test.mjs`
-- `test/session/dispatch.test.mjs`
-- `test/session/narrow-diff.test.mjs` (imports `engine/`)
-- `test/session/resolve-dispatch.test.mjs`
-- `test/signals/fleet.test.mjs`
-- `test/signals/queue-signal.test.mjs`
-- `test/signals/run-history-signal.test.mjs`
-- `test/signals/signal-context.test.mjs` (imports `engine/`)
-- `test/signals/signals.test.mjs`
-- `test/signals/substantive-commit.test.mjs`
-- `test/sim/README.md`
-- `test/sim/coverage.test.mjs`
-- `test/sim/scenarios.test.mjs`
-- `test/sim/sim.mjs` (imports `engine/`)
-- `test/sim/world/actions.mjs`
-- `test/sim/world/agents.mjs`
-- `test/sim/world/clock.mjs`
-- `test/sim/world/github.mjs`
-- `test/sim/world/humans.mjs`
-- `test/sim/world/parity.test.mjs`
-- `test/sim/world/sessions.mjs`
-- `test/sim/world/world.test.mjs` (imports `engine/`)
-- `test/surface-check-scope.test.mjs`
 - `test/tasks/usage-fold/corpus-use.test.mjs` (imports `engine/`)
 - `test/tasks/usage-fold/fold-tasks-usage.test.mjs`
 - `test/tasks/usage-fold/fold-usage.test.mjs`
@@ -711,10 +559,6 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 - `test/tasks/usage-fold/task.test.mjs`
 - `test/tasks/usage-fold/worker.test.mjs`
 - `test/tasks/verify-production.test.mjs`
-- `test/world/hold.test.mjs`
-- `test/world/secrets-bag.test.mjs`
-- `test/world/sessions.test.mjs`
-- `test/world/vars-bag.test.mjs`
 
 ## cloudflare-site
 

@@ -1,9 +1,9 @@
 # Delivering a scheduled task's pull request
 
 How an executor subagent delivers the PR its task produced — the AGENT lane of the one
-delivery procedure. The CODE lane is `land-pr.mjs` beside this file (Action-side workers
-run it); **the two must keep saying the same thing** — a nuance changed in one changes in
-the other in the same commit. Your GitHub writes go through the session's MCP tools, and
+delivery procedure. The CODE lane is the engine's landing lane (`tasks/land`, which
+Action-side runs go through); **the two must keep saying the same thing** — a nuance changed
+in one changes in the other in the same change. Your GitHub writes go through the session's MCP tools, and
 your pushes ride a credential whose events start workflows normally, so — unlike the code
 lane — your PR's checks need no help from you to run.
 
@@ -19,7 +19,7 @@ at all; `supersede_existing_pr` gave you a fresh branch and listed the earlier o
 request already exists and your push updates it. Where there is none, open your pull
 request on that branch. Never mint a branch name, never search for an open pull
 request to reuse, and never close an earlier run's pull request yourself: the converge
-(`src/session/converge-item.mjs`, handed `--pr`) closes what `Supersedes:` names once yours
+(`cn work converge`, handed `--pr`) closes what `Supersedes:` names once yours
 exists, and a run that delivered nothing leaves them where they were.
 
 **A `Target-pr:` that conflicts with its base is yours to resolve, not to walk away
@@ -58,22 +58,11 @@ Whichever source it came from:
   scope such as `['under:product-wiki']`, or an intersection of the two,
   `['under:product-wiki && doc-changes']`) — the task may
   land its PR only when the diff sits inside the policy, and the policy engine decides
-  that, never your reading of the diff. Before step 2, run it from the repository root —
-  `src/session/merge-policy-run.mjs` in the claudinite-tasks pack (probe
-  `.claudinite/shared/packs/claudinite-tasks/src/session/merge-policy-run.mjs`, falling back to
-  `packs/claudinite-tasks/src/session/merge-policy-run.mjs` in the canon):
-
-  ```
-  node <that file> --base <the PR's base branch> --policy '<the terms, ;-joined>'
-  ```
-
-  `AUTOMERGE: no` — leave the PR open for review, quote the verdict line in your wrap-up,
-  and stop; a diff wider than its policy waiting for a person is a correct outcome, and
-  you never re-shape a change to fit the classifier. `AUTOMERGE: yes` — amend your
-  branch's final commit to carry the arming trailer on its own line,
-  `Claudinite-Automerge-Policy: <the same expression>`, push, and continue below (the
-  `automerge-policy-scope` check re-measures the diff against the trailer, so a
-  mis-measured arm goes red instead of merging).
+  that, never your reading of the diff. The engine has no session-side command that runs
+  the policy engine over your branch yet, so no verdict is available to you: leave the PR
+  open for review, say in your wrap-up that its policy could not be measured from the
+  session, and stop. A diff waiting for a person is a correct outcome; arming on your own
+  reading of the diff is not one.
 
 ## 1. Read the repo's delivery preference
 
