@@ -28,11 +28,7 @@ func init() {
 
 func referenceIntegrity(repo checksdk.Repo) []checksdk.Finding {
 	var out []checksdk.Finding
-	var dead []checksdk.DeadLink
-	if changed := repo.ChangedFiles(); len(changed) > 0 {
-		dead = checksdk.DeadLinks(repo, changed)
-	}
-	for _, d := range dead {
+	for _, d := range checksdk.DeadLinks(repo, nil) {
 		out = append(out, checksdk.Finding{
 			Path: d.Path, Line: d.Line,
 			Sentence: fmt.Sprintf("relative link → %s resolves to %s, which does not exist", d.Target, d.Resolved),

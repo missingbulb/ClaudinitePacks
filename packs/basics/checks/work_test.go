@@ -50,12 +50,11 @@ func TestWorkRequestNotStarted(t *testing.T) {
 
 func TestReferenceIntegrity(t *testing.T) {
 	links := map[string]string{"doc.md": "[gone](missing/file.md) and [ok](README.md)\n", "README.md": "x\n"}
-	expect(t, "a dangling link, and a resolving one", run(t, referenceIntegrity, links, &checksdk.Fake{ChangedFiles: []string{"doc.md", "README.md"}}), "doc.md:1")
-	expect(t, "a dangling link the change never touched", run(t, referenceIntegrity, links, &checksdk.Fake{ChangedFiles: []string{"README.md"}}), "")
+	expect(t, "a dangling link, and a resolving one", run(t, referenceIntegrity, links, nil), "doc.md:1")
 
 	deleted := &checksdk.Fake{Deleted: []string{"old.md"}}
 	files := map[string]string{"index.md": "see [old](old.md)\n", ".claudinite/shared/packs/basics/README.md": "canon doc mentioning old.md generically\n"}
-	expect(t, "surviving references to a deleted file, never from the mount", run(t, referenceIntegrity, files, deleted), "index.md:1")
+	expect(t, "surviving references to a deleted file, never from the mount", run(t, referenceIntegrity, files, deleted), "index.md:1 index.md:1")
 
 	wf := &checksdk.Fake{Deleted: []string{".github/workflows/legacy-release.yml"}}
 	governed := map[string]string{

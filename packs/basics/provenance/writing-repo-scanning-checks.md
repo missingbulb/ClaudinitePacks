@@ -12,10 +12,3 @@
   it.
 - **Mechanism:** the description, as before.
 - **Actor:** @missingbulb (owner).
-
-## 2026-10-02 · scope-changed · Forced on an edit of a pack's Go check
-- **Reason:** a pack's coded checks move to `checks/*.go` (missingbulb/ClaudiniteEngine#39), so the
-  skill's trigger widens to that home beside the `.mjs` ones still on the shelf.
-- **Actor:** @missingbulb (owner), through the chunk 8 plan.
-- **Mechanism:** the skill's `force-load-on-file-edits-paths`.
-- **Landed:** pending.
