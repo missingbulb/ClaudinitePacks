@@ -1,6 +1,6 @@
 {
   "version": "61002.1",
-  "minEngineVersion": "60928.1",
+  "minEngineVersion": "61001.1.0",
   "ruleRoutingGuidance": {
     "belongs": "fleet-enforcer duties for the repo watching every other repo — coverage, freshness, standardized packs",
     "excludes": "anything a member does to itself — its comments are basics, lessons are claudinite-growth; the fleet brief is claudinite-dashboard"
