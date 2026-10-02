@@ -21,6 +21,7 @@ const LABEL_SETS = [
 
 const TITLES = [
   `${v.WORK_PREFIX} acme-pack/acme-task`, `${v.WORK_PREFIX} acme-pack/acme-task for #12`, `${v.WORK_PREFIX} barriers/acme-task`,
+  `${v.WORK_PREFIX} tidy-repo/acme-task`, `${v.WORK_PREFIX} static-website/acme-task`,
   `${v.WORK_PREFIX} acme-pack`, 'acme-pack/acme-task', `${v.WORK_PREFIX}  acme-pack/acme-task  x `, '',
 ];
 

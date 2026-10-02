@@ -1197,3 +1197,38 @@ test('a counter a row predates stays unknown in the file, never a fabricated zer
   assert.equal(totals[file.fields.week.indexOf('userMessages')], null);
   assert.ok(!('userMessages' in decodeUsage(file).weeks['2026-W30']));
 });
+
+// --- the mounted-skill set -----------------------------------------------------
+
+test('mountedCorpus reads each declared pack\'s skills off its own mount, and records nothing it cannot ask', async () => {
+  const { mkdtempSync, mkdirSync, writeFileSync, rmSync } = await import('node:fs');
+  const { tmpdir } = await import('node:os');
+  const { join } = await import('node:path');
+  const { mountedCorpus, countEntries } = await import('../../../tasks/usage-fold/fold-usage.mjs');
+  const root = mkdtempSync(join(tmpdir(), 'acme-corpus-'));
+  try {
+    const skill = (mount, pack, name) => {
+      mkdirSync(join(root, mount, pack, 'skills', name), { recursive: true });
+      writeFileSync(join(root, mount, pack, 'skills', name, 'SKILL.md'), '# s\n');
+    };
+    skill('.claudinite/shared/packs', 'acme-pack', 'acme-skill');
+    skill('.claudinite/local/packs', 'acme-local', 'local-skill');
+    skill('.claudinite/temp/packs', 'acme-temp', 'temp-skill');
+    skill('.claudinite/shared/packs', 'undeclared-pack', 'never-mounted');
+    mkdirSync(join(root, '.claudinite/shared/packs/acme-pack/skills/no-skill-file'), { recursive: true });
+    const corpus = await mountedCorpus(root, [
+      { id: 'acme-pack', kind: 'canon' }, { id: 'acme-local', kind: 'local' }, { id: 'acme-temp', kind: 'temp' },
+      { id: 'acme-absent', kind: 'canon' },
+    ]);
+    assert.deepEqual([...corpus.mounted].sort(), ['acme-skill', 'local-skill', 'temp-skill']);
+    // The engine's predicates and ownership are not asked, so the counters that need
+    // them write no key: absent, never zero.
+    assert.deepEqual(corpus.declarations, []);
+    assert.deepEqual(corpus.hits, {});
+    assert.equal(corpus.ownerOf, null);
+    const counted = countEntries([{ type: 'user', message: { role: 'user', content: 'x' } }], corpus);
+    assert.deepEqual(counted.moments, {});
+    assert.deepEqual(counted.skillCaught, {});
+    assert.deepEqual(await mountedCorpus(root, null), { mounted: new Set(), declarations: [], hits: {}, ownerOf: null });
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});

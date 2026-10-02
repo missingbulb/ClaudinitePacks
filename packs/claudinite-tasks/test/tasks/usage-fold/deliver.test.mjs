@@ -67,3 +67,14 @@ test('no target branch is refused before anything is written', async (t) => {
   await assert.rejects(deliver({ root: repo.root, base: 'main', target: { branch: null }, files: {}, subject: 's' }), /no branch to deliver on/);
   assert.equal(sdk.calls.length, 0);
 });
+
+test('the base branch is refused as a target before anything is pushed', async (t) => {
+  const repo = member(t, { 'README.md': 'hi\n' });
+  const before = repo.rev('main');
+  await assert.rejects(
+    deliver({ root: repo.root, base: 'main', target: { branch: 'main', pr: null }, files: { 'a.json': '1\n' }, subject: 's', title: 't', body: 'b' }),
+    /refusing to force-push to main/,
+  );
+  assert.equal(repo.rev('main'), before);
+  assert.equal(sdk.calls.filter((c) => c.method === 'git' && c.args.args[0] === 'push').length, 0);
+});

@@ -71,3 +71,8 @@
 - **Reason:** the runner's generated-file lane it delivered through is gone.
 - **Actor:** build lead, completing ClaudinitePacks #20 so the runner's removal lands with every importer ported.
 - **Mechanism:** a pack-local delivery copy: commit on the fetched base, force-push to the target branch, `github.openPr` unless a pull request is being amended.
+
+## 2026-10-02 · hardened · the delivery refuses the base branch
+- **Reason:** review of ClaudinitePacks #20: the delivery force-pushes to whatever branch it is handed, and the engine's `git` bounds no ref.
+- **Actor:** build lead, reviewing ClaudinitePacks #20.
+- **Mechanism:** `deliver.mjs` throws before any write when `target.branch` is the base; the copy is held to its siblings by `tools/test/pack-copies.test.mjs`.

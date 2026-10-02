@@ -165,3 +165,8 @@
 - **Reason:** its worker imported the queue wire, usage formats and delivery lane this pack dropped.
 - **Actor:** build lead, completing ClaudinitePacks #20 so the runner's removal lands with every importer ported.
 - **Mechanism:** local copies of each, the delivery over the SDK; forced-load declarations, hit predicates and check ownership are engine reads the SDK does not offer, so those fields record as absent.
+
+## 2026-10-02 · hardened · the delivery refuses the base branch, and the wire copy is held to `cn`
+- **Reason:** review of ClaudinitePacks #20: the delivery force-pushes to whatever branch it is handed, and the engine's `git` bounds no ref, so a target that named the base would rewrite it; and `queue-wire.mjs` named a drift test that did not exist.
+- **Actor:** build lead, reviewing ClaudinitePacks #20.
+- **Mechanism:** `deliver.mjs` throws before any write when `target.branch` is the base; `test/tasks/usage-fold/queue-wire.test.mjs` runs the copy's decode over one corpus against `cn tasks grammar` and `cn tasks queue`; `tools/test/pack-copies.test.mjs` holds every pack's `deliver.mjs` and `github-api.mjs` copies together.

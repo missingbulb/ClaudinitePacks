@@ -93,6 +93,11 @@ export async function deliver({ root, base, target, files, moves = {}, subject, 
   if (!target?.branch) {
     throw new Error('no branch to deliver on — the executor resolves it and hands it in as the target branch');
   }
+  // The push below is a force-push: right for a branch this task alone writes, and
+  // never for the base, whose history it would rewrite.
+  if (target.branch === base) {
+    throw new Error(`refusing to force-push to ${base}, the base branch — a delivery lands on the task's own branch`);
+  }
   const baseSha = await baseTip(root, base);
   const commit = commitFiles(root, {
     baseSha, files, moves,
