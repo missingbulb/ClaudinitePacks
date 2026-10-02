@@ -7,7 +7,7 @@ import assert from 'node:assert/strict';
 import {
   latencyOf, parksIn, costsIn, readClosedItems,
 } from '../../../tasks/usage-fold/read-items.mjs';
-import { RUN_COST_TAG } from '../../../src/items/run-record.mjs';
+import { RUN_COST_TAG } from '../../../tasks/usage-fold/queue-wire.mjs';
 
 const NOW = '2026-09-15T12:00:00Z';
 

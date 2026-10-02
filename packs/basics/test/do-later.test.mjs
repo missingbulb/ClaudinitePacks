@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { parseRequestFields } from '../../claudinite-tasks/public/work-item-grammar.mjs';
+import { requestFieldsOf, needsCn } from '../../../tools/test/cn-tasks.mjs';
 
 const skill = readFileSync(
   join(dirname(fileURLToPath(import.meta.url)), '../skills/do-later/SKILL.md'), 'utf8');
@@ -23,15 +23,15 @@ const filled = template.split('\n').map((line) => {
   return field && line.includes('<') && SAMPLES[field] ? `${field}: ${SAMPLES[field]}` : line;
 }).join('\n');
 
-test('the queue reads every field the template prescribes back from a body written to it', () => {
-  const gated = parseRequestFields(filled, { gated: true });
+test('the queue reads every field the template prescribes back from a body written to it', needsCn, () => {
+  const gated = requestFieldsOf(filled);
   assert.deepEqual(gated.blockedBy, [1456], 'Blocked-by is what serializes the chain');
   assert.equal(gated.notBefore, SAMPLES['Not-before']);
   assert.equal(gated.model, 'sonnet');
   assert.equal(gated.task, 'basics/ci-performance');
   assert.ok(gated.merge, 'Automerge must read as a policy expression');
   // An ungated author still gets the two waits — they define when, not what.
-  const ungated = parseRequestFields(filled);
+  const ungated = requestFieldsOf(filled, { gated: false });
   assert.deepEqual(ungated.blockedBy, [1456]);
   assert.equal(ungated.notBefore, SAMPLES['Not-before']);
 });

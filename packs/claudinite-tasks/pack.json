@@ -1,6 +1,11 @@
 {
-  "version": "61002.1",
+  "version": "61002.3",
   "minEngineVersion": "61001.1.0",
+  "githubActions": [
+    "createComment",
+    "listIssues",
+    "openPr"
+  ],
   "ruleRoutingGuidance": {
     "belongs": "scheduled work — the work-item queue, the executor, the task contract and its signals, run records, code-work, delivery",
     "excludes": "authoring a task — claudinite-growth; this repo's Claudinite status — claudinite-lifecycle; rendering queue state — claudinite-dashboard"

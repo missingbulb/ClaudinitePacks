@@ -44,3 +44,8 @@
   same work runs, exits the same way and prints the same markers.
 - **Actor:** @missingbulb (owner), who asked why every task re-implements one runner's job.
 - **Model:** Opus 5
+
+## 2026-10-02 · ported · publish-pages runs on `@claudinite/sdk`
+- **Reason:** the worker pushed with a token remote and dispatched through the removed runner's GitHub client.
+- **Actor:** build lead, completing ClaudinitePacks #20 so the runner's removal lands with every importer ported.
+- **Mechanism:** a scratch-index commit force-pushed through the SDK's `git`, the deploy dispatched through `github.dispatchWorkflow` with a 404 parking at action.

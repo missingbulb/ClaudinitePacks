@@ -7,7 +7,7 @@ import {
 } from '../src/derive/fleet-ledger.mjs';
 import {
   WORK_PREFIX, OUTCOME_DONE, STATUS_NEEDS_HUMAN_APPROVAL,
-} from '../../claudinite-tasks/public/task-constants.mjs';
+} from '../src/read/queue-vocabulary.mjs';
 
 const NOW = Date.parse('2026-09-02T12:00:00Z');
 const DAY = 86400e3;

@@ -20,16 +20,16 @@ import {
 } from './task-calendar.mjs';
 import {
   EXECUTING_LEASH_MS, AGENT_LEASH_MS, STALE_READY_PERIODS, STUCK_BLOCKED_MS,
-} from '../../../claudinite-tasks/public/task-constants.mjs';
+} from '../read/queue-vocabulary.mjs';
 import {
   WORK_PREFIX, STATUS_BLOCKED, STATUS_READY, URGENT, STATUS_RUNNING_EXECUTOR, STATUS_RUNNING_AGENT, 
   STATUS_NEEDS_HUMAN_ACTION, STATUS_NEEDS_HUMAN_DECISION,
   STATUS_NEEDS_HUMAN_APPROVAL, STATUS_NEEDS_HUMAN_FAILURE, CLAIM_MARKER, HANDOFF_MARKER, EPISODE_MARKER,
-} from '../../../claudinite-tasks/public/task-constants.mjs';
+} from '../read/queue-vocabulary.mjs';
 import {
   outcomeOf as decodeOutcome, statusesOn, isParked, parkKindOf, triageLabelFor, isBlockingPark,
   parseLastVerdict, parseWorkItemTitle, parseWorkItemBody, taskIdFromPath, hasLabel, labelNames,
-} from '../../../claudinite-tasks/public/work-item-grammar.mjs';
+} from '../read/queue-vocabulary.mjs';
 
 export {
   WORK_PREFIX, STATUS_BLOCKED, STATUS_READY, URGENT, STATUS_RUNNING_EXECUTOR, STATUS_RUNNING_AGENT,
@@ -218,7 +218,7 @@ export function describeCadence(preconditions, trigger) {
 // An item is a filed `[claudinite-work]` issue OR an adopted marked issue — the
 // one-issue request model's other shape, which keeps the person's own title. One
 // definition, shared with the queue's own reader.
-export { isQueueItem as isWorkItem } from '../../../claudinite-tasks/public/work-item-grammar.mjs';
+export { isQueueItem as isWorkItem } from '../read/queue-vocabulary.mjs';
 
 // THE PAGE'S FIVE STATE KEYS. Four are the engine's own status labels; the fifth is
 // this page's own word, because a park is four labels and the page groups them into

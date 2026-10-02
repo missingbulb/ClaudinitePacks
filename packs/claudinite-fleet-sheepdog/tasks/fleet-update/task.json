@@ -1,5 +1,4 @@
 {
-  "$schema": "../../../claudinite-tasks/task.schema.json",
   "id": "fleet-update",
   "description": "The operator's lever to force every member, or a named few, to update against the canon now rather than on its own nightly schedule.",
   "trigger": "request",

@@ -90,3 +90,8 @@
 - **Mechanism:** paths over a near-root manifest.json, text over "manifest_version": 3.
 - **Rejected:** dropping it, since an extension declares no package dependency a manifest-based
   fingerprint could read instead.
+
+## 2026-10-02 · ported · store-release drops its `$schema` key
+- **Reason:** the `$schema` key pointed at `claudinite-tasks/task.schema.json`, which left with the Node runner; the engine validates a declaration itself (`cn tasks contract`) and publishes no schema file, so the key is dropped as the hello pack's tasks do.
+- **Actor:** build lead, completing ClaudinitePacks #20 so the runner's removal lands with every importer ported.
+- **Mechanism:** the declaration loses the key; the pack's tests read the precondition through `cn tasks` and the shipping-gate test pins the engine's `release` signal regex instead of the removed Node reader. chrome-extension 61002.1.

@@ -8,8 +8,7 @@
 //
 //  - THE LABEL EXISTS FIRST. Applying a label GitHub does not know 422s, and a
 //    refused mark is a work list nobody ever runs — so the mark is created in the
-//    member before it is applied, from the engine's own definition of it rather
-//    than a second copy of its colour and prose.
+//    member before it is applied, with the colour and prose the engine gives it.
 //  - THE MACHINE BLOCK SURVIVES A REWRITE. A repeated force rewrites the body; once
 //    the member has adopted the issue, part of that body is the machine's (the
 //    block adoption appended). Rewriting the human half and re-attaching the block
@@ -18,15 +17,10 @@
 //    a body that actually changed clears whatever status stands — a parked or
 //    finished run of the OLD list must not be what silences the new one.
 import { ensureLabel } from '../../fleet-api.mjs';
-import { ORIGIN_AD_HOC, QUEUE_LABELS } from '../../../claudinite-tasks/public/task-constants.mjs';
 import {
-  statusOf, spellingsOf, machineBlockOf, withMachineBlock,
-} from '../../../claudinite-tasks/public/work-item-grammar.mjs';
+  MARK_LABEL, statusOf, spellingsOf, machineBlockOf, withMachineBlock,
+} from './queue-vocabulary.mjs';
 import { MARK, withTargeting } from './protocol.mjs';
-
-// The engine's own definition of the mark — never a second copy of its colour and
-// description, which would drift the moment either side is edited.
-const MARK_LABEL = QUEUE_LABELS.find((l) => l.name === ORIGIN_AD_HOC);
 
 export async function ensureMark(gh, fullName) {
   await ensureLabel(gh, fullName, MARK, { color: MARK_LABEL.color, description: MARK_LABEL.description });

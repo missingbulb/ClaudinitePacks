@@ -12,8 +12,8 @@ import {
 } from '../src/derive/model.mjs';
 import {
   OUTCOME_DONE, OUTCOME_DELIVERED, STATUS_DONE, STATUS_NEEDS_HUMAN_APPROVAL, NEEDS_HUMAN,
-} from '../../claudinite-tasks/public/task-constants.mjs';
-import { normalizeTaskDeclaration } from '../../claudinite-tasks/public/task-declaration.mjs';
+} from '../src/read/queue-vocabulary.mjs';
+import { cnTasks, needsCn } from '../../../tools/test/cn-tasks.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
 const NOW = Date.parse('2026-08-16T12:00:00Z');
@@ -152,13 +152,12 @@ test('parseDeclaration reads a task.json, defaults filled', () => {
   assert.equal(broken.preconditions, null);
 });
 
-// The page cannot load the contract's door (it reaches into `node:` builtins), so it
-// spells the one rule of it the roster needs: the cadence SPELLING rewrite, which is
+// The page cannot run the engine's contract (it is in cn), so it spells the one rule of it the roster needs: the cadence SPELLING rewrite, which is
 // permanent. Both run over one vector set here — the retired field still among the
 // shapes, so a declaration carrying it is proven to add no cadence on either side —
 // and the copy cannot drift from the contract without this going red. The page spells
 // its unknown `null` where the contract simply leaves the key off.
-test('the page\'s cadence and trigger doors agree with the contract\'s on every shape', () => {
+test('the page\'s cadence and trigger doors agree with the contract\'s on every shape', needsCn, () => {
   const vectors = [
     { id: 'a', frequency: 'daily' },
     { id: 'b', frequency: 'weekly', preconditions: [] },
@@ -175,8 +174,9 @@ test('the page\'s cadence and trigger doors agree with the contract\'s on every 
     { id: 'm', trigger: 'request', preconditions: ['due:weekly', 'substantive-change'] },
     { id: 'n', trigger: 'schedule', preconditions: [] },
   ];
-  for (const decl of vectors) {
-    const contract = normalizeTaskDeclaration({ ...decl, expected_outcome: 'no_code_changes' });
+  const contracts = cnTasks('contract', { declarations: vectors.map((decl) => ({ declaration: { ...decl, expected_outcome: 'no_code_changes' }, terms: {} })) });
+  for (const [i, decl] of vectors.entries()) {
+    const contract = contracts[i].normalized;
     const page = parseDeclaration(JSON.stringify({ ...decl, expected_outcome: 'no_code_changes' }));
     assert.deepEqual(page.preconditions, contract.preconditions, `vector ${decl.id}`);
     assert.equal(page.trigger, contract.trigger ?? null, `vector ${decl.id}: the two doors read one trigger`);

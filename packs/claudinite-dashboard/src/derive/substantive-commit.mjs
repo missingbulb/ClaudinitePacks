@@ -1,11 +1,10 @@
 // Is a default-branch commit GENUINE PROJECT WORK, or the machinery moving? THE
-// DASHBOARD'S OWN COPY of the queue's test (`packs/claudinite-tasks/src/signals/
-// substantive-commit.mjs`), which the signal collectors gate a precondition on: packs
-// share no code, so the page carries the test it marks a member sleepy with and reads
-// only the trailer name from the queue's vocabulary. `test/substantive-commit-drift.test.mjs`
-// runs both sides over the same commits and fails the moment they disagree.
+// DASHBOARD'S OWN COPY of the engine's test, which its signal collectors gate a
+// precondition on: the page classifies commits in a browser, so it carries the test it
+// marks a member sleepy with. `test/substantive-commit-drift.test.mjs` holds it to the
+// engine's answers.
 
-import { TASK_TRAILER } from '../../../claudinite-tasks/public/task-constants.mjs';
+import { TASK_TRAILER } from '../read/queue-vocabulary.mjs';
 
 // `Claudinite-Task: <pack>/<task>` on its own line, anywhere in the message: the commit
 // says itself that a scheduled task wrote it.

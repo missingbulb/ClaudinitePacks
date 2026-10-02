@@ -1,28 +1,32 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { cleanup, git, makeRepo } from '../../../../../engine-tests/helpers.mjs';
-import { removeTree } from '../../../../../engine/remove-tree.mjs';
-import {
+import { gitIn, installSdk, memberRepo } from '../../../../../tools/test/sdk-stand-in.mjs';
+
+installSdk({ params: { pack: 'github-pages', task: 'site-release' } });
+const {
   deploy, deploymentAt, loadVersioning, pushRelease, reportServed, VERSIONING_SEAM,
-} from '../../../tasks/site-release/worker.mjs';
+} = await import('../../../tasks/site-release/worker.mjs');
+
+const git = (root, ...args) => execFileSync('git', ['-C', root, '-c', 'user.name=acme', '-c', 'user.email=acme@example.com', ...args], { encoding: 'utf8' });
 
 const CONFIG = 'publish_root=.\npublish_paths=index.html assets\nbuild_command=\n';
 
 // A repo on the scheme, with a bare clone standing in for GitHub: the worker fetches
 // the tip from it and pushes the bump back to it, exactly as it does against origin.
 async function withRemote(fn) {
-  const root = makeRepo({ base: {
+  const dir = mkdtempSync(join(tmpdir(), 'site-release-remote-'));
+  const repo = memberRepo(dir, {
     '.github/site.config': CONFIG,
     'index.html': '<p title="version 1.10910.4">c</p>\n',
     'assets/style.css': 'body{}\n',
     'package.json': '{\n  "version": "1.10910.4"\n}\n',
-  } });
-  const remote = mkdtempSync(join(tmpdir(), 'site-release-remote-'));
-  git(root, 'clone', '--bare', '--quiet', root, join(remote, 'r.git'));
-  try { return await fn(root, join(remote, 'r.git')); } finally { cleanup(root); removeTree(remote); }
+  });
+  installSdk({ params: { root: repo.root, pack: 'github-pages', task: 'site-release' }, answers: { git: gitIn(repo.root) } });
+  try { return await fn(repo.root, repo.origin); } finally { rmSync(dir, { recursive: true, force: true }); }
 }
 
 const silenced = async (fn) => {
@@ -64,8 +68,8 @@ test('deploymentAt reads the publish set at the commit and parks on a path the b
 test('pushRelease advances the version on the remote and stamps the page', async () => {
   await withRemote(async (root, remote) => {
     const versioning = await loadVersioning();
-    const { version, commit, attempts } = pushRelease(root, {
-      remote, base: 'main', taskId: 'github-pages/site-release', versioning, now: new Date('2026-09-17T10:00:00Z'),
+    const { version, commit, attempts } = await pushRelease(root, {
+      base: 'main', versioning, now: new Date('2026-09-17T10:00:00Z'),
     });
     assert.equal(version, '1.10917.5');
     assert.equal(attempts, 1);
@@ -79,9 +83,9 @@ test('pushRelease advances the version on the remote and stamps the page', async
 // Without the pack: nothing is written, nothing is pushed, and the release is the tip
 // as found.
 test('pushRelease with no versioning releases the tip and writes nothing', async () => {
-  await withRemote((root, remote) => {
+  await withRemote(async (root, remote) => {
     const before = git(root, 'ls-remote', remote, 'refs/heads/main').split('\t')[0];
-    const { version, commit } = pushRelease(root, { remote, base: 'main', taskId: 'github-pages/site-release', versioning: null });
+    const { version, commit } = await pushRelease(root, { base: 'main', versioning: null });
     assert.equal(version, null);
     assert.equal(commit, before);
     assert.equal(git(root, 'ls-remote', remote, 'refs/heads/main').split('\t')[0], before);
@@ -95,7 +99,7 @@ test('a declared version pack with no record to advance parks as a decision', as
     git(root, 'push', '--quiet', remote, 'HEAD:main');
     const versioning = await loadVersioning();
     const { lines } = await silenced(async () => {
-      assert.throws(() => pushRelease(root, { remote, base: 'main', taskId: 't', versioning }), /nothing to advance/);
+      await assert.rejects(pushRelease(root, { base: 'main', versioning }), /nothing to advance/);
     });
     assert.match(lines[0], /^claudinite-needs-human: decision/);
   });

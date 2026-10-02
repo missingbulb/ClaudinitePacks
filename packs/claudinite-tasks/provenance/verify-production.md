@@ -35,3 +35,8 @@
   same work runs, exits the same way and prints the same markers.
 - **Actor:** @missingbulb (owner), who asked why every task re-implements one runner's job.
 - **Model:** Opus 5
+
+## 2026-10-02 · ported · verify-production runs on `@claudinite/sdk`
+- **Reason:** its worker imported the removed runner's GitHub client.
+- **Actor:** build lead, completing ClaudinitePacks #20 so the runner's removal lands with every importer ported.
+- **Mechanism:** comments through `github.createComment`, the reopen through a REST copy on the job's token.

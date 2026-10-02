@@ -10,27 +10,27 @@
 //   2. PUSH. The built tree becomes one root commit force-pushed to `gh-pages`, which
 //      is how it reaches the deploy's runner: the workflow checks that branch out and
 //      uploads it as the Pages artifact. No history — the branch holds the last build
-//      and nothing else — and the push uses the Action's own token, `contents: write`
-//      being the executor's already.
-//   3. DISPATCH the seeded workflow on the default branch. `workflow_dispatch` is one
-//      of the two events the Action's own token may fire, so no wider credential is
-//      involved; the executor already holds `actions: write` for the queue's chaining.
+//      and nothing else. The commit is written into the checkout's object store and
+//      pushed through the engine's `git`, which carries the job's credential.
+//   3. DISPATCH the seeded workflow on the default branch, through the engine's
+//      `dispatchWorkflow` action, which this pack is granted.
 //   4. FOLLOW the run to a terminal state. A dispatch answers 204 whether or not the
 //      deploy will work, and a Pages deploy fails for exactly one non-code reason —
 //      Pages not enabled with source "GitHub Actions", a repository setting no Action
 //      can flip. That failure parks as an action for a person; any other parks as a
 //      failure with the run's URL, where the trace is.
 //
-// Runnable by hand from anywhere, given a token that may push `gh-pages` and dispatch:
-//   publish({ repoRoot: '/path/to/member', repo: 'owner/name', token: '…' })
+// Reading the run and the Pages setting has no engine action, so those two reads go
+// through the job's own token (`github-api.mjs`).
 
 import { execFileSync, spawn } from 'node:child_process';
+import { rmSync } from 'node:fs';
 import { access, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { makeGh, dispatchWorkflow } from '../../../claudinite-tasks/public/github.mjs';
-import { remoteUrl } from '../../../claudinite-tasks/public/delivery.mjs';
+import { git as engineGit, github } from '@claudinite/sdk';
+import { makeGh } from './github-api.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 
@@ -63,10 +63,6 @@ let defaultLog = console.log;
 const exists = async (p) => { try { await access(p); return true; } catch { return false; } };
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-// The delivery lane's own, re-exported rather than re-spelled: two copies of the
-// token-bearing remote URL is two places to get the credential's shape wrong.
-export { remoteUrl };
-
 // --- 1. build --------------------------------------------------------------------
 
 // Run the assembler exactly as an operator would, into `out`. Resolves `{ built,
@@ -94,22 +90,48 @@ function spawnBuild(args) {
 
 const git = (cwd, args, opts = {}) => execFileSync('git', ['-C', cwd, ...args], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], ...opts });
 
+const AUTHOR = {
+  GIT_AUTHOR_NAME: 'claudinite[bot]', GIT_AUTHOR_EMAIL: 'claudinite@users.noreply.github.com',
+  GIT_COMMITTER_NAME: 'claudinite[bot]', GIT_COMMITTER_EMAIL: 'claudinite@users.noreply.github.com',
+};
+
+// The built tree `out` as one parentless commit in the checkout's object store, through
+// a scratch index so the checkout's own index and work tree are untouched.
+export function commitTree(root, out, message) {
+  const gitDir = git(root, ['rev-parse', '--absolute-git-dir']).trim();
+  const index = `${out}.index`;
+  const env = { ...process.env, ...AUTHOR, GIT_DIR: gitDir, GIT_INDEX_FILE: index, GIT_WORK_TREE: out };
+  const inOut = (args) => execFileSync('git', args, { cwd: out, env, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
+  try {
+    inOut(['add', '--all', '--force', '.']);
+    const tree = inOut(['write-tree']).trim();
+    return inOut(['commit-tree', tree, '-m', message]).trim();
+  } finally {
+    rmSync(index, { force: true });
+  }
+}
+
 // The built tree as one root commit on the Pages branch. Force, always: the branch
 // holds the last build and nothing else, so there is no history to keep and no
 // reconcile to do — and a re-run of the same sources is a re-push, not a conflict.
-export function pushSite(out, { remote, branch = PAGES_BRANCH, message }) {
-  git(out, ['init', '--quiet', '--initial-branch', branch]);
-  git(out, ['add', '--all']);
-  const author = ['-c', 'user.name=claudinite[bot]', '-c', 'user.email=claudinite@users.noreply.github.com'];
-  git(out, [...author, 'commit', '--quiet', '--message', message]);
-  const sha = git(out, ['rev-parse', 'HEAD']).trim();
-  try {
-    git(out, ['push', '--quiet', '--force', remote, `HEAD:refs/heads/${branch}`]);
-  } catch (e) {
-    // The token is in the remote URL; keep it out of the trace.
-    throw new Error(`push to ${branch} failed: ${String(e.stderr ?? e.message).replace(/x-access-token:[^@]*@/g, 'x-access-token:***@')}`);
-  }
+export async function pushSite(root, out, { branch = PAGES_BRANCH, message }) {
+  const sha = commitTree(root, out, message);
+  const pushed = await engineGit('push', '--quiet', '--force', 'origin', `${sha}:refs/heads/${branch}`);
+  if (pushed.code !== 0) throw new Error(`push to ${branch} failed: ${pushed.stderr.trim()}`);
   return sha;
+}
+
+// Fire the seeded workflow. A workflow GitHub does not know answers 404, which is the
+// seed never having landed rather than a fault in the run.
+export async function dispatch(ref) {
+  try {
+    await github.dispatchWorkflow({ workflow: WORKFLOW_FILE, ref });
+  } catch (e) {
+    if (/\b404\b/.test(String(e.message))) {
+      throw new NeedsHuman('action', `${WORKFLOW_FILE} is not on ${ref} — the pack's seeded workflow never landed in .github/workflows/, or was removed`);
+    }
+    throw new Error(`dispatching ${WORKFLOW_FILE} on ${ref} failed: ${e.message}`);
+  }
 }
 
 // --- 3 + 4. dispatch and follow ----------------------------------------------------
@@ -156,8 +178,6 @@ export async function publish({
   repoRoot,
   repo,
   ref = 'main',
-  token = null,
-  remote = null,
   gh = makeGh(),
   build = buildInto,
   log = defaultLog,
@@ -169,7 +189,6 @@ export async function publish({
   followMs = 8 * 60 * 1000,
 } = {}) {
   if (!repoRoot || !repo) throw new Error('the repository root and the repository are both required');
-  if (!remote && !token) throw new Error('GITHUB_TOKEN is not set — the executor always provides it');
 
   const out = await mkdtemp(join(tmpdir(), 'claudinite-dashboard-'));
   try {
@@ -181,8 +200,7 @@ export async function publish({
 
     const source = git(repoRoot, ['rev-parse', 'HEAD']).trim();
     await writeFile(join(out, STAMP_FILE), `${JSON.stringify({ source, builtAt: new Date().toISOString() }, null, 2)}\n`);
-    const sha = pushSite(out, {
-      remote: remote ?? remoteUrl(repo, token),
+    const sha = await pushSite(repoRoot, out, {
       message: `Claudinite dashboard built from ${source.slice(0, 12)}${item ? ` (#${item})` : ''}\n\nClaudinite-Task: claudinite-dashboard/publish-pages`,
     });
     log(`pushed ${sha.slice(0, 12)} to ${PAGES_BRANCH}`);
@@ -191,13 +209,7 @@ export async function publish({
   }
 
   const since = new Date(Date.now() - 1000);
-  const sent = await dispatchWorkflow(gh, repo, WORKFLOW_FILE, ref);
-  if (!sent.ok) {
-    if (sent.status === 404) {
-      throw new NeedsHuman('action', `${WORKFLOW_FILE} is not on ${ref} — the pack's seeded workflow never landed in .github/workflows/, or was removed`);
-    }
-    throw new Error(`dispatching ${WORKFLOW_FILE} on ${ref} answered ${sent.status}`);
-  }
+  await dispatch(ref);
   log(`dispatched ${WORKFLOW_FILE} on ${ref}`);
 
   const run = await findRun(gh, repo, since);
@@ -222,7 +234,7 @@ export async function publish({
   throw new Error(`run ${done.html_url} concluded ${done.conclusion}`);
 }
 
-export async function worker({ root, repo, defaultBranch, token, gh, item, log: runLog }) {
+export async function worker({ root, repo, defaultBranch, item, log: runLog }) {
   defaultLog = runLog;
-  await publish({ repoRoot: root, repo, ref: defaultBranch ?? 'main', token, gh, item: item.number });
+  await publish({ repoRoot: root, repo, ref: defaultBranch ?? 'main', item: item?.number ?? null });
 }

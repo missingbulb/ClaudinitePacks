@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { workerParams } from '../../claudinite-tasks/src/execute/worker-entry.mjs'; // @real-entity the runner that builds the bag lives in that pack
+import { paramsBag } from '../../../tools/test/sdk-stand-in.mjs';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
@@ -22,20 +22,17 @@ import { worker as addPacks } from '../tasks/fleet-add-missing-packs/worker.mjs'
 // days without `Pull requests: read` (#1030). These tests hold the union.
 
 // fleet-add-missing-packs' sweep is reached through its worker, which the runner calls
-// with the parameters bag; the other three are the sweeps themselves. The bag is built
-// by the RUNNER'S OWN `workerParams` over that task's real directory, so a field added
-// to the bag reaches this case rather than leaving it asserting against a hand-written
-// shape the runner stopped producing.
+// with the parameters bag; the other three are the sweeps themselves. The bag is the
+// shape the engine's runner builds, every field it carries present.
 const TASK_DIR = join(dirname(fileURLToPath(import.meta.url)), '../tasks/fleet-add-missing-packs');
-const BAG = {
-  ...workerParams({
-    CLAUDINITE_REPO: 'owner/enforcer',
-    CLAUDINITE_PACK: 'claudinite-fleet-sheepdog',
-    CLAUDINITE_TASK: 'fleet-add-missing-packs',
-    CLAUDINITE_CONTEXT: 'SCAN_FOR_NEEDED_PACKS=true\nREPOS=all-covered-members',
-  }, TASK_DIR),
+const BAG = paramsBag({
+  root: TASK_DIR,
+  repo: 'owner/enforcer',
+  pack: 'claudinite-fleet-sheepdog',
+  task: 'fleet-add-missing-packs',
+  context: ['SCAN_FOR_NEEDED_PACKS=true', 'REPOS=all-covered-members'],
   log: () => {},
-};
+});
 
 const SWEEPS = [
   ['fleet-roster', roster],

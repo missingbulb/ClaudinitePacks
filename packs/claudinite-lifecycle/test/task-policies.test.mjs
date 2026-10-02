@@ -10,29 +10,21 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { fileURLToPath } from 'node:url';
 import { dirname } from 'node:path';
-import {
-  policyVerdict, declaredMergeRules,
-} from '../../claudinite-tasks/public/task-declaration.mjs';
-import adoptJson from '../tasks/adopt-requested-packs/task.json' with { type: 'json' };
-import updateJson from '../tasks/update/task.json' with { type: 'json' };
-import { normalizeTaskDeclaration } from '../../claudinite-tasks/public/task-declaration.mjs';
-// The loader's door: the JSON says what is particular to the task, the defaults are the contract's.
-const adopt = normalizeTaskDeclaration(adoptJson);
-const update = normalizeTaskDeclaration(updateJson);
+import { mergePolicy, needsCn } from '../../../tools/test/cn-tasks.mjs';
+import adopt from '../tasks/adopt-requested-packs/task.json' with { type: 'json' };
+import update from '../tasks/update/task.json' with { type: 'json' };
 
+// Both declarations name their own policy, so the JSON's is the one the engine judges by.
 const packDir = dirname(dirname(fileURLToPath(import.meta.url)));
-const { rules, errors } = declaredMergeRules(
-  [{ id: 'claudinite-lifecycle', dir: packDir }],
-  { packs: ['claudinite-lifecycle'] },
-);
-const verdict = (entries) => policyVerdict({ policy: adopt.automerge, entries, declaredRules: rules });
-const updateVerdict = (entries) => policyVerdict({ policy: update.automerge, entries, declaredRules: rules });
+const policy = needsCn.skip ? null : mergePolicy([{ id: 'claudinite-lifecycle', dir: packDir }]);
+const verdict = (entries) => policy.verdict(adopt.automerge, entries);
+const updateVerdict = (entries) => policy.verdict(update.automerge, entries);
 
-test('the pack\'s merge-rules.json compiles cleanly', () => {
-  assert.deepEqual(errors, []);
+test('the pack\'s merge-rules.json compiles cleanly', needsCn, () => {
+  assert.deepEqual(policy.errors, []);
 });
 
-test('an adoption-shaped diff lands: declaration, re-vendored mount (its policy files included), rules index', () => {
+test('an adoption-shaped diff lands: declaration, re-vendored mount (its policy files included), rules index', needsCn, () => {
   const v = verdict([
     { file: '.claudinite-settings.json', before: '{"packs":["acme-pack"]}\n', after: '{"packs":["acme-pack","acme-pack-j"]}\n' },
     { file: '.claudinite/shared/packs/acme-pack-j/pack.mjs', before: null, after: 'export default {};\n' },
@@ -46,7 +38,7 @@ test('an adoption-shaped diff lands: declaration, re-vendored mount (its policy 
   assert.equal(v.mergeable, true, v.why);
 });
 
-test('what an adoption does not write parks: repo source, workflows, repo-owned policy files', () => {
+test('what an adoption does not write parks: repo source, workflows, repo-owned policy files', needsCn, () => {
   assert.equal(verdict([
     { file: 'src/app.mjs', before: 'a\n', after: 'b\n' },
   ]).mergeable, false);
@@ -58,7 +50,7 @@ test('what an adoption does not write parks: repo source, workflows, repo-owned 
   ]).mergeable, false, 'a repo-owned task declaration is never coverable');
 });
 
-test('an update-shaped diff lands: the converged mount, the stamp, a staged workflow', () => {
+test('an update-shaped diff lands: the converged mount, the stamp, a staged workflow', needsCn, () => {
   const v = updateVerdict([
     { file: '.claudinite/shared/engine/selftest.mjs', before: 'a\n', after: 'b\n' },
     { file: '.claudinite/shared/packs/acme-pack/RULES.md', before: 'a\n', after: 'b\n' },
@@ -72,7 +64,7 @@ test('an update-shaped diff lands: the converged mount, the stamp, a staged work
   assert.equal(v.mergeable, true, v.why);
 });
 
-test('what the apply stage adds on top lands too: the delivered workflow, and the test repairs', () => {
+test('what the apply stage adds on top lands too: the delivered workflow, and the test repairs', needsCn, () => {
   const v = updateVerdict([
     { file: '.github/workflows/claudinite-executor.yml', before: 'name: old\n', after: 'name: new\n' },
     { file: '.claudinite/pending-workflows/claudinite-executor.yml', before: 'name: new\n', after: null },
@@ -81,7 +73,7 @@ test('what the apply stage adds on top lands too: the delivered workflow, and th
   assert.equal(v.mergeable, true, v.why);
 });
 
-test('a migration that rewrote the repo\'s own source parks — that is the review this buys', () => {
+test('a migration that rewrote the repo\'s own source parks — that is the review this buys', needsCn, () => {
   assert.equal(updateVerdict([
     { file: 'src/app.mjs', before: 'a\n', after: 'b\n' },
   ]).mergeable, false, 'a repair to production code is a person\'s call, not a nightly\'s');

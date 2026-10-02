@@ -1,15 +1,19 @@
 # The task machinery — principles
 
-Every claim below is *Y happens when Z*, present tense, and ends with the test
-that proves it: a scenario's first word (`S13'`, `S59` — run against
-[`packs/claudinite-tasks/test/sim/scenarios.test.mjs`](../test/sim/scenarios.test.mjs)) or, for what
-the simulator does not see, `<test file>: <test title>` from the unit suite.
-The two-way guard in [`packs/claudinite-tasks/test/sim/coverage.test.mjs`](../test/sim/coverage.test.mjs)
-keeps this honest: every scenario in `scenarios.test.mjs` is cited by at least
-one claim here, and every citation names a test that actually exists. Claims
-are grouped by role — schedule, execute, session, deliver, recover, requests,
-cost, contract — the same cut the pack's own folders take. Run the suite from
-[`packs/claudinite-tasks/test/sim/README.md`](../test/sim/README.md).
+The task runner is the engine's now, and so are its claims: ClaudiniteEngine's `tasks/doc.go`
+states each one beside the Go test that proves it, and its `doc_test.go` keeps that honest both
+ways — every citation names a test that exists, and every scenario test is cited. That file is
+the live specification.
+
+This one is the Node pack's record, kept for what `tasks/doc.go` does not carry: the rejected
+alternatives under each claim and the list of what no test can reach. Every claim below is
+*Y happens when Z*, and ends with the Node test that proved it when the runner was this pack's: a
+scenario's first word (`S13'`, `S59`) from
+[`test/sim/scenarios.test.mjs`](https://github.com/missingbulb/Claudinite/blob/057841ac43de1f90b821f7a57e0f3d21eb6ff0e7/packs/claudinite-tasks/test/sim/scenarios.test.mjs), or `<test file>: <test
+title>` from the Node unit suite. Both suites, and the two-way guard that held this file to them
+([`test/sim/coverage.test.mjs`](https://github.com/missingbulb/Claudinite/blob/057841ac43de1f90b821f7a57e0f3d21eb6ff0e7/packs/claudinite-tasks/test/sim/coverage.test.mjs)), are frozen at
+missingbulb/Claudinite@057841ac; the scenario harness was ported to the engine's `tasks/sim`. Claims are
+grouped by role — schedule, execute, session, deliver, recover, requests, cost, contract.
 
 ## Schedule
 
@@ -534,9 +538,9 @@ a place a bug could live that nothing here catches; what would make it
 verifiable is named beside it.
 
 The fake's own limitations are stated in the header of the module that owns
-them ([`packs/claudinite-tasks/test/sim/world/`](../test/sim/world)), and the behaviours it DOES
+them ([`packs/claudinite-tasks/test/sim/world/`](https://github.com/missingbulb/Claudinite/tree/057841ac43de1f90b821f7a57e0f3d21eb6ff0e7/packs/claudinite-tasks/test/sim/world)), and the behaviours it DOES
 model are proven in
-[`packs/claudinite-tasks/test/sim/world/world.test.mjs`](../test/sim/world/world.test.mjs) rather
+[`packs/claudinite-tasks/test/sim/world/world.test.mjs`](https://github.com/missingbulb/Claudinite/blob/057841ac43de1f90b821f7a57e0f3d21eb6ff0e7/packs/claudinite-tasks/test/sim/world/world.test.mjs) rather
 than assumed — the strictly-increasing comment ids that claim arbitration
 rests on, the one-second timestamp granularity that makes them necessary, a
 torn label swap, a rate limit, a stale listing, a dropped `labeled` webhook, a

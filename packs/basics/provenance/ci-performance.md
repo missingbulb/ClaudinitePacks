@@ -12,3 +12,8 @@
 - **Actor:** @missingbulb (owner).
 - **Model:** Claude, per the commit trailer.
 - **Landed:** #941 · pack version 5.
+
+## 2026-10-02 · ported · ci-performance runs on `@claudinite/sdk`
+- **Reason:** the worker's tracker and Actions reads went through the removed runner's library.
+- **Actor:** build lead, completing ClaudinitePacks #20 so the runner's removal lands with every importer ported.
+- **Mechanism:** the tracker through the SDK's tracker actions, the Actions runs and jobs through a pack-local REST copy on the job's token.

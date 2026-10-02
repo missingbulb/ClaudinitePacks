@@ -2,23 +2,17 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import dedupJson from '../tasks/growth-dedup/task.json' with { type: 'json' };
 import logsPruneJson from '../tasks/logs-prune/task.json' with { type: 'json' };
-import {
-  evaluatePrecondition, loadTaskTerms,
-} from '../../claudinite-tasks/public/task-declaration.mjs';
-import { normalizeTaskDeclaration } from '../../claudinite-tasks/public/task-declaration.mjs';
-// The loader's door: the JSON says what is particular to the task, the defaults are the contract's.
-const dedup = normalizeTaskDeclaration(dedupJson);
-const logsPrune = normalizeTaskDeclaration(logsPruneJson);
+import { verdictWithTerms, needsCn } from '../../../tools/test/cn-tasks.mjs';
 
 const PACK_DIR = new URL('..', import.meta.url).pathname;
-const logsPruneTerms = await loadTaskTerms(new URL('../tasks/logs-prune', import.meta.url).pathname);
 // The cadence term reads the task's own run history at a chosen instant: an empty
-// history holds, and the signal under test decides.
-const SCHEDULE = { dailyHour: 4, weeklyDay: 'Sun', monthlyDay: 1 };
+// history holds, and the signal under test decides. The built-in terms are the
+// engine's own (`cn tasks precondition`); a task's local terms are its preconditions.mjs.
 const AT = '2026-09-05T16:00:00Z';
 const NO_RUNS = { runs: { list: [] } };
-const verdictFor = async (task, signals, config, item) =>
-  evaluatePrecondition({ decl: task, terms: await loadTaskTerms(`${PACK_DIR}tasks/${task.id}`) }, { ...NO_RUNS, ...signals }, config, item, AT, SCHEDULE);
+const verdictFor = (task, signals, config = {}, item = null) =>
+  verdictWithTerms(`${PACK_DIR}tasks/${task.id}`, task.preconditions, { ...NO_RUNS, ...signals }, { now: AT, config, item });
+const [dedup, logsPrune] = [dedupJson, logsPruneJson];
 
 // --- growth-dedup (the pruning stage) ----------------------------------------
 // Its precondition composes a built-in `mount-moved` with a built-in
@@ -29,14 +23,14 @@ const verdictFor = async (task, signals, config, item) =>
 // never removes it, so movement is the whole gate. It reads that movement off the
 // window's own changed paths — the generic `commits-under:` condition — rather than
 // a collector field of its own.
-test('growth-dedup: local-pack movement alone fires it, with no presence question', async () => {
+test('growth-dedup: local-pack movement alone fires it, with no presence question', needsCn, async () => {
   const moved = await verdictFor(dedup, { commits: { touchedPaths: ['.claudinite/local/packs/x/RULES.md'] }, sharedMount: { changedPacks: [] } });
   assert.equal(moved.run, true);
   assert.equal((await verdictFor(dedup, { commits: { touchedPaths: ['src/app.mjs'] }, sharedMount: { changedPacks: [] } })).run, false);
   assert.equal((await verdictFor(dedup, { commits: {}, sharedMount: { changedPacks: [] } })).run, false);
 });
 
-test('growth-dedup: a declared pack moving in the mount fires it (and names the packs)', async () => {
+test('growth-dedup: a declared pack moving in the mount fires it (and names the packs)', needsCn, async () => {
   const v = await verdictFor(dedup, { commits: { touchedPaths: [] }, sharedMount: { changedPacks: ['acme-pack'] } });
   assert.equal(v.run, true);
   assert.match(v.reason, /acme-pack/);
@@ -47,7 +41,7 @@ test('growth-dedup: a declared pack moving in the mount fires it (and names the 
 // `log-past-retention` is this task's own precondition term (retention math and
 // the opt-out reading live beside its declaration), so its decisions are kept.
 
-test('logs-prune: fires on age alone, which is what makes it independent of activity', async () => {
+test('logs-prune: fires on age alone, which is what makes it independent of activity', needsCn, async () => {
   // A CLOCK crossing a boundary, and deliberately no repo-movement condition beside
   // it: the prune must keep firing on exactly the repos that went quiet, which is
   // where logs sit long enough to expire.
@@ -58,7 +52,7 @@ test('logs-prune: fires on age alone, which is what makes it independent of acti
   assert.match(v.reason, /retention 10d/);
 });
 
-test('logs-prune: no branch, a declared opt-out, or nothing aged yet — all silent', async () => {
+test('logs-prune: no branch, a declared opt-out, or nothing aged yet — all silent', needsCn, async () => {
   assert.match((await verdictFor(logsPrune, { conversationLogs: { present: false } })).reason, /nothing captured/);
   // Capture-only is declared now, never inferred from a missing key (#1620): an
   // undeclared retention takes the default, and only a non-positive one is silent.

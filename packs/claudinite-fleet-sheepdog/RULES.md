@@ -36,7 +36,7 @@
   (pushing-canon-whole)
 
   ```
-  node .claudinite/shared/packs/claudinite-tasks/src/schedule/create-work-item.mjs \
+  .claudinite/bin/cn work create \
     claudinite-fleet-sheepdog/fleet-update
   ```
 

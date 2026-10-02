@@ -74,7 +74,7 @@ bundled skills resolve off it) and a `local` flag. A local pack:
 
 A local pack contributes **every** slot first-class: prose, checks, skills, **and scheduled
 tasks** — `tasks/<name>/task.json`, found by the repo's own scheduler in the same uniform scan that
-finds a canon pack's tasks ([packs/claudinite-tasks/src/contract/discover.mjs](./claudinite-tasks/src/contract/discover.mjs)),
+finds a canon pack's tasks (the engine's task discovery, ClaudiniteEngine `shared/taskspec`),
 gated by the repo's declaration exactly like a canon pack's tasks. The canon home's own curation
 tasks ride this path.
 

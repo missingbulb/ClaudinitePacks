@@ -14,10 +14,7 @@ const keyInsights = declaredCheck('packs/product-wiki', 'product-wiki-key-insigh
 const growthLog = declaredCheck('packs/product-wiki', 'product-wiki-growth-log');
 const sources = declaredCheck('packs/product-wiki', 'product-wiki-sources');
 const freshness = declaredCheck('packs/product-wiki', 'product-wiki-freshness');
-import wikiGrowthJson from '../tasks/wiki-growth/task.json' with { type: 'json' };
-import { normalizeTaskDeclaration } from '../../claudinite-tasks/public/task-declaration.mjs';
-// The loader's door: the JSON says what is particular to the task, the defaults are the contract's.
-const wikiGrowth = normalizeTaskDeclaration(wikiGrowthJson);
+import wikiGrowth from '../tasks/wiki-growth/task.json' with { type: 'json' };
 // Built through the real path: a forbidReferences entry in the pack's own
 // declared-checks.json, compiled by the declarative engine.
 const isolation = declaredCheck('packs/product-wiki', 'product-wiki-isolation');

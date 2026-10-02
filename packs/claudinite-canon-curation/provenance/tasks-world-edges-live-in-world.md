@@ -14,3 +14,10 @@
 - **Reason:** owner decision, 2026-09-25: the field names what happens when the check fails, and
   *severity* keeps its impact sense; what this element enforces is unchanged.
 - **Actor:** @missingbulb (owner).
+
+## 2026-10-02 · retired · the tasks pack has no `src/` left to route through `world/`
+- **Reason:** the Node task runner left `packs/claudinite-tasks/src/` for the Go engine, so the
+  check's scope matched nothing and it could only ever read as passing.
+- **Actor:** build lead, porting the runner's importers onto `@claudinite/sdk` (ClaudinitePacks #20).
+- **Mechanism:** the declaration and its catalog row are removed; the engine's own packages carry
+  the layering this check held.

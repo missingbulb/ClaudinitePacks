@@ -76,3 +76,8 @@
   adopted: not an indicator for adoption.
 - **Actor:** @missingbulb (owner), in review of #2382.
 - **Mechanism:** no relevanceDetector, so --init and the fleet sweep never suggest it.
+
+## 2026-10-02 · ported · wiki-growth drops its `$schema` key
+- **Reason:** the `$schema` key pointed at `claudinite-tasks/task.schema.json`, which left with the Node runner; the engine validates a declaration itself (`cn tasks contract`) and publishes no schema file, so the key is dropped as the hello pack's tasks do.
+- **Actor:** build lead, completing ClaudinitePacks #20 so the runner's removal lands with every importer ported.
+- **Mechanism:** the declaration loses the key; the pack test reads the declaration as written. product-wiki 61002.1.

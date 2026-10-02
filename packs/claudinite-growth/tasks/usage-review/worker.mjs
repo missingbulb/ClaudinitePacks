@@ -9,7 +9,7 @@
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { baseTip, remoteUrl, readAt } from '../../../claudinite-tasks/public/delivery.mjs';
+import { baseTip, readAt, deliver } from './deliver.mjs';
 import { evaluateRules } from './evaluate.mjs';
 import { figureReader } from './figures.mjs';
 import { readWindows } from './read-record.mjs';
@@ -35,10 +35,12 @@ const engineOrLocal = async (mod) => {
 // that asks whether a skill should have loaded in a window where it did not.
 const WANTS_DIGESTS = new Set(['skill-adoption-not-reached']);
 
-export async function worker({ root: runRoot, repo: runRepo, defaultBranch, token: runToken, deliver }) {
+export async function worker({ root: runRoot, repo: runRepo, defaultBranch, target }) {
   root = runRoot;
   repo = runRepo;
-  token = runToken;
+  // The issue sync below has no engine action, so it reads the job's own token, which
+  // the executor leaves in every work step's environment.
+  token = process.env.GITHUB_TOKEN ?? null;
   base = defaultBranch ?? 'main';
   const config = JSON.parse(readFileSync(join(root, '.claudinite-settings.json'), 'utf8'));
   const { loadPacks, isActive } = await engineOrLocal('pack_loader/pack-registry.mjs');
@@ -81,8 +83,7 @@ export async function worker({ root: runRoot, repo: runRepo, defaultBranch, toke
   // at the base tip, never from local HEAD: the checkout may be sitting on this
   // task's own open pull request, and the base is the only authority on what has
   // already been reviewed.
-  const remote = remoteUrl(repo, token);
-  const baseSha = token && repo ? baseTip(root, remote, base) : null;
+  const baseSha = target?.branch ? await baseTip(root, base) : null;
   const atBase = (path) => (baseSha ? readAt(root, baseSha, path) : null);
   const priorText = atBase(REVIEW_PATH) ?? atBase(LEGACY_PATHS[REVIEW_PATH]);
   // Each file still at its old path moves to its new one in its own commit, bytes
@@ -117,18 +118,20 @@ export async function worker({ root: runRoot, repo: runRepo, defaultBranch, toke
   writeFileSync(join(root, DASHBOARD_PATH), dashboard);
   log(`${findings.length} findings, ${notEvaluated.length} not evaluated, ${unstated.length} skills unstated`);
 
-  if (!token || !repo) { log('no token - the file is written, nothing delivered'); return; }
+  if (!target?.branch) { log('no target branch - the file is written, nothing delivered'); return; }
 
-  await deliver({
-    branchPrefix: 'claudinite/usage-review',
+  const pr = await deliver({
+    root, base, target,
     files: { [REVIEW_PATH]: `${JSON.stringify(file, null, 2)}\n`, [DASHBOARD_PATH]: dashboard },
     moves,
     title: `Usage review: ${findings.length} findings in the 28 days to ${record.window.to}`,
     body: prBody(file),
-    message: `Usage review for the 28 days to ${record.window.to}`,
+    subject: `Usage review for the 28 days to ${record.window.to}`,
   });
+  log(`${pr.reused ? 'updated' : 'opened'} PR #${pr.number}`);
 
-  await syncIssues(file);
+  if (token) await syncIssues(file);
+  else log('no GITHUB_TOKEN - the finding issues are not synced this run');
 }
 
 // One issue per (rule, subject) whose finding has lasted two weeks with a cause
