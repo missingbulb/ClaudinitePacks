@@ -41,3 +41,8 @@
   exception named a path that no longer exists.
 - **Actor:** @missingbulb (owner), through ClaudiniteEngine chunk 11 (#45).
 - **Model:** Claude Opus 5.5, per the commit trailer.
+
+## 2026-10-02 · reworded · an accepted import goes under `checks.accept`
+- **Reason:** the Node engine's `.claudinite-settings.json` is not a `cn` member's declaration, which is `.claudinite/settings.{yaml,toml,json}`.
+- **Actor:** build lead, ClaudiniteEngine#49 (a `cn` member declares itself in `.claudinite/settings.*`; `cn settings import` reads the Node file once, on move day).
+- **Mechanism:** the `fix` names `checks.accept` in `.claudinite/settings.yaml`. claudinite-canon-curation 61002.2.

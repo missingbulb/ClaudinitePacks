@@ -50,3 +50,8 @@
 - **Reason:** owner decision, 2026-09-25: the field names what happens when the check fails, and
   *severity* keeps its impact sense; what this element enforces is unchanged.
 - **Actor:** @missingbulb (owner).
+
+## 2026-10-02 · scope-changed · the member's declaration in the `except` list is `.claudinite/settings.*`
+- **Reason:** the Node engine's `.claudinite-settings.json` is not a `cn` member's declaration, which is `.claudinite/settings.{yaml,toml,json}`; an acceptance there names product-wiki paths, which the barrier must not flag.
+- **Actor:** build lead, ClaudiniteEngine#49 (a `cn` member declares itself in `.claudinite/settings.*`; `cn settings import` reads the Node file once, on move day).
+- **Mechanism:** `except` names the three `.claudinite/settings.*` spellings in place of `.claudinite-settings.json`; the `fix` names `checks.accept`. product-wiki 61002.2.

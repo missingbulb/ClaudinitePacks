@@ -13,14 +13,14 @@
     "id": "product-wiki-isolation",
     "on_fail": "block",
     "failureMessage": "the wikis are agent-rewritten, loosely-sourced research — code, tests and docs that silently depend on them inherit unreviewed churn",
-    "fix": "depend on product-wiki/product-requirements (the one reviewed crossing point), remove the reference, or accept it with a reason in .claudinite-settings.json (rule \"product-wiki-isolation\")",
+    "fix": "depend on product-wiki/product-requirements (the one reviewed crossing point), remove the reference, or accept it with a reason under checks.accept in .claudinite/settings.yaml (rule \"product-wiki-isolation\")",
     "forbidReferences": [
       {
         "from": ".",
         "to": "product-wiki/*",
         "allow": ["product-wiki/product-requirements"],
         "matchUniqueFilenames": false,
-        "except": ["product-wiki", ".claudinite-settings.json"],
+        "except": ["product-wiki", ".claudinite/settings.yaml", ".claudinite/settings.toml", ".claudinite/settings.json"],
         "reason": "the self-growing product wikis and their sample data are autonomous research the repo must not depend on; product-wiki/product-requirements is the one reviewed crossing point"
       }
     ]
