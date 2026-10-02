@@ -1,0 +1,102 @@
+// The pack-version-bump entry point: cut a new version for every pack on the shelf
+// whose shipping content moved since its version last did, in one commit straight
+// onto the base branch. Run by the canon's push-to-main workflow the moment a merge
+// lands, and as this task's daily code-work for the merges GitHub turns into no push
+// run (a pull request the queue lands with the Action's own token).
+//
+// The decision — which packs, which numbers — is `../../pack-versions.mjs`; this
+// file is the I/O shell around it: fetch the base tip with enough history to find
+// each pack's last bump, commit the new manifests onto that tip with git plumbing,
+// push without force, and try again from the new tip when the branch moved under
+// the push. The fetch and the push go through the engine's `git` (`@claudinite/sdk`),
+// which carries the job's token to the remote and nowhere else. Nothing here touches the checkout: one executor run drains several items
+// from one working tree, so the commit is built in a throwaway index against the
+// fetched tip, exactly as the generated-file lane does. The shelf's catalog rides the
+// same commit, its Version cells moved to match.
+
+import { execFileSync } from 'node:child_process';
+import { rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { commitMessage, git as engineGit } from '@claudinite/sdk';
+import { planBumps, bumpSubject, fileAt, withDirectoryVersions, DIRECTORY_PATH } from '../../pack-versions.mjs';
+
+// The run's own logger, under the task's name and its item. Module-level because the
+// helpers below log too; `worker` takes the one the runner built.
+let log = console.log;
+
+export const makeGit = (root) => (args, opts = {}) => execFileSync('git', ['-C', root, ...args], {
+  encoding: 'utf8',
+  stdio: [opts.input === undefined ? 'ignore' : 'pipe', 'pipe', 'pipe'],
+  ...opts,
+});
+
+// The base branch's remote tip, with the whole first-parent history behind it: the
+// walk stops at each pack's last bump, which for a quiet pack can be months back,
+// and an Actions checkout is one commit deep. Unshallowing is a fetch the size of the
+// repository once and a no-op after; on a complete clone the plain fetch is enough.
+//
+// `remote` runs a git command against origin, answering { code, stdout, stderr } as
+// the engine's `git` does.
+export async function fetchBase(git, remote, base) {
+  const shallow = git(['rev-parse', '--is-shallow-repository']).trim() === 'true';
+  const fetched = await remote('fetch', '--quiet', ...(shallow ? ['--unshallow'] : []), 'origin', base);
+  if (fetched.code !== 0) throw new Error(`fetching ${base} failed: ${fetched.stderr.trim()}`);
+  return git(['rev-parse', 'FETCH_HEAD']).trim();
+}
+
+// Commit `files` ({ path: content }) onto `baseSha` and push the result to `branch`
+// as a fast-forward. Returns the commit, or null when the remote refused the push
+// because the branch had moved — the caller replans from the new tip.
+export async function pushOnto(git, remote, { baseSha, branch, files, message }) {
+  const index = join(tmpdir(), `claudinite-bump-${process.pid}-${Date.now()}.index`);
+  const plumb = (args, opts) => git(args, { ...opts, env: { ...process.env, GIT_INDEX_FILE: index } });
+  try {
+    plumb(['read-tree', baseSha]);
+    for (const [path, content] of Object.entries(files)) {
+      const blob = git(['hash-object', '-w', '--stdin'], { input: content }).trim();
+      plumb(['update-index', '--add', '--cacheinfo', `100644,${blob},${path}`]);
+    }
+    const tree = plumb(['write-tree']).trim();
+    const commit = git([
+      '-c', 'user.name=claudinite[bot]', '-c', 'user.email=claudinite@users.noreply.github.com',
+      'commit-tree', tree, '-p', baseSha, '-m', message,
+    ]).trim();
+    const pushed = await remote('push', '--quiet', 'origin', `${commit}:refs/heads/${branch}`);
+    if (pushed.code === 0) return commit;
+    if (/rejected|fetch first|non-fast-forward|stale info/i.test(pushed.stderr)) return null;
+    throw new Error(`push to ${branch} failed: ${pushed.stderr.trim()}`);
+  } finally { rmSync(index, { force: true }); }
+}
+
+// One pass: plan against the fetched tip, commit, push. `attempts` bounds the replans
+// a moving base branch can cost; a busy canon lands a handful of merges an hour, so
+// three is generous and a fourth rejection is worth a red run. `git` is injectable
+// so a test can move the branch between the plan and the push.
+export async function run({ root, base, today = new Date(), attempts = 3, log: say = log, git = makeGit(root), remote = engineGit }) {
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    const tip = await fetchBase(git, remote, base);
+    const bumps = planBumps(git, tip, { today });
+    if (!bumps.length) {
+      say(`${base} at ${tip.slice(0, 10)}: every pack's version already covers its content — nothing to bump`);
+      return { bumped: [], commit: null };
+    }
+    for (const b of bumps) say(`${b.id}: ${b.from} → ${b.to} (${b.changed.length} shipping file(s) changed since ${b.from})`);
+    const files = Object.fromEntries(bumps.map((b) => [b.manifest, b.text]));
+    const directory = fileAt(git, tip, DIRECTORY_PATH);
+    const patched = directory === null ? null : withDirectoryVersions(directory, bumps);
+    if (patched !== null && patched !== directory) files[DIRECTORY_PATH] = patched;
+    const commit = await pushOnto(git, remote, { baseSha: tip, branch: base, files, message: commitMessage(bumpSubject(bumps)) });
+    if (commit) {
+      say(`pushed ${commit.slice(0, 10)} onto ${base}`);
+      return { bumped: bumps.map((b) => ({ id: b.id, from: b.from, to: b.to })), commit };
+    }
+    say(`${base} moved under the push (attempt ${attempt} of ${attempts}) — replanning from its new tip`);
+  }
+  throw new Error(`${base} kept moving under ${attempts} pushes — run again`);
+}
+
+export async function worker({ root, defaultBranch, log: runLog }) {
+  log = runLog;
+  await run({ root, base: defaultBranch ?? 'main' });
+}
