@@ -66,3 +66,8 @@
 - **Actor:** @missingbulb (owner).
 - **Mechanism:** the worker's delivery; automerge stays `nothing`.
 - **Landed:** #2322
+
+## 2026-10-02 · ported · usage-review delivers through `@claudinite/sdk`
+- **Reason:** the runner's generated-file lane it delivered through is gone.
+- **Actor:** build lead, completing ClaudinitePacks #20 so the runner's removal lands with every importer ported.
+- **Mechanism:** a pack-local delivery copy: commit on the fetched base, force-push to the target branch, `github.openPr` unless a pull request is being amended.

@@ -54,3 +54,8 @@
 - **Actor:** @missingbulb (owner), asking for pack.json manifests.
 - **Mechanism:** pack.json, which the loader prefers over pack.mjs; a canon pack now needs engine
   60928.1, the first to read it.
+
+## 2026-10-02 · ported · task declarations and usage-review leave the Node runner
+- **Reason:** the `$schema` key pointed at `claudinite-tasks/task.schema.json`, which left with the Node runner; the engine validates a declaration itself (`cn tasks contract`) and publishes no schema file, so the key is dropped as the hello pack's tasks do. usage-review delivered through the runner's generated-file lane.
+- **Actor:** build lead, completing ClaudinitePacks #20 so the runner's removal lands with every importer ported.
+- **Mechanism:** usage-review carries its own delivery copy, pushing through the SDK's `git` and opening through `github.openPr` (granted in pack.json); the writing-tasks skill states the SDK worker contract. growth 61002.3.

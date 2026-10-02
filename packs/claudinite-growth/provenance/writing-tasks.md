@@ -138,3 +138,8 @@
 - **Reason:** pack.json is the preferred manifest; where the text told a reader to list a module in
   pack.mjs, rules are found in worldRules/ and workRules/ and nothing is listed.
 - **Actor:** @missingbulb (owner), asking for pack.json manifests.
+
+## 2026-10-02 · reworded · the worker contract is `@claudinite/sdk`
+- **Reason:** the skill described the Node runner's bag (`gh`, `deliver`, `token`), its `$schema` file, the tracker library and the stdout failure marker, all gone with the runner.
+- **Actor:** build lead, completing ClaudinitePacks #20 so the runner's removal lands with every importer ported.
+- **Mechanism:** the code_worker_mjs section states the SDK's params, actions, git, commitMessage, fail, requeue and requestAgent, and the declaration carries no `$schema`.
