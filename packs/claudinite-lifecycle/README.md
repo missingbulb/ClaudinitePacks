@@ -62,7 +62,7 @@ Where each one runs:
 
 What goes wrong when one fires:
 
-- `claudinite-lifecycle-declared` — this pack's entry is gone from `.claudinite-settings.json`, so none of the rules above run and the session cannot tell.
+- `claudinite-lifecycle-declared` — this pack's entry is gone from `packs.declared` in `.claudinite/settings.*`, so none of the rules above run and the session cannot tell.
 - `claudinite-isolation` — the repo's own code reaches into `.claudinite/`, so the next canon refactor is a breaking migration for code the canon does not own (a declared `forbidReferences` barrier edge).
 - `seeded-file-stale` — a file some pack seeded at adoption has fallen behind that pack's template, and since a seeded file is never converged nothing else would ever say so: the member goes on running a copy whose pack has moved.
 - `scheduler-workflow-shape` — the scheduler's cron, concurrency or dispatch guard has drifted, or it no longer runs `cn schedule run`: staggering, double-run safety or manual runs break.

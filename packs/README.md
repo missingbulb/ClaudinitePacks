@@ -1,6 +1,6 @@
 # packs/ — the corpus content, active by declaration
 
-Each `packs/<name>/` bundles a pack's **prose** (`RULES.md`, injected at session start when the pack is active), its **checks** (run at every Stop), and its **bundled skills** (`<pack>/skills/`, mounted at session start). **No pack is active by default** - every pack, `basics` included, activates only when declared in `.claudinite-settings.json` (bootstrap's `--init` seeds `basics` plus the fingerprinted technology packs; the nightly update backfills the explicit `basics` declaration into existing consumers). Discovery is structural - any `packs/<name>/` carrying a `pack.json` (or `pack.mjs`) is a pack, and that manifest is the pack's index: what it owns, the checks it runs in each scope, the skills it bundles. A pack's `README.md` is **optional** and carries only what the manifest cannot - provenance, design rationale, an index of its prose. A README that restates the manifest is duplication with a drift risk, and several had already drifted.
+Each `packs/<name>/` bundles a pack's **prose** (`RULES.md`, injected at session start when the pack is active), its **checks** (run at every Stop), and its **bundled skills** (`<pack>/skills/`, mounted at session start). **No pack is active by default** - every pack, `basics` included, activates only when declared under `packs.declared` in `.claudinite/settings.*` (bootstrap's `--init` seeds `basics` plus the fingerprinted technology packs; the nightly update backfills the explicit `basics` declaration into existing consumers). Discovery is structural - any `packs/<name>/` carrying a `pack.json` (or `pack.mjs`) is a pack, and that manifest is the pack's index: what it owns, the checks it runs in each scope, the skills it bundles. A pack's `README.md` is **optional** and carries only what the manifest cannot - provenance, design rationale, an index of its prose. A README that restates the manifest is duplication with a drift risk, and several had already drifted.
 
 ## Packs
 
@@ -60,7 +60,7 @@ same engine as these canon packs. `discoverPacks({ localRoot })` ([registry.mjs]
 `packs/` **and** the consumer's `local/packs/`; each pack is stamped with its own `dir` (prose and
 bundled skills resolve off it) and a `local` flag. A local pack:
 
-- is **declared by hand** in `.claudinite-settings.json` like any pack — never fingerprinted or seeded
+- is **declared by hand** in `.claudinite/settings.*` like any pack — never fingerprinted or seeded
   (no `relevanceDetector`), by its **namespaced token `local/<name>`** (the canonical form;
   the engine's [`packEntryId`](../engine/pack_loader/pack-registry.mjs) resolves it and the bare id
   alike to the bare pack id, and it keeps resolving both permanently), and its id must
@@ -260,7 +260,7 @@ A pack may declare a toolchain (or per-repo deps) a cloud session needs but the 
 }
 ```
 
-`setup` and `probe` may be a **string**, or a **template repeated once per value of one of the project's per-pack params** - a project supplies parameters about its own usage as `config` on the pack's entry in `.claudinite-settings.json`, so one pack fragment fits every repo. `{}` in the `template` stands for the value, `whenUnset` answers for an absent or empty param, and the copies of a `setup` run as lines while the copies of a `probe` must all hold. The `node` pack uses this for where `npm ci` runs:
+`setup` and `probe` may be a **string**, or a **template repeated once per value of one of the project's per-pack params** - a project supplies parameters about its own usage as `config` on the pack's entry in `.claudinite/settings.*`, so one pack fragment fits every repo. `{}` in the `template` stands for the value, `whenUnset` answers for an absent or empty param, and the copies of a `setup` run as lines while the copies of a `probe` must all hold. The `node` pack uses this for where `npm ci` runs:
 
 ```json
 "setup": { "forEach": "dirs", "whenUnset": ["."], "template": "( cd \"{}\" && npm ci ) || true" }
@@ -293,7 +293,7 @@ never adopted, so its question reaches an owner who did not ask for it — which
 folder-access graph, pulled in everywhere basics is declared, asks nothing and simply stays
 inert until a repo writes one (#1681).
 
-The answers live **verbatim** on the pack's entry in `.claudinite-settings.json` (`answers:
+The answers live **verbatim** on the pack's entry in `.claudinite/settings.*` (`answers:
 { "<question-id>": "<answer>" }` — [engine/checks/README.md](../engine/checks/README.md)): the settings file
 records the project's intent beside the `config` distilled from it — provenance for the
 configuration, versioned and diffable, and re-derivable if the pack's config shape later changes.

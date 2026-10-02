@@ -143,3 +143,8 @@
 - **Reason:** the skill described the Node runner's bag (`gh`, `deliver`, `token`), its `$schema` file, the tracker library and the stdout failure marker, all gone with the runner.
 - **Actor:** build lead, completing ClaudinitePacks #20 so the runner's removal lands with every importer ported.
 - **Mechanism:** the code_worker_mjs section states the SDK's params, actions, git, commitMessage, fail, requeue and requestAgent, and the declaration carries no `$schema`.
+
+## 2026-10-02 · reworded · `disabledTasks` and the endpoints live on the `claudinite-tasks` entry
+- **Reason:** the Node engine's `.claudinite-settings.json` is not a `cn` member's declaration, which is `.claudinite/settings.{yaml,toml,json}`; `cn` reads `disabledTasks` and `agenticTaskInvocationEndpoints` from the `claudinite-tasks` entry's `config`, never a top-level `taskScheduler`.
+- **Actor:** build lead, ClaudiniteEngine#49 (a `cn` member declares itself in `.claudinite/settings.*`; `cn settings import` reads the Node file once, on move day).
+- **Mechanism:** the skill names `config.disabledTasks` and `config.agenticTaskInvocationEndpoints` on that entry. claudinite-growth 61002.4.

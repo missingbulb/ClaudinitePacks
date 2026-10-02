@@ -7,6 +7,7 @@ package fixture
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -39,6 +40,9 @@ type Case struct {
 	Transcript []string
 	// Tag runs `cn check --tag` instead of the pack's own checks.
 	Tag string
+	// Format is the member's settings file: "yaml", "toml" or "json",
+	// which an empty Format means.
+	Format string
 	// Expect is each of the pack's findings as "<class> <id> <path>[:<line>]",
 	// in any order; none means the case is silent.
 	Expect []string
@@ -98,7 +102,8 @@ func copyDir(t *testing.T, src, dst string) {
 	}
 }
 
-// Run checks each case against pack's declared and coded checks.
+// Run checks each case against pack's declared and coded checks. A pack
+// named local/<name> is the member's own: the case's Member carries it.
 func Run(t *testing.T, pack string, cases []Case) {
 	cn := os.Getenv("CLAUDINITE_CN")
 	if cn == "" {
@@ -129,10 +134,13 @@ func check(t *testing.T, cn, pack string, c Case) []string {
 	}
 	declared := []any{entry}
 	for _, id := range append([]string{pack}, c.Also...) {
-		copyDir(t, filepath.Join(root(), "packs", id), filepath.Join(dir, ".claudinite", "shared", "packs", id))
 		if id != pack {
 			declared = append(declared, id)
 		}
+		if strings.HasPrefix(id, "local/") {
+			continue
+		}
+		copyDir(t, filepath.Join(root(), "packs", id), filepath.Join(dir, ".claudinite", "shared", "packs", id))
 	}
 	settings := map[string]any{
 		"engine": map[string]any{"version": "0.0.0", "manifest": "sha512-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=="},
@@ -141,8 +149,15 @@ func check(t *testing.T, cn, pack string, c Case) []string {
 	if c.Rules != nil {
 		settings["checks"] = map[string]any{"rules": c.Rules}
 	}
-	raw, _ := json.MarshalIndent(settings, "", "  ")
-	write(t, dir, map[string]string{".claudinite/settings.json": string(raw) + "\n"})
+	format := c.Format
+	if format == "" {
+		format = "json"
+	}
+	text, err := renderSettings(settings, format)
+	if err != nil {
+		t.Fatal(err)
+	}
+	write(t, dir, map[string]string{".claudinite/settings." + format: text})
 	git(t, dir, "init", "-q", "-b", "main")
 	// A newer git runs its auto maintenance detached after a commit, and a
 	// repack still writing under .git fails the TempDir cleanup.
@@ -170,7 +185,7 @@ func check(t *testing.T, cn, pack string, c Case) []string {
 	if c.Tag != "" {
 		args = append(args, "--tag", c.Tag)
 	} else {
-		args = append(args, "--pack", pack)
+		args = append(args, "--pack", strings.TrimPrefix(pack, "local/"))
 	}
 	if c.Transcript != nil {
 		p := filepath.Join(t.TempDir(), "session.jsonl")
@@ -188,11 +203,136 @@ func check(t *testing.T, cn, pack string, c Case) []string {
 	var got []string
 	for _, l := range strings.Split(string(out), "\n") {
 		m := findingRe.FindStringSubmatch(l)
-		if m == nil || !strings.HasPrefix(m[2], pack+"/") {
+		prefix := strings.TrimPrefix(pack, "local/") + "/"
+		if m == nil || !strings.HasPrefix(m[2], prefix) {
 			continue
 		}
-		got = append(got, m[1]+" "+strings.TrimPrefix(m[2], pack+"/")+" "+m[3])
+		got = append(got, m[1]+" "+strings.TrimPrefix(m[2], prefix)+" "+m[3])
 	}
 	sort.Strings(got)
 	return got
+}
+
+// renderSettings writes the member's settings in format, block style, each
+// string quoted; the values are JSON's.
+func renderSettings(settings map[string]any, format string) (string, error) {
+	raw, err := json.Marshal(settings)
+	if err != nil {
+		return "", err
+	}
+	settings = nil
+	if err := json.Unmarshal(raw, &settings); err != nil {
+		return "", err
+	}
+	var b strings.Builder
+	switch format {
+	case "json":
+		raw, err := json.MarshalIndent(settings, "", "  ")
+		if err != nil {
+			return "", err
+		}
+		return string(raw) + "\n", nil
+	case "yaml":
+		if err := yamlValue(&b, settings, ""); err != nil {
+			return "", err
+		}
+		return b.String(), nil
+	case "toml":
+		for _, k := range sortedKeys(settings) {
+			fmt.Fprintf(&b, "[%s]\n", k)
+			table, _ := settings[k].(map[string]any)
+			for _, sub := range sortedKeys(table) {
+				v, err := tomlValue(table[sub])
+				if err != nil {
+					return "", err
+				}
+				fmt.Fprintf(&b, "%s = %s\n", quote(sub), v)
+			}
+		}
+		return b.String(), nil
+	}
+	return "", fmt.Errorf("settings format %q is not yaml, toml or json", format)
+}
+
+func sortedKeys(m map[string]any) []string {
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	return keys
+}
+
+func quote(s string) string {
+	raw, _ := json.Marshal(s)
+	return string(raw)
+}
+
+func scalar(v any) (string, bool) {
+	switch v := v.(type) {
+	case string:
+		return quote(v), true
+	case bool, float64:
+		return fmt.Sprint(v), true
+	}
+	return "", false
+}
+
+func yamlValue(b *strings.Builder, v any, indent string) error {
+	switch v := v.(type) {
+	case map[string]any:
+		for _, k := range sortedKeys(v) {
+			if s, ok := scalar(v[k]); ok {
+				fmt.Fprintf(b, "%s%s: %s\n", indent, quote(k), s)
+				continue
+			}
+			fmt.Fprintf(b, "%s%s:\n", indent, quote(k))
+			if err := yamlValue(b, v[k], indent+"  "); err != nil {
+				return err
+			}
+		}
+	case []any:
+		for _, e := range v {
+			if s, ok := scalar(e); ok {
+				fmt.Fprintf(b, "%s- %s\n", indent, s)
+				continue
+			}
+			var sub strings.Builder
+			if err := yamlValue(&sub, e, indent+"  "); err != nil {
+				return err
+			}
+			fmt.Fprintf(b, "%s- %s", indent, strings.TrimPrefix(sub.String(), indent+"  "))
+		}
+	default:
+		return fmt.Errorf("a settings value %v (%T) has no YAML form here", v, v)
+	}
+	return nil
+}
+
+func tomlValue(v any) (string, error) {
+	if s, ok := scalar(v); ok {
+		return s, nil
+	}
+	var parts []string
+	switch v := v.(type) {
+	case map[string]any:
+		for _, k := range sortedKeys(v) {
+			s, err := tomlValue(v[k])
+			if err != nil {
+				return "", err
+			}
+			parts = append(parts, quote(k)+" = "+s)
+		}
+		return "{" + strings.Join(parts, ", ") + "}", nil
+	case []any:
+		for _, e := range v {
+			s, err := tomlValue(e)
+			if err != nil {
+				return "", err
+			}
+			parts = append(parts, s)
+		}
+		return "[" + strings.Join(parts, ", ") + "]", nil
+	}
+	return "", fmt.Errorf("a settings value %v (%T) has no TOML form", v, v)
 }

@@ -3,7 +3,7 @@
     "id": "pack-independence",
     "on_fail": "block",
     "failureMessage": "the vendor set ships a pack only when declared, so a cross-pack import crashes every consumer that vendors one pack without the other",
-    "fix": "declare the dependency (requires) and pass configuration, move the shared helper into engine/checks/helpers, or accept the import with a reason in .claudinite-settings.json",
+    "fix": "declare the dependency (requires) and pass configuration, move the shared helper into engine/checks/helpers, or accept the import with a reason under checks.accept in .claudinite/settings.yaml",
     "relevantWhen": {
       "pathExists": "packs"
     },

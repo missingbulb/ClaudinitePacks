@@ -1,6 +1,9 @@
 package test
 
 import (
+	"encoding/json"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -45,4 +48,40 @@ func TestSchedulerWorkflowShape(t *testing.T) {
 			schedulerWorkflow: strings.Replace(goodScheduler, `"25 4,16 * * *"`, `"25 4 * * *"`, 1),
 		}, Expect: []string{id + ":4"}},
 	})
+}
+
+// claudinite-lifecycle-declared runs only where the pack is declared, so
+// the cases carry its declaration in a local pack of the member's own to
+// see it fire on settings that lack the entry, in each format.
+func TestLifecycleDeclaredReadsEverySettingsFormat(t *testing.T) {
+	const id = "claudinite-lifecycle-declared"
+	raw, err := os.ReadFile(filepath.Join("..", "declared-checks.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var all []map[string]any
+	if err := json.Unmarshal(raw, &all); err != nil {
+		t.Fatal(err)
+	}
+	var own []byte
+	for _, c := range all {
+		if c["id"] == id {
+			own, _ = json.Marshal([]any{c})
+		}
+	}
+	if own == nil {
+		t.Fatalf("declared-checks.json has no %s", id)
+	}
+	member := map[string]string{
+		".claudinite/local/packs/acme-pack/pack.json":            "{}\n",
+		".claudinite/local/packs/acme-pack/declared-checks.json": string(own) + "\n",
+	}
+	var cases []fixture.Case
+	for _, f := range []string{"yaml", "toml", "json"} {
+		cases = append(cases,
+			fixture.Case{Name: f + " settings lacking it", Format: f, Member: member, Expect: []string{"finding " + id + " .claudinite/settings." + f}},
+			fixture.Case{Name: f + " settings declaring it", Format: f, Member: member, Also: []string{"claudinite-lifecycle"}, Rules: map[string]string{"flat-declarations-current": "off"}},
+		)
+	}
+	fixture.Run(t, "local/acme-pack", cases)
 }

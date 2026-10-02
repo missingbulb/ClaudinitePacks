@@ -308,7 +308,7 @@ Declare one only when its rule applies.
 - **`on_interrupt: 'requeue' | 'needs-human'`** (default `requeue`) — declare `'needs-human'`
   only for a genuinely one-shot side effect (a store submission, an external notification):
   it makes every recovery path that would re-execute the task converge to triage instead.
-- **`invocation_endpoint: '<name>'`** — a key into the repo's `taskScheduler.endpoints`, for a
+- **`invocation_endpoint: '<name>'`** — a key into the `claudinite-tasks` entry's `config.agenticTaskInvocationEndpoints`, for a
   task whose agentic phase needs reach the repo's ordinary sessions lack. **Never a URL**: a
   task declaration is vendored verbatim into every consuming repo, so deployment detail and
   anything adjacent to a credential stay in that repo's own config.
@@ -394,8 +394,8 @@ mistake:
 - **Repo shape.** "This repo ships the release pipeline", "this repo has a
   vendored mount" are facts adoption settled, not questions worth re-asking every
   night. A repo that carries a pack but not one task's subject names that task in
-  its own `.claudinite-settings.json` — `taskScheduler.disabledTasks:
-  ['<pack>/<task>']` — which the scheduler reads before asking anything.
+  its own `.claudinite/settings.*`, on the `claudinite-tasks` entry's `config.disabledTasks:
+  ['<pack>/<task>']`, which the scheduler reads before asking anything.
 - **Scope.** Which files, PRs or members a granted run works on is the worker's
   decision, made in the work sections from the same signals. The conditions decide
   run or no-run, nothing else.
@@ -630,7 +630,7 @@ closing or running anything.
 ## A dormant scheduler runs nothing
 
 A project nobody is working on stops its scheduler. It declares that on the pack that
-owns the scheduler, not at the top level of `.claudinite-settings.json` — a repo
+owns the scheduler, not at the top level of `.claudinite/settings.*` — a repo
 declaring no `claudinite-tasks` has no scheduler for the word to mean anything about:
 
 ```json

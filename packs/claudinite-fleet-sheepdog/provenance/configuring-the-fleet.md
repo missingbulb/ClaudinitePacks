@@ -14,3 +14,8 @@
   it.
 - **Mechanism:** the description, as before.
 - **Actor:** @missingbulb (owner).
+
+## 2026-10-02 · trigger-changed · the skill loads for an edit of `.claudinite/settings.*`
+- **Reason:** the Node engine's `.claudinite-settings.json` is not a `cn` member's declaration, which is `.claudinite/settings.{yaml,toml,json}`; the path trigger watched a file the enforcer repo no longer edits once it moves.
+- **Actor:** build lead, ClaudiniteEngine#49 (a `cn` member declares itself in `.claudinite/settings.*`; `cn settings import` reads the Node file once, on move day).
+- **Mechanism:** `force-load-on-file-edits-paths` names the three `.claudinite/settings.*` spellings, and the description says so. claudinite-fleet-sheepdog 61002.2.

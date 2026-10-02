@@ -1,12 +1,14 @@
 ---
 name: configuring-the-fleet
-description: Editing the fleet enforcer's own config entry: the exclude list, packSeeds, and the matching declaration. Loaded for any edit of .claudinite-settings.json in the enforcer repo.
+description: Editing the fleet enforcer's own config entry: the exclude list, packSeeds, and the matching declaration. Loaded for any edit of .claudinite/settings.* in the enforcer repo.
 metadata:
   body: guidelines
   usage:
     expect: triggered
   force-load-on-file-edits-paths:
-    - ".claudinite-settings.json"
+    - ".claudinite/settings.yaml"
+    - ".claudinite/settings.toml"
+    - ".claudinite/settings.json"
 ---
 
 # Configuring the fleet
