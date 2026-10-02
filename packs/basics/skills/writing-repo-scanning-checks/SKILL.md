@@ -10,6 +10,7 @@ metadata:
     - "**/packs/*/worldRules/**"
     - "**/packs/*/workRules/**"
     - "**/packs/*/skills/*/checks.mjs"
+    - "**/packs/*/checks/*.go"
     - "**/declared-checks.json"
 ---
 

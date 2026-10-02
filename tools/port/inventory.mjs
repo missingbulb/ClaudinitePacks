@@ -5,11 +5,12 @@
 //
 //   node tools/port/inventory.mjs [--check] [--packs <dir>] [--out <file>]
 //
-// Writes the doc, or with --check exits 1 when the doc differs from a fresh render. The coded-check
-// class follows the frozen Claudinite's engine/pack_loader/: rule modules are the non-test *.mjs
-// directly under worldRules/ or workRules/ (pack-conventions.mjs), and a skill's checks.mjs, with
-// the sibling modules it imports, is gathered as that skill's checks (pack-registry.mjs). A file
-// matching two classes fails the run rather than being counted twice.
+// Writes the doc, or with --check exits 1 when the doc differs from a fresh render. A ported pack's
+// Go checks are the non-test *.go directly under checks/. The Node coded-check class follows the
+// frozen Claudinite's engine/pack_loader/: rule modules are the non-test *.mjs directly under
+// worldRules/ or workRules/ (pack-conventions.mjs), and a skill's checks.mjs, with the sibling
+// modules it imports, is gathered as that skill's checks (pack-registry.mjs). A file matching two
+// classes fails the run rather than being counted twice.
 import { lstatSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, posix } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -22,12 +23,12 @@ const LISTED = ['coded-check', 'task', 'src', 'test', 'other'];
 
 class InventoryError extends Error {}
 
-const isTest = (rel) => rel.startsWith('test/') || rel.endsWith('.test.mjs');
+const isTest = (rel) => rel.startsWith('test/') || rel.endsWith('.test.mjs') || rel.endsWith('_test.go');
 const TASK_FILE = /^(?:queue\/)?tasks\/[^/]+\/(?:task\.json|task\.md|worker\.mjs|preconditions\.mjs)$/;
 const isTaskFile = (rel) => TASK_FILE.test(rel);
 const DECLARED_NAMES = new Set(['declared-checks.json', 'merge-rules.json', 'pack.json']);
-const isCodedCheck = (rel, ctx) => rel.endsWith('.mjs') && !isTest(rel)
-  && (/^(?:worldRules|workRules)\/[^/]+\.mjs$/.test(rel) || ctx.skillChecks.has(rel));
+const isCodedCheck = (rel, ctx) => !isTest(rel) && (/^checks\/[^/]+\.go$/.test(rel) || (rel.endsWith('.mjs')
+  && (/^(?:worldRules|workRules)\/[^/]+\.mjs$/.test(rel) || ctx.skillChecks.has(rel))));
 
 // Each rule is judged on its own; the inventory fails a file more than one accepts.
 export const RULES = [
@@ -127,17 +128,17 @@ export function render(inv, { frozenAt }) {
     "Claudinite's `engine/` by relative path does not run here until its slice replaces the import.",
     '',
     `\`minEngineVersion\` across the shelf: ${[...floors].sort(([a], [b]) => byBytes(a, b)).map(([v, n]) => `\`${v}\` (${n} pack${n === 1 ? '' : 's'})`).join(', ')}.`,
-    "These are Claudinite's Node engine versions; the Engine's `shared/version` parses three parts",
-    '(`<day>.<n>.0`), so no `cn` reads these manifests yet. A ported pack\'s first version sets',
-    '`minEngineVersion` to the `cn` version it was tested on.',
+    "A two-part one is a Claudinite Node engine version, which the Engine's `shared/version` (three",
+    'parts, `<day>.<n>.0`) does not read; a ported pack\'s first version sets `minEngineVersion` to the',
+    '`cn` version it was tested on.',
     '',
     'Classes: `content` (`RULES.md`, `README.md`, every other `.md`, `provenance/**`, `badge.svg`);',
     '`declared` (`pack.json`, `declared-checks.json`, `merge-rules.json`, any other `.json` at the pack',
-    'root or under `tasks/`); `coded-check` (non-test `.mjs` directly under `worldRules/` or',
-    "`workRules/`, and a skill's `checks.mjs` with the sibling modules it imports); `task`",
-    '(`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `preconditions.mjs`); `src` (every other',
-    'non-test `.mjs`); `test` (`test/**`, `*.test.mjs`); `workflow` (`.yml` under `stubs/` or',
-    '`.github/`); `other` (the rest, listed below by path).',
+    'root or under `tasks/`); `coded-check` (non-test `.go` directly under `checks/`, non-test `.mjs`',
+    "directly under `worldRules/` or `workRules/`, and a skill's `checks.mjs` with the sibling modules",
+    'it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `preconditions.mjs`);',
+    '`src` (every other non-test `.mjs`); `test` (`test/**`, `*.test.mjs`, `*_test.go`); `workflow`',
+    '(`.yml` under `stubs/` or `.github/`); `other` (the rest, listed below by path).',
     '',
     `| pack | version | ${CLASSES.join(' | ')} | engine/ importers |`,
     `|---|---|${CLASSES.map(() => '---:').join('|')}|---:|`,

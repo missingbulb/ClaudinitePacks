@@ -3,8 +3,8 @@
 The sources of Claudinite's global, public packs: each pack lives under `packs/<id>/` with its
 rules, skills, checks, tasks and tests, and this repository runs the pack release workflow.
 Members do not read this tree directly. A released pack reaches them as a vendored archive (the
-pack minus its `test/`, `docs/` and `provenance/`), published to the R2 pack store as
-`packs/<id>/<version>.tar.gz` and mirrored on the `vendored` branch, as Claudinite's design
+pack minus its `test/`, `docs/`, `provenance/` and `checks/*_test.go`), published to the R2 pack
+store as `packs/<id>/<version>.tar.gz` and mirrored on the `vendored` branch, as Claudinite's design
 "Pack serving and publishing" describes. `packs/` began as a verified import of Claudinite's own
 `packs/`, frozen at the commit `docs/import.md` records; it now changes here, and only here.
 

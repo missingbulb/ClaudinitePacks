@@ -15,3 +15,10 @@
 - **Reason:** owner decision, 2026-09-25: the field names what happens when the check fails, and
   *severity* keeps its impact sense; what this element enforces is unchanged.
 - **Actor:** @missingbulb (owner).
+
+## 2026-10-02 · moved · A `cn` built-in (missingbulb/ClaudiniteEngine#39)
+- **Reason:** the Go engine runs this check itself, with the same id, findings and config, so the
+  pack's `.mjs` and its test are removed rather than ported.
+- **Actor:** @missingbulb (owner), through the chunk 8 plan.
+- **Mechanism:** `cn`'s built-in check, pinned by the parity harness's existing scenario.
+- **Landed:** pending.
