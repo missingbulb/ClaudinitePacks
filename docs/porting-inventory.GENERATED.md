@@ -46,7 +46,7 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 | github-pages | 60928.1 | 13 | 1 | 2 | 3 | 3 | 3 | 1 | 0 | 5 |
 | google-identity | 61002.1 | 9 | 2 | 1 | 0 | 0 | 3 | 0 | 0 | 0 |
 | headless-browser | 60928.1 | 31 | 2 | 0 | 0 | 0 | 4 | 0 | 0 | 1 |
-| hello | 1.3 | 12 | 2 | 4 | 0 | 0 | 0 | 0 | 0 | 0 |
+| hello | 1.4 | 14 | 3 | 4 | 4 | 0 | 0 | 0 | 0 | 0 |
 | host-page | 60928.1 | 19 | 1 | 3 | 0 | 1 | 1 | 0 | 0 | 4 |
 | html | 60928.1 | 9 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | ios | 60928.1 | 7 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -63,7 +63,7 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 | spec-driven-product | 60928.1 | 31 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | web-scraping | 60928.1 | 35 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | web-speech | 60928.1 | 33 | 3 | 6 | 0 | 1 | 5 | 0 | 0 | 10 |
-| **39 packs** | | 1199 | 72 | 66 | 77 | 209 | 266 | 14 | 5 | 152 |
+| **39 packs** | | 1201 | 73 | 66 | 81 | 209 | 266 | 14 | 5 | 152 |
 
 ## aws-sam
 
@@ -845,6 +845,13 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 - `checks/config.go`
 - `checks/hello.go`
 - `checks/judge.go`
+
+### task (4)
+
+- `tasks/hello-agent/task.json`
+- `tasks/hello-agent/task.md`
+- `tasks/hello-fold/task.json`
+- `tasks/hello-fold/worker.mjs`
 
 ## host-page
 

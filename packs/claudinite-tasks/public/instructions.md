@@ -26,30 +26,42 @@ that will repeat on every tick until a person clears it. It is the `no-trigger` 
 
 1. **Read the issue.** Its first body line is a path to a task file.
 
-2. **Validate in code before acting**, never by judgment:
-   - the task file exists at HEAD,
-   - its pack is declared in `.claudinite-settings.json`,
-   - the issue's title names that same task, **or** — for a marked issue, whose
-     title is the person's own — its machine block's first line is that task's
-     worker path,
-   - the issue carries `task:status:running-agent`,
-   - and its newest hand-off comment carries **the nonce you were given**.
+2. **Validate in code before acting**, never by judgment. Read the item and its
+   comments with your own GitHub tools — `issue_read`, methods `get` and
+   `get_comments` — save each as JSON, oldest comment first, and run, from the
+   repository root:
 
-   And **if the item carries a `Request: #N` field**, one more: that issue is open
-   and still carries the mark (`task:origin:ad-hoc`, or a legacy `claude-queued` on
-   an item filed before the one-issue model). It is the issue this run implements —
-   usually this very issue — and a request withdrawn between being queued and being
-   started is one you do not run.
+   ```bash
+   .claudinite/bin/cn work validate --issue <n> --nonce <the nonce you were given> \
+     --item-file <the item's JSON> --comments-file <its comments' JSON> \
+     [--request-file <the Request: #N issue's JSON>]
+   ```
+
+   It checks that the task file exists at HEAD and its pack is declared; that the
+   issue's title names that same task, **or** — for a marked issue, whose title is
+   the person's own — its machine block's first line is that task's worker path;
+   that the issue carries `task:status:running-agent`; that its newest hand-off
+   comment carries **the nonce you were given**; and that the grant the executor
+   posted for this item verifies, signed for this issue and unexpired. On success it
+   prints `item #<n> is this session's`, the task file, the model and the outcome
+   ceiling.
+
+   **If the item carries a `Request: #N` field**, read that issue too and pass it as
+   `--request-file`: it must be open and still carry the mark (`task:origin:ad-hoc`,
+   or a legacy `claude-queued` on an item filed before the one-issue model). It is the
+   issue this run implements — usually this very issue — and a request withdrawn
+   between being queued and being started is one you do not run.
 
    On a marked issue the item and the issue are **one object**: the machine block is
    the machine's half of the body and everything outside it is the person's, so
    never rewrite their prose, and never close their issue — the terminal status
    standing on an open issue is the correct end (the command handles both).
 
-   Any of those failing means you are not this item's session. Comment saying
-   which check failed, and stop — do not label, do not close, do not run the task.
-   A nonce mismatch in particular means this fire named a hand-off that is not the
-   current one; the item belongs to someone else or to an earlier episode.
+   A refusal — `not this item's session: …` — means you are not this item's
+   session. Comment saying which check failed, and stop — do not label, do not
+   close, do not run the task. A nonce mismatch in particular means this fire named
+   a hand-off that is not the current one; the item belongs to someone else or to an
+   earlier episode.
 
 3. **Say what you are about to run**, in your first reply after reading the issue
    and before any work — a fenced block, so it reads as a box in the transcript.
@@ -85,7 +97,7 @@ that will repeat on every tick until a person clears it. It is the `no-trigger` 
      yourself: `Supersedes:` names the ones the converge closes once yours exists.
    - **Never give the PR body a closing keyword (`Closes #<n>`) naming this item's own issue.**
      GitHub auto-closes it on merge regardless of the run's outcome, racing ahead of
-     `converge-item.mjs`'s comment-and-label transition - including overriding an intended
+     `cn work converge`'s comment-and-label transition - including overriding an intended
      `needs-human-approval` park. Cite it with `Refs #<n>` if useful; the close is the
      convergence step's to make.
    - **An input the task file calls required and the issue does not carry stops the
@@ -103,12 +115,9 @@ that will repeat on every tick until a person clears it. It is the `no-trigger` 
    engine's own `AUTOMERGE: yes` (deliver-pr.md).
    Exceeding the ceiling is a failure, not a success with a surprise.
 
-6. **Converge the issue exactly once — in code, not by hand.** `<here>` in the
-   commands below is **the directory this file sits in** —
-   `packs/claudinite-tasks/public/` in the canon, the same path under
-   `.claudinite/shared/` in a member's mount — `<pack>` is `<here>/..`, the tasks
-   pack itself, and `<engine>` is `<here>/../../../engine`. Derive all three from
-   where you found this file rather than from any root you were told.
+6. **Converge the issue exactly once — in code, not by hand.** The commands run
+   from the repository root, through the engine the member pins
+   (`.claudinite/bin/cn`).
 
    **The command decides the transition; you perform it.** It does not touch
    GitHub, and it is not trying to: your GitHub access is yours, and a subprocess
@@ -118,11 +127,11 @@ that will repeat on every tick until a person clears it. It is the `no-trigger` 
    prints them as the exact calls to make. That printout **is** the successful
    run.
 
-   Two calls, in this order. First read the item with your own GitHub tools and
-   save it as JSON — `issue_read`, method `get` — then:
+   Two calls, in this order. First read the item afresh with your own GitHub tools
+   and save it as JSON — `issue_read`, method `get` — then:
 
    ```bash
-   node <pack>/src/session/converge-item.mjs --issue <n> \
+   .claudinite/bin/cn work converge --issue <n> \
      --outcome done|approval|action|decision|failure \
      --summary '<what happened>' [--pr <n>] \
      --repo <owner/name> --item-file <path to that JSON>
