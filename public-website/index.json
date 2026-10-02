@@ -1,7 +1,7 @@
 {
   "v": 1,
   "pack": "public-website",
-  "serial": 1,
+  "serial": 2,
   "versions": [
     {
       "version": "60928.1",
@@ -15,6 +15,19 @@
       "revoked": false,
       "publishedAt": "2026-10-01T14:32:10Z",
       "sourceCommit": "27612838c695d2d6704966572cd86d34485e4751"
+    },
+    {
+      "version": "61002.1",
+      "sha256": "5eba1b6255e76bcab9aa2c5f5903f83826ab2725f5c6e028c31be3b8975ccbf8",
+      "size": 7024,
+      "minEngineVersion": "61001.1.0",
+      "requires": [
+        "html"
+      ],
+      "channel": "canary",
+      "revoked": false,
+      "publishedAt": "2026-10-02T15:05:19Z",
+      "sourceCommit": "ae81567128631041f6e7faa2e865a9f7124628af"
     }
   ]
 }
