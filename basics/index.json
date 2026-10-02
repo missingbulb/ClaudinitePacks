@@ -1,7 +1,7 @@
 {
   "v": 1,
   "pack": "basics",
-  "serial": 2,
+  "serial": 3,
   "versions": [
     {
       "version": "60928.1",
@@ -16,6 +16,20 @@
       "revoked": false,
       "publishedAt": "2026-10-01T14:32:10Z",
       "sourceCommit": "27612838c695d2d6704966572cd86d34485e4751"
+    },
+    {
+      "version": "61002.1",
+      "sha256": "1695f51c6b982e05900ba01f5ebc600bcf346dc0007af2c4c57ff3e185a8fa40",
+      "size": 94430,
+      "minEngineVersion": "61001.1.0",
+      "requires": [
+        "claudinite-lifecycle",
+        "git-github"
+      ],
+      "channel": "canary",
+      "revoked": false,
+      "publishedAt": "2026-10-02T15:05:19Z",
+      "sourceCommit": "ae81567128631041f6e7faa2e865a9f7124628af"
     }
   ]
 }
