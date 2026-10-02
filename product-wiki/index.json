@@ -1,7 +1,7 @@
 {
   "v": 1,
   "pack": "product-wiki",
-  "serial": 1,
+  "serial": 2,
   "versions": [
     {
       "version": "60928.1",
@@ -13,6 +13,17 @@
       "revoked": false,
       "publishedAt": "2026-10-01T14:32:10Z",
       "sourceCommit": "27612838c695d2d6704966572cd86d34485e4751"
+    },
+    {
+      "version": "61002.1",
+      "sha256": "ad0d39ef4531a161bec3d43b8b682e628629665202c627ac57a6b067c84a3c0c",
+      "size": 13954,
+      "minEngineVersion": "61001.1.0",
+      "requires": [],
+      "channel": "canary",
+      "revoked": false,
+      "publishedAt": "2026-10-02T21:08:50Z",
+      "sourceCommit": "be046455426cab06c677ba22b22eef19e722360f"
     }
   ]
 }
