@@ -9,7 +9,7 @@ coded checks become Go; tasks stay Node against `@claudinite/sdk`; tests are rew
 the pinned `cn`, or dropped when they check only file shapes or doc text. A file that imports
 Claudinite's `engine/` by relative path does not run here until its slice replaces the import.
 
-`minEngineVersion` across the shelf: `60928.1` (30 packs), `61001.1.0` (9 packs).
+`minEngineVersion` across the shelf: `60928.1` (28 packs), `61001.1.0` (11 packs).
 A two-part one is a Claudinite Node engine version, which the Engine's `shared/version` (three
 parts, `<day>.<n>.0`) does not read; a ported pack's first version sets `minEngineVersion` to the
 `cn` version it was tested on.
@@ -34,8 +34,8 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 | claudinite-canon-curation | 60928.1 | 65 | 3 | 6 | 18 | 4 | 10 | 0 | 0 | 14 |
 | claudinite-dashboard | 60928.2 | 16 | 3 | 1 | 4 | 42 | 41 | 1 | 4 | 11 |
 | claudinite-fleet-sheepdog | 60928.1 | 29 | 1 | 1 | 8 | 23 | 22 | 0 | 0 | 10 |
-| claudinite-growth | 60930.1 | 159 | 8 | 9 | 18 | 13 | 21 | 0 | 0 | 23 |
-| claudinite-lifecycle | 60928.1 | 44 | 3 | 12 | 5 | 9 | 18 | 0 | 0 | 30 |
+| claudinite-growth | 61002.1 | 159 | 8 | 0 | 18 | 13 | 16 | 0 | 0 | 10 |
+| claudinite-lifecycle | 61002.1 | 44 | 3 | 0 | 5 | 10 | 8 | 0 | 0 | 11 |
 | claudinite-tasks | 60928.2 | 24 | 4 | 4 | 8 | 87 | 91 | 2 | 0 | 37 |
 | cloudflare-site | 60928.1 | 16 | 1 | 3 | 3 | 4 | 7 | 0 | 0 | 5 |
 | cloudflare-workers | 60928.1 | 16 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -63,7 +63,7 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 | spec-driven-product | 60928.1 | 31 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | web-scraping | 60928.1 | 35 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | web-speech | 60928.1 | 33 | 3 | 6 | 0 | 1 | 5 | 0 | 0 | 10 |
-| **39 packs** | | 1199 | 72 | 87 | 77 | 208 | 281 | 14 | 5 | 184 |
+| **39 packs** | | 1199 | 72 | 66 | 77 | 209 | 266 | 14 | 5 | 152 |
 
 ## aws-sam
 
@@ -422,18 +422,6 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 
 ## claudinite-growth
 
-### coded-check (9)
-
-- `skills/unattended-agents/checks.mjs`
-- `skills/unattended-agents/routine-structure.mjs` (imports `engine/`)
-- `workRules/dedup-integrity.mjs` (imports `engine/`)
-- `workRules/growth-write-scope.mjs` (imports `engine/`)
-- `workRules/provenance-change-recorded.mjs` (imports `engine/`)
-- `worldRules/provenance-integrity.mjs` (imports `engine/`)
-- `worldRules/task-declaration-matches-folder.mjs` (imports `engine/`)
-- `worldRules/task-md-only-when-agentic.mjs` (imports `engine/`)
-- `worldRules/task-worker-restores-main.mjs` (imports `engine/`)
-
 ### task (18)
 
 - `tasks/growth-dedup/task.json`
@@ -471,22 +459,17 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 - `tasks/usage-review/read-record.mjs`
 - `tasks/usage-review/report.mjs`
 
-### test (21)
+### test (16)
 
 - `test/check-ships-with-test.test.mjs`
 - `test/doc-pointers-resolve.test.mjs`
 - `test/growth-dedup-worker.test.mjs`
 - `test/pack.test.mjs` (imports `engine/`)
 - `test/provenance-cli.test.mjs` (imports `engine/`)
-- `test/provenance-integrity.test.mjs` (imports `engine/`)
 - `test/skills/learning-a-technology/declared-checks.test.mjs`
 - `test/skills/unattended-agents/in-session-github-access.test.mjs` (imports `engine/`)
-- `test/skills/unattended-agents/routine-structure.test.mjs` (imports `engine/`)
-- `test/task-declaration-matches-folder.test.mjs` (imports `engine/`)
-- `test/task-md-only-when-agentic.test.mjs` (imports `engine/`)
 - `test/task-phase-discipline.test.mjs` (imports `engine/`)
 - `test/task-policies.test.mjs`
-- `test/task-worker-restores-main.test.mjs` (imports `engine/`)
 - `test/tasks.test.mjs`
 - `test/tasks/logs-prune/prune-logs.test.mjs`
 - `test/usage-review/evaluate.test.mjs`
@@ -497,21 +480,6 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 
 ## claudinite-lifecycle
 
-### coded-check (12)
-
-- `skills/adopt-claudinite/checks.mjs` (imports `engine/`)
-- `skills/adopt-claudinite/interview.mjs` (imports `engine/`)
-- `skills/adopt-pack/checks.mjs` (imports `engine/`)
-- `workRules/shared-tree-immutable.mjs` (imports `engine/`)
-- `workRules/skill-loaded-before-editing.mjs` (imports `engine/`)
-- `worldRules/conformance-work-scope.mjs` (imports `engine/`)
-- `worldRules/conformance-workflow.mjs` (imports `engine/`)
-- `worldRules/flat-declarations-current.mjs` (imports `engine/`)
-- `worldRules/legacy-shape-in-use.mjs` (imports `engine/`)
-- `worldRules/rules-index-current.mjs` (imports `engine/`)
-- `worldRules/seeded-file-stale.mjs` (imports `engine/`)
-- `worldRules/skills-index-current.mjs` (imports `engine/`)
-
 ### task (5)
 
 - `tasks/adopt-requested-packs/task.json`
@@ -520,11 +488,12 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 - `tasks/update/task.md`
 - `tasks/update/worker.mjs` (imports `engine/`)
 
-### src (9)
+### src (10)
 
 - `migrations/2026-08-14-core-seed/migration.mjs`
 - `migrations/2026-09-04-barriers-absorbed/migration.mjs`
 - `migrations/2026-09-06-tidy-repo-absorbed/migration.mjs`
+- `skills/adopt-claudinite/interview.mjs` (imports `engine/`)
 - `tasks/adopt-requested-packs/protocol.mjs`
 - `updates/converge-scope.mjs` (imports `engine/`)
 - `updates/engine-update.mjs` (imports `engine/`)
@@ -532,22 +501,12 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 - `updates/pack-update.mjs` (imports `engine/`)
 - `updates/terminals.mjs`
 
-### test (18)
+### test (8)
 
-- `test/conformance-work-scope.test.mjs`
-- `test/conformance-workflow.test.mjs`
-- `test/flat-declarations-current.test.mjs` (imports `engine/`)
-- `test/legacy-shape-in-use.test.mjs` (imports `engine/`)
 - `test/mandatory.test.mjs` (imports `engine/`)
 - `test/pack.test.mjs` (imports `engine/`)
 - `test/scheduler-workflow-shape.test.mjs` (imports `engine/`)
-- `test/seeded-file-stale.test.mjs` (imports `engine/`)
-- `test/shared-tree-immutable.test.mjs` (imports `engine/`)
-- `test/skill-loaded-before-editing.test.mjs` (imports `engine/`)
-- `test/skill-loaded-before-tool-call.test.mjs` (imports `engine/`)
-- `test/skills-index-current.test.mjs` (imports `engine/`)
 - `test/skills/adopt-claudinite/interview.test.mjs` (imports `engine/`)
-- `test/skills/adopt-pack/checks.test.mjs` (imports `engine/`)
 - `test/task-policies.test.mjs`
 - `test/tasks.test.mjs`
 - `test/tasks/adopt-requested-packs/task.test.mjs`

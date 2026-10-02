@@ -26,3 +26,8 @@
   of a fixed `.claudinite/`.
 - **Mechanism:** unchanged, a coded world check.
 - **Landed:** #2322
+
+## 2026-10-02 · retired · `cn verify` answers it (missingbulb/ClaudiniteEngine#41)
+- **Reason:** verify's `rules-index-current` and `claude-md-import` rules ask it of the `cn` member shape; a port would be a second check over the same file, written for the Node
+  member's shape.
+- **Actor:** @missingbulb (owner), through the chunk 9 plan.

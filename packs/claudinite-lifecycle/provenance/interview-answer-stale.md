@@ -19,3 +19,12 @@
 - **Reason:** owner decision, 2026-09-25: the field names what happens when the check fails, and
   *severity* keeps its impact sense; what this element enforces is unchanged.
 - **Actor:** @missingbulb (owner).
+
+## 2026-10-02 · moved · Its port waits on the `init` and adoption slice, beside the interview (missingbulb/ClaudiniteEngine#41)
+- **Reason:** the check asserts something a later slice of the Go engine creates, so it ports to Go
+  with that slice; no `.mjs` runs under `cn`, so it is removed now, and the frozen Node shelf at
+  missingbulb/Claudinite@057841ac keeps the source the port reads.
+- **Actor:** @missingbulb (owner), through the chunk 9 plan.
+- **Mechanism:** none until that slice; ClaudiniteEngine's `parity/deferred.txt` names it, and
+  the differential refuses any subtraction it does not explain.
+- **Landed:** pending.

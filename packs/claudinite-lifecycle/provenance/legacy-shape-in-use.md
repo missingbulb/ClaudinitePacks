@@ -86,3 +86,8 @@
   has a barrier that enforces nothing and needs telling.
 - **Actor:** @missingbulb (owner), asking to drop pack contributions altogether.
 - **Mechanism:** unchanged carrier; one more pattern over local manifests.
+
+## 2026-10-02 · retired · `cn verify` answers it (missingbulb/ClaudiniteEngine#41)
+- **Reason:** verify is the advisory half of every tolerance: its `settings-checks` deprecations and `min-engine-version-legacy`; a port would be a second check over the same file, written for the Node
+  member's shape.
+- **Actor:** @missingbulb (owner), through the chunk 9 plan.

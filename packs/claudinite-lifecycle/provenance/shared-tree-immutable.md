@@ -29,3 +29,12 @@
 - **Reason:** owner decision: the mechanism that re-vendors a mount is called update; "converge"
   stays only for a work item reaching its end state.
 - **Actor:** @missingbulb (owner).
+
+## 2026-10-02 · moved · A `cn` built-in owned by this pack (missingbulb/ClaudiniteEngine#41)
+- **Reason:** the Go engine folds this pack's checks into itself: the check runs as a `cn`
+  built-in tagged with this pack, only where the pack is declared, with its id, `on_fail`, `since`,
+  `why`, `doc` and finding text kept, so the `.mjs` and its test are removed.
+- **Actor:** @missingbulb (owner), through the chunk 9 plan.
+- **Mechanism:** `checks/builtin/shared_tree_immutable.go` in ClaudiniteEngine, unit-tested there and compared with
+  the Node engine by its parity harness.
+- **Landed:** pending.
