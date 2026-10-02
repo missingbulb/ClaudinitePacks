@@ -126,26 +126,6 @@ test('the input fleet-api sends is one the scheduler run stub declares', async (
   }
 });
 
-test('the member-side scheduler run resolves the very id this lever sends', async () => {
-  // FORCED_TASK travels as a `wake` input and is resolved by planWake against the
-  // member's own declared tasks. A bare id must be owned by exactly one canon pack,
-  // or planWake refuses it as ambiguous and the force silently wakes nothing.
-  const { planWake } = await import('../../../../claudinite-tasks/src/schedule/run.mjs');
-  const { normalizeTaskDeclaration } = await import('../../../../claudinite-tasks/public/task-declaration.mjs');
-  const { readFileSync } = await import('node:fs');
-  // The member's real declaration: a bare wake mints or wakes a SCHEDULED task's
-  // standing item, where an unscheduled one has nothing standing to reach.
-  const decl = normalizeTaskDeclaration(JSON.parse(readFileSync(join(ROOT, 'packs/claudinite-lifecycle/tasks/update/task.json'), 'utf8'))); // @real-entity the real stub and task this forces
-  const tasks = [{ pack: 'claudinite-lifecycle', id: FORCED_TASK, decl }]; // @real-entity the real stub and task this forces
-  const items = [{
-    number: 1, state: 'open', labels: ['task:blocked'],
-    title: `[claudinite-work] claudinite-lifecycle/${FORCED_TASK}`,
-  }];
-  const { wake, unmatched } = planWake(FORCED_TASK, tasks, items);
-  assert.deepEqual(unmatched, [], `the scheduler run must resolve "${FORCED_TASK}" — this is the exact string fleet-update dispatches`);
-  assert.deepEqual(wake, [{ id: `claudinite-lifecycle/${FORCED_TASK}`, issue: 1 }]); // @real-entity the real stub and task this forces
-});
-
 test('the 422 message names the stale-mount cause, not just the disabled-workflow one', () => {
   // The misdiagnosis WAS the bug's second half: a member behind on its mount is
   // current-but-stale, and a message saying only "disabled" sends the reader to

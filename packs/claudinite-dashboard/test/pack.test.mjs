@@ -259,36 +259,3 @@ test('a mode that contradicts the config is refused too, in both directions', as
   assert.match(String(b.stderr ?? b.message), /roster source/);
 });
 
-// --- the handover -------------------------------------------------------------------
-// The point of the field over a README line: a README is read after the deploy has
-// already failed. This asserts the install flow actually surfaces it.
-test('the install flow reports the handover so adoption cannot miss it', async (t) => {
-  const dir = await mkdtemp(join(tmpdir(), 'cd-install-'));
-  t.after(() => rm(dir, { recursive: true, force: true }));
-  await writeFile(join(dir, '.claudinite-settings.json'), JSON.stringify({ packs: [] }, null, 2));
-
-  const { stdout } = await runReporting('node',
-    [join(ROOT, 'packs/claudinite-lifecycle/updates/install.mjs'), '--target', dir, 'claudinite-dashboard'], // @real-entity the real generated roster artifact and the real installer this flow runs
-    { cwd: ROOT });
-
-  assert.match(stdout, /only a human can do/, 'the handover is printed');
-  assert.match(stdout, /\[ \] \(claudinite-dashboard\) Enable GitHub Pages/);
-  assert.match(stdout, /\[ \] \(claudinite-dashboard\) Turn on Sign in with GitHub/);
-  assert.match(stdout, /while off:/);
-  assert.match(stdout, /done when:/);
-  // And the thing it is a handover FOR actually landed.
-  assert.match(stdout, /seeded \.github\/workflows\/claudinite-dashboard-pages\.yml/);
-  assert.ok(existsSync(join(dir, '.github/workflows/claudinite-dashboard-pages.yml')), 'the seeded workflow is on disk where Pages will find it');
-});
-
-// A pack with nothing to hand over must not print an empty section.
-test('a pack with no handover prints none', async (t) => {
-  const dir = await mkdtemp(join(tmpdir(), 'cd-install2-'));
-  t.after(() => rm(dir, { recursive: true, force: true }));
-  await writeFile(join(dir, '.claudinite-settings.json'), JSON.stringify({ packs: [] }, null, 2));
-
-  const { stdout } = await runReporting('node',
-    [join(ROOT, 'packs/claudinite-lifecycle/updates/install.mjs'), '--target', dir, 'acme-pack-g'], // @real-entity the real generated roster artifact and the real installer this flow runs
-    { cwd: ROOT });
-  assert.doesNotMatch(stdout, /only a human can do/);
-});

@@ -35,3 +35,9 @@
 - **Reason:** owner decision, 2026-09-25: the field names what happens when the check fails, and
   *severity* keeps its impact sense; what this element enforces is unchanged.
 - **Actor:** @missingbulb (owner).
+
+## 2026-10-02 · gate-changed · the `claudinite-lifecycle/updates` carve-out leaves with the directory
+- **Reason:** the Node update code it exempted is retired (ClaudiniteEngine chunk 11, #45), so the
+  exception named a path that no longer exists.
+- **Actor:** @missingbulb (owner), through ClaudiniteEngine chunk 11 (#45).
+- **Model:** Claude Opus 5.5, per the commit trailer.

@@ -17,15 +17,14 @@ on:
 concurrency:
   group: claudinite-scheduler
 permissions:
-  contents: write
+  contents: read
   issues: write
-  pull-requests: write
-  actions: read
+  pull-requests: read
 jobs:
   schedule:
     runs-on: ubuntu-latest
     steps:
-      - run: node .claudinite/shared/packs/claudinite-tasks/src/schedule/run.mjs
+      - run: .claudinite/bin/cn schedule run
 `;
 
 const run = (files) => {
@@ -84,13 +83,16 @@ test('scheduler-workflow-shape: flags a workflow with no cron at all', () => {
   assert.match(whats, /declares 0 cron schedules, expected exactly one/);
 });
 
-test('scheduler-workflow-shape: flags a read-only scheduler (baselining deliver() needs write)', () => {
-  const readOnly = goodWorkflow
-    .replace('contents: write', 'contents: read')
-    .replace('  pull-requests: write\n', '');
-  const whats = run({ [WF]: readOnly }).map((x) => x.what).join(' | ');
-  assert.match(whats, /does not grant contents: write/);
-  assert.match(whats, /does not grant pull-requests: write/);
+// The scheduler pushes nothing: the update runs as a task the executor drains.
+test('scheduler-workflow-shape: a read-only scheduler is conforming', () => {
+  assert.deepEqual(run({ [WF]: goodWorkflow }), []);
+});
+
+test('scheduler-workflow-shape: flags the retired Node scheduler entry', () => {
+  const node = goodWorkflow.replace('.claudinite/bin/cn schedule run',
+    'node .claudinite/shared/packs/claudinite-tasks/src/schedule/run.mjs');
+  const whats = run({ [WF]: node }).map((x) => x.what).join(' | ');
+  assert.match(whats, /does not run the engine's scheduler/);
 });
 
 test('scheduler-workflow-shape: flags missing concurrency, dispatch, and engine entry', () => {
@@ -106,5 +108,5 @@ jobs:
   const whats = run({ [WF]: stripped }).map((x) => x.what).join(' | ');
   assert.match(whats, /no workflow_dispatch/);
   assert.match(whats, /no concurrency group/);
-  assert.match(whats, /does not run the vendored scheduler entry/);
+  assert.match(whats, /does not run the engine's scheduler/);
 });

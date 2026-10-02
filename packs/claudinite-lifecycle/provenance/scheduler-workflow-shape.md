@@ -49,3 +49,10 @@
 - **Reason:** owner decision, 2026-09-25: the field names what happens when the check fails, and
   *severity* keeps its impact sense; what this element enforces is unchanged.
 - **Actor:** @missingbulb (owner).
+
+## 2026-10-02 · gate-changed · the scheduler runs `cn schedule run`, and needs no write grant
+- **Reason:** the scheduler is the engine's `cn schedule run`, not the Node entry under
+  claudinite-tasks; it pushes nothing now the update is a task the executor drains, so the
+  `contents: write` and `pull-requests: write` requirements went with the Node update runner.
+- **Actor:** @missingbulb (owner), through ClaudiniteEngine chunk 11 (#45).
+- **Model:** Claude Opus 5.5, per the commit trailer.

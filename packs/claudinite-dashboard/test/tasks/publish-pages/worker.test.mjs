@@ -7,34 +7,8 @@ import { join } from 'node:path';
 import {
   publish, pushSite, NeedsHuman, WORKFLOW_FILE, PAGES_BRANCH, STAMP_FILE,
 } from '../../../tasks/publish-pages/worker.mjs';
-import declarationJson from '../../../tasks/publish-pages/task.json' with { type: 'json' };
-import updateJson from '../../../../claudinite-lifecycle/tasks/update/task.json' with { type: 'json' };
-import {
-  normalizeTaskDeclaration, isScheduledTask,
-} from '../../../../claudinite-tasks/public/task-declaration.mjs';
-import { pickOrder } from '../../../../claudinite-tasks/src/items/pick-order.mjs';
-import {
-  WORK_PREFIX, STATUS_READY, STATUS_RUNNING_EXECUTOR,
-} from '../../../../claudinite-tasks/public/task-constants.mjs';
 
 const REPO = 'o/r';
-
-test('publish-pages yields to the update it publishes', () => {
-  const decl = normalizeTaskDeclaration(declarationJson);
-  // Driven through the executor's real pick order: while the update's standing item
-  // is live this cycle, the Pages item is not picked; the moment it is gone, it is.
-  const update = normalizeTaskDeclaration(updateJson);
-  const byId = new Map([['claudinite-dashboard/publish-pages', decl], ['claudinite-lifecycle/update', update]]); // @real-entity the update task whose real declaration this yields to
-  const opts = { taskAfter: (id) => byId.get(id)?.schedule_after ?? [], scheduledOf: (id) => (byId.has(id) ? isScheduledTask(byId.get(id)) : null) };
-  const item = (number, key, status) => ({
-    number, title: `${WORK_PREFIX} ${key}`, body: `packs/${key.replace('/', '/tasks/')}/task.md\n`,
-    state: 'open', labels: [status], created_at: '2026-08-14T01:00:00Z', updated_at: '2026-08-14T01:00:00Z',
-  });
-  const pages = item(1, 'claudinite-dashboard/publish-pages', STATUS_READY);
-  const converging = item(2, 'claudinite-lifecycle/update', STATUS_RUNNING_EXECUTOR); // @real-entity the update task whose real declaration this yields to
-  assert.deepEqual(pickOrder([pages, converging], opts), [], 'the Pages item waits for the update');
-  assert.deepEqual(pickOrder([pages], opts).map((i) => i.number), [1], 'and is picked once it has gone');
-});
 
 // A bare repo standing in for GitHub: what the worker pushes is read back from it.
 async function remote(t) {

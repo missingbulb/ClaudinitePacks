@@ -54,3 +54,11 @@
 - **Actor:** @missingbulb (owner), asking for pack.json manifests.
 - **Mechanism:** pack.json, which the loader prefers over pack.mjs; a canon pack now needs engine
   60928.1, the first to read it.
+
+## 2026-10-02 · reworded · the pack says it is the engine's own: `"engine": true`
+- **Reason:** which packs' tasks run as the engine's own, under the license, was a literal list
+  in the engine; reading it off the manifest makes it a property of the pack (ClaudiniteEngine
+  design record row 75). Absent means not engine; there is no default.
+- **Actor:** @missingbulb (owner), through ClaudiniteEngine chunk 11 (#45).
+- **Model:** Claude Opus 5.5, per the commit trailer.
+- **Mechanism:** a boolean in pack.json, which an engine from chunk 11 on reads.

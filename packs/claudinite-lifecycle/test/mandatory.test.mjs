@@ -11,7 +11,6 @@ import { resolveDeclaredPacks, packEntryId } from '../../../engine/pack_loader/p
 import * as registry from '../../../engine/pack_loader/pack-registry.mjs';
 import { loadDeclaredChecks } from '../../../engine/checks/helpers/pattern-rules.mjs';
 
-const corePack = (await registry.loadPacks()).find((p) => p.id === 'claudinite-lifecycle'); // @real-entity the pack under test
 
 const coreDeclared = loadDeclaredChecks(
   fileURLToPath(new URL('../../../packs/claudinite-lifecycle', import.meta.url)),
@@ -29,9 +28,9 @@ const coreDeclared = loadDeclaredChecks(
 // as a literal; case 1 is the drift guard for that literal. It reads the RAW
 // packs array, so an entry object must count by its id — and it reports, never
 // rescues: activation reads the literal declaration, so in a repo missing the
-// entry the rule itself does not run. The entry arrives two other ways (the
-// requires closure on every declaration write, the core-seed record), which is
-// why the check only has to catch a hand-deleted entry.
+// entry the rule itself does not run. The entry arrives another way (the
+// requires closure on every declaration write), which is why the check only
+// has to catch a hand-deleted entry.
 const REPO = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
 
 test('the requires closure materializes core into a declaration that names only basics', async () => { // @real-entity resolved against the real shelf, so the id must be one it carries
@@ -66,9 +65,4 @@ test('the canon home passes its own claudinite-lifecycle-declared check — base
   // this repo's own declaration is the one nothing delivers to. If it drifts, every
   // core rule stops running in the repo that authors them.
   assert.deepEqual(runRule(coreDeclared, buildContext({ root: REPO, mode: 'all' })), []);
-});
-
-test('the core-seed record never outruns the version this manifest ships', async () => {
-  const { default: record } = await import('../migrations/2026-08-14-core-seed/migration.mjs');
-  assert.ok(record.version <= corePack.version, `the record declares version ${record.version}; the pack ships ${corePack.version} — a record above its pack's version re-applies every cycle forever`);
 });

@@ -23,6 +23,9 @@ scheduler (`packs/claudinite-tasks/discover.mjs`) wherever the pack is declared:
 [usage-fold](../claudinite-tasks/tasks/usage-fold/README.md) reads that same branch and is
 described below, but it is the claudinite-tasks pack's task, not this one's.)
 
+The pack is marked `"engine": true` in `pack.json`, so the executor runs these tasks as the
+engine's own, under the license.
+
 ## Extraction is one task over two sources
 
 `growth-extract` is the whole capture stage, and it runs **three skills** in order:

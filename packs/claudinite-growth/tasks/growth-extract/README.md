@@ -22,8 +22,8 @@ corpus the other one was concurrently writing. One task, two source skills.
 
 The ordering, declared with `schedule_after:` — and now the ONLY thing carrying it, since
 the staggered anchor hours retired with the twice-daily cron. This task reads a mount
-`claudinite-lifecycle/update` converges, so it yields while that task's item is live this
-cycle and runs the moment it converges — or rolls. The offset only ever implied this; the
+the engine's `engine/update` refreshes, so it yields while that task's item is live this
+cycle and runs the moment it lands — or rolls. The offset only ever implied this; the
 declaration enforces it.
 A substantive default-branch change is the whole trigger — the term names the
 commits, and task.md says what else the window puts in scope.

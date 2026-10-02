@@ -16,10 +16,7 @@
           "engine",
           "packs/claudinite-tasks/public"
         ],
-        "reason": "a pack imports only its own files, the engine surface, and the tasks pack's published public/ — abilities otherwise cross pack boundaries through declaration and configuration, never imports; a pack's updates/ is carved out because no vendor set carries it, so an import there cannot crash a consumer (#1317)",
-        "except": [
-          "packs/claudinite-lifecycle/updates"
-        ]
+        "reason": "a pack imports only its own files, the engine surface, and the tasks pack's published public/ — abilities otherwise cross pack boundaries through declaration and configuration, never imports"
       }
     ]
   },

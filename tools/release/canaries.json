@@ -1,8 +1,8 @@
 {
   "canaries": [
-    { "repo": "missingbulb/ClaudiniteCanary", "workflows": [] },
     { "repo": "missingbulb/ClaudiniteCanaryLagging", "workflows": [] },
-    { "repo": "missingbulb/ClaudiniteCanaryFresh", "workflows": [] }
+    { "repo": "missingbulb/ClaudiniteCanaryFresh", "workflows": [] },
+    { "repo": "missingbulb/ClaudiniteSandbox", "workflows": [] }
   ],
   "blockers": { "repo": "missingbulb/ClaudiniteEngine", "label": "release-blocker" }
 }
