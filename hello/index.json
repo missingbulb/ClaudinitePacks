@@ -1,7 +1,7 @@
 {
   "v": 1,
   "pack": "hello",
-  "serial": 2,
+  "serial": 3,
   "versions": [
     {
       "version": "1.0",
@@ -24,6 +24,17 @@
       "revoked": false,
       "publishedAt": "2026-10-02T15:05:19Z",
       "sourceCommit": "ae81567128631041f6e7faa2e865a9f7124628af"
+    },
+    {
+      "version": "1.4",
+      "sha256": "11afe54f6d1b809ba3defa48606a235b0eff8613fc5aa4dde1c88de7f3da30ed",
+      "size": 4639,
+      "minEngineVersion": "61001.1.0",
+      "requires": [],
+      "channel": "canary",
+      "revoked": false,
+      "publishedAt": "2026-10-02T17:50:47Z",
+      "sourceCommit": "48b86d9c69366e9da8d866033d15d05a6c04653c"
     }
   ]
 }
