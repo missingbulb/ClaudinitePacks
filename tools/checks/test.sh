@@ -20,7 +20,7 @@ if [ -e "$root/go.mod" ]; then
 fi
 "$CLAUDINITE_CN" check sdk --out "$tmp/sdk" >/dev/null
 {
-  printf 'module claudinitepacks.test\n\ngo 1.22\n\n'
+  printf 'module claudinitepacks.test\n\ngo 1.24\n\n'
   cat "$tmp/sdk/go.mod.stanza"
 } >"$root/go.mod"
 
