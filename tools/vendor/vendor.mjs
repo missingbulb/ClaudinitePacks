@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // The vendored-set rule: a pack directory minus `test/`, `docs/` and `provenance/` at the pack
-// root, nothing else dropped, packed as a deterministic .tar.gz with its SHA-256.
+// root and the Go tests beside its checks (`checks/*_test.go`), nothing else dropped, packed as a deterministic .tar.gz with its SHA-256.
 //
 //   node tools/vendor/vendor.mjs <pack dir> <out dir>
 //   node tools/vendor/vendor.mjs --all <packs root> <out dir>
@@ -52,6 +52,7 @@ function vendoredFiles(dir) {
         if (!rel && DROPPED_AT_ROOT.has(name)) continue;
         walk(path);
       } else if (st.isFile()) {
+        if (rel === 'checks' && name.endsWith('_test.go')) continue;
         files.push({ path, executable: (st.mode & 0o111) !== 0 });
       } else {
         throw new VendorError(`${basename(dir)}: ${path} is neither a file nor a directory`);

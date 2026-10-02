@@ -29,6 +29,9 @@ function acmePack(root, id = 'acme-pack', version = '60101.1') {
   put(dir, 'updates/flow.mjs', 'kept\n');
   put(dir, `deep/${'d'.repeat(90)}/${'e'.repeat(60)}.md`, 'long path\n');
   put(dir, 'bin/run.sh', '#!/bin/sh\n');
+  put(dir, 'checks/acme.go', 'package checks\n');
+  put(dir, 'checks/acme_test.go', 'package checks\n');
+  put(dir, 'skills/acme-skill/acme_test.go', 'kept\n');
   chmodSync(join(dir, 'bin/run.sh'), 0o755);
   return dir;
 }
@@ -52,7 +55,7 @@ test('writes <id>-<version>.tar.gz and a matching .sha256 named from pack.json',
   assert.equal(readFileSync(join(out, 'acme-pack-60101.1.sha256'), 'utf8'), `${sha256(archive)}  acme-pack-60101.1.tar.gz\n`);
 });
 
-test('drops test/, docs/ and provenance/ at the pack root only, keeping everything else', () => {
+test('drops test/, docs/ and provenance/ at the pack root and checks/*_test.go, keeping everything else', () => {
   const pack = acmePack(scratch());
   const out = scratch();
   assert.equal(vendor(pack, out).status, 0);
@@ -60,9 +63,11 @@ test('drops test/, docs/ and provenance/ at the pack root only, keeping everythi
   assert.deepEqual(listed, [
     'RULES.md',
     'bin/run.sh',
+    'checks/acme.go',
     `deep/${'d'.repeat(90)}/${'e'.repeat(60)}.md`,
     'pack.json',
     'skills/acme-skill/SKILL.md',
+    'skills/acme-skill/acme_test.go',
     'skills/acme-skill/provenance/payload.md',
     'skills/acme-skill/test/fixture.md',
     'updates/flow.mjs',

@@ -119,9 +119,11 @@ and a repo that declares none is silent rather than failing. [barriers.md](barri
 vocabulary — the rule forms, how a reference is resolved against the tree, the exception kinds, and
 how another pack ships a fixed barrier of its own as manifest data.
 
-`improve-comments-scope` is owned by the
-[improve-comments](skills/improve-comments/checks.mjs) skill rather than by this pack's rule
-directories, because it validates that skill's action rather than a property of the repo: on a
+`barrier` and `declared-check-spec-keys` are `cn` built-ins: the engine runs them for this pack,
+with the same ids, findings and config, and the pack carries no code for them.
+
+`improve-comments-scope` validates the [improve-comments](skills/improve-comments/SKILL.md)
+skill's action rather than a property of the repo: on a
 branch whose commit subject is `Claudinite tidy: improve comments` it strips the comments from both
 sides of every changed file and reds anything left over, plus any change at all under
 `.claudinite/shared/`, since the vendored mount is not the repo's own source. Silent everywhere else, so an ordinary

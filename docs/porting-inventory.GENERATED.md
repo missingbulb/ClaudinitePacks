@@ -9,25 +9,25 @@ coded checks become Go; tasks stay Node against `@claudinite/sdk`; tests are rew
 the pinned `cn`, or dropped when they check only file shapes or doc text. A file that imports
 Claudinite's `engine/` by relative path does not run here until its slice replaces the import.
 
-`minEngineVersion` across the shelf: `60928.1` (38 packs), `61001.1.0` (1 pack).
-These are Claudinite's Node engine versions; the Engine's `shared/version` parses three parts
-(`<day>.<n>.0`), so no `cn` reads these manifests yet. A ported pack's first version sets
-`minEngineVersion` to the `cn` version it was tested on.
+`minEngineVersion` across the shelf: `60928.1` (30 packs), `61001.1.0` (9 packs).
+A two-part one is a Claudinite Node engine version, which the Engine's `shared/version` (three
+parts, `<day>.<n>.0`) does not read; a ported pack's first version sets `minEngineVersion` to the
+`cn` version it was tested on.
 
 Classes: `content` (`RULES.md`, `README.md`, every other `.md`, `provenance/**`, `badge.svg`);
 `declared` (`pack.json`, `declared-checks.json`, `merge-rules.json`, any other `.json` at the pack
-root or under `tasks/`); `coded-check` (non-test `.mjs` directly under `worldRules/` or
-`workRules/`, and a skill's `checks.mjs` with the sibling modules it imports); `task`
-(`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `preconditions.mjs`); `src` (every other
-non-test `.mjs`); `test` (`test/**`, `*.test.mjs`); `workflow` (`.yml` under `stubs/` or
-`.github/`); `other` (the rest, listed below by path).
+root or under `tasks/`); `coded-check` (non-test `.go` directly under `checks/`, non-test `.mjs`
+directly under `worldRules/` or `workRules/`, and a skill's `checks.mjs` with the sibling modules
+it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `preconditions.mjs`);
+`src` (every other non-test `.mjs`); `test` (`test/**`, `*.test.mjs`, `*_test.go`); `workflow`
+(`.yml` under `stubs/` or `.github/`); `other` (the rest, listed below by path).
 
 | pack | version | content | declared | coded-check | task | src | test | workflow | other | engine/ importers |
 |---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
 | android | 60928.1 | 4 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | app-store-release | 60928.1 | 4 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| aws-sam | 60928.1 | 25 | 2 | 1 | 0 | 0 | 1 | 0 | 0 | 2 |
-| basics | 60928.1 | 189 | 2 | 13 | 5 | 1 | 14 | 0 | 0 | 21 |
+| aws-sam | 61002.1 | 25 | 2 | 1 | 0 | 0 | 3 | 0 | 0 | 0 |
+| basics | 61002.1 | 189 | 2 | 13 | 5 | 1 | 8 | 0 | 0 | 0 |
 | chrome-extension | 60928.1 | 46 | 2 | 4 | 3 | 4 | 7 | 9 | 0 | 8 |
 | claude-code-web-users-support | 60928.1 | 13 | 1 | 4 | 0 | 8 | 7 | 0 | 1 | 8 |
 | claudinite-canary-repo | 60928.1 | 4 | 1 | 0 | 0 | 2 | 0 | 1 | 0 | 0 |
@@ -39,59 +39,61 @@ non-test `.mjs`); `test` (`test/**`, `*.test.mjs`); `workflow` (`.yml` under `st
 | claudinite-tasks | 60928.2 | 24 | 4 | 4 | 8 | 87 | 91 | 2 | 0 | 37 |
 | cloudflare-site | 60928.1 | 16 | 1 | 3 | 3 | 4 | 7 | 0 | 0 | 5 |
 | cloudflare-workers | 60928.1 | 16 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| executable-requirements | 60928.1 | 21 | 1 | 1 | 0 | 0 | 1 | 0 | 0 | 2 |
-| firebase | 60928.1 | 29 | 2 | 1 | 0 | 2 | 1 | 0 | 0 | 2 |
+| executable-requirements | 61002.1 | 21 | 1 | 1 | 0 | 0 | 2 | 0 | 0 | 0 |
+| firebase | 61002.1 | 29 | 2 | 1 | 0 | 1 | 3 | 0 | 0 | 0 |
 | flutter | 60928.1 | 26 | 2 | 0 | 0 | 0 | 2 | 0 | 0 | 0 |
 | git-github | 60928.1 | 33 | 3 | 0 | 0 | 1 | 1 | 0 | 0 | 1 |
 | github-pages | 60928.1 | 13 | 1 | 2 | 3 | 3 | 3 | 1 | 0 | 5 |
-| google-identity | 60928.1 | 9 | 2 | 2 | 0 | 0 | 3 | 0 | 0 | 4 |
+| google-identity | 61002.1 | 9 | 2 | 1 | 0 | 0 | 3 | 0 | 0 | 0 |
 | headless-browser | 60928.1 | 31 | 2 | 0 | 0 | 0 | 4 | 0 | 0 | 1 |
-| hello | 1.1 | 6 | 2 | 0 | 0 | 0 | 0 | 0 | 1 | 0 |
+| hello | 1.3 | 12 | 2 | 4 | 0 | 0 | 0 | 0 | 0 | 0 |
 | host-page | 60928.1 | 19 | 1 | 3 | 0 | 1 | 1 | 0 | 0 | 4 |
 | html | 60928.1 | 9 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | ios | 60928.1 | 7 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | jwt | 60928.1 | 20 | 3 | 0 | 0 | 0 | 6 | 0 | 0 | 6 |
 | leaflet | 60928.1 | 12 | 1 | 2 | 0 | 0 | 2 | 0 | 0 | 4 |
 | macos | 60928.1 | 46 | 2 | 3 | 0 | 0 | 5 | 0 | 0 | 6 |
-| node | 60928.1 | 20 | 2 | 2 | 0 | 0 | 1 | 0 | 0 | 3 |
+| node | 61002.1 | 20 | 2 | 2 | 0 | 0 | 3 | 0 | 0 | 0 |
 | numpy-image-processing | 60928.1 | 14 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | play-store-release | 60928.1 | 4 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | product-wiki | 60928.1 | 34 | 2 | 0 | 2 | 1 | 1 | 0 | 0 | 1 |
-| public-website | 60928.1 | 12 | 1 | 1 | 0 | 3 | 3 | 0 | 0 | 2 |
-| python | 60928.1 | 12 | 1 | 4 | 0 | 0 | 2 | 0 | 0 | 4 |
+| public-website | 61002.1 | 12 | 1 | 1 | 0 | 3 | 3 | 0 | 0 | 0 |
+| python | 61002.1 | 12 | 1 | 3 | 0 | 0 | 2 | 0 | 0 | 0 |
 | research-project | 60928.1 | 63 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | spec-driven-product | 60928.1 | 31 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | web-scraping | 60928.1 | 35 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | web-speech | 60928.1 | 33 | 3 | 6 | 0 | 1 | 5 | 0 | 0 | 10 |
-| **39 packs** | | 1193 | 72 | 85 | 77 | 209 | 280 | 14 | 6 | 224 |
+| **39 packs** | | 1199 | 72 | 87 | 77 | 208 | 281 | 14 | 5 | 184 |
 
 ## aws-sam
 
 ### coded-check (1)
 
-- `worldRules/handler-path.mjs` (imports `engine/`)
+- `checks/handler_path.go`
 
-### test (1)
+### test (3)
 
-- `test/pack.test.mjs` (imports `engine/`)
+- `checks/handler_path_test.go`
+- `checks/helpers_test.go`
+- `test/declared_test.go`
 
 ## basics
 
 ### coded-check (13)
 
-- `skills/improve-comments/checks.mjs` (imports `engine/`)
-- `workRules/comment-classification-form.mjs` (imports `engine/`)
-- `workRules/reference-integrity.mjs` (imports `engine/`)
-- `workRules/work-request-not-started.mjs` (imports `engine/`)
-- `worldRules/barrier.mjs` (imports `engine/`)
-- `worldRules/claude-md-length.mjs` (imports `engine/`)
-- `worldRules/declared-check-messages.mjs` (imports `engine/`)
-- `worldRules/declared-check-since.mjs` (imports `engine/`)
-- `worldRules/declared-check-spec-keys.mjs` (imports `engine/`)
-- `worldRules/markdown-link-labels.mjs` (imports `engine/`)
-- `worldRules/runnable-doc-commands.mjs` (imports `engine/`)
-- `worldRules/schema-conformance.mjs` (imports `engine/`)
-- `worldRules/shared-constants.mjs` (imports `engine/`)
+- `checks/claude_md_length.go`
+- `checks/comment_classification_form.go`
+- `checks/declared_check_messages.go`
+- `checks/declared_check_since.go`
+- `checks/declared_specs.go`
+- `checks/improve_comments_scope.go`
+- `checks/jsonschema.go`
+- `checks/markdown_link_labels.go`
+- `checks/reference_integrity.go`
+- `checks/runnable_doc_commands.go`
+- `checks/schema_conformance.go`
+- `checks/shared_constants.go`
+- `checks/work_request_not_started.go`
 
 ### task (5)
 
@@ -105,21 +107,15 @@ non-test `.mjs`); `test` (`test/**`, `*.test.mjs`); `workflow` (`.yml` under `st
 
 - `migrations/2026-08-13-mechanism-versioned/migration.mjs`
 
-### test (14)
+### test (8)
 
-- `test/action-guards.test.mjs` (imports `engine/`)
-- `test/barriers.test.mjs` (imports `engine/`)
+- `checks/helpers_test.go`
+- `checks/work_test.go`
+- `checks/world_test.go`
 - `test/ci-performance.test.mjs`
-- `test/declared-check-messages.test.mjs` (imports `engine/`)
-- `test/declared-check-since.test.mjs` (imports `engine/`)
-- `test/declared-check-spec-keys.test.mjs` (imports `engine/`)
+- `test/declared_test.go`
 - `test/do-later.test.mjs`
-- `test/pack.test.mjs` (imports `engine/`)
 - `test/production-retrospective.test.mjs`
-- `test/runnable-doc-commands.test.mjs` (imports `engine/`)
-- `test/schema-conformance.test.mjs`
-- `test/skills/improve-comments/checks.test.mjs` (imports `engine/`)
-- `test/untracked-test-file.test.mjs`
 - `test/verify-in-production.test.mjs`
 
 ## chrome-extension
@@ -796,26 +792,28 @@ non-test `.mjs`); `test` (`test/**`, `*.test.mjs`); `workflow` (`.yml` under `st
 
 ### coded-check (1)
 
-- `workRules/feature-requirements-first.mjs` (imports `engine/`)
+- `checks/feature_requirements_first.go`
 
-### test (1)
+### test (2)
 
-- `test/pack.test.mjs` (imports `engine/`)
+- `checks/feature_requirements_first_test.go`
+- `checks/helpers_test.go`
 
 ## firebase
 
 ### coded-check (1)
 
-- `worldRules/functions-predeploy-build.mjs` (imports `engine/`)
+- `checks/functions_predeploy_build.go`
 
-### src (2)
+### src (1)
 
-- `lib.mjs`
 - `migrations/2026-08-19-firebase-release-collapse/migration.mjs`
 
-### test (1)
+### test (3)
 
-- `test/pack.test.mjs` (imports `engine/`)
+- `checks/functions_predeploy_build_test.go`
+- `checks/helpers_test.go`
+- `test/declared_test.go`
 
 ## flutter
 
@@ -861,16 +859,15 @@ non-test `.mjs`); `test` (`test/**`, `*.test.mjs`); `workflow` (`.yml` under `st
 
 ## google-identity
 
-### coded-check (2)
+### coded-check (1)
 
-- `skills/google-id-token-validation/checks.mjs`
-- `skills/google-id-token-validation/client-id-single-origin.mjs` (imports `engine/`)
+- `checks/client_id_single_origin.go`
 
 ### test (3)
 
-- `test/skills/google-id-token-validation/client-id-single-origin.test.mjs` (imports `engine/`)
-- `test/skills/google-id-token-validation/email-verified.test.mjs` (imports `engine/`)
-- `test/skills/google-id-token-validation/token-audience.test.mjs` (imports `engine/`)
+- `checks/client_id_single_origin_test.go`
+- `checks/helpers_test.go`
+- `test/declared_test.go`
 
 ## headless-browser
 
@@ -883,9 +880,12 @@ non-test `.mjs`); `test` (`test/**`, `*.test.mjs`); `workflow` (`.yml` under `st
 
 ## hello
 
-### other (1)
+### coded-check (4)
 
+- `checks/change.go`
+- `checks/config.go`
 - `checks/hello.go`
+- `checks/judge.go`
 
 ## host-page
 
@@ -946,12 +946,14 @@ non-test `.mjs`); `test` (`test/**`, `*.test.mjs`); `workflow` (`.yml` under `st
 
 ### coded-check (2)
 
-- `workRules/earn-each-dependency.mjs` (imports `engine/`)
-- `worldRules/test-discovery-resolves.mjs` (imports `engine/`)
+- `checks/earn_each_dependency.go`
+- `checks/test_discovery_resolves.go`
 
-### test (1)
+### test (3)
 
-- `test/pack.test.mjs` (imports `engine/`)
+- `checks/helpers_test.go`
+- `checks/node_test.go`
+- `test/declared_test.go`
 
 ## product-wiki
 
@@ -972,7 +974,7 @@ non-test `.mjs`); `test` (`test/**`, `*.test.mjs`); `workflow` (`.yml` under `st
 
 ### coded-check (1)
 
-- `worldRules/version-stamp-matches-package.mjs` (imports `engine/`)
+- `checks/version_stamp_matches_package.go`
 
 ### src (3)
 
@@ -982,23 +984,22 @@ non-test `.mjs`); `test` (`test/**`, `*.test.mjs`); `workflow` (`.yml` under `st
 
 ### test (3)
 
-- `test/pack.test.mjs` (imports `engine/`)
-- `test/version-stamp-matches-package.test.mjs`
+- `checks/helpers_test.go`
+- `checks/version_stamp_matches_package_test.go`
 - `test/version.test.mjs`
 
 ## python
 
-### coded-check (4)
+### coded-check (3)
 
-- `skills/python-optional-deps/checks.mjs`
-- `skills/python-optional-deps/optional-import-install-hint.mjs` (imports `engine/`)
-- `skills/python-optional-deps/optional-import-lazy.mjs` (imports `engine/`)
-- `skills/python-optional-deps/pyproject.mjs`
+- `checks/optional_import_install_hint.go`
+- `checks/optional_import_top_level.go`
+- `checks/optional_imports.go`
 
 ### test (2)
 
-- `test/skills/python-optional-deps/optional-import-install-hint.test.mjs` (imports `engine/`)
-- `test/skills/python-optional-deps/optional-import-lazy.test.mjs` (imports `engine/`)
+- `checks/helpers_test.go`
+- `checks/optional_imports_test.go`
 
 ## web-speech
 

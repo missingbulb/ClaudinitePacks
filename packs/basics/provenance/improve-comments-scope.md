@@ -32,3 +32,14 @@
 - **Mechanism:** the gate's mount prefix, pinned to the task's precondition by a test.
 - **Actor:** @missingbulb (owner).
 - **Model:** claude-opus-5-5
+
+## 2026-10-02 · moved · Ported to Go (missingbulb/ClaudiniteEngine#39)
+- **Reason:** the Go engine runs a pack's coded checks from its `checks/` directory, built against
+  the SDK, so the check is rewritten in Go with its id, `on_fail`, `why`, `doc` and finding text
+  unchanged, and the `.mjs` with its import of the Node engine is removed.
+  It moves from the skill's `checks.mjs` to the pack's `checks/`, the one home of a Go check.
+- **Actor:** @missingbulb (owner), through the chunk 8 plan.
+- **Mechanism:** `packs/basics/checks/improve_comments_scope.go`, unit-tested
+  beside it through the SDK's fake engine and compared with the Node engine by
+  ClaudiniteEngine's parity harness.
+- **Landed:** pending.

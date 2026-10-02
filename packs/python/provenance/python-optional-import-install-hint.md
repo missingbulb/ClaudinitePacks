@@ -25,3 +25,14 @@
 - **Reason:** owner decision, 2026-09-25: the field names what happens when the check fails, and
   *severity* keeps its impact sense; what this element enforces is unchanged.
 - **Actor:** @missingbulb (owner).
+
+## 2026-10-02 · moved · Ported to Go (missingbulb/ClaudiniteEngine#39)
+- **Reason:** the Go engine runs a pack's coded checks from its `checks/` directory, built against
+  the SDK, so the check is rewritten in Go with its id, `on_fail`, `why`, `doc` and finding text
+  unchanged, and the `.mjs` with its import of the Node engine is removed.
+  It moves from the skill's `checks.mjs` to the pack's `checks/`, the one home of a Go check.
+- **Actor:** @missingbulb (owner), through the chunk 8 plan.
+- **Mechanism:** `packs/python/checks/optional_import_install_hint.go`, unit-tested
+  beside it through the SDK's fake engine and compared with the Node engine by
+  ClaudiniteEngine's parity harness.
+- **Landed:** pending.

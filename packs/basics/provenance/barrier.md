@@ -29,3 +29,10 @@
 - **Reason:** barriers.mjs held pack contributions, retired, and the doc constant the rule imported
   from it; the doc is unchanged.
 - **Actor:** @missingbulb (owner), asking to drop pack contributions altogether.
+
+## 2026-10-02 · moved · A `cn` built-in (missingbulb/ClaudiniteEngine#39)
+- **Reason:** the Go engine runs this check itself, with the same id, findings and config, so the
+  pack's `.mjs` and its test are removed rather than ported.
+- **Actor:** @missingbulb (owner), through the chunk 8 plan.
+- **Mechanism:** `cn`'s built-in check, pinned by the parity harness's existing scenario.
+- **Landed:** pending.

@@ -34,8 +34,13 @@ vendors each pack whose version is already on `vendored` and compares the files 
 unpacked set. A differing, missing or extra path fails the job with
 `published <id> <version> CHANGED: differing: <path>` (or `missing:`, `extra:`); bump that pack's
 `pack.json` version. A change only to what the vendored set drops (`test/`, `docs/`,
-`provenance/` at the pack root) needs no bump. The publish job's own refusal is the backstop after
-the merge.
+`provenance/` at the pack root, and `checks/*_test.go`) needs no bump. The publish job's own
+refusal is the backstop after the merge.
+
+A pack's Go checks and the fixtures under its `test/` run with `sh tools/checks/test.sh`, which
+takes the `cn` to build against from `CLAUDINITE_CN`. Until ClaudiniteEngine#2 lets this repo pin
+a published `cn`, that run lives in ClaudiniteEngine's CI, against the commit its
+`parity/claudinitepacks.ref` names, rather than in this repo's.
 
 ## The `vendored` branch
 
