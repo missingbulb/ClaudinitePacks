@@ -1,6 +1,6 @@
 {
   "v": 1,
-  "serial": 104,
+  "serial": 105,
   "packs": [
     {
       "id": "android",
@@ -338,7 +338,7 @@
     },
     {
       "id": "hello",
-      "version": "1.4",
+      "version": "1.5",
       "channel": "canary",
       "minEngineVersion": "61001.1.0",
       "requires": [],
