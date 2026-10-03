@@ -1,6 +1,6 @@
 {
   "v": 1,
-  "serial": 83,
+  "serial": 84,
   "packs": [
     {
       "id": "android",
@@ -67,7 +67,7 @@
     },
     {
       "id": "chrome-extension",
-      "version": "61002.1",
+      "version": "61003.1",
       "channel": "canary",
       "minEngineVersion": "61001.1.0",
       "requires": [],
