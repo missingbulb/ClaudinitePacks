@@ -34,35 +34,35 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 | claudinite-dashboard | 61003.1 | 16 | 3 | 0 | 4 | 44 | 46 | 1 | 4 | 0 |
 | claudinite-fleet-sheepdog | 61003.3 | 30 | 2 | 0 | 4 | 0 | 1 | 0 | 0 | 0 |
 | claudinite-growth | 61003.1 | 159 | 8 | 0 | 16 | 10 | 13 | 0 | 0 | 0 |
-| claudinite-lifecycle | 61003.2 | 42 | 3 | 0 | 2 | 1 | 6 | 0 | 0 | 2 |
-| claudinite-tasks | 61003.1 | 23 | 3 | 0 | 5 | 26 | 14 | 0 | 0 | 1 |
+| claudinite-lifecycle | 61003.2 | 42 | 3 | 0 | 2 | 1 | 4 | 0 | 0 | 0 |
+| claudinite-tasks | 61003.1 | 23 | 3 | 0 | 5 | 26 | 14 | 0 | 0 | 0 |
 | cloudflare-site | 61003.1 | 16 | 1 | 2 | 3 | 4 | 7 | 0 | 0 | 0 |
 | cloudflare-workers | 61003.1 | 16 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | executable-requirements | 61002.1 | 21 | 1 | 1 | 0 | 0 | 2 | 0 | 0 | 0 |
 | firebase | 61002.1 | 29 | 2 | 1 | 0 | 1 | 3 | 0 | 0 | 0 |
 | flutter | 61003.1 | 26 | 2 | 0 | 0 | 0 | 2 | 0 | 0 | 0 |
-| git-github | 61003.1 | 33 | 3 | 0 | 0 | 1 | 1 | 0 | 0 | 1 |
+| git-github | 61003.1 | 33 | 3 | 0 | 0 | 1 | 1 | 0 | 0 | 0 |
 | github-pages | 61003.1 | 13 | 1 | 2 | 3 | 4 | 6 | 1 | 0 | 0 |
 | google-identity | 61002.1 | 9 | 2 | 1 | 0 | 0 | 3 | 0 | 0 | 0 |
-| headless-browser | 61003.1 | 31 | 2 | 0 | 0 | 0 | 4 | 0 | 0 | 1 |
+| headless-browser | 61003.1 | 31 | 2 | 0 | 0 | 0 | 3 | 0 | 0 | 0 |
 | hello | 1.4 | 14 | 3 | 4 | 4 | 0 | 0 | 0 | 0 | 0 |
 | host-page | 61003.1 | 19 | 1 | 2 | 0 | 0 | 3 | 0 | 0 | 0 |
 | html | 61003.1 | 9 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | ios | 61003.1 | 7 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| jwt | 61003.1 | 20 | 3 | 0 | 0 | 0 | 6 | 0 | 0 | 6 |
+| jwt | 61003.1 | 20 | 3 | 0 | 0 | 0 | 1 | 0 | 0 | 0 |
 | leaflet | 61003.1 | 12 | 1 | 2 | 0 | 0 | 3 | 0 | 0 | 0 |
 | macos | 61003.1 | 46 | 2 | 3 | 0 | 0 | 3 | 0 | 0 | 0 |
 | node | 61002.1 | 20 | 2 | 2 | 0 | 0 | 3 | 0 | 0 | 0 |
 | numpy-image-processing | 61003.1 | 14 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | play-store-release | 61003.1 | 4 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| product-wiki | 61002.2 | 34 | 2 | 0 | 2 | 1 | 1 | 0 | 0 | 1 |
+| product-wiki | 61002.2 | 34 | 2 | 0 | 2 | 1 | 1 | 0 | 0 | 0 |
 | public-website | 61002.1 | 12 | 1 | 1 | 0 | 3 | 3 | 0 | 0 | 0 |
 | python | 61002.1 | 12 | 1 | 3 | 0 | 0 | 2 | 0 | 0 | 0 |
 | research-project | 61003.1 | 63 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | spec-driven-product | 61003.1 | 31 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | web-scraping | 61003.1 | 35 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | web-speech | 61003.1 | 33 | 3 | 4 | 0 | 0 | 3 | 0 | 0 | 0 |
-| **38 packs** | | 1195 | 72 | 54 | 69 | 114 | 170 | 11 | 5 | 28 |
+| **38 packs** | | 1195 | 72 | 54 | 69 | 114 | 162 | 11 | 5 | 16 |
 
 ## aws-sam
 
@@ -421,11 +421,9 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 
 - `tasks/adopt-requested-packs/protocol.mjs`
 
-### test (6)
+### test (4)
 
 - `test/declared_test.go`
-- `test/mandatory.test.mjs` (imports `engine/`)
-- `test/pack.test.mjs` (imports `engine/`)
 - `test/task-policies.test.mjs`
 - `test/tasks/adopt-requested-packs/protocol.test.mjs`
 - `test/tasks/adopt-requested-packs/task.test.mjs`
@@ -471,7 +469,7 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 
 ### test (14)
 
-- `test/tasks/usage-fold/corpus-use.test.mjs` (imports `engine/`)
+- `test/tasks/usage-fold/corpus-use.test.mjs`
 - `test/tasks/usage-fold/deliver.test.mjs`
 - `test/tasks/usage-fold/fold-tasks-usage.test.mjs`
 - `test/tasks/usage-fold/fold-usage.test.mjs`
@@ -558,7 +556,7 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 
 ### test (1)
 
-- `test/pack.test.mjs` (imports `engine/`)
+- `test/declared_test.go`
 
 ## github-pages
 
@@ -603,12 +601,11 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 
 ## headless-browser
 
-### test (4)
+### test (3)
 
 - `test/capture-without-font-wait.test.mjs`
 - `test/insecure-fake-origin.test.mjs`
 - `test/networkidle-wait.test.mjs`
-- `test/pack.test.mjs` (imports `engine/`)
 
 ## hello
 
@@ -641,14 +638,9 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 
 ## jwt
 
-### test (6)
+### test (1)
 
-- `test/pack.test.mjs` (imports `engine/`)
-- `test/skills/jwt-minting/hardcoded-secret.test.mjs` (imports `engine/`)
-- `test/skills/jwt-minting/sign-sets-expiry.test.mjs` (imports `engine/`)
-- `test/skills/jwt-validation/none-not-accepted.test.mjs` (imports `engine/`)
-- `test/skills/jwt-validation/verify-binds-audience.test.mjs` (imports `engine/`)
-- `test/skills/jwt-validation/verify-pins-algorithms.test.mjs` (imports `engine/`)
+- `test/declared_test.go`
 
 ## leaflet
 
@@ -703,7 +695,7 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 
 ### test (1)
 
-- `test/pack.test.mjs` (imports `engine/`)
+- `test/declared_test.go`
 
 ## public-website
 
