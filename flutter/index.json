@@ -1,7 +1,7 @@
 {
   "v": 1,
   "pack": "flutter",
-  "serial": 1,
+  "serial": 2,
   "versions": [
     {
       "version": "60928.1",
@@ -13,6 +13,17 @@
       "revoked": false,
       "publishedAt": "2026-10-01T14:32:10Z",
       "sourceCommit": "27612838c695d2d6704966572cd86d34485e4751"
+    },
+    {
+      "version": "61003.1",
+      "sha256": "0f7b37e2a0578a4b37d37b88ab812826ef35a5944c2fff58013c15e48a0ab2f5",
+      "size": 5963,
+      "minEngineVersion": "61001.1.0",
+      "requires": [],
+      "channel": "canary",
+      "revoked": false,
+      "publishedAt": "2026-10-03T14:45:23Z",
+      "sourceCommit": "e47e739df11a62929d1a9832ccf3cc7bf618c94a"
     }
   ]
 }
