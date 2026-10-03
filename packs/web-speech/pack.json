@@ -1,6 +1,6 @@
 {
-  "version": "60928.1",
-  "minEngineVersion": "60928.1",
+  "version": "61003.1",
+  "minEngineVersion": "61001.1.0",
   "ruleRoutingGuidance": {
     "belongs": "browser voice I/O gotchas — SpeechRecognition results and errors, speechSynthesis and chrome.tts, mic permission and lifecycle",
     "excludes": "general MV3 service-worker and content-script mechanics — that is chrome-extension; page markup is html"

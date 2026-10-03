@@ -9,7 +9,7 @@ coded checks become Go; tasks stay Node against `@claudinite/sdk`; tests are rew
 the pinned `cn`, or dropped when they check only file shapes or doc text. A file that imports
 Claudinite's `engine/` by relative path does not run here until its slice replaces the import.
 
-`minEngineVersion` across the shelf: `60928.1` (2 packs), `61001.1.0` (36 packs).
+`minEngineVersion` across the shelf: `60928.1` (1 pack), `61001.1.0` (37 packs).
 A two-part one is a Claudinite Node engine version, which the Engine's `shared/version` (three
 parts, `<day>.<n>.0`) does not read; a ported pack's first version sets `minEngineVersion` to the
 `cn` version it was tested on.
@@ -61,8 +61,8 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 | research-project | 61003.1 | 63 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | spec-driven-product | 61003.1 | 31 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | web-scraping | 61003.1 | 35 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| web-speech | 60928.1 | 33 | 3 | 6 | 0 | 1 | 5 | 0 | 0 | 10 |
-| **38 packs** | | 1195 | 72 | 58 | 69 | 115 | 173 | 11 | 5 | 43 |
+| web-speech | 61003.1 | 33 | 3 | 4 | 0 | 0 | 3 | 0 | 0 | 0 |
+| **38 packs** | | 1195 | 72 | 56 | 69 | 114 | 171 | 11 | 5 | 33 |
 
 ## aws-sam
 
@@ -741,23 +741,15 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 
 ## web-speech
 
-### coded-check (6)
+### coded-check (4)
 
-- `worldRules/mic-capture-released.mjs` (imports `engine/`)
-- `worldRules/mic-constraints-not-screen-capture.mjs` (imports `engine/`)
-- `worldRules/stt-error-map-has-default.mjs` (imports `engine/`)
-- `worldRules/stt-interim-results-gated.mjs` (imports `engine/`)
-- `worldRules/stt-terminal-handlers.mjs` (imports `engine/`)
-- `worldRules/tts-speak-settles.mjs` (imports `engine/`)
+- `checks/lib.go`
+- `checks/mic.go`
+- `checks/stt.go`
+- `checks/tts.go`
 
-### src (1)
+### test (3)
 
-- `lib.mjs`
-
-### test (5)
-
-- `test/skills/web-speech-io/capture-pagehide-teardown.test.mjs` (imports `engine/`)
-- `test/skills/web-speech-io/recognition-feature-detect.test.mjs` (imports `engine/`)
-- `test/skills/web-speech-io/service-worker-speech.test.mjs` (imports `engine/`)
-- `test/speech-contracts.test.mjs` (imports `engine/`)
-- `test/tts-voices-cached-empty.test.mjs`
+- `checks/checks_test.go`
+- `checks/helpers_test.go`
+- `test/declared_test.go`
