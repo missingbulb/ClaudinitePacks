@@ -221,21 +221,29 @@ once this repository runs `cn`.
 
 ## Keys
 
-The publish job signs with `CN_PACKS_KEY` (the key file's content) and `CN_PACKS_CERT` (the
-`packs` certificate's content), secrets of the `release` environment; set one without the other
-and the run fails. With neither, it signs with the development key under `keys/dev/`, prints
-`signing with the development key keys/dev/packs.key (trusted by no member)` and annotates the run
-with a warning. The development certificate expires 90 days after issue; `keys/dev/README.md` says
-how to renew it, and `.github/workflows/dev-key-expiry.yml` (weekly, and on dispatch) runs
-`tools/release/dev-key-expiry.mjs`, which prints the expiry and goes red once it is 14 days away
-or less. The tests verify the development certificate at an instant read from its own window, so
-they do not go red on expiry; `publish --now <instant>` moves only the self-check's instant, for
-tests, and `publishedAt` always reads the clock. The workflow goes in the change that removes
-`keys/dev/`.
+The publish and promote jobs sign with `CN_PACKS_KEY` (the key file's content) and
+`CN_PACKS_CERT` (the `packs` certificate's content), secrets of the `release` environment that
+ClaudiniteEngine's key ceremony stores (its `cmd/cn-keys/README.md`); the run fails unless both are
+set. Every signature is checked against `keys/roots/`, the ceremony's root and standby root, which
+`tools/sign/roots.test.mjs` pins by key id. The tests sign with throwaway chains of their own.
 
-When ClaudiniteEngine#5 provides the real `packs` key: add the two secrets, add protection rules
-to the `release` environment, replace `keys/dev/roots/` with the real roots for the self-check,
-delete `keys/dev/` and the development fallback, and re-sign every index.
+Neither `publish` nor `promote`/`revoke` puts the key on bytes nothing vouches for. Before carrying
+an index or the catalog forward, they check its own signature (`tools/release/trust.mjs`):
+
+- verifies against `--roots` now: kept as it is;
+- verifies against `--roots` only at an instant inside its certificate's window (an expired or
+  rotated certificate), or there against `--previous-roots`: `publish` re-signs it, bytes
+  unchanged, in one commit after the release commits (`Re-sign <n> indexes and the catalog under
+  the current roots`);
+- anything else, a missing signature or bytes the signature does not cover included: the run fails
+  before it pushes anything.
+
+`--previous-roots` names roots trusted for that re-signing and nothing else. `release-packs.yml`
+passes `keys/retired-dev-roots/`, the development roots that signed `vendored` before
+ClaudiniteEngine#5, until the branch has been re-signed under `keys/roots/`.
+
+The `packs` certificate lasts 90 days; renew it with key-ceremony's `rotate` mode, which the same
+README describes.
 
 ## The R2 upload
 
@@ -291,25 +299,30 @@ with SigV4 (`r2.mjs`, proven by AWS's published examples in `sigv4.test-vectors.
 
 ## Running it locally
 
-Against a local bare remote, signing with the development key:
+Against a local bare remote, signing with a throwaway chain made by ClaudiniteEngine's `cn-keys`
+(`go build -o "$WORK/cn-keys" ./cmd/cn-keys` in an Engine checkout):
 
 ```
 WORK=$(mktemp -d)
+"$WORK/cn-keys" root new --out "$WORK/roots"
+"$WORK/cn-keys" key new --out "$WORK" --name packs
+"$WORK/cn-keys" certify --root "$WORK/roots/root.key" --subject "$WORK/packs.pub" --use packs --days 7 --out "$WORK/packs.cert.json"
+rm "$WORK/roots/root.key"
+export CN_PACKS_KEY="$WORK/packs.key" CN_PACKS_CERT="$WORK/packs.cert.json"
 git init --bare "$WORK/remote.git"
 node tools/release/release.mjs plan --remote "$WORK/remote.git"
 node tools/release/release.mjs build --out "$WORK/archives"
-node tools/release/release.mjs publish --archives "$WORK/archives" --remote "$WORK/remote.git" --roots keys/dev/roots
-node tools/release/release.mjs upload --r2 dry-run --remote "$WORK/remote.git" --roots keys/dev/roots
-node tools/release/release.mjs promote --pack basics --version 60928.1 --by local --remote "$WORK/remote.git" --roots keys/dev/roots
+node tools/release/release.mjs publish --archives "$WORK/archives" --remote "$WORK/remote.git" --roots "$WORK/roots"
+node tools/release/release.mjs upload --r2 dry-run --remote "$WORK/remote.git" --roots "$WORK/roots"
+node tools/release/release.mjs promote --pack basics --version <its version> --by local --remote "$WORK/remote.git" --roots "$WORK/roots"
 git clone -q --branch vendored "$WORK/remote.git" "$WORK/vendored"
-for d in "$WORK"/vendored/*/; do node tools/sign/sign.mjs verify-index --roots keys/dev/roots "$d/index.json" "$d/index.sig.json" || break; done
-node tools/sign/sign.mjs verify-catalog --roots keys/dev/roots "$WORK/vendored/catalog.json" "$WORK/vendored/catalog.sig.json"
-node tools/release/dev-key-expiry.mjs
+for d in "$WORK"/vendored/*/; do node tools/sign/sign.mjs verify-index --roots "$WORK/roots" "$d/index.json" "$d/index.sig.json" || break; done
+node tools/sign/sign.mjs verify-catalog --roots "$WORK/roots" "$WORK/vendored/catalog.json" "$WORK/vendored/catalog.sig.json"
 ```
 
-`--key` and `--cert` (or the files `CN_PACKS_KEY` and `CN_PACKS_CERT` name) sign with another
-key; `--repo` names the checkout whose git directory holds the work, by default the current one.
+`--key` and `--cert` sign in place of the files `CN_PACKS_KEY` and `CN_PACKS_CERT` name; `--repo`
+names the checkout whose git directory holds the work, by default the current one.
 `upload --r2 dry-run` lists every object as `would PUT`; `--r2 claudinite-packs` with the two
 Cloudflare variables set uploads for real. `evidence --out <file>` reads the canary evidence with
-`GITHUB_TOKEN` when set. Check the development certificate with
-`node tools/sign/sign.mjs verify-cert --roots keys/dev/roots keys/dev/packs.cert.json`.
+`GITHUB_TOKEN` when set. Check a certificate with
+`node tools/sign/sign.mjs verify-cert --roots keys/roots <cert.json>`.

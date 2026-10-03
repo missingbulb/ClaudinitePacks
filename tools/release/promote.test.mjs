@@ -7,7 +7,7 @@ import { verifyCatalog } from './catalog.mjs';
 import { readIndex, verifyIndex } from './index.mjs';
 import { choosePromotions, githubReader, readEvidence, rewriteBranch } from './promote.mjs';
 import { branchObjects, planUpload } from './r2.mjs';
-import { build, commitAll, git, packJson, publish, put, run, scratch, show, testChain, vendoredLog, world } from './test-fixture.mjs';
+import { build, commitAll, editVendored, git, packJson, publish, put, run, scratch, show, testChain, vendoredLog, world } from './test-fixture.mjs';
 
 // acme-pack with 60101.1 and 60101.2 on vendored, acme-pack-two with 60101.1, all canary.
 function released() {
@@ -301,4 +301,20 @@ test('canaries.json names the canaries and the blockers repository in the shape 
   assert.ok(config.canaries.length >= 1);
   assert.ok(reader.calls.includes(`issues ${config.blockers.repo} ${config.blockers.label}`));
   assert.equal(typeof choosePromotions(ev, config), 'object');
+});
+
+test('promote and revoke refuse, writing nothing, an index whose bytes no longer match its signature', () => {
+  const { w, chain } = released();
+  editVendored(w, (tree) => {
+    const file = join(tree, 'acme-pack/index.json');
+    const ix = JSON.parse(readFileSync(file, 'utf8'));
+    ix.versions[0].sha256 = 'f'.repeat(64);
+    writeFileSync(file, JSON.stringify(ix, null, 2) + '\n');
+  }, 'tamper');
+  for (const action of ['promote', 'revoke']) {
+    const p = cli(w, chain, [action, '--pack', 'acme-pack', '--version', '60101.1', '--by', 'acme-user']);
+    assert.notEqual(p.status, 0, p.out);
+    assert.match(p.out, /acme-pack\/index\.json does not verify/);
+    assert.equal(vendoredLog(w)[0], 'tamper');
+  }
 });

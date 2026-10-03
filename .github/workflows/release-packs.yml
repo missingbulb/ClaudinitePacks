@@ -65,20 +65,17 @@ jobs:
           PACKS_KEY: ${{ secrets.CN_PACKS_KEY }}
           PACKS_CERT: ${{ secrets.CN_PACKS_CERT }}
         run: |
-          signing=()
-          if [ -n "$PACKS_KEY" ] || [ -n "$PACKS_CERT" ]; then
-            if [ -z "$PACKS_KEY" ] || [ -z "$PACKS_CERT" ]; then
-              echo "::error::the release environment holds only one of CN_PACKS_KEY and CN_PACKS_CERT"
-              exit 1
-            fi
-            umask 077
-            printf '%s\n' "$PACKS_KEY" > "$RUNNER_TEMP/packs.key"
-            printf '%s\n' "$PACKS_CERT" > "$RUNNER_TEMP/packs.cert.json"
-            signing=(--key "$RUNNER_TEMP/packs.key" --cert "$RUNNER_TEMP/packs.cert.json")
-          else
-            echo "::warning::signed with the development key"
+          if [ -z "$PACKS_KEY" ] || [ -z "$PACKS_CERT" ]; then
+            echo "::error::the release environment must hold both CN_PACKS_KEY and CN_PACKS_CERT"
+            exit 1
           fi
-          node tools/release/release.mjs publish --archives "$RUNNER_TEMP/archives" --roots keys/dev/roots --summary "$GITHUB_STEP_SUMMARY" "${signing[@]}"
+          umask 077
+          printf '%s\n' "$PACKS_KEY" > "$RUNNER_TEMP/packs.key"
+          printf '%s\n' "$PACKS_CERT" > "$RUNNER_TEMP/packs.cert.json"
+          signing=(--key "$RUNNER_TEMP/packs.key" --cert "$RUNNER_TEMP/packs.cert.json")
+          # The development roots signed vendored before ClaudiniteEngine#5; publish re-signs what they
+          # alone vouch for, and nothing else trusts them.
+          node tools/release/release.mjs publish --archives "$RUNNER_TEMP/archives" --roots keys/roots --previous-roots keys/retired-dev-roots --summary "$GITHUB_STEP_SUMMARY" "${signing[@]}"
 
   upload:
     needs: publish
@@ -98,4 +95,4 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        run: node tools/release/release.mjs upload --r2 claudinite-packs --roots keys/dev/roots --remote origin --summary "$GITHUB_STEP_SUMMARY"
+        run: node tools/release/release.mjs upload --r2 claudinite-packs --roots keys/roots --remote origin --summary "$GITHUB_STEP_SUMMARY"

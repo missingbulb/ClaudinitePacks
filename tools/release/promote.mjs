@@ -7,7 +7,8 @@ import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { BRANCH, openBranch, ReleaseError } from './branch.mjs';
 import { CATALOG, CATALOG_SIG, writeCatalog } from './catalog.mjs';
-import { assertSerialAdvances, readIndex, serialize, setChannel, setRevoked, signIndex } from './index.mjs';
+import { assertSerialAdvances, readIndex, serialize, setChannel, setRevoked, signIndex, verifyIndex } from './index.mjs';
+import { trustOf } from './trust.mjs';
 
 export const NO_WORKFLOW_VERDICT = 'no canary workflow is configured; promotion needs a dispatch';
 const TRUSTED_AUTHORS = new Set(['OWNER', 'MEMBER', 'COLLABORATOR']);
@@ -132,7 +133,9 @@ export function rewriteBranch({ repo, remote, roots, key, certificate, changes, 
     for (const change of changes) {
       const file = join(branch.tree, change.pack, 'index.json');
       if (!existsSync(file)) throw new ReleaseError(`${change.pack} is not on ${BRANCH}`);
-      const previous = readIndex(readFileSync(file));
+      const previousBytes = readFileSync(file);
+      trustOf(`${change.pack}/index.json`, previousBytes, join(branch.tree, change.pack, 'index.sig.json'), verifyIndex, { roots, now });
+      const previous = readIndex(previousBytes);
       const why = refusal(change, previous.versions.find((e) => e.version === change.version));
       if (why) {
         if (!skipStale) throw new ReleaseError(`refusing to ${change.action}: ${why}`);

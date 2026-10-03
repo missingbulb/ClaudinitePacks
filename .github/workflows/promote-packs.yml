@@ -55,24 +55,19 @@ jobs:
           VERSION: ${{ inputs.version }}
           ACTOR: ${{ github.actor }}
         run: |
-          signing=()
-          if [ -n "$PACKS_KEY" ] || [ -n "$PACKS_CERT" ]; then
-            if [ -z "$PACKS_KEY" ] || [ -z "$PACKS_CERT" ]; then
-              echo "::error::the release environment holds only one of CN_PACKS_KEY and CN_PACKS_CERT"
-              exit 1
-            fi
-            umask 077
-            printf '%s\n' "$PACKS_KEY" > "$RUNNER_TEMP/packs.key"
-            printf '%s\n' "$PACKS_CERT" > "$RUNNER_TEMP/packs.cert.json"
-            signing=(--key "$RUNNER_TEMP/packs.key" --cert "$RUNNER_TEMP/packs.cert.json")
-          else
-            echo "::warning::signed with the development key"
+          if [ -z "$PACKS_KEY" ] || [ -z "$PACKS_CERT" ]; then
+            echo "::error::the release environment must hold both CN_PACKS_KEY and CN_PACKS_CERT"
+            exit 1
           fi
+          umask 077
+          printf '%s\n' "$PACKS_KEY" > "$RUNNER_TEMP/packs.key"
+          printf '%s\n' "$PACKS_CERT" > "$RUNNER_TEMP/packs.cert.json"
+          signing=(--key "$RUNNER_TEMP/packs.key" --cert "$RUNNER_TEMP/packs.cert.json")
           if [ -n "$PACK" ]; then
-            node tools/release/release.mjs "$ACTION" --pack "$PACK" --version "$VERSION" --by "$ACTOR" --roots keys/dev/roots --summary "$GITHUB_STEP_SUMMARY" "${signing[@]}"
+            node tools/release/release.mjs "$ACTION" --pack "$PACK" --version "$VERSION" --by "$ACTOR" --roots keys/roots --summary "$GITHUB_STEP_SUMMARY" "${signing[@]}"
           else
             node tools/release/release.mjs evidence --out "$RUNNER_TEMP/evidence.json" --summary "$GITHUB_STEP_SUMMARY"
-            node tools/release/release.mjs promote --evidence "$RUNNER_TEMP/evidence.json" --roots keys/dev/roots --summary "$GITHUB_STEP_SUMMARY" "${signing[@]}"
+            node tools/release/release.mjs promote --evidence "$RUNNER_TEMP/evidence.json" --roots keys/roots --summary "$GITHUB_STEP_SUMMARY" "${signing[@]}"
           fi
 
   upload:
@@ -93,4 +88,4 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        run: node tools/release/release.mjs upload --r2 claudinite-packs --roots keys/dev/roots --remote origin --summary "$GITHUB_STEP_SUMMARY"
+        run: node tools/release/release.mjs upload --r2 claudinite-packs --roots keys/roots --remote origin --summary "$GITHUB_STEP_SUMMARY"

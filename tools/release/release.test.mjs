@@ -1,14 +1,14 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync, spawnSync } from 'node:child_process';
-import { writeFileSync, readFileSync } from 'node:fs';
+import { readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { gunzipSync, gzipSync } from 'node:zlib';
 import { readRoots } from '../sign/sign.mjs';
 import { verifyCatalog } from './catalog.mjs';
 import { readIndex, verifyIndex } from './index.mjs';
 import {
-  build, commitAll, DEV_ROOTS, devCertInstant, git, packJson, publish, put, REPO_ROOT, run, scratch, sha256, show, testChain, vendoredLog, world,
+  build, commitAll, editVendored, git, packJson, publish, put, REPO_ROOT, run, scratch, sha256, show, testChain, vendoredLog, world,
 } from './test-fixture.mjs';
 
 test('first run publishes every pack: unpacked set, archive, signed index, one commit each', () => {
@@ -136,13 +136,92 @@ test('a pack.json without minEngineVersion fails the build naming the pack', () 
   assert.equal(spawnSync('git', ['rev-parse', '--verify', '-q', 'vendored'], { cwd: w.remote }).status, 1);
 });
 
-test('without CN_PACKS_KEY and CN_PACKS_CERT it signs with the development key and says so', () => {
+test('without CN_PACKS_KEY and CN_PACKS_CERT it refuses and writes nothing', () => {
   const w = world();
-  const p = publish(w, build(w).archives, { roots: DEV_ROOTS }, ['--now', devCertInstant()]);
+  const p = publish(w, build(w).archives, { roots: testChain(scratch()).roots });
+  assert.notEqual(p.status, 0);
+  assert.match(p.out, /CN_PACKS_KEY and CN_PACKS_CERT/);
+  assert.equal(spawnSync('git', ['rev-parse', '--verify', '-q', 'vendored'], { cwd: w.remote }).status, 1);
+});
+
+test('publish re-signs, under --roots, what verifies only against --previous-roots, leaving its bytes alone; without the flag it refuses', () => {
+  const w = world();
+  const old = testChain(scratch());
+  const b = build(w);
+  assert.equal(publish(w, b.archives, old).status, 0);
+  const before = Object.fromEntries(['acme-pack/index.json', 'acme-pack-two/index.json', 'catalog.json'].map((f) => [f, show(w, f)]));
+  const fresh = testChain(scratch());
+  const refused = publish(w, b.archives, fresh);
+  assert.notEqual(refused.status, 0);
+  assert.match(refused.out, /acme-pack\/index\.json .*does not verify against --roots or --previous-roots/);
+  assert.equal(vendoredLog(w).length, 2);
+  const p = publish(w, b.archives, fresh, ['--previous-roots', old.roots]);
   assert.equal(p.status, 0, p.out);
-  assert.match(p.out, /^signing with the development key keys\/dev\/packs\.key \(trusted by no member\)$/m);
-  const devCert = JSON.parse(readFileSync(join(REPO_ROOT, 'keys/dev/packs.cert.json'), 'utf8'));
-  assert.deepEqual(JSON.parse(show(w, 'acme-pack/index.sig.json')).certificate, devCert);
+  assert.match(p.out, /^re-signed acme-pack, acme-pack-two and the catalog under the given roots$/m);
+  assert.equal(vendoredLog(w)[0], 'Re-sign 2 indexes and the catalog under the current roots');
+  const roots = readRoots(fresh.roots);
+  for (const id of ['acme-pack', 'acme-pack-two']) {
+    assert.deepEqual(show(w, `${id}/index.json`), before[`${id}/index.json`]);
+    assert.equal(verifyIndex(show(w, `${id}/index.json`), JSON.parse(show(w, `${id}/index.sig.json`)), roots, new Date()).keyId, fresh.keyId);
+  }
+  assert.deepEqual(show(w, 'catalog.json'), before['catalog.json']);
+  assert.equal(verifyCatalog(show(w, 'catalog.json'), JSON.parse(show(w, 'catalog.sig.json')), roots, new Date()).keyId, fresh.keyId);
+  const again = publish(w, b.archives, fresh);
+  assert.equal(again.status, 0, again.out);
+  assert.match(again.out, /^nothing to publish$/m);
+  assert.doesNotMatch(again.out, /re-signed/);
+  assert.equal(vendoredLog(w).length, 3);
+});
+
+test('publish re-signs what a certificate of the same roots signed before it expired', () => {
+  const w = world();
+  const old = testChain(scratch(), 'packs', { from: -120 * 86400e3, to: -30 * 86400e3 });
+  const b = build(w);
+  assert.equal(publish(w, b.archives, old, ['--now', new Date(Date.now() - 60 * 86400e3).toISOString()]).status, 0);
+  const rotated = testChain(scratch(), 'packs', { root: old.rootKey });
+  const p = publish(w, b.archives, rotated);
+  assert.equal(p.status, 0, p.out);
+  assert.match(p.out, /^re-signed acme-pack, acme-pack-two and the catalog under the given roots$/m);
+  verifyIndex(show(w, 'acme-pack/index.json'), JSON.parse(show(w, 'acme-pack/index.sig.json')), readRoots(rotated.roots), new Date());
+});
+
+test('publish refuses, writing nothing, an index whose bytes no longer match its signature', () => {
+  const w = world();
+  const chain = testChain(scratch());
+  const b = build(w);
+  assert.equal(publish(w, b.archives, chain).status, 0);
+  editVendored(w, (tree) => {
+    const file = join(tree, 'acme-pack/index.json');
+    const ix = JSON.parse(readFileSync(file, 'utf8'));
+    ix.versions[0].sha256 = 'f'.repeat(64);
+    writeFileSync(file, JSON.stringify(ix, null, 2) + '\n');
+  }, 'tamper');
+  for (const extra of [[], ['--previous-roots', chain.roots]]) {
+    const p = publish(w, b.archives, chain, extra);
+    assert.notEqual(p.status, 0, p.out);
+    assert.match(p.out, /acme-pack\/index\.json .*does not verify/);
+    assert.equal(vendoredLog(w)[0], 'tamper');
+    assert.equal(vendoredLog(w).length, 3);
+  }
+  put(w.src, 'packs/acme-pack/pack.json', packJson('60101.2', { requires: ['acme-pack-two'] }));
+  commitAll(w.src, 'bump');
+  const carried = publish(w, build(w).archives, chain);
+  assert.notEqual(carried.status, 0, carried.out);
+  assert.match(carried.out, /acme-pack\/index\.json .*does not verify/);
+  assert.equal(vendoredLog(w)[0], 'tamper');
+});
+
+test('publish refuses, writing nothing, an index whose signature is gone', () => {
+  const w = world();
+  const chain = testChain(scratch());
+  const b = build(w);
+  assert.equal(publish(w, b.archives, chain).status, 0);
+  editVendored(w, (tree) => rmSync(join(tree, 'acme-pack-two/index.sig.json')), 'unsign');
+  const p = publish(w, b.archives, chain);
+  assert.notEqual(p.status, 0, p.out);
+  assert.match(p.out, /acme-pack-two\/index\.json has no signature/);
+  assert.equal(vendoredLog(w)[0], 'unsign');
+  assert.equal(vendoredLog(w).length, 3);
 });
 
 test('--now moves only the self-check instant; publishedAt stays the real clock', () => {
@@ -221,7 +300,7 @@ test('upload to a bucket without CLOUDFLARE_API_TOKEN or CLOUDFLARE_ACCOUNT_ID f
 
 test('upload with nothing on vendored says so and succeeds', () => {
   const w = world();
-  const u = run(['upload', '--r2', 'dry-run', '--repo', w.src, '--remote', w.remote, '--roots', DEV_ROOTS]);
+  const u = run(['upload', '--r2', 'dry-run', '--repo', w.src, '--remote', w.remote, '--roots', testChain(scratch()).roots]);
   assert.equal(u.status, 0, u.out);
   assert.match(u.out, /nothing on vendored to upload/);
 });
