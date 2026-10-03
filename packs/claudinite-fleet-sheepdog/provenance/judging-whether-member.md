@@ -13,3 +13,9 @@
 - **Actor:** @missingbulb (owner).
 - **Model:** Claude, per the commit trailer.
 - **Landed:** #1028 (Fixes #1025) · pack version 8.
+
+## 2026-10-03 · reworded · behind is what the member's own update would move
+- **Reason:** there is no canon repository for a `cn` member to be compared with, and its stamp no longer carries the numbers; the measure a member acts on is its update's candidate engine and each held pack's selected version.
+- **Actor:** build lead, ClaudiniteEngine#61.
+- **Model:** Claude Opus 5.5 (1M context)
+- **Mechanism:** a RULES.md rule naming `cn fleet judge`.

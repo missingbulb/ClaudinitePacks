@@ -32,7 +32,7 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 | claude-code-web-users-support | 60928.1 | 13 | 1 | 4 | 0 | 8 | 7 | 0 | 1 | 8 |
 | claudinite-canon-curation | 61002.2 | 65 | 3 | 6 | 18 | 5 | 10 | 0 | 0 | 13 |
 | claudinite-dashboard | 61002.1 | 16 | 3 | 1 | 4 | 44 | 42 | 1 | 4 | 10 |
-| claudinite-fleet-sheepdog | 61002.2 | 29 | 1 | 1 | 8 | 24 | 23 | 0 | 0 | 9 |
+| claudinite-fleet-sheepdog | 61003.1 | 29 | 1 | 1 | 6 | 10 | 13 | 0 | 0 | 6 |
 | claudinite-growth | 61003.1 | 159 | 8 | 0 | 16 | 10 | 13 | 0 | 0 | 0 |
 | claudinite-lifecycle | 61003.1 | 42 | 3 | 0 | 2 | 1 | 5 | 0 | 0 | 2 |
 | claudinite-tasks | 61003.1 | 23 | 3 | 0 | 5 | 26 | 14 | 0 | 0 | 1 |
@@ -62,7 +62,7 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 | spec-driven-product | 60928.1 | 31 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | web-scraping | 60928.1 | 35 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | web-speech | 60928.1 | 33 | 3 | 6 | 0 | 1 | 5 | 0 | 0 | 10 |
-| **38 packs** | | 1194 | 71 | 62 | 73 | 140 | 185 | 11 | 5 | 91 |
+| **38 packs** | | 1194 | 71 | 62 | 71 | 126 | 175 | 11 | 5 | 88 |
 
 ## aws-sam
 
@@ -355,28 +355,17 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 
 - `worldRules/seeds-agree.mjs` (imports `engine/`)
 
-### task (8)
+### task (6)
 
 - `tasks/fleet-add-missing-packs/task.json`
 - `tasks/fleet-add-missing-packs/worker.mjs`
 - `tasks/fleet-pack-seeds/task.json`
 - `tasks/fleet-pack-seeds/worker.mjs`
 - `tasks/fleet-roster/task.json`
-- `tasks/fleet-roster/worker.mjs`
 - `tasks/fleet-update/task.json`
-- `tasks/fleet-update/worker.mjs`
 
-### src (24)
+### src (10)
 
-- `dormancy.mjs`
-- `fleet-api.mjs` (imports `engine/`)
-- `fleet-config.mjs`
-- `fleet-token.mjs`
-- `migrations/2026-08-05-sheepdog-fleet-baseline/migration.mjs`
-- `migrations/2026-08-11-fleet-baseline-task/migration.mjs`
-- `migrations/2026-08-19-sheepdog-rename/migration.mjs`
-- `migrations/2026-09-25-fleet-update-rename/migration.mjs`
-- `param-bag.mjs`
 - `tasks/fleet-add-missing-packs/canon-packs.mjs` (imports `engine/`)
 - `tasks/fleet-add-missing-packs/fingerprint-fit.mjs` (imports `engine/`)
 - `tasks/fleet-add-missing-packs/force-add-packs.mjs`
@@ -387,18 +376,10 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 - `tasks/fleet-add-missing-packs/remote-context.mjs` (imports `engine/`)
 - `tasks/fleet-add-missing-packs/scan-for-needed-packs.mjs`
 - `tasks/fleet-pack-seeds/check-fleet-pack-seeds.mjs`
-- `tasks/fleet-roster/adoption-issues.mjs`
-- `tasks/fleet-roster/check-fleet-roster.mjs`
-- `tasks/fleet-roster/freshness.mjs` (imports `engine/`)
-- `tasks/fleet-update/follow-to-current.mjs`
-- `tasks/fleet-update/force-fleet-update.mjs`
 
-### test (23)
+### test (13)
 
-- `test/dormancy-drift.test.mjs`
-- `test/fleet-api.test.mjs`
-- `test/fleet-config.test.mjs`
-- `test/fleet-token.test.mjs` (imports `engine/`)
+- `test/handover_test.go`
 - `test/seeds-agree.test.mjs`
 - `test/tasks/fleet-add-missing-packs/canon-packs.test.mjs` (imports `engine/`)
 - `test/tasks/fleet-add-missing-packs/fingerprint-fit.test.mjs`
@@ -411,13 +392,6 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 - `test/tasks/fleet-add-missing-packs/task.test.mjs`
 - `test/tasks/fleet-pack-seeds/check-fleet-pack-seeds.test.mjs`
 - `test/tasks/fleet-pack-seeds/task.test.mjs`
-- `test/tasks/fleet-roster/adoption-issues.test.mjs`
-- `test/tasks/fleet-roster/check-fleet-roster.test.mjs`
-- `test/tasks/fleet-roster/freshness.test.mjs`
-- `test/tasks/fleet-roster/task.test.mjs`
-- `test/tasks/fleet-update/follow-to-current.test.mjs`
-- `test/tasks/fleet-update/force-fleet-update.test.mjs`
-- `test/tasks/fleet-update/task.test.mjs`
 
 ## claudinite-growth
 

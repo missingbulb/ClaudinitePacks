@@ -34,3 +34,8 @@
 - **Reason:** the Node `create-work-item.mjs` entry left with the task runner; the engine files a work item by hand with `cn work create <pack>/<task>`.
 - **Actor:** build lead, completing ClaudinitePacks #20 so the runner's removal lands with every importer ported.
 - **Mechanism:** the rule's command block names the engine command; the Context knobs are unchanged.
+
+## 2026-10-03 · reworded · the lever follows each member to the published versions
+- **Reason:** `cn fleet update` measures current as what a member's own update would decide; there is no canon to follow members to.
+- **Actor:** build lead, ClaudiniteEngine#61.
+- **Model:** Claude Opus 5.5 (1M context)

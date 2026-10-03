@@ -122,3 +122,9 @@
 - **Reason:** `60928.1` is a Node engine version, which `cn` reads only as the legacy two-part form any engine satisfies (ClaudiniteEngine#18); a new version must name the `cn` release it needs, and release-packs refused claudinite-fleet-sheepdog 61002.1 for carrying it. `61001.1.0` is the engine floor, below which no `cn` is released, so it holds back no engine the old value admitted.
 - **Actor:** build lead, repairing release-packs on main after ClaudinitePacks #20.
 - **Mechanism:** the manifest's `minEngineVersion`, which the pack update enforces; `release.mjs plan` now refuses a two-part value on a version to publish before the merge. claudinite-fleet-sheepdog 61002.1.
+
+## 2026-10-03 · scope-changed · the roster and the update lever are engine commands
+- **Reason:** the roster's and the lever's modules, the shared pack-root modules (`fleet-api.mjs`, `fleet-config.mjs`, `fleet-token.mjs`, `dormancy.mjs`, `param-bag.mjs`) and the migrations imported the Node engine or ran only in a Node member; `cn` holds the sweeps as engine code (`cn fleet roster`, `cn fleet update`, `cn fleet judge`, `cn fleet token`), and there is no canon repository to measure against: current is what a member's own update would decide. The pack keeps its declarations, rules and skill.
+- **Actor:** build lead, ClaudiniteEngine#61.
+- **Model:** Claude Opus 5.5 (1M context)
+- **Mechanism:** the pack manifest. claudinite-fleet-sheepdog 61003.1.
