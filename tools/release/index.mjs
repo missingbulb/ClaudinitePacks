@@ -7,8 +7,10 @@ export const INDEX_KEYS = ['v', 'pack', 'serial', 'versions'];
 export const ENTRY_KEYS = ['version', 'sha256', 'size', 'minEngineVersion', 'requires', 'channel', 'revoked', 'publishedAt', 'sourceCommit'];
 const CHANNELS = ['canary', 'stable'];
 const VERSION = /^\d+(\.\d+)*$/;
-// The Engine's release version, <day>.<n>.<patch>: what a new version's minEngineVersion names.
-const ENGINE_VERSION = /^\d+\.\d+\.\d+$/;
+// The Engine's release version, <major>.<day>.<n> as the Engine's shared/version reads it: what a
+// new version's minEngineVersion names. <day> has a month and a day of the month, <n> counts from
+// 1, and 0.0.0 is the Engine's dev build.
+const ENGINE_VERSION = /^(0\.0\.0|(0|[1-9]\d*)\.([1-9]\d*(0[1-9]|1[0-2])|[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])\.[1-9]\d*)$/;
 
 export class IndexError extends Error {}
 
@@ -31,7 +33,7 @@ const bumped = (index, versions) => ({ ...index, serial: index.serial + 1, versi
 
 // packJson is `packs/<id>/pack.json` as data; the archive fields come from the build.
 // The fields of pack.json an index entry copies, with `requires` absent read as []. A version not
-// yet on the branch (isNew) must name its engine as three dot-separated numbers; an entry already
+// yet on the branch (isNew) must name its engine as <major>.<day>.<n>; an entry already
 // published keeps whatever it carries.
 export function packFields(id, packJson, { isNew = false } = {}) {
   for (const field of ['version', 'minEngineVersion']) {
@@ -40,7 +42,7 @@ export function packFields(id, packJson, { isNew = false } = {}) {
   const { version, minEngineVersion } = packJson;
   if (!VERSION.test(version)) throw new IndexError(`${id}: pack.json version "${version}" is not dot-separated numbers`);
   if (isNew && !ENGINE_VERSION.test(minEngineVersion)) {
-    throw new IndexError(`${id} ${version}: minEngineVersion "${minEngineVersion}" is not three dot-separated numbers (<day>.<n>.<patch>, the Engine release it needs)`);
+    throw new IndexError(`${id} ${version}: minEngineVersion "${minEngineVersion}" is not <major>.<day>.<n>, the Engine release it needs`);
   }
   const requires = packJson.requires ?? [];
   if (!Array.isArray(requires) || requires.some((r) => typeof r !== 'string')) throw new IndexError(`${id}: pack.json requires is not a list of pack ids`);

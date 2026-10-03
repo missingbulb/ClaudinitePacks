@@ -35,9 +35,9 @@ vendors each pack whose version is already on `vendored` and compares the files 
 unpacked set. A differing, missing or extra path fails the job with
 `published <id> <version> CHANGED: differing: <path>` (or `missing:`, `extra:`); bump that pack's
 `pack.json` version. A version to publish whose `pack.json` the publish job would refuse fails
-too, with the same `::error::` line, such as a two-part `minEngineVersion` or a
-`relevanceDetector` the engine's catalog reader would refuse (`<id> <version>: <sentence>`, one line
-per problem). A change only to what
+too, with the same `::error::` line, such as a `minEngineVersion` that is not
+`<major>.<day>.<n>` or a `relevanceDetector` the engine's catalog reader would refuse
+(`<id> <version>: <sentence>`, one line per problem). A change only to what
 the vendored set drops (`test/`, `docs/`,
 `provenance/` at the pack root, and `checks/*_test.go`) needs no bump. The publish job's own
 refusal is the backstop after the merge.
@@ -107,8 +107,8 @@ plus a newline, keys in this order, and never re-serialized by anything else:
 - `version`, `minEngineVersion` and `requires` are copied from `packs/<id>/pack.json`; absent
   `requires` becomes `[]`; a pack without a string `version` or `minEngineVersion` fails the run.
   `minEngineVersion` is a minimum, not interpreted here, except that a new version must spell it
-  as three dot-separated numbers (`<day>.<n>.<patch>`, the Engine release it needs); an entry
-  already published is rewritten as it is.
+  as `<major>.<day>.<n>`, the Engine release it needs, as the Engine's version reader takes it;
+  an entry already published is rewritten as it is.
 - `channel` is `canary` or `stable`, and a new version is always `canary`. `revoked` is a boolean.
 - `sha256` and `size` describe `<id>/<version>.tar.gz`; `publishedAt` is the publish job's clock,
   RFC 3339 UTC seconds; `sourceCommit` is the `main` commit the run built.
@@ -147,7 +147,7 @@ forced pack's questions against it, so nothing needs a clone of the shelf.
       "id": "python",
       "version": "61001.2",
       "channel": "stable",
-      "minEngineVersion": "61001.1.0",
+      "minEngineVersion": "1.61001.1",
       "requires": [],
       "relevanceDetector": {
         "about": "pyproject.toml (at the repo root or one directory down)",

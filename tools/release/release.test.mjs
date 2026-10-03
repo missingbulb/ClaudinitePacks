@@ -6,7 +6,7 @@ import { join } from 'node:path';
 import { gunzipSync, gzipSync } from 'node:zlib';
 import { readRoots } from '../sign/sign.mjs';
 import { verifyCatalog } from './catalog.mjs';
-import { readIndex, verifyIndex } from './index.mjs';
+import { packFields, readIndex, verifyIndex } from './index.mjs';
 import {
   build, commitAll, editVendored, git, packJson, publish, put, REPO_ROOT, run, scratch, sha256, show, testChain, vendoredLog, world,
 } from './test-fixture.mjs';
@@ -35,7 +35,7 @@ test('first run publishes every pack: unpacked set, archive, signed index, one c
     assert.equal(ix.serial, 1);
     assert.equal(ix.versions.length, 1);
     assert.deepEqual({ ...ix.versions[0], publishedAt: 'x' }, {
-      version: '60101.1', sha256: sha256(archive), size: archive.length, minEngineVersion: '60101.1.0',
+      version: '60101.1', sha256: sha256(archive), size: archive.length, minEngineVersion: '1.60101.1',
       requires: id === 'acme-pack' ? ['acme-pack-two'] : [], channel: 'canary', revoked: false, publishedAt: 'x', sourceCommit: srcHead,
     });
     assert.match(ix.versions[0].publishedAt, /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ$/);
@@ -398,16 +398,16 @@ test('plan --content: a bumped version or a pack absent from vendored is to publ
   assert.equal(p.stdout, 'publish acme-pack 60101.2\npublish acme-pack-three 60101.1\npublished acme-pack-two 60101.1 unchanged\n');
 });
 
-test('plan fails a version to publish whose minEngineVersion publish would refuse, and passes once it names three parts', () => {
+test('plan fails a version to publish whose minEngineVersion publish would refuse, and passes once it names <major>.<day>.<n>', () => {
   const w = world();
   put(w.src, 'packs/acme-pack-two/pack.json', packJson('60101.1', { minEngineVersion: '60928.1' }));
   commitAll(w.src, 'two-part floor');
   assert.equal(publish(w, build(w).archives, testChain(scratch())).status, 1);
   const before = planContent(w);
   assert.equal(before.status, 1, before.out);
-  assert.match(before.stdout, /^::error::acme-pack-two 60101\.1: minEngineVersion "60928\.1" is not three dot-separated numbers/m);
+  assert.match(before.stdout, /^::error::acme-pack-two 60101\.1: minEngineVersion "60928\.1" is not <major>\.<day>\.<n>/m);
   put(w.src, 'packs/acme-pack-two/pack.json', packJson('60101.1'));
-  commitAll(w.src, 'three-part floor');
+  commitAll(w.src, 'a cn floor');
   assert.equal(publish(w, build(w).archives, testChain(scratch())).status, 0);
   const after = planContent(w);
   assert.equal(after.status, 0, after.out);
@@ -433,14 +433,15 @@ test('plan fails a version to publish whose fingerprint the catalog reader refus
 
 // Every version on main is on vendored once the release runs (plan refuses a changed pack without a
 // bump, publish refuses a reused version), so each pack's pack.json here is the newest version of
-// it on the branch: none may name a Node engine, which cn's Select skips.
-test('the newest version of every pack on the branch names a three-part minEngineVersion', () => {
-  const two = [];
+// it on the branch: each names its floor as a version publish takes, never a Node engine, which
+// cn's Select skips, nor the retired <day>.<n>.0 form cn no longer reads.
+test('the newest version of every pack on the branch names a <major>.<day>.<n> minEngineVersion', () => {
+  const refused = [];
   for (const id of git(REPO_ROOT, 'ls-tree', '--name-only', 'HEAD', 'packs/').trim().split('\n')) {
     const file = join(REPO_ROOT, id, 'pack.json');
     let manifest;
     try { manifest = JSON.parse(readFileSync(file, 'utf8')); } catch { continue; }
-    if (!/^\d+\.\d+\.\d+$/.test(String(manifest.minEngineVersion))) two.push(`${id.replace('packs/', '')} ${manifest.version}: ${manifest.minEngineVersion}`);
+    try { packFields(id.replace('packs/', ''), manifest, { isNew: true }); } catch (e) { refused.push(e.message); }
   }
-  assert.deepEqual(two, []);
+  assert.deepEqual(refused, []);
 });
