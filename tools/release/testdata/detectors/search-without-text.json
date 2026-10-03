@@ -1,0 +1,20 @@
+{
+  "detector": {
+    "about": "x",
+    "paths": {
+      "source": "a"
+    },
+    "search": [
+      "a",
+      "b",
+      "c",
+      "d",
+      "e",
+      "f",
+      "g"
+    ]
+  },
+  "expect": [
+    "relevanceDetector.search names 7 terms; one code search joins at most six"
+  ]
+}

@@ -21,9 +21,10 @@
 
 - **Judging whether a member is behind** — ask what its own update would move it to: its engine
   pin against the published engine versions, each held pack against the published pack versions
-  (`cn fleet judge <owner/name>` answers it), never a commit, a canon repository or the age of any
-  stamp. A member's own update acts on exactly that, so any other measure reports a gap the member
-  will never close, or misses one it will. (judging-whether-member)
+  (`cn fleet judge <owner/name>` answers it, and `.claudinite/fleet/roster.GENERATED.json` holds the
+  last sweep's answer for every member), never a commit, a canon repository or the age of any stamp.
+  A member's own update acts on exactly that, so any other measure reports a gap the member will
+  never close, or misses one it will. (judging-whether-member)
 
 - **Answering why the fleet did not move** — read the member's own artifacts first: its
   declaration, its stamp, the runs on its head sha. This repo dispatches; each member updates

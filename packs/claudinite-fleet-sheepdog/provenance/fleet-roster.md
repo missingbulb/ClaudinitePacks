@@ -81,3 +81,9 @@
 - **Actor:** build lead, ClaudiniteEngine#61.
 - **Model:** Claude Opus 5.5 (1M context)
 - **Mechanism:** the task's `code_work`, with `FLEET_GITHUB_TOKEN` its declared secret; the `ref-not-on-trunk` state goes with canon.
+
+## 2026-10-03 · policy-changed · the roster is published, one verdict per repository, on an amend lane
+- **Reason:** a fleet dashboard priced every member against a canon in the browser; there is no canon, and pricing there means npm packuments and the shelf's signed indexes for every member on every load. The sweep already judges every member daily, so it publishes that answer once: `.claudinite/fleet/roster.GENERATED.json`, written only when a verdict moved. A derived fleet artifact lands as an accumulating pull request under a policy naming its one path.
+- **Actor:** build lead, ClaudiniteEngine#65.
+- **Model:** Claude Opus 5.5 (1M context)
+- **Mechanism:** `expected_outcome: amend_existing_or_create_new_pr`, `automerge: ["fleet-roster-artifact"]` (this pack's `merge-rules.json`), the executor delivering the tree change a shell `code_work` leaves; the park sentence now names the executor's `needs-human-failure` park and the `action` kind in its comment.

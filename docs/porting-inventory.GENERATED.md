@@ -32,7 +32,7 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 | claude-code-web-users-support | 60928.1 | 13 | 1 | 4 | 0 | 8 | 7 | 0 | 1 | 8 |
 | claudinite-canon-curation | 61002.2 | 65 | 3 | 6 | 18 | 5 | 10 | 0 | 0 | 13 |
 | claudinite-dashboard | 61002.1 | 16 | 3 | 1 | 4 | 44 | 42 | 1 | 4 | 10 |
-| claudinite-fleet-sheepdog | 61003.2 | 30 | 1 | 0 | 4 | 0 | 1 | 0 | 0 | 0 |
+| claudinite-fleet-sheepdog | 61003.3 | 30 | 2 | 0 | 4 | 0 | 1 | 0 | 0 | 0 |
 | claudinite-growth | 61003.1 | 159 | 8 | 0 | 16 | 10 | 13 | 0 | 0 | 0 |
 | claudinite-lifecycle | 61003.2 | 42 | 3 | 0 | 2 | 1 | 6 | 0 | 0 | 2 |
 | claudinite-tasks | 61003.1 | 23 | 3 | 0 | 5 | 26 | 14 | 0 | 0 | 1 |
@@ -62,7 +62,7 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 | spec-driven-product | 60928.1 | 31 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | web-scraping | 60928.1 | 35 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | web-speech | 60928.1 | 33 | 3 | 6 | 0 | 1 | 5 | 0 | 0 | 10 |
-| **38 packs** | | 1195 | 71 | 61 | 69 | 116 | 164 | 11 | 5 | 82 |
+| **38 packs** | | 1195 | 72 | 61 | 69 | 116 | 164 | 11 | 5 | 82 |
 
 ## aws-sam
 

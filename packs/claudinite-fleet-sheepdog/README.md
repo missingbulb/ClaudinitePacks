@@ -12,7 +12,7 @@ member executes:
 
 | sweep | task | asks |
 |---|---|---|
-| `cn fleet roster` | [fleet-roster](tasks/fleet-roster/README.md) (daily) | is this repo a **member**, and is that membership still **meaning** anything? → adoption issues + the run report's freshness section |
+| `cn fleet roster` | [fleet-roster](tasks/fleet-roster/README.md) (daily) | is this repo a **member**, and is that membership still **meaning** anything? → adoption issues + the run report's freshness section + `.claudinite/fleet/roster.GENERATED.json`, one verdict per repository, for a fleet dashboard |
 | `cn fleet add-packs` | [fleet-add-missing-packs](tasks/fleet-add-missing-packs/README.md) (weekly, and forceable) | which packs is a member missing — the ones its **shape** suspects, or the ones the owner named? → a work-list issue *in* each member + that member's scheduler fired; the member's own agent adopts |
 | `cn fleet pack-seeds` | [fleet-pack-seeds](tasks/fleet-pack-seeds/README.md) (daily) | does a member declare what this fleet **standardizes on**? → the declaration, written |
 | `cn fleet update` | [fleet-update](tasks/fleet-update/README.md) (`manual` — forced runs only) | make every member update **now**, then follow each to the published engine and pack versions → an outcome table, not a dispatch count |
@@ -53,11 +53,12 @@ commit that vendors the pack's code. The sweep is the **standing** half: a migra
 and retires, while the sweep keeps converging every member the fleet acquires after it is gone.
 
 The fit sweep fingerprints against the shelf's signed `catalog.json` — every pack the shelf offers on
-this repo's channel, with its fingerprint and its adoption questions — never against this repo's own
-mount, which carries only the packs the enforcer declares, so sweeping against it would report every
-member as fitted while testing almost nothing. Its report names how many packs it measured against,
-and a catalog smaller than five packs is refused, so a shrunken denominator is visible rather than
-silent.
+**each member's** channel, the one its own update delivers from, with its fingerprint and its adoption
+questions — never against this repo's own mount, which carries only the packs the enforcer declares,
+so sweeping against it would report every member as fitted while testing almost nothing. This repo's
+own channel decides nothing about any member. Its report names how many packs the catalog holds and
+how many are on each channel, and a catalog of fewer than five distinct packs across both channels is
+refused, so a shrunken denominator is visible rather than silent.
 
 **The fit sweep's agent stage splits the way every one here does** — everything decidable in code
 stays in the agentless `code_work`, and the agent is reached only for the part that is genuinely a
@@ -177,7 +178,7 @@ implementation, never in how a task is wired.
 
 | task | when it runs | agent | outcome |
 |---|---|---|---|
-| `fleet-roster` | `due:daily` | none | none |
+| `fleet-roster` | `due:daily` | none | the roster artifact, on one accumulating pull request its `fleet-roster-artifact` policy merges |
 | `fleet-add-missing-packs` | `due:weekly` (forceable) | none | none |
 | `fleet-pack-seeds` | `due:daily` | none | none |
 | `fleet-update` | never — no `preconditions`; only from an item the owner creates | none | none |

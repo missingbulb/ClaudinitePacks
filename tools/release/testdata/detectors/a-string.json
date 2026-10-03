@@ -1,0 +1,6 @@
+{
+  "detector": "paths",
+  "expect": [
+    "relevanceDetector is an object or null"
+  ]
+}
