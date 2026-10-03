@@ -9,7 +9,7 @@ coded checks become Go; tasks stay Node against `@claudinite/sdk`; tests are rew
 the pinned `cn`, or dropped when they check only file shapes or doc text. A file that imports
 Claudinite's `engine/` by relative path does not run here until its slice replaces the import.
 
-`minEngineVersion` across the shelf: `60928.1` (5 packs), `61001.1.0` (33 packs).
+`minEngineVersion` across the shelf: `60928.1` (4 packs), `61001.1.0` (34 packs).
 A two-part one is a Claudinite Node engine version, which the Engine's `shared/version` (three
 parts, `<day>.<n>.0`) does not read; a ported pack's first version sets `minEngineVersion` to the
 `cn` version it was tested on.
@@ -46,7 +46,7 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 | google-identity | 61002.1 | 9 | 2 | 1 | 0 | 0 | 3 | 0 | 0 | 0 |
 | headless-browser | 61003.1 | 31 | 2 | 0 | 0 | 0 | 4 | 0 | 0 | 1 |
 | hello | 1.4 | 14 | 3 | 4 | 4 | 0 | 0 | 0 | 0 | 0 |
-| host-page | 60928.1 | 19 | 1 | 3 | 0 | 1 | 1 | 0 | 0 | 4 |
+| host-page | 61003.1 | 19 | 1 | 2 | 0 | 0 | 3 | 0 | 0 | 0 |
 | html | 61003.1 | 9 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | ios | 61003.1 | 7 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | jwt | 61003.1 | 20 | 3 | 0 | 0 | 0 | 6 | 0 | 0 | 6 |
@@ -62,7 +62,7 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 | spec-driven-product | 61003.1 | 31 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | web-scraping | 61003.1 | 35 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | web-speech | 60928.1 | 33 | 3 | 6 | 0 | 1 | 5 | 0 | 0 | 10 |
-| **38 packs** | | 1195 | 72 | 59 | 69 | 116 | 172 | 11 | 5 | 57 |
+| **38 packs** | | 1195 | 72 | 58 | 69 | 115 | 174 | 11 | 5 | 53 |
 
 ## aws-sam
 
@@ -631,19 +631,16 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 
 ## host-page
 
-### coded-check (3)
+### coded-check (2)
 
-- `worldRules/page-observers-disconnected.mjs` (imports `engine/`)
-- `worldRules/synthetic-input-events-bubble.mjs` (imports `engine/`)
-- `worldRules/synthetic-input-events-target-app-node.mjs` (imports `engine/`)
+- `checks/checks.go`
+- `checks/lib.go`
 
-### src (1)
+### test (3)
 
-- `lib.mjs`
-
-### test (1)
-
-- `test/host-page-contracts.test.mjs` (imports `engine/`)
+- `checks/checks_test.go`
+- `checks/helpers_test.go`
+- `test/declared_test.go`
 
 ## jwt
 
