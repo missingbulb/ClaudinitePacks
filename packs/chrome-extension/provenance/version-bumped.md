@@ -16,3 +16,16 @@
 - **Reason:** owner decision, 2026-09-25: the field names what happens when the check fails, and
   *severity* keeps its impact sense; what this element enforces is unchanged.
 - **Actor:** @missingbulb (owner).
+
+
+## 2026-10-03 · moved · Ported to Go (missingbulb/ClaudiniteEngine#68)
+- **Reason:** the Go engine runs a pack's coded checks from its `checks/` directory, built against
+  the SDK, so the check is rewritten in Go with its `on_fail`, `why`, `doc` and finding text
+  unchanged, and the `.mjs` with its import of the Node engine is removed. The Go SDK's check ids
+  are lowercase letters, digits and dashes, so `cer/version-bumped` is `version-bumped`, and this
+  file moves from `cer-version-bumped.md` to match.
+- **Actor:** @missingbulb (owner), through the chunk 17 plan (ClaudinitePacks#30 T2).
+- **Mechanism:** `packs/chrome-extension/checks/version_bumped.go`, unit-tested beside it through
+  the SDK's fake engine, run through `cn check --pack chrome-extension` by `test/`, and compared
+  with the Node engine by ClaudiniteEngine's parity harness.
+- **Landed:** pending.

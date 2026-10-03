@@ -100,3 +100,12 @@
 - **Reason:** `60928.1` is a Node engine version, which `cn` reads only as the legacy two-part form any engine satisfies (ClaudiniteEngine#18); a new version must name the `cn` release it needs, and release-packs refused chrome-extension 61002.1 for carrying it. `61001.1.0` is the engine floor, below which no `cn` is released, so it holds back no engine the old value admitted.
 - **Actor:** build lead, repairing release-packs on main after ClaudinitePacks #20.
 - **Mechanism:** the manifest's `minEngineVersion`, which the pack update enforces; `release.mjs plan` now refuses a two-part value on a version to publish before the merge. chrome-extension 61002.1.
+
+## 2026-10-03 · scope-changed · the coded checks run on cn
+- **Reason:** the four coded checks imported the Node engine and ran on no engine of cn's; they are
+  Go now, with `cer/release-workflows` and `cer/version-bumped` named `release-workflows` and
+  `version-bumped` as the SDK's id grammar requires, and the tests that imported the Node engine are
+  Go fixtures.
+- **Actor:** build lead, ClaudinitePacks#30 T2.
+- **Mechanism:** `checks/*.go` against the SDK, `test/` through `cn check --pack chrome-extension`;
+  `minEngineVersion` `61001.1.0`, the floor the SDK names. chrome-extension 61003.1.

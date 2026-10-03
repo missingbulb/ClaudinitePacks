@@ -37,3 +37,16 @@
 - **Reason:** owner decision: the mechanism that re-vendors a mount is called update, and the pack
   every repo declares is basics; the baseline wording named a retired mechanism.
 - **Actor:** @missingbulb (owner).
+
+
+## 2026-10-03 · moved · Ported to Go (missingbulb/ClaudiniteEngine#68)
+- **Reason:** the Go engine runs a pack's coded checks from its `checks/` directory, built against
+  the SDK, so the check is rewritten in Go with its `on_fail`, `why`, `doc` and finding text
+  unchanged, and the `.mjs` with its import of the Node engine is removed. The Go SDK's check ids
+  are lowercase letters, digits and dashes, so `cer/release-workflows` is `release-workflows`, and
+  this file moves from `cer-release-workflows.md` to match.
+- **Actor:** @missingbulb (owner), through the chunk 17 plan (ClaudinitePacks#30 T2).
+- **Mechanism:** `packs/chrome-extension/checks/release_workflows.go`, unit-tested beside it through
+  the SDK's fake engine, run through `cn check --pack chrome-extension` by `test/`, and compared
+  with the Node engine by ClaudiniteEngine's parity harness.
+- **Landed:** pending.
