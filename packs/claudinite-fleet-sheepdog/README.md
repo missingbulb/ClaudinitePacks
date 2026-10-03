@@ -4,18 +4,18 @@ The fleet **enforcer** marker — declaring it makes a repo the one that covers 
 under an owner. Opt-in (a dedicated claudinite-fleet-sheepdog repo declares it; **not** seeded by `--init`).
 
 Thin by design: prose + the config schema (the claudinite-fleet-sheepdog pack entry's `config` = `{ owner, kind, exclude,
-canonRepo, packSeeds }`) + five cross-repo **sweeps/levers**, each a
-scheduled task whose sweep is its `code_work`. The pack carries **no workflow**, and nothing agentic
+packSeeds }`) + four cross-repo **sweeps/levers**, each a
+task whose sweep is its `code_work`. The pack carries **no workflow**, and nothing agentic
 happens *here* — it happens in the *member*, on the fan-out model
 where the enforcer dispatches and the
 member executes:
 
 | sweep | task | asks |
 |---|---|---|
-| [check-fleet-roster.mjs](tasks/fleet-roster/check-fleet-roster.mjs) → [adoption-issues.mjs](tasks/fleet-roster/adoption-issues.mjs) + [freshness.mjs](tasks/fleet-roster/freshness.mjs) | [fleet-roster](tasks/fleet-roster/README.md) (daily) | is this repo a **member**, and is that membership still **meaning** anything? → adoption issues + the run report's freshness section |
+| `cn fleet roster` | [fleet-roster](tasks/fleet-roster/README.md) (daily) | is this repo a **member**, and is that membership still **meaning** anything? → adoption issues + the run report's freshness section |
 | [scan-for-needed-packs.mjs](tasks/fleet-add-missing-packs/scan-for-needed-packs.mjs) + [force-add-packs.mjs](tasks/fleet-add-missing-packs/force-add-packs.mjs) | [fleet-add-missing-packs](tasks/fleet-add-missing-packs/README.md) (weekly, and forceable) | which packs is a member missing — the ones its **shape** suspects, or the ones the owner named? → a work-list issue *in* each member + that member's scheduler fired; the member's own agent adopts |
 | [check-fleet-pack-seeds.mjs](tasks/fleet-pack-seeds/check-fleet-pack-seeds.mjs) | [fleet-pack-seeds](tasks/fleet-pack-seeds/README.md) (daily) | does a member declare what this fleet **standardizes on**? → the declaration, written |
-| [force-fleet-update.mjs](tasks/fleet-update/force-fleet-update.mjs) | [fleet-update](tasks/fleet-update/README.md) (`manual` — forced runs only) | make every member update **now**, then follow each to canon's published versions → an outcome table, not a dispatch count |
+| `cn fleet update` | [fleet-update](tasks/fleet-update/README.md) (`manual` — forced runs only) | make every member update **now**, then follow each to the published engine and pack versions → an outcome table, not a dispatch count |
 
 **The roster carries two questions** because they are asked of the same repos from the same walk.
 The freshness half exists because
@@ -96,7 +96,7 @@ freshness section names its fresh members and its out-of-scope repos with why; t
 back **fitted** as loudly as the ones with findings, and names the fingerprints it could not decide
 from outside rather than counting them as non-matches; the usage sweep's `coverage` section
 accounts for every repo under the owner and its run report flags folding members with no captured
-activity that day; fleet-update reports every repo it did *not* dispatch, with the reason, and every repo it DID dispatch that never reached canon's versions.
+activity that day; fleet-update reports every repo it did *not* dispatch, with the reason, and every repo it DID dispatch that never reached the published versions.
 
 **Undecidable is not a non-match.** Most fingerprints are answerable from a path listing, and the fit
 sweep answers those over one tree call per member; one that reads file *contents* is resolved by a
@@ -107,7 +107,7 @@ truncated tree listing makes every non-match on that repo undecided for the same
 look" and "we looked and it isn't there" are different facts, and only one is safe to act on.
 
 **A sweep that cannot see a repo says so and fails.** A repo whose declaration the roster cannot read
-is `unknown` to both its questions, never uncovered and never behind; a member whose mount probe
+is `unknown` to both its questions, never uncovered and never behind; a member whose freshness read
 fails is `unknown` to freshness alone, because its declaration was read and the coverage verdict
 stands; a member the fit scan cannot read is `unknown`, never fitted; a member whose scheduler
 refused a fan-out dispatch is named and fails the run, because a work list nobody will act on is not
@@ -119,53 +119,52 @@ parks one open issue for it.
 task declaring `trigger: request`: not on the schedule, never asked at any tick, it runs only from
 an item the owner creates by hand — `create-work-item claudinite-fleet-sheepdog/fleet-update`, with `REPOS=…`, `DRY_RUN=true`,
 `INCLUDE_DORMANT=true`, `FOLLOW_MINUTES=…` as `--context` lines — which wakes every covered member's own
-standing `update` item so the fleet picks canon up now instead of over the next day. A forced
+standing `update` item so the fleet picks up the published versions now instead of over the next day. A forced
 fleet-add-missing-packs item is the second lever, same command, its own Context.
 
 **`fleet-update` reports outcomes, not dispatches.** A dispatch POST returning 204 says a
 run was queued and nothing more, and a report built from those 204s describes the sweep's own outgoing
 calls while reading as fleet-wide delivery. So after firing, the sweep
-follows each member until its own declaration stamps the engine and every declared pack at the versions
-canon publishes, and reports each as `updated`, `already-current`, `did-not-update`, `never-started`
-or `unknown`. A member already at canon's versions is a success in its own right: its update correctly
-declines, and it does no work. *Current* is a claim about **published version numbers** — canon content
-that shipped without a version bump moves no number and is invisible to it, which the report says itself.
+follows each member until its own update would move nothing — its engine pin and every declared pack at
+the published versions — and reports each as `updated`, `already-current`, `moved` (a Node member whose
+stamp changed), `did-not-update`, `never-started` or `unknown`. A member already at the published
+versions is a success in its own right: its update correctly declines, and it does no work. *Current* is
+a claim about **published version numbers** — content that shipped without a version bump moves no
+number and is invisible to it, which the report says itself.
 
-[follow-to-current.mjs](tasks/fleet-update/follow-to-current.mjs) polls a real terminal condition:
+The follow polls a real terminal condition:
 each member leaves the loop the moment it reads current, so an already-current fleet finishes
 on the first pass in seconds, and the lever stays an ordinary queue task.
 
-Each sweep lives **inside its task's folder**, because nothing outside that task uses it. Only what
-they all share sits at the pack root: [fleet-api.mjs](fleet-api.mjs) (the cross-repo REST
-primitives, including the one that fires a member's scheduler),
-[fleet-config.mjs](fleet-config.mjs) (the one reader of this pack's entry `config`) and
-[fleet-token.mjs](fleet-token.mjs) (the one statement of what `FLEET_GITHUB_TOKEN` must be granted —
-every "token is not set" message, the adoption handover step and a `403`'s hint are rendered from its
-table, so no sweep ever states a subset of its own).
+The roster and the lever are engine code, `cn fleet roster` and `cn fleet update`, each its task's
+`code_work`. The engine holds what every sweep shares: the cross-repo REST reads and the one call that
+fires a member's scheduler, the one reader of this pack's entry `config`, and the one statement of what
+`FLEET_GITHUB_TOKEN` must be granted (`cn fleet token`) — every "token is not set" message, a `403`'s
+hint and this pack's adoption handover step are rendered from that table, and the pack's test holds the
+handover step to it, so no sweep ever states a subset of its own. `cn fleet judge <owner/name>` answers
+one repository's shape, dormancy and freshness without a sweep.
 
 The rest of the machinery — running the daily-run, the task engine (`packs/claudinite-tasks/`), scheduling —
 is Claudinite **core**. What a session in an enforcer repo has to get right: [RULES.md](RULES.md).
 
 ## Config
 
-The enforcer's `.claudinite-settings.json` carries, as its `packs` entry for this pack:
+The enforcer's `.claudinite/settings.*` carries, as its `packs` entry for this pack (JSON shown):
 
 ```json
 { "id": "claudinite-fleet-sheepdog", "config": { "owner": "missingbulb", "kind": "user", "exclude": ["owner/repo-a"],
-                                "canonRepo": "missingbulb/Claudinite",
                                 "packSeeds": [{ "id": "<a pack>", "config": { … } }] } }
 ```
 
 | key | default | what it is |
 |---|---|---|
 | `owner` | this repo's owner | whose repositories make up the fleet |
-| `kind` | `"user"` | org support is a later addition |
+| `kind` | `"user"` | the only kind `cn fleet` sweeps; any other is refused |
 | `exclude` | none | the repos deliberately kept out, a full `owner/name` each |
-| `canonRepo` | `<owner>/Claudinite` | what a member's installed versions are measured against — named rather than inferred, because a version tells you nothing about where it came from |
 | `packSeeds` | none | what this fleet wants every member to declare, each `{ id, config? }`. The **only** place a pack is named: the sweep carries the mechanism, the fleet carries the choice |
 
-Every key defaults, so an existing claudinite-fleet-sheepdog config keeps working untouched.
-[fleet-config.mjs](fleet-config.mjs) is the one reader of all of it.
+Every key but the entry's `config` itself defaults; an entry with no `config` is refused, since absence
+is not consent to cover everything. The engine's reader is the one reader of all of it.
 
 ## How the tasks are wired
 

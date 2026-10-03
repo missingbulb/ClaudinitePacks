@@ -69,3 +69,9 @@
 - **Actor:** @missingbulb (owner).
 - **Rejected:** renaming the sweep's `FLEET_BASELINE_*` environment knobs: a hand-run still setting
   the old `DRY_RUN` name would run live.
+
+## 2026-10-03 · ported · the lever is `cn fleet update`, followed to the published versions
+- **Reason:** the worker imported the Node engine and followed members to canon's stamped versions; the engine's lever dispatches the same scheduler wake and follows each member until its own update would move nothing, a Node member until its stamp moves.
+- **Actor:** build lead, ClaudiniteEngine#61.
+- **Model:** Claude Opus 5.5 (1M context)
+- **Mechanism:** the task's `code_work`, `trigger: request`, with `FLEET_GITHUB_TOKEN` its declared secret.

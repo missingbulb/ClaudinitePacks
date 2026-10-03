@@ -19,11 +19,11 @@
   pack-seed sweep could not reach is not converged. Fix the access and re-run.
   (reading-unknown-report)
 
-- **Judging whether a member is behind** — compare `engineVersion` and `packVersions` against
-  canon, never the age of its stamped `ref`. The update flows deliberately never rewrite `ref` or
-  `updated`, so the stamp is provenance — which commit first vendored the mount — and stays
-  frozen on a member that is perfectly current. Its age measures nothing, and measuring it
-  calls the whole fleet behind on one arbitrary day. (judging-whether-member)
+- **Judging whether a member is behind** — ask what its own update would move it to: its engine
+  pin against the published engine versions, each held pack against the published pack versions
+  (`cn fleet judge <owner/name>` answers it), never a commit, a canon repository or the age of any
+  stamp. A member's own update acts on exactly that, so any other measure reports a gap the member
+  will never close, or misses one it will. (judging-whether-member)
 
 - **Answering why the fleet did not move** — read the member's own artifacts first: its
   declaration, its stamp, the runs on its head sha. This repo dispatches; each member updates
@@ -44,7 +44,7 @@
   commas), `--context "DRY_RUN=true"` to see the list without dispatching, or
   `--context "INCLUDE_DORMANT=true"` to reach members that stopped their own scheduler on purpose.
   Both knobs are read from the item's Context and nowhere else — an item created without them runs
-  unscoped and live. It queues one run per member and then FOLLOWS each to canon's published engine
+  unscoped and live. It queues one run per member and then FOLLOWS each to the published engine
   and pack versions, reporting per member whether it updated, was already current, or never got
   there — never a count of accepted dispatches. A member with nothing to do reads
   `already-current`, which is a success, so over-using it is wasteful rather than unsafe.
@@ -57,7 +57,7 @@
 ## Credentials
 
 - **Granting or repairing `FLEET_GITHUB_TOKEN`** — a fine-grained PAT spanning the owner's
-  repositories, granted exactly what [`fleet-token.mjs`](fleet-token.mjs)'s table names — the only
+  repositories, granted exactly what `cn fleet token` prints — the only
   place the permissions are written, because a per-sweep subset is always a defensible answer and
   never the right one. Grant it whole: the token is granted once, for the pack.
   (granting-repairing-fleetgithubtoken)

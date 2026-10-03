@@ -75,3 +75,9 @@
 - **Reason:** the canon's manifests may now be pack.json.
 - **Actor:** @missingbulb (owner), asking for pack.json manifests.
 - **Mechanism:** the worker's manifest read tries pack.json, then pack.mjs.
+
+## 2026-10-03 · ported · the roster is `cn fleet roster`, measured against the published versions
+- **Reason:** the worker and its sweep imported the Node engine and read canon's numbers over the API; the engine's sweep reads each member's `.claudinite/settings.*` (or names a Node member `node`) and measures freshness by what that member's own update would move it to, from npm and the pack indexes.
+- **Actor:** build lead, ClaudiniteEngine#61.
+- **Model:** Claude Opus 5.5 (1M context)
+- **Mechanism:** the task's `code_work`, with `FLEET_GITHUB_TOKEN` its declared secret; the `ref-not-on-trunk` state goes with canon.

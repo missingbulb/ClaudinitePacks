@@ -13,3 +13,9 @@
 - **Actor:** @missingbulb (owner).
 - **Model:** Claude, per the commit trailer.
 - **Landed:** #1052 (Fixes #1030) · pack version 12.
+
+## 2026-10-03 · reworded · the grant is `cn fleet token`'s table
+- **Reason:** `fleet-token.mjs` left with the Node sweeps; the engine holds the one table, and the pack's adoption handover step is held to it by the pack's test.
+- **Actor:** build lead, ClaudiniteEngine#61.
+- **Model:** Claude Opus 5.5 (1M context)
+- **Mechanism:** a RULES.md rule naming `cn fleet token`.
