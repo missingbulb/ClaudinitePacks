@@ -25,18 +25,17 @@ so the sections it prints without a draft under them are the run's work, not its
    conversion's entry - owing history where git shows the element earlier or its derived
    birth is an assumption, settled where git dates the birth on that entry's own day - and
    how many candidates `_declined.md` already holds. The listing is the whole pass: nothing owed is left off it.
-2. **Write the brief**, source-first: `brief <pack> > brief.md` (an element
+2. **Write the brief**, source-first: `cn provenance brief <pack> > brief.md` (an element
    list after the pack narrows it to those files) reads every empty file's history out of
    git, pull request first: each commit's body once, then a draft entry per element it bore
    or changed with the fields git vouches for - the date, the kind, the actor, the model,
    the carrier as `Mechanism`, `Landed` with the version - and the commit's shared fields in
    one `entry-defaults` fence ahead of its entries. Read the tracker comments and the issues
    each body names on GitHub; `cn provenance history <pack> <element>` prints one element's raw
-   evidence where the brief's derivation looks wrong. `brief` and `apply` are the canon
-   maintainer's verbs and `cn` carries neither yet (missingbulb/ClaudiniteEngine#24): where they
-   are absent, `history` is each owed element's evidence, its entries are written by hand, and
-   `cn provenance append <pack> <element> --backfill` writes each in date order. A shallow clone reads as no history: unshallow
-   before trusting an empty brief.
+   evidence where the brief's derivation looks wrong. An engine older than `brief` and `apply`
+   answers them with its usage: there `history` is each owed element's evidence, its entries are
+   written by hand, and `cn provenance append <pack> <element> --backfill` writes each in date
+   order. A shallow clone reads as no history: unshallow before trusting an empty brief.
 
    Four things the brief hands over rather than answering, each printed where it arises.
    **The issues a commit references** are listed beside the defaults fence and never written
@@ -97,7 +96,7 @@ so the sections it prints without a draft under them are the run's work, not its
    the commit's defaults fence where every element it bore shares them, and on one entry
    where they are its own; a draft the commit did not decide is deleted, and the kind a
    draft guessed (`reworded` for any later commit) is corrected to what the change was.
-   `apply <pack> brief.md --backfill` validates every entry as one batch,
+   `cn provenance apply <pack> brief.md --backfill` validates every entry as one batch,
    writes each file in date order under its defaults, and writes nothing while any one is
    refused; run twice it writes nothing new. **`--backfill` is what this run is entitled to
    and no other caller is**: a backfill derives history that already happened, so its entries
