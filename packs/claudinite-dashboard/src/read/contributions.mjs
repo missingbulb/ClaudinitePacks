@@ -20,7 +20,7 @@
 // withheld read, a failure); `null` means read and absent. They render differently
 // and neither renders as a number.
 import { duration } from '../render/ui.mjs';
-import { settingsTextAtSha } from './settings-read.mjs';
+import { readMember } from './member.mjs';
 import { readFlat, entryText, FLAT_DASHBOARD_PATH } from './flat.mjs';
 
 // The closed vocabulary. A descriptor naming anything outside it is not guessed at:
@@ -336,9 +336,10 @@ export async function readRepoContributions({ repo, token, gh }) {
   try {
     const meta = await gh.getRepo(repo, token);
     const sha = await gh.getHeadSha(repo, meta.default_branch, token);
-    const configText = await settingsTextAtSha(gh, repo, sha, token);
-    if (!configText) return { repo, contributions: [] };
-    const declaration = JSON.parse(configText);
+    const { member, fault } = await readMember({ repo, sha, token, gh });
+    if (fault) return { repo, contributions: [], error: new Error(fault) };
+    if (!member) return { repo, contributions: [] };
+    const declaration = member.declaration;
     const tree = await gh.listTreeAtSha(repo, sha, token);
     const contributions = await readContributions({ repo, sha, token, declaration, paths: tree?.paths ?? null, gh });
     const needed = liveSourcesNeeded(contributions);
@@ -353,13 +354,11 @@ export async function readRepoContributions({ repo, token, gh }) {
   }
 }
 
-// The deployment-scope cards: every contribution, from the repos a deployment reads
-// as its own, that declares a `fleet.deployment` list. Two repos rather than one
-// because they answer different questions — the CANON knows what it has been shipping
-// the fleet, and the ENFORCER knows what its sweeps found — and a deployment that is
-// both simply reads the same repo once.
+// The deployment-scope cards: every contribution, from the repo the deployment is
+// published from (and the repo a single-repo page shows, where that is another one),
+// that declares a `fleet.deployment` list. A repo named twice is read once.
 export async function readDeploymentContributions({ config, token, gh }) {
-  const repos = [...new Set([config?.defaultRepo, config?.canonRepo].filter(Boolean))];
+  const repos = [...new Set([config?.defaultRepo, config?.deploymentRepo].filter(Boolean))];
   const reads = await Promise.all(repos.map((repo) => readRepoContributions({ repo, token, gh })));
   return reads.flatMap((r) => r.contributions
     .filter((c) => c.descriptor?.deployment?.length)

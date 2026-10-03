@@ -1,13 +1,15 @@
 // Is a member's SCHEDULER dormant? THE DASHBOARD'S OWN COPY of the scheduler's predicate,
 // read off the member's own declaration: packs share no code, so this pack carries the
-// one test the member's scheduler stops itself with. The dashboard and the sheepdog
-// both read it cross-repo, and each one's `test/dormancy-drift.test.mjs` runs both
-// copies over the same declarations and fails the moment they disagree.
+// one test the member's scheduler stops itself with. `test/dormancy-drift.test.mjs`
+// runs it and `cn fleet decide dormancy` over the same declarations and fails the
+// moment they disagree.
 //
-// It reads a raw parsed `.claudinite-settings.json` and the normalized config
-// `loadConfig` returns alike, because a cross-repo reader fetches another repo's
-// declaration over the API with no engine loaded against that tree. Strictly `=== true`,
-// so every malformed value reads as awake — the conservative direction.
+// It reads three shapes: a cn member as `read/member.mjs` answers it, whose `dormant`
+// its own `cn` wrote into the member file; and, for a Node member, a raw parsed
+// `.claudinite-settings.json` and the normalized config `loadConfig` returns alike,
+// because a cross-repo reader fetches another repo's declaration over the API with no
+// engine loaded against that tree. Strictly `=== true`, so every malformed value reads
+// as awake — the conservative direction.
 import { TASKS_PACK_ID, DORMANT_CONFIG_KEY, canonicalPackId } from './queue-vocabulary.mjs';
 
 // A declared id as it resolves today. A member's declaration can carry a spelling from
@@ -46,4 +48,4 @@ function declared(config) {
 // The predicate. Strictly `=== true`, so every malformed value below reads as awake —
 // the conservative direction, since the alternative is silently stopping a project's
 // entire scheduled workload on a typo.
-export const isDormant = (config) => declared(config) === true;
+export const isDormant = (config) => (config?.shape === 'cn' ? config.dormant === true : declared(config) === true);

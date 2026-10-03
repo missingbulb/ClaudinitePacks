@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFile, mkdtemp, mkdir, writeFile, cp, rm } from 'node:fs/promises';
+import { readFile, readdir, mkdtemp, mkdir, writeFile, cp, rm } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
@@ -11,88 +11,98 @@ import { fileURLToPath } from 'node:url';
 
 const run = promisify(execFile);
 
-// The install runner exits non-zero when the converged tree fails its self-test, which
-// a bare temp directory always does — no git, no mount. These tests assert on what it
-// REPORTS, so the exit code is not the subject and stdout is read either way.
-const runReporting = async (...args) => {
-  try { return await run(...args); } catch (e) { return { stdout: e.stdout ?? '', stderr: e.stderr ?? '' }; }
-};
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
 const PACK_DIR = join(ROOT, 'packs/claudinite-dashboard');
+const MEMBER_FILE = '.claudinite/flat/member.GENERATED.json';
 
-// --- build-site, against a simulated member mount ----------------------------------
+// --- build-site, against a cn member ----------------------------------------------
 
-// Stand up a member the way an update leaves one: the pack and the engine side by
-// side under `.claudinite/shared/`. The relative imports the page uses resolve only
-// if that shape is right, so building here is what proves the shape.
-async function member(declaration, extraFiles = {}) {
-  const dir = await mkdtemp(join(tmpdir(), 'cd-member-'));
-  await mkdir(join(dir, '.claudinite/shared/packs'), { recursive: true });
-  await cp(join(ROOT, 'engine'), join(dir, '.claudinite/shared/engine'), { recursive: true });
-  // The queue modules the page reads through the tasks pack's published public/.
-  await cp(join(ROOT, 'packs/claudinite-tasks'), join(dir, '.claudinite/shared/packs/claudinite-tasks'), { recursive: true }); // @real-entity the pack whose public assets this publishes
-  // As the vendor set lays it down: a pack's tests sit beside the files they cover and
-  // are dropped on the way into a mount, so a fixture that copied them would be staging
-  // a tree no member ever has.
-  await cp(PACK_DIR, join(dir, '.claudinite/shared/packs/claudinite-dashboard'),
-    { recursive: true, filter: (src) => !src.endsWith('.test.mjs') });
-  await writeFile(join(dir, '.claudinite-settings.json'), JSON.stringify(declaration));
-  for (const [name, body] of Object.entries(extraFiles)) await writeFile(join(dir, name), body);
-  return dir;
+// Stand up a member the way `cn` leaves one: its settings in a format this build never
+// parses, and the member file `cn` writes from them, which is all the build reads. The
+// pack sits OUTSIDE the member's tree, where `cn` keeps the packs it fetched, with no
+// engine and no sibling pack beside it — so a build that still reached for either
+// fails here. A pack's tests are dropped on the way, as the published archive drops
+// them.
+async function member(declaration, { memberFile = true } = {}) {
+  const base = await mkdtemp(join(tmpdir(), 'cd-member-'));
+  const dir = join(base, 'repo');
+  const pack = join(base, 'packs', 'claudinite-dashboard');
+  await mkdir(join(dir, '.claudinite/flat'), { recursive: true });
+  await cp(PACK_DIR, pack, { recursive: true, filter: (src) => !src.startsWith(join(PACK_DIR, 'test')) });
+  await writeFile(join(dir, '.claudinite/settings.yaml'), 'packs:\n  - claudinite-dashboard\n');
+  if (memberFile) {
+    await writeFile(join(dir, MEMBER_FILE), JSON.stringify({
+      version: 1,
+      settings: { path: '.claudinite/settings.yaml', format: 'yaml' },
+      engine: { package: '@claudinite/cn', version: '61003.1', channel: 'stable' },
+      packs: { channel: 'stable', declared: declaration.packs },
+      dormant: false,
+      held: {},
+    }, null, 2));
+  }
+  return { base, dir, pack };
 }
 
-const build = (dir, env = {}) => run('node',
-  ['.claudinite/shared/packs/claudinite-dashboard/tooling/build-site.mjs'],
+const build = ({ dir, pack }, env = {}) => run('node',
+  [join(pack, 'tooling/build-site.mjs'), '--root', dir],
   { cwd: dir, env: { ...process.env, ...env } });
 
+const cleanup = (t, m) => t.after(() => rm(m.base, { recursive: true, force: true }));
 const readJson = async (p) => JSON.parse(await readFile(p, 'utf8'));
 const CONFIG_AT = '_site/packs/claudinite-dashboard/dashboard.config.json';
+const REPO = { packs: [{ id: 'claudinite-dashboard', config: { mode: 'repo' } }] };
 
-test('a bare declaration builds this repo\'s own dashboard', async (t) => {
-  const dir = await member({ packs: [{ id: 'claudinite-dashboard', config: { mode: 'repo' } }] });
-  t.after(() => rm(dir, { recursive: true, force: true }));
+// The defect this pack carried onto cn: the build looked for the engine beside the pack,
+// found none on a cn member, and exited 0 with "nothing to publish" — so publish-pages
+// published nothing and reported success.
+test('a cn member builds this repo\'s own dashboard, with no engine anywhere', async (t) => {
+  const m = await member(REPO);
+  cleanup(t, m);
 
-  await build(dir, { GITHUB_REPOSITORY: 'o/mine' });
-  const cfg = await readJson(join(dir, CONFIG_AT));
+  const { stdout } = await build(m, { GITHUB_REPOSITORY: 'o/mine' });
+  assert.doesNotMatch(stdout, /nothing to publish/i);
+  assert.ok(existsSync(join(m.dir, '_site/index.html')), 'a site was built');
+  const cfg = await readJson(join(m.dir, CONFIG_AT));
   assert.equal(cfg.mode, 'repo', 'the page is told which dashboard it is, never left to infer it');
   assert.equal(cfg.defaultRepo, 'o/mine');
-  assert.equal(cfg.rosterUrl, null, 'no roster means no fleet view');
+  assert.equal(cfg.deploymentRepo, 'o/mine');
   assert.equal(cfg.clientId, null);
+  for (const retired of ['rosterUrl', 'repos', 'canonRepo']) assert.equal(Object.hasOwn(cfg, retired), false, `${retired} is not published`);
 });
 
-// The layout the page's relative imports depend on. Flattening it would send
-// `../../engine/...` above the site root and the page would not boot.
-test('the staged tree mirrors the mount, with the root a redirect', async (t) => {
-  const dir = await member({ packs: [{ id: 'claudinite-dashboard', config: { mode: 'repo' } }] });
-  t.after(() => rm(dir, { recursive: true, force: true }));
-  await build(dir);
+test('the staged tree is the pack alone, with the root a redirect', async (t) => {
+  const m = await member(REPO);
+  cleanup(t, m);
+  await build(m);
 
   for (const p of [
     '_site/index.html',
     '_site/packs/claudinite-dashboard/index.html',
     '_site/packs/claudinite-dashboard/src/derive/model.mjs',
-    '_site/engine/checks/helpers/code-scanning.mjs',
     '_site/.nojekyll',
-  ]) assert.ok(existsSync(join(dir, p)), `missing from the staged site: ${p}`);
+  ]) assert.ok(existsSync(join(m.dir, p)), `missing from the staged site: ${p}`);
+  assert.deepEqual((await readdir(join(m.dir, '_site'))).sort(), ['.nojekyll', 'index.html', 'packs']);
+  assert.deepEqual(await readdir(join(m.dir, '_site/packs')), ['claudinite-dashboard'], 'no engine, no sibling pack');
 
   // The page is stored under `src/` and served from the directory above it. A staged
   // tree that left it in place would serve a page whose every path is off by one
   // directory, which is the one way this relocation can fail silently.
-  assert.ok(!existsSync(join(dir, '_site/packs/claudinite-dashboard/src/index.html')),
+  assert.ok(!existsSync(join(m.dir, '_site/packs/claudinite-dashboard/src/index.html')),
     'the page must be moved to the root it is served from, not copied');
 
-  const root = await readFile(join(dir, '_site/index.html'), 'utf8');
+  const root = await readFile(join(m.dir, '_site/index.html'), 'utf8');
   assert.match(root, /url=\.\/packs\/claudinite-dashboard\//);
 });
 
-// Every relative import the page makes must resolve inside the staged tree — the
-// check that would have caught the flattening bug without a browser.
-test('every relative import in the staged page resolves inside the site', async (t) => {
-  const dir = await member({ packs: [{ id: 'claudinite-dashboard', config: { mode: 'repo' } }] });
-  t.after(() => rm(dir, { recursive: true, force: true }));
-  await build(dir);
+// Every relative import the page makes must resolve inside the pack's own staged
+// directory — the check that would have caught a flattening bug, or an import climbing
+// out to an engine or a sibling pack, without a browser.
+test('every relative import in the staged page resolves inside the pack', async (t) => {
+  const m = await member(REPO);
+  cleanup(t, m);
+  await build(m);
 
-  const pageDir = join(dir, '_site/packs/claudinite-dashboard');
+  const pageDir = join(m.dir, '_site/packs/claudinite-dashboard');
   // Every staged module, at whatever depth `src/` puts it, and each specifier resolved
   // against ITS OWN directory — a page whose modules sit in layer folders is only
   // reachable if each file's own climb is right, which a page-root-relative check
@@ -106,61 +116,58 @@ test('every relative import in the staged page resolves inside the site', async 
     .filter(({ spec }) => spec.startsWith('.'));
   assert.ok(specs.length > 0, 'found no relative imports — the grep is wrong, not the page');
   for (const { file, spec } of specs) {
-    assert.ok(existsSync(resolve(dirname(file), spec)),
-      `${relative(pageDir, file)} imports ${spec}, which is not in the site`);
+    const to = resolve(dirname(file), spec);
+    assert.ok(!relative(pageDir, to).startsWith('..'), `${relative(pageDir, file)} imports ${spec}, outside the pack`);
+    assert.ok(existsSync(to), `${relative(pageDir, file)} imports ${spec}, which is not in the site`);
   }
 });
 
 test('local-only and explanatory files are not published', async (t) => {
-  const dir = await member({ packs: [{ id: 'claudinite-dashboard', config: { mode: 'repo' } }] });
-  t.after(() => rm(dir, { recursive: true, force: true }));
-  await build(dir);
+  const m = await member(REPO);
+  cleanup(t, m);
+  await build(m);
 
-  for (const f of ['tooling', 'pack.mjs', 'README.md', 'stubs']) {
-    assert.ok(!existsSync(join(dir, '_site/packs/claudinite-dashboard', f)), `${f} must not be published`);
+  for (const f of ['tooling', 'tasks', 'docs', 'pack.json', 'README.md', 'stubs', 'worldRules']) {
+    assert.ok(!existsSync(join(m.dir, '_site/packs/claudinite-dashboard', f)), `${f} must not be published`);
   }
 });
 
-test('a roster file turns on the fleet view and publishes only the names', async (t) => {
-  const dir = await member(
-    { packs: [{ id: 'claudinite-dashboard', config: { mode: 'fleet', rosterFile: 'fleet.json', canonRepo: 'o/canon' } }] },
-    { 'fleet.json': JSON.stringify({ repos: { 'o/a': { tonnes: 'of stats' }, 'o/b': {} } }) },
-  );
-  t.after(() => rm(dir, { recursive: true, force: true }));
-  await build(dir);
+test('a fleet names an owner, and the deployment repo is where its roster is read', async (t) => {
+  const m = await member({ packs: [{ id: 'claudinite-dashboard', config: { mode: 'fleet', owner: 'o', exclude: ['o/skip'] } }] });
+  cleanup(t, m);
+  const { stdout } = await build(m, { GITHUB_REPOSITORY: 'o/manager' });
 
-  const cfg = await readJson(join(dir, CONFIG_AT));
+  const cfg = await readJson(join(m.dir, CONFIG_AT));
   assert.equal(cfg.mode, 'fleet');
-  assert.equal(cfg.rosterUrl, './fleet-roster.GENERATED.json'); // @real-entity the real generated roster artifact and the real installer this flow runs
-  assert.equal(cfg.canonRepo, 'o/canon');
+  assert.equal(cfg.owner, 'o');
+  assert.deepEqual(cfg.exclude, ['o/skip']);
+  assert.equal(cfg.deploymentRepo, 'o/manager');
   assert.equal(cfg.defaultRepo, null, 'a fleet deployment lands on the overview, not inside one member');
-
-  const roster = await readJson(join(dir, '_site/packs/claudinite-dashboard/fleet-roster.GENERATED.json')); // @real-entity the real generated roster artifact and the real installer this flow runs
-  assert.deepEqual(roster.repos, ['o/a', 'o/b']);
-  assert.equal(JSON.stringify(roster).includes('tonnes'), false, 'only the names travel');
+  assert.match(stdout, /freshness: .*o\/manager/);
 });
 
-// Saying so matters: the site would otherwise publish as a single-repo dashboard and
-// look entirely intentional.
-test('an unreadable roster file warns instead of silently covering one repo', async (t) => {
-  const dir = await member({ packs: [{ id: 'claudinite-dashboard', config: { mode: 'fleet', rosterFile: 'absent.json' } }] });
-  t.after(() => rm(dir, { recursive: true, force: true }));
-
-  const { stdout } = await build(dir);
-  assert.match(stdout, /WARNING: rosterFile absent\.json could not be read/);
-  const cfg = await readJson(join(dir, CONFIG_AT));
-  assert.equal(cfg.rosterUrl, null);
-  // And it stays a FLEET page. The declaration said so; an unreadable roster is a fleet
-  // whose members could not be listed, which is what the warning is for — it is not a
-  // reason to publish a different dashboard than the one that was asked for.
-  assert.equal(cfg.mode, 'fleet');
+// A key nothing reads any more fails the build rather than publishing a page that
+// quietly ignores it.
+test('a retired roster or canon key fails the build naming row 111, and publishes nothing', async (t) => {
+  for (const config of [
+    { mode: 'fleet', owner: 'o', rosterFile: 'fleet.json' },
+    { mode: 'fleet', owner: 'o', repos: ['o/a', 'o/b'] },
+    { mode: 'repo', canonRepo: 'o/canon' },
+  ]) {
+    const m = await member({ packs: [{ id: 'claudinite-dashboard', config }] });
+    cleanup(t, m);
+    const res = await build(m).catch((e) => e);
+    assert.ok(res instanceof Error, `${JSON.stringify(config)} must fail`);
+    assert.match(String(res.stderr), /row 111/);
+    assert.equal(existsSync(join(m.dir, CONFIG_AT)), false, 'and nothing is published');
+  }
 });
 
 test('sign-in needs both halves, and the build says which is missing', async (t) => {
-  const dir = await member({ packs: [{ id: 'claudinite-dashboard', config: { mode: 'repo' } }] });
-  t.after(() => rm(dir, { recursive: true, force: true }));
+  const m = await member(REPO);
+  cleanup(t, m);
 
-  const { stdout } = await build(dir, { CLAUDINITE_DASHBOARD_CLIENT_ID: 'Iv1.x' });
+  const { stdout } = await build(m, { CLAUDINITE_DASHBOARD_CLIENT_ID: 'Iv1.x' });
   assert.match(stdout, /sign-in: NOT configured/);
   assert.match(stdout, /exchangeUrl missing/);
 });
@@ -168,15 +175,15 @@ test('sign-in needs both halves, and the build says which is missing', async (t)
 // The pair travel as repository variables, so the build has to read them from its
 // environment — the workflow passes them, and nothing in the settings file carries them.
 test('the sign-in pair reach the published config from repository variables', async (t) => {
-  const dir = await member({ packs: [{ id: 'claudinite-dashboard', config: { mode: 'repo' } }] });
-  t.after(() => rm(dir, { recursive: true, force: true }));
+  const m = await member(REPO);
+  cleanup(t, m);
 
-  const { stdout } = await build(dir, {
+  const { stdout } = await build(m, {
     CLAUDINITE_DASHBOARD_CLIENT_ID: 'Iv1.fromVar',
     CLAUDINITE_DASHBOARD_EXCHANGE_URL: 'https://w.example',
   });
   assert.match(stdout, /sign-in: configured/);
-  const cfg = await readJson(join(dir, CONFIG_AT));
+  const cfg = await readJson(join(m.dir, CONFIG_AT));
   assert.equal(cfg.clientId, 'Iv1.fromVar');
   assert.equal(cfg.exchangeUrl, 'https://w.example');
   assert.doesNotMatch(stdout, /NOTE: sign-in read from the declaration/);
@@ -185,36 +192,25 @@ test('the sign-in pair reach the published config from repository variables', as
 // A deployment that configured the pair before the variables existed keeps its button —
 // nothing converges a member's settings file — and is told once where they live now.
 test('a declared pair still builds a signed-in site, and says it is on the old footing', async (t) => {
-  const dir = await member({ packs: [{ id: 'claudinite-dashboard', config: { mode: 'repo', clientId: 'Iv1.old', exchangeUrl: 'https://old.example' } }] });
-  t.after(() => rm(dir, { recursive: true, force: true }));
+  const m = await member({ packs: [{ id: 'claudinite-dashboard', config: { mode: 'repo', clientId: 'Iv1.old', exchangeUrl: 'https://old.example' } }] });
+  cleanup(t, m);
 
-  const { stdout } = await build(dir);
+  const { stdout } = await build(m);
   assert.match(stdout, /sign-in: configured/);
   assert.match(stdout, /NOTE: sign-in read from the declaration for .*clientId.*exchangeUrl/);
-  const cfg = await readJson(join(dir, CONFIG_AT));
+  const cfg = await readJson(join(m.dir, CONFIG_AT));
   assert.equal(cfg.clientId, 'Iv1.old');
 });
 
-// An adopted-but-not-yet-converged member is the ordinary state on a fleet, not a
-// fault. Failing here would paint every run red until the update caught up.
-test('a mount without the page produces nothing and exits clean', async (t) => {
-  const dir = await mkdtemp(join(tmpdir(), 'cd-bare-'));
-  t.after(() => rm(dir, { recursive: true, force: true }));
-  await mkdir(join(dir, '.claudinite/shared/packs/claudinite-dashboard'), { recursive: true });
-  await mkdir(join(dir, '.claudinite/shared/engine'), { recursive: true });
-  for (const f of ['tooling/build-site.mjs', 'tooling/deployment-config.mjs', 'src/read/config.mjs', 'src/read/signin-vars.mjs']) {
-    const dest = join(dir, '.claudinite/shared/packs/claudinite-dashboard', f);
-    await mkdir(dirname(dest), { recursive: true });
-    await cp(join(PACK_DIR, f), dest);
-  }
-  // The build resolves the member's settings file by name rather than naming it, so
-  // the module that knows both names is part of the mount it needs.
-  for (const f of ['settings-file.mjs', 'settings-file-names.mjs']) await cp(join(PACK_DIR, '..', '..', 'engine', f), join(dir, `.claudinite/shared/engine/${f}`));
-  await writeFile(join(dir, '.claudinite-settings.json'), JSON.stringify({ packs: ['claudinite-dashboard'] }));
+// The pack present without its page is the one inert case: exit clean, build nothing.
+test('a pack without its page produces nothing and exits clean', async (t) => {
+  const m = await member(REPO);
+  cleanup(t, m);
+  await rm(join(m.pack, 'src/index.html'));
 
-  const { stdout } = await build(dir);
+  const { stdout } = await build(m);
   assert.match(stdout, /nothing to publish/i);
-  assert.equal(existsSync(join(dir, '_site')), false);
+  assert.equal(existsSync(join(m.dir, '_site')), false);
 });
 
 // --- the mode, which the build refuses to guess ---------------------------------------
@@ -225,35 +221,38 @@ test('a mount without the page produces nothing and exits clean', async (t) => {
 // one-repo dashboard that looked entirely intentional. So the build now refuses, and the
 // deployment says which dashboard it is.
 test('a declaration that states no mode publishes nothing and says why', async (t) => {
-  const dir = await member({ packs: ['claudinite-dashboard'] });
-  t.after(() => rm(dir, { recursive: true, force: true }));
+  const m = await member({ packs: ['claudinite-dashboard'] });
+  cleanup(t, m);
 
-  const res = await build(dir, { GITHUB_REPOSITORY: 'o/x' }).catch((e) => e);
+  const res = await build(m, { GITHUB_REPOSITORY: 'o/x' }).catch((e) => e);
   assert.ok(res instanceof Error, 'the build must fail, not publish a guess');
   assert.match(String(res.stderr ?? res.message), /does not say which dashboard it is/);
-  assert.equal(existsSync(join(dir, CONFIG_AT)), false, 'and nothing is published');
+  assert.equal(existsSync(join(m.dir, CONFIG_AT)), false, 'and nothing is published');
 });
 
-test('a repo with no declaration at all is refused for the same reason', async (t) => {
-  // Previously this built a repo page. Nothing states a mode here either, and "no
-  // declaration" is a less deliberate silence than an empty config, not a more one.
-  const dir = await member({ packs: [{ id: 'claudinite-dashboard', config: { mode: 'repo' } }] });
-  t.after(() => rm(dir, { recursive: true, force: true }));
-  await rm(join(dir, '.claudinite-settings.json'));
+// The member file is the declaration this build reads. A member whose cn has not
+// written it — or a Node member's settings file standing alone — is told which file
+// is missing and the command that writes it, not that its mode is unset.
+test('a repo with no member file is refused naming that file, whatever settings file it keeps', async (t) => {
+  const m = await member(REPO, { memberFile: false });
+  cleanup(t, m);
+  await writeFile(join(m.dir, '.claudinite-settings.json'), JSON.stringify(REPO));
 
-  const res = await build(dir, { GITHUB_REPOSITORY: 'o/x' }).catch((e) => e);
+  const res = await build(m, { GITHUB_REPOSITORY: 'o/x' }).catch((e) => e);
   assert.ok(res instanceof Error);
-  assert.match(String(res.stderr ?? res.message), /does not say which dashboard it is/);
+  assert.match(String(res.stderr ?? res.message), /member\.GENERATED\.json is missing.*cn tasks flat --write/);
+  assert.doesNotMatch(String(res.stderr ?? res.message), /does not say which dashboard it is/);
+  assert.equal(existsSync(join(m.dir, CONFIG_AT)), false, 'and nothing is published');
 });
 
 test('a mode that contradicts the config is refused too, in both directions', async (t) => {
   const fleetNoRoster = await member({ packs: [{ id: 'claudinite-dashboard', config: { mode: 'fleet' } }] });
-  t.after(() => rm(fleetNoRoster, { recursive: true, force: true }));
+  cleanup(t, fleetNoRoster);
   const a = await build(fleetNoRoster).catch((e) => e);
   assert.match(String(a.stderr ?? a.message), /names no roster source/);
 
   const repoWithOwner = await member({ packs: [{ id: 'claudinite-dashboard', config: { mode: 'repo', owner: 'o' } }] });
-  t.after(() => rm(repoWithOwner, { recursive: true, force: true }));
+  cleanup(t, repoWithOwner);
   const b = await build(repoWithOwner).catch((e) => e);
   assert.match(String(b.stderr ?? b.message), /roster source/);
 });

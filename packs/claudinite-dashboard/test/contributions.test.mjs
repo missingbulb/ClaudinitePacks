@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
   parseDescriptor, parseValues, valueOf, fleetPhrase, phraseText, listItems, windowDelta,
-  descriptorPathIn, declaredPackIds, readContributions, liveSourcesNeeded,
+  descriptorPathIn, declaredPackIds, readContributions, readRepoContributions, liveSourcesNeeded,
   valuesPath, legacyValuesPath, MAX_LIST_ITEMS, MAX_REPO_WIDGETS, FLEET_KINDS,
 } from '../src/read/contributions.mjs';
 import { FLAT_DASHBOARD_PATH } from '../src/read/flat.mjs';
@@ -314,4 +314,22 @@ test('git-github contributes stars, and it composes', () => {
   assert.equal(d.fault, null);
   const w = d.widgets.get(d.member);
   assert.equal(phraseText(fleetPhrase(w, valueOf(w, { live: { stars: 18 } }).value, NOW)), '18 stars');
+});
+
+// A repo whose member file is there but does not read is not a repo with no cards: its
+// contributions are unknown, which the panel shows as such, rather than none.
+test('readRepoContributions reports an unreadable member file as an error, not as no contributions', async () => {
+  const gh = {
+    getRepo: async () => ({ default_branch: 'main', stars: 0 }),
+    getHeadSha: async () => 'abc',
+    getTextAtSha: async (_r, _s, path) => (path === '.claudinite/flat/member.GENERATED.json' ? '{"packs":' : null),
+    listTreeAtSha: async () => ({ paths: [] }),
+  };
+  const r = await readRepoContributions({ repo: 'acme/app', token: null, gh });
+  assert.ok(r.error instanceof Error, 'an error, so the panel reads unknown');
+  assert.match(r.error.message, /member\.GENERATED\.json is not valid JSON/);
+  assert.deepEqual(r.contributions, []);
+
+  const none = await readRepoContributions({ repo: 'acme/app', token: null, gh: { ...gh, getTextAtSha: async () => null } });
+  assert.equal(none.error, undefined, 'a repo that runs no Claudinite has no cards, and no error');
 });

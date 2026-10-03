@@ -8,6 +8,8 @@ import {
   WORK_PREFIX, MACHINE_BLOCK_START, MACHINE_BLOCK_END, CLAIM_MARKER, HANDOFF_MARKER, OUTCOME_DONE,
   OUTCOME_OBSOLETE,
 } from '../src/read/queue-vocabulary.mjs';
+import { spawnSync } from 'node:child_process';
+import { CN, needsCn } from '../../../tools/test/cn-tasks.mjs';
 
 const NOW = Date.parse('2026-09-02T10:30:00Z');
 const DAY = 86400e3;
@@ -28,9 +30,24 @@ test('a mark opens the panel its STATUS earns, because the next move differs', (
   assert.equal(panelKind({ kind: 'item' }), 'stuck-item');
 });
 
-test('the converge command is the one converge-item.mjs prints for that item', () => {
+// The reader pastes it, so every flag it spells must be one cn's own usage names for
+// the command, and every flag that usage requires must be spelled.
+test('the converge command spells exactly the flags cn work converge takes', needsCn, () => {
+  const usage = spawnSync(CN, [], { encoding: 'utf8' });
+  const text = `${usage.stdout}${usage.stderr}`;
+  const at = text.indexOf('work converge ');
+  assert.ok(at >= 0, 'cn names work converge in its usage');
+  const block = text.slice(at, text.indexOf('\n  work ', at + 1));
+  const optional = new Set([...block.matchAll(/\[(--[a-z-]+)/g)].map((m) => m[1]));
+  const taken = new Set([...block.matchAll(/--[a-z-]+/g)].map((m) => m[0]));
+  const spelled = new Set([...convergeCommand(item(), 'o/r').matchAll(/--[a-z-]+/g)].map((m) => m[0]));
+  for (const f of spelled) assert.ok(taken.has(f), `${f} is not a cn work converge flag`);
+  for (const f of taken) if (!optional.has(f)) assert.ok(spelled.has(f), `${f} is required and not spelled`);
+});
+
+test('the converge command is cn work converge for that item, as a routine session runs it', () => {
   const cmd = convergeCommand(item(), 'o/r', 'failure');
-  assert.match(cmd, /converge-item\.mjs/);
+  assert.match(cmd, /^\.claudinite\/bin\/cn work converge /);
   assert.match(cmd, /--issue 42/);
   assert.match(cmd, /--outcome failure/);
   assert.match(cmd, /--summary/);
@@ -83,7 +100,7 @@ test('the failed-task panel says when the lane\'s HELD claim is disproved by the
   const lane = panel.fields.find((f) => f.label === 'lane');
   assert.match(lane.value, /roster says this lane is HELD/);
   assert.match(lane.value, /2 later occurrence/);
-  assert.match(panel.do, /converge-item\.mjs/);
+  assert.match(panel.do, /cn work converge/);
 });
 
 test('a held lane with no later occurrence says only that it is held', () => {

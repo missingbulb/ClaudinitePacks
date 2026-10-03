@@ -255,7 +255,7 @@ async function render() {
       $('footnote').textContent = `Reading ${ROSTER.length} members…`;
       if (roster.error) showError('The owner\'s repositories could not be listed — sign in with an account that can see them.');
       else if (!roster.complete) showNotice('This owner has more repositories than one enumeration reaches; the fleet below is the most recently pushed of them.');
-      await loadFleet({
+      const fleet = await loadFleet({
         repos: ROSTER,
         ignored: IGNORED,
         token,
@@ -270,11 +270,18 @@ async function render() {
           $('footnote').textContent = `${label} — ${done}/${total}${repo ? ` — ${repo}` : ''}…`;
         },
       });
-      footer([`${ROSTER.length} members${roster.source === 'owner' ? ` under ${CONFIG.owner}, as you can see them` : ''}`]);
+      footer([
+        `${ROSTER.length} members${roster.source === 'owner' ? ` under ${CONFIG.owner}, as you can see them` : ''}`,
+        // The third freshness on this page, beside the load's own and each member's
+        // fold: the Updates verdicts are only as current as the roster that carries them.
+        fleet?.roster
+          ? `freshness from the fleet-roster ${fleet.roster.generated ? `of ${fleet.roster.generated.replace('T', ' ').slice(0, 16)}` : 'at an unstated time'}`
+          : 'no fleet-roster in this deployment — Updates read unknown',
+      ]);
     } else {
       const repo = currentRepo();
       if (!/^[^/\s]+\/[^/\s]+$/.test(repo)) {
-        showError('No repo selected. Add ?repo=owner/name, or configure a roster.');
+        showError('No repo selected. Add ?repo=owner/name, or configure an owner for a fleet.');
         $('footnote').textContent = '';
         return;
       }

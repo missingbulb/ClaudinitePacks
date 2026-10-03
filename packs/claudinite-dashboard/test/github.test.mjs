@@ -3,7 +3,6 @@ import assert from 'node:assert/strict';
 import { readFile, readdir } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
-import { stripComments } from '../../../engine/checks/helpers/code-scanning.mjs';
 
 class Mem {
   constructor() { this.m = new Map(); }
@@ -352,12 +351,15 @@ test('both views ask for the same runs URL, so the second is a cache hit', async
 // caller asking for 30 while the constant says 40 — and it is invisible at runtime,
 // because both URLs work and simply cache separately.
 test('no caller overrides the shared runs page size', async () => {
-  const dir = dirname(fileURLToPath(import.meta.url));
-  const sources = (await readdir(dir))
-    .filter((f) => f.endsWith('.mjs') && !f.endsWith('.test.mjs'));
+  const dir = resolve(dirname(fileURLToPath(import.meta.url)), '..', 'src');
+  const sources = (await readdir(dir, { recursive: true })).filter((f) => f.endsWith('.mjs'));
+  assert.ok(sources.some((f) => f.endsWith('view-fleet.mjs')), 'the scan reaches the views');
   const offenders = [];
   for (const f of sources) {
-    const code = stripComments(await readFile(resolve(dir, f), 'utf8'));
+    // Comments may quote a call; only code counts. `://` keeps a URL in a string whole.
+    const code = (await readFile(resolve(dir, f), 'utf8'))
+      .replace(/\/\*[\s\S]*?\*\//g, '')
+      .replace(/(^|[^:])\/\/.*$/gm, '$1');
     // Two arguments is the shared default; a third is an override.
     if (/\blistRuns\s*\([^)]*,[^)]*,[^)]*\)/.test(code)) offenders.push(f);
   }

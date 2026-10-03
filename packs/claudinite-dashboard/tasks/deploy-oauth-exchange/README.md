@@ -38,8 +38,9 @@ there is no state to reconcile. Rotating the client secret means running it agai
 ## What it deliberately does not do
 
 **It does not set `exchangeUrl`.** The endpoint is live the moment it deploys, but
-the Sign in button appears only once the declaration names it, and that is an edit
-to the member's own `.claudinite-settings.json`. The run prints the exact value.
+the Sign in button appears only once the repository variable
+`CLAUDINITE_DASHBOARD_EXCHANGE_URL` names it, which is a person's edit in the
+repository's settings. The run prints the exact value.
 
 ## Why the declaration reads as it does
 
@@ -54,16 +55,16 @@ of page origins allowed to call it changes; none of those is a cadence or a
 condition the scheduler could read, so the only way it runs is a work item created
 by hand:
 
-  create-work-item claudinite-dashboard/deploy-oauth-exchange
+  cn work create claudinite-dashboard/deploy-oauth-exchange
 
-`agent_model: 'none'` — pure code. Read the endpoint's source out of the mount,
+`agent_model: 'none'` — pure code. Read the endpoint's source out of the pack,
 upload it with its bindings, route it, probe it, report the URL.
 
 Never due on its own: an item exists only because somebody created one, and
 that IS the request.
 It writes nothing in this repo. The one edit the deployment implies — naming
-the minted URL as `exchangeUrl` — is the member's own declaration, and the run
-reports it rather than making it.
+the minted URL as `exchangeUrl` — is a repository variable, and the run reports
+it rather than setting it.
 Three API calls and a probe that waits out route propagation (six attempts,
 five seconds apart). The bound is that probe's worst case with room around it.
 The two real credentials, and only those. CLOUDFLARE_API_TOKEN needs one grant to

@@ -1,36 +1,31 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
-import { fileURLToPath } from 'node:url';
-import { dirname, resolve } from 'node:path';
 import {
-  summariseMember, summariseRuns, mountState, rankMembers, rollUp, packSpread, taskSpread,
-  ciStatus, parseEngineVersion, parsePackVersion, attentionBreakdown,
+  summariseMember, summariseRuns, freshnessOf, FRESHNESS_STATES, NO_ROSTER, rankMembers, rollUp, packSpread, taskSpread,
+  ciStatus, attentionBreakdown,
   memberAttention, fleetAttention, estimateMinutes, estimateNote,
   PARK_MINUTES, APPROVAL_RATE, approvalMinutes, lastFoldedScheduler,
 } from '../src/derive/fleet.mjs';
-import { ENGINE_VERSION } from '../../../engine/version.mjs';
-import { existsSync } from 'node:fs';
-import * as conventions from '../../../engine/pack_loader/pack-conventions.mjs';
-import * as manifests from '../../../engine/pack_loader/pack-manifest.mjs';
-
-const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
+import { parseRoster } from '../src/read/roster.mjs';
+import { memberFromFile } from '../src/read/member.mjs';
 import {
   STATUS_BLOCKED, STATUS_READY, STATUS_RUNNING_EXECUTOR, STATUS_RUNNING_AGENT, NEEDS_HUMAN, STATUS_NEEDS_HUMAN_APPROVAL, STATUS_NEEDS_HUMAN_DECISION,
   STATUS_NEEDS_HUMAN_ACTION, OUTCOME_DONE, OUTCOME_DELIVERED, OUTCOME_OBSOLETE, STATUS_DONE,
 } from '../src/read/queue-vocabulary.mjs';
 
 const NOW = Date.parse('2026-08-17T12:00:00Z');
-const CANON = { repo: 'o/canon', ref: 'canonsha', engineVersion: 4, packVersions: { 'acme-pack-b': 3, 'acme-pack': 5 } };
 
-// The stamp's `ref` and `updated` are deliberately ANCIENT here: the versioned flows
-// stamp versions and nothing else, so those two hold the provenance of the last full
-// re-vendor — a healthy member's fixtures must look exactly like this, and every
-// test over `decl()` doubles as proof that neither field is ever judged.
+// The manager's roster artifact as the engine renders it: `{ version, generated, owner,
+// members: [fleet.Verdict] }`, the field names the engine's own JSON tags.
+const verdict = (repo, state, detail = '', over = {}) => ({
+  repo, defaultBranch: 'main', scope: 'covered', shape: 'cn', covered: true, dormant: false,
+  ...(state ? { freshness: { state, detail } } : {}), ...over,
+});
+const roster = (...members) => parseRoster(JSON.stringify({ version: 1, generated: '2026-08-17T06:00:00Z', owner: 'o', members }, null, 2));
+const ROSTER = roster(verdict('o/a', 'fresh'), verdict('o/b', 'fresh'));
+
 const decl = (over = {}) => ({
   packs: [{ id: 'acme-pack-b', version: 3 }, { id: 'acme-pack', version: 5 }],
-  taskScheduler: { dailyHour: 4 },
-  engineVersion: 4,
   ...over,
 });
 
@@ -82,7 +77,7 @@ test('a repo that does not run Claudinite is not-adopted, never zero-everything'
 });
 
 test('a healthy adopted member has no reasons and reads ok', () => {
-  const s = summariseMember(read({ items: [item()] }), { now: NOW, canon: CANON });
+  const s = summariseMember(read({ items: [item()] }), { now: NOW, roster: ROSTER });
   assert.equal(s.status, 'adopted');
   assert.equal(s.level, 'ok');
   assert.deepEqual(s.reasons, []);
@@ -95,7 +90,7 @@ test('a healthy adopted member has no reasons and reads ok', () => {
 // and a fleet view that alarms identically on all four teaches the reader to ignore
 // the alarm.
 test('an unclassified park is critical — it is a broken run', () => {
-  const s = summariseMember(read({ items: [item({ labels: [NEEDS_HUMAN] })] }), { now: NOW, canon: CANON });
+  const s = summariseMember(read({ items: [item({ labels: [NEEDS_HUMAN] })] }), { now: NOW, roster: ROSTER });
   assert.equal(s.level, 'critical');
   assert.equal(s.parked, 1);
   assert.match(s.reasons[0].text, /parked broken/);
@@ -103,13 +98,13 @@ test('an unclassified park is critical — it is a broken run', () => {
 
 test('an action or decision park is serious, and an approval park is a waiting PR', () => {
   const decision = summariseMember(
-    read({ items: [item({ labels: [NEEDS_HUMAN, STATUS_NEEDS_HUMAN_DECISION] })] }), { now: NOW, canon: CANON },
+    read({ items: [item({ labels: [NEEDS_HUMAN, STATUS_NEEDS_HUMAN_DECISION] })] }), { now: NOW, roster: ROSTER },
   );
   assert.equal(decision.level, 'serious');
   assert.match(decision.reasons[0].text, /parked for a person/);
 
   const approval = summariseMember(
-    read({ items: [item({ labels: [NEEDS_HUMAN, STATUS_NEEDS_HUMAN_APPROVAL] })] }), { now: NOW, canon: CANON },
+    read({ items: [item({ labels: [NEEDS_HUMAN, STATUS_NEEDS_HUMAN_APPROVAL] })] }), { now: NOW, roster: ROSTER },
   );
   assert.equal(approval.level, 'warning');
   assert.match(approval.reasons[0].text, /waiting for approval/);
@@ -118,7 +113,7 @@ test('an action or decision park is serious, and an approval park is a waiting P
 
 test('an item past its leash is serious, and counted apart from parked', () => {
   const stale = new Date(NOW - 5 * 3600e3).toISOString();
-  const s = summariseMember(read({ items: [item({ labels: [STATUS_RUNNING_EXECUTOR], updated_at: stale })] }), { now: NOW, canon: CANON });
+  const s = summariseMember(read({ items: [item({ labels: [STATUS_RUNNING_EXECUTOR], updated_at: stale })] }), { now: NOW, roster: ROSTER });
   assert.equal(s.level, 'serious');
   assert.equal(s.warned, 1);
   assert.equal(s.parked, 0);
@@ -134,7 +129,7 @@ test('a single scheduler failure is serious and a streak is critical', () => {
   // The member must otherwise be healthy, or another rule supplies the level and the
   // assertion passes without the run signal doing anything.
   const at = (concs) => summariseMember(
-    read({ items: [item()], runs: runs(concs) }), { now: NOW, canon: CANON },
+    read({ items: [item()], runs: runs(concs) }), { now: NOW, roster: ROSTER },
   ).level;
   assert.equal(at(['failure', 'success']), 'serious');
   assert.equal(at(['failure', 'failure']), 'critical');
@@ -143,126 +138,91 @@ test('a single scheduler failure is serious and a streak is critical', () => {
 
 // The signal no per-repo page can show you: the scheduler was never wired up at all.
 test('declared tasks with no work item ever is surfaced', () => {
-  const s = summariseMember(read({ items: [], paths: ['packs/acme-pack/tasks/acme-task-d/task.json'] }), { now: NOW, canon: CANON });
+  const s = summariseMember(read({ items: [], paths: ['packs/acme-pack/tasks/acme-task-d/task.json'] }), { now: NOW, roster: ROSTER });
   assert.equal(s.level, 'serious');
   assert.match(s.reasons.find((r) => /no work item/.test(r.text)).text, /1 task declared/);
 });
 
 test('a member declaring no tasks is not accused of never running them', () => {
-  const s = summariseMember(read({ items: [], paths: [] }), { now: NOW, canon: CANON });
+  const s = summariseMember(read({ items: [], paths: [] }), { now: NOW, roster: ROSTER });
   assert.equal(s.declaredTasks, 0);
   assert.equal(s.reasons.find((r) => /no work item/.test(r.text)), undefined);
 });
 
-// --- mount freshness -------------------------------------------------------------
+// --- freshness, from the manager's roster -----------------------------------------
 
-// A member's settings, as `mountState` reads them: the engine version at the top and
-// each pack's version on its own entry (#1252).
-const member = (engineVersion, packVersions = {}) => ({
-  engineVersion,
-  packs: Object.entries(packVersions).map(([id, version]) => ({ id, version })),
+test('every state the engine publishes passes through with its detail', () => {
+  for (const state of FRESHNESS_STATES) {
+    assert.deepEqual(freshnessOf(verdict('o/a', state, `${state} because`)), { state, detail: `${state} because` });
+  }
 });
 
-// The defect this whole block exists to keep out (#1065, same class as #786): the
-// versioned flows record versions and nothing else, so the `ref` and `updated` that
-// used to sit beside them held the provenance of the LAST FULL RE-VENDOR. A mount
-// updating nightly carried a months-old pair forever — judging either read every
-// healthy member as behind or stalled. #1252 deleted both, so a member that somehow
-// still carries them must be judged on its versions exactly as one that does not.
-test('freshness is judged on versions, and stray provenance keys change nothing', () => {
-  const stamp = {
-    ...member(4, { 'acme-pack-b': 3, 'acme-pack': 5 }),
-    ref: 'a-january-full-revendor-sha', updated: '2026-01-05T00:00:00Z',
-  };
-  assert.equal(mountState(stamp, CANON).state, 'current');
+// The three absences are three different sentences, and none of them reads as current.
+test('no roster, no row and an unjudged row are each unknown, saying which', () => {
+  assert.deepEqual(freshnessOf(null, { rostered: false }), { state: 'unknown', detail: NO_ROSTER });
+  assert.match(freshnessOf(null).detail, /no row for this repo/);
+  assert.match(freshnessOf(verdict('o/a', null, '', { error: 'boom' })).detail, /could not judge it: boom/);
+  assert.match(freshnessOf(verdict('o/a', null, '', { covered: false })).detail, /declaring no packs/);
+  for (const f of [freshnessOf(null, { rostered: false }), freshnessOf(null), freshnessOf(verdict('o/a', null))]) {
+    assert.equal(f.state, 'unknown');
+  }
 });
 
-// The rename's window has closed (#1640): nothing reads the retired block any more,
-// so a member still carrying one reads as having no versions at all rather than being
-// judged from it. That is the stated cost — the member is visibly unversioned rather
-// than quietly reported current from a shape nothing writes.
-test('a member still stamped in the retired block reads as unversioned', () => {
-  const legacy = { claudinite: { engineVersion: 4, packVersions: { 'acme-pack-b': 3, 'acme-pack': 5 } } };
-  assert.equal(mountState(legacy, CANON).state, 'unversioned');
+// A newer engine may publish a state this page has never heard of; it is named, not
+// mapped onto the nearest one this page knows.
+test('a state newer than the page is unknown and quotes the state', () => {
+  const f = freshnessOf(verdict('o/a', 'some-future-state'));
+  assert.equal(f.state, 'unknown');
+  assert.match(f.detail, /some-future-state/);
 });
 
-test('an older engine version outranks pack lag', () => {
-  const s = mountState(member(3, { 'acme-pack': 4 }), CANON);
-  assert.equal(s.state, 'behind-engine');
-  assert.equal(s.canonEngineVersion, 4);
+test('a row the roster read as dormant is dormant, whatever freshness it carries', () => {
+  assert.equal(freshnessOf(verdict('o/a', 'behind', 'x', { dormant: true })).state, 'dormant');
 });
 
-test('a pack behind canon reads behind and names the pack', () => {
-  const s = mountState(member(4, { 'acme-pack-b': 2, 'acme-pack': 5 }), CANON);
-  assert.equal(s.state, 'behind');
-  assert.deepEqual(s.behindPacks, [{ pack: 'acme-pack-b', version: 2, canonVersion: 3 }]);
+// GitHub's names are case-insensitive, and the enumeration and the sweep need not
+// spell one alike.
+test('the roster finds a member under any casing of its name', () => {
+  const s = summariseMember(read({ repo: 'O/A', items: [item()] }), { now: NOW, roster: roster(verdict('o/a', 'behind', 'acme-pack 1 → 2')) });
+  assert.equal(s.freshness.state, 'behind');
 });
 
-// The stored-data rename rule at this read: a stamp written before a pack rename
-// still keys the version under the old spelling, and must compare — not read as an
-// unknown pack.
-// Driven through a real entry of the rename map rather than an invented one: what
-// this pins is that the spellings the corpus actually ships are the ones compared,
-// so it needs its own canon reference keyed under today's ids.
-test('a renamed pack\'s stamped spelling still compares against canon', () => {
-  const canon = { ...CANON, packVersions: { basics: 5 } }; // @real-entity the rename map under test renames to this id
-  const s = mountState(member(4, { 'tidy-repo': 2 }), canon); // @real-entity the retired spelling the map still resolves
-  assert.equal(s.state, 'behind');
-  assert.deepEqual(s.behindPacks, [{ pack: 'basics', version: 2, canonVersion: 5 }]); // @real-entity the id the map renames to
+test('a roster that is not one parses to null rather than an empty fleet', () => {
+  assert.equal(parseRoster('not json'), null);
+  assert.equal(parseRoster('{"version":1}'), null);
+  assert.equal(parseRoster('[]'), null);
 });
 
-// A pack the canon reference cannot price (the read failed, or it is a local pack)
-// is an unknown, never silently "current".
-test('a pack canon carries no version for is counted unknown, not judged', () => {
-  const s = mountState(member(4, { 'acme-pack': 5, 'some-new-pack': 1 }), CANON);
-  assert.equal(s.state, 'current');
-  assert.equal(s.unknownPacks, 1);
-  assert.equal(s.comparedPacks, 1);
+test('with no roster every member\'s freshness is unknown and raises no reason', () => {
+  const s = summariseMember(read({ items: [item()] }), { now: NOW });
+  assert.equal(s.freshness.state, 'unknown');
+  assert.deepEqual(s.reasons.filter((r) => r.kind === 'mount'), []);
 });
 
-test('with no canon configured freshness is unknown, not current', () => {
-  const s = mountState(member(4, { 'acme-pack': 5 }), null);
-  assert.equal(s.state, 'unknown');
+// Nothing converges a member with no stamp or no scheduler, so waiting never clears
+// it; a behind member's own nightly update does.
+test('no-stamp and no-scheduler are warnings, behind is routine', () => {
+  const at = (state) => summariseMember(read({ items: [item()] }), { now: NOW, roster: roster(verdict('o/a', state, `${state} detail`)) })
+    .reasons.find((r) => r.kind === 'mount');
+  assert.equal(at('behind').level, 'info');
+  assert.equal(at('no-stamp').level, 'warning');
+  assert.equal(at('no-scheduler').level, 'warning');
+  assert.equal(at('no-stamp').text, 'no-stamp detail');
+  assert.equal(at('fresh'), undefined);
+  assert.equal(at('node'), undefined);
 });
 
-// A stamp with no versions at all predates the versioned flows — that member has not
-// converged since they landed, which is worth a flag of its own.
-test('a stamp carrying no versions reads unversioned', () => {
-  assert.equal(mountState({ packs: ['acme-pack'] }, CANON).state, 'unversioned');
-});
-
-// The canon side of the comparison is lifted as text off the real files, so the
-// parsers are proven against those files themselves — a fixture spelling the same
-// pattern would only prove the matching.
-test('the version parsers read the canon\'s own real files', async () => {
-  const engineText = await readFile(resolve(ROOT, 'engine/version.mjs'), 'utf8');
-  assert.equal(parseEngineVersion(engineText), ENGINE_VERSION);
-  const packDir = resolve(ROOT, 'packs/claudinite-dashboard');
-  const manifest = resolve(packDir, conventions.manifestFileIn((f) => existsSync(resolve(packDir, f))));
-  assert.equal(parsePackVersion(await readFile(manifest, 'utf8')), (await manifests.readManifest(manifest)).version);
-});
-
-test('the pack version parser reads either manifest spelling', () => {
-  assert.equal(parsePackVersion('{\n  "version": "60927.2",\n  "minEngineVersion": "60925.1"\n}\n'), '60927.2');
-  assert.equal(parsePackVersion('export default {\n  minEngineVersion: \'60925.1\',\n  version: \'60927.2\',\n};\n'), '60927.2');
-});
-
-test('the version parsers answer null — never a guess — on text without the field', () => {
-  assert.equal(parseEngineVersion('// ENGINE_VERSION = 9 in prose only\nexport const x = 1;\n'), null);
-  assert.equal(parsePackVersion('export default { id: "x", agentVersion: 3 };\n'), null);
-  assert.equal(parsePackVersion('{ "id": "x", "minEngineVersion": "60925.1" }\n'), null);
-});
-
-// The two absences, kept apart: a declaration this page could not read at all is
-// `none`, and a declaration that records no versions is `unversioned` — a repo that
-// declares Claudinite and has never been converged. Before #1252 both were "no
-// stamp", because the versions lived in a block that could itself be missing.
-test('a member declaring Claudinite with no installed versions is flagged', () => {
-  const s = summariseMember(read({ declaration: { packs: ['acme-pack'], taskScheduler: { dailyHour: 4 } } }),
-    { now: NOW, canon: CANON });
-  assert.equal(mountState(undefined).state, 'none');
-  assert.equal(mountState({ packs: ['acme-pack'] }).state, 'unversioned');
-  assert.ok(s.reasons.some((r) => /records no installed versions/.test(r.text)), JSON.stringify(s.reasons));
+// A cn member's row carries what its own member file says it runs.
+test('a cn member\'s engine and shape ride along from its member file', () => {
+  const member = memberFromFile(JSON.stringify({
+    version: 1, settings: { path: '.claudinite/settings.yaml', format: 'yaml' },
+    engine: { package: '@claudinite/cn', version: '61003.1', channel: 'stable' },
+    packs: { channel: 'stable', declared: [{ id: 'acme-pack' }] }, dormant: false, held: { 'acme-pack': '61001.2' },
+  }));
+  const s = summariseMember(read({ member, declaration: member.declaration }), { now: NOW, roster: ROSTER });
+  assert.equal(s.shape, 'cn');
+  assert.deepEqual(s.engine, { version: '61003.1' });
+  assert.deepEqual(s.packs, ['acme-pack']);
 });
 
 // --- runs ------------------------------------------------------------------------
@@ -341,8 +301,8 @@ test('members rank worst first and ties are stable by name', () => {
 
 test('rollUp counts members needing attention, not raw items', () => {
   const summaries = [
-    summariseMember(read({ repo: 'o/a', items: [item({ labels: [NEEDS_HUMAN] }), item({ number: 2, labels: [NEEDS_HUMAN] })] }), { now: NOW, canon: CANON }),
-    summariseMember(read({ repo: 'o/b', items: [item()] }), { now: NOW, canon: CANON }),
+    summariseMember(read({ repo: 'o/a', items: [item({ labels: [NEEDS_HUMAN] }), item({ number: 2, labels: [NEEDS_HUMAN] })] }), { now: NOW, roster: ROSTER }),
+    summariseMember(read({ repo: 'o/b', items: [item()] }), { now: NOW, roster: ROSTER }),
     summariseMember({ repo: 'o/c', declaration: null }, { now: NOW }),
     summariseMember({ repo: 'o/d', error: { status: 404 } }, { now: NOW }),
   ];
@@ -408,7 +368,7 @@ test('outcomes decode every spelling to the canonical words', () => {
   const closed = (number, labels) => item({ number, state: 'closed', labels, closed_at: '2026-08-17T06:00:00Z' });
   const s = summariseMember(read({
     items: [closed(1, [OUTCOME_DONE]), closed(2, [STATUS_DONE]), closed(3, [OUTCOME_DELIVERED]), closed(4, [OUTCOME_OBSOLETE])],
-  }), { now: NOW, canon: CANON });
+  }), { now: NOW, roster: ROSTER });
   assert.equal(s.outcomes.done, 2);
   assert.equal(s.outcomes.delivered, 1);
   assert.equal(s.outcomes.obsolete, 1);
@@ -434,7 +394,7 @@ test('the open state mix is counted per state, with unknown states kept apart', 
     item({ number: 3, labels: [STATUS_RUNNING_AGENT] }),
     item({ number: 4, labels: [] }),          // torn/unlabelled — a real repair case
   ];
-  const s = summariseMember(read({ items }), { now: NOW, canon: CANON });
+  const s = summariseMember(read({ items }), { now: NOW, roster: ROSTER });
   assert.equal(s.open.total, 4);
   assert.equal(s.open.byState[STATUS_BLOCKED], 1);
   assert.equal(s.open.byState[STATUS_READY], 1);
@@ -442,18 +402,18 @@ test('the open state mix is counted per state, with unknown states kept apart', 
   assert.equal(s.open.byState.other, 1, 'an unlabelled item is not silently folded into a real state');
 });
 
-test('a behind mount is a reason that names the packs, at routine severity', () => {
+test('a behind member is a reason that names the gaps, at routine severity', () => {
   const s = summariseMember(
-    read({ items: [item()], declaration: decl({ packs: [{ id: 'acme-pack-b', version: 2 }, { id: 'acme-pack', version: 5 }] }) }),
-    { now: NOW, canon: CANON },
+    read({ items: [item()] }),
+    { now: NOW, roster: roster(verdict('o/a', 'behind', 'acme-pack-b 2 → 3')) },
   );
-  const reason = s.reasons.find((r) => /behind canon/.test(r.text));
+  const reason = s.reasons.find((r) => r.kind === 'mount');
   assert.equal(reason.level, 'info', 'behind is routine — the nightly update catches it up');
   assert.match(reason.text, /acme-pack-b/);
 });
 
 test('one declared task is not "1 tasks"', () => {
-  const one = summariseMember(read({ items: [], paths: ['packs/acme-pack/tasks/acme-task-d/task.json'] }), { now: NOW, canon: CANON });
+  const one = summariseMember(read({ items: [], paths: ['packs/acme-pack/tasks/acme-task-d/task.json'] }), { now: NOW, roster: ROSTER });
   assert.match(one.reasons.find((r) => /no work item/.test(r.text)).text, /^1 task declared/);
 });
 
@@ -485,7 +445,7 @@ test('a failing repo CI is a reason, and is not the scheduler failing', () => {
       { event: 'schedule', status: 'completed', conclusion: 'success', head_branch: 'main', created_at: '2026-08-17T10:00:00Z' },
     ],
     defaultBranch: 'main',
-  }), { now: NOW, canon: CANON });
+  }), { now: NOW, roster: ROSTER });
   assert.equal(s.ci.state, 'failing');
   assert.equal(s.runs.consecutiveFailures, 0);
   assert.ok(s.reasons.some((r) => /own CI is failing/.test(r.text)));
@@ -499,7 +459,7 @@ test('the Work group counts issues that are not queue items, and open PRs', () =
       { number: 7, title: 'a pr', created_at: '2026-08-12T00:00:00Z', draft: false },
       { number: 8, title: 'a draft', created_at: '2026-08-13T00:00:00Z', draft: true },
     ],
-  }), { now: NOW, canon: CANON });
+  }), { now: NOW, roster: ROSTER });
 
   assert.equal(s.work.issues, 1);
   assert.equal(s.work.issuesOldest, Date.parse('2026-08-10T00:00:00Z'));
@@ -509,7 +469,7 @@ test('the Work group counts issues that are not queue items, and open PRs', () =
 
 test('the head commit and the repo\'s stars ride along from reads already made', () => {
   const s = summariseMember(read({ head: { sha: 'abc', committedAt: '2026-08-16T00:00:00Z' }, stars: 12 }),
-    { now: NOW, canon: CANON });
+    { now: NOW, roster: ROSTER });
   assert.equal(s.stars, 12);
   assert.equal(s.lastCommit, Date.parse('2026-08-16T00:00:00Z'));
 });
@@ -546,7 +506,7 @@ test('a kind with nothing waiting on it is left out, not reported as zero', () =
 // function, so the two can never describe the same parks in different words.
 test('a member and the fleet reach the breakdown through the same counts', () => {
   const one = summariseMember(
-    read({ items: [item({ labels: [NEEDS_HUMAN, STATUS_NEEDS_HUMAN_APPROVAL] })] }), { now: NOW, canon: CANON },
+    read({ items: [item({ labels: [NEEDS_HUMAN, STATUS_NEEDS_HUMAN_APPROVAL] })] }), { now: NOW, roster: ROSTER },
   );
   assert.deepEqual(memberAttention(one),
     { broken: 0, decisions: 0, actions: 0, approvals: 1, tripping: 0, schedulersFailing: 0, schedulersNeverRan: 0 });
@@ -563,8 +523,8 @@ test('a member and the fleet reach the breakdown through the same counts', () =>
 
 test('the rollup carries the split the breakdown reads', () => {
   const roll = rollUp([
-    summariseMember(read({ items: [item({ labels: [NEEDS_HUMAN, STATUS_NEEDS_HUMAN_APPROVAL] })] }), { now: NOW, canon: CANON }),
-    summariseMember(read({ repo: 'o/b', items: [item({ labels: [NEEDS_HUMAN] })] }), { now: NOW, canon: CANON }),
+    summariseMember(read({ items: [item({ labels: [NEEDS_HUMAN, STATUS_NEEDS_HUMAN_APPROVAL] })] }), { now: NOW, roster: ROSTER }),
+    summariseMember(read({ repo: 'o/b', items: [item({ labels: [NEEDS_HUMAN] })] }), { now: NOW, roster: ROSTER }),
   ]);
   assert.equal(roll.parkedApprovals, 1);
   assert.equal(roll.parkedHolding, 1, 'an unclassified park falls back to failure, which holds the lane');
@@ -580,7 +540,7 @@ test('the rollup splits an action park from a decision park', () => {
       item({ number: 1, labels: [NEEDS_HUMAN, STATUS_NEEDS_HUMAN_ACTION] }),
       item({ number: 2, labels: [NEEDS_HUMAN, STATUS_NEEDS_HUMAN_DECISION] }),
       item({ number: 3, labels: [NEEDS_HUMAN] }),
-    ] }), { now: NOW, canon: CANON }),
+    ] }), { now: NOW, roster: ROSTER }),
   ]);
   assert.equal(roll.parkedActions, 1);
   assert.equal(roll.parkedDecisions, 1);
@@ -646,8 +606,8 @@ test('a scheduler fault is not minutes of a person\'s time', () => {
 // reads every reason, and only the rendering filters by kind.
 test('every reason carries the kind that says where the row shows it', () => {
   const s = summariseMember(
-    read({ items: [item({ labels: [NEEDS_HUMAN, STATUS_NEEDS_HUMAN_APPROVAL] })] }),
-    { now: NOW, canon: { engineVersion: 99, packVersions: {} } },
+    read({ items: [item({ labels: [NEEDS_HUMAN, STATUS_NEEDS_HUMAN_DECISION] })] }),
+    { now: NOW, roster: roster(verdict('o/a', 'no-stamp', 'no stamp')) },
   );
   assert.ok(s.reasons.length >= 2);
   for (const r of s.reasons) assert.ok(r.kind, `a reason with no kind cannot be placed: ${r.text}`);
@@ -699,48 +659,46 @@ const commitAt = (daysAgo, over = {}) => ({
 });
 
 test('an archived repo is out of the fleet, whatever it declares', () => {
-  const s = summariseMember(read({ archived: true, private: true }), { now: NOW, canon: CANON });
+  const s = summariseMember(read({ archived: true, private: true }), { now: NOW, roster: ROSTER });
   assert.equal(s.status, 'archived');
   assert.equal(s.private, true);
   assert.match(s.reasons[0].text, /archived/);
 });
 
 test('a member carries GitHub\'s private flag through, adopted or not', () => {
-  assert.equal(summariseMember(read({ private: true }), { now: NOW, canon: CANON }).private, true);
+  assert.equal(summariseMember(read({ private: true }), { now: NOW, roster: ROSTER }).private, true);
   assert.equal(summariseMember({ repo: 'o/a', declaration: null, private: false }, { now: NOW }).private, false);
 });
 
-test('a dormant member is neither measured for its mount nor judged on its scheduler', () => {
-  const behind = dormantDecl({ engineVersion: 2 });
+test('a dormant member is neither measured for its freshness nor judged on its scheduler', () => {
   const s = summariseMember(read({
-    declaration: behind,
+    declaration: dormantDecl(),
     runs: [{ event: 'schedule', status: 'completed', conclusion: 'failure', created_at: '2026-08-17T04:00:00Z' }],
-  }), { now: NOW, canon: CANON });
+  }), { now: NOW, roster: roster(verdict('o/a', 'behind', 'acme-pack-b 2 → 3')) });
 
   assert.equal(s.dormant, true);
-  assert.equal(s.mount.state, 'dormant');
+  assert.equal(s.freshness.state, 'dormant');
   assert.deepEqual(s.reasons.filter((r) => r.kind === 'scheduler'), []);
   assert.deepEqual(s.reasons.filter((r) => r.kind === 'mount').map((r) => r.level), ['info']);
   assert.match(s.reasons.find((r) => r.kind === 'mount').text, /not measured/);
   assert.equal(s.level, 'info', 'an obedient repo is not an alarm');
 });
 
-test('the contrast case: the same mount and scheduler on an AWAKE member are findings', () => {
+test('the contrast case: the same freshness and scheduler on an AWAKE member are findings', () => {
   const s = summariseMember(read({
-    declaration: decl({ engineVersion: 2 }),
     runs: [{ event: 'schedule', status: 'completed', conclusion: 'failure', created_at: '2026-08-17T04:00:00Z' }],
-  }), { now: NOW, canon: CANON });
-  assert.equal(s.mount.state, 'behind-engine');
+  }), { now: NOW, roster: roster(verdict('o/a', 'behind', 'acme-pack-b 2 → 3')) });
+  assert.equal(s.freshness.state, 'behind');
   assert.ok(s.reasons.some((r) => r.kind === 'scheduler'));
 });
 
 test('the rollup counts machinery faults over the awake members only', () => {
   const asleep = summariseMember(read({
     repo: 'o/asleep',
-    declaration: dormantDecl({ engineVersion: 2 }),
+    declaration: dormantDecl(),
     runs: [{ event: 'schedule', status: 'completed', conclusion: 'failure', created_at: '2026-08-17T04:00:00Z' }],
-  }), { now: NOW, canon: CANON });
-  const awake = summariseMember(read({ repo: 'o/awake' }), { now: NOW, canon: CANON });
+  }), { now: NOW, roster: ROSTER });
+  const awake = summariseMember(read({ repo: 'o/awake' }), { now: NOW, roster: ROSTER });
   const roll = rollUp([asleep, awake]);
   assert.equal(roll.behindMembers, 0);
   assert.equal(roll.failingMembers, 0);
@@ -756,18 +714,18 @@ test('sleepy is decided on MEANINGFUL commits, by the claudinite-tasks test', ()
       commitAt(3, { message: 'Regenerate the board\n\nClaudinite-Task: acme-pack/acme-task-g\n' }),
       commitAt(40),
     ]),
-  }), { now: NOW, canon: CANON });
+  }), { now: NOW, roster: ROSTER });
   assert.equal(machineryOnly.sleep.state, 'sleepy');
   assert.equal(machineryOnly.dormant, false, 'sleepy is not dormancy — every sweep still reaches it');
 
   const worked = summariseMember(read({
     windowCommits: commitWindow([commitAt(1), commitAt(40)]),
-  }), { now: NOW, canon: CANON });
+  }), { now: NOW, roster: ROSTER });
   assert.equal(worked.sleep.state, 'awake');
 });
 
 test('a member whose commit listing was not read is unknown, never sleepy', () => {
-  const s = summariseMember(read({ windowCommits: undefined }), { now: NOW, canon: CANON });
+  const s = summariseMember(read({ windowCommits: undefined }), { now: NOW, roster: ROSTER });
   assert.equal(s.sleep.state, 'unknown');
   assert.equal(rollUp([s]).sleepyMembers, 0);
 });
@@ -775,6 +733,6 @@ test('a member whose commit listing was not read is unknown, never sleepy', () =
 test('a commit window that starts inside the fortnight cannot answer the question', () => {
   const s = summariseMember(read({
     windowCommits: commitWindow([], { since: new Date(NOW - 3 * 86400e3).toISOString() }),
-  }), { now: NOW, canon: CANON });
+  }), { now: NOW, roster: ROSTER });
   assert.equal(s.sleep.state, 'unknown');
 });

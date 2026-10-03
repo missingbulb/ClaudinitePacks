@@ -1,9 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { removeTree } from '../../../../../engine/remove-tree.mjs';
 import {
   SOURCE, DEFAULT_WORKER_NAME, COMPATIBILITY_DATE, NeedsAction,
   resolveOrigins, uploadForm, probe, deploy, wiringNote,
@@ -11,10 +10,13 @@ import {
 
 const member = (config) => {
   const root = mkdtempSync(join(tmpdir(), 'claudinite-deploy-'));
-  writeFileSync(join(root, '.claudinite-settings.json'),
-    JSON.stringify({ packs: [{ id: 'claudinite-dashboard', config }] }, null, 2));
+  mkdirSync(join(root, '.claudinite', 'flat'), { recursive: true });
+  writeFileSync(join(root, '.claudinite', 'flat', 'member.GENERATED.json'),
+    JSON.stringify({ version: 1, packs: { declared: [{ id: 'claudinite-dashboard', config }] } }, null, 2));
   return root;
 };
+
+const removeTree = (root) => rmSync(root, { recursive: true, force: true });
 
 const ENV = {
   CLOUDFLARE_API_TOKEN: 'cf-token',
@@ -116,6 +118,17 @@ test('a missing clientId, an unresolvable origin and a missing secret are each a
 
 // One reader for the deploy and the site build, so the endpoint cannot be minted for a
 // different App than the button authorizes against.
+// The member file is where the deploy reads its origins and worker name from; one
+// never written is named with the command that writes it, even when the client id
+// arrives by variable.
+test('a member with no member file is a NeedsAction naming it and cn tasks flat --write', async (t) => {
+  const root = mkdtempSync(join(tmpdir(), 'claudinite-deploy-'));
+  t.after(() => removeTree(root));
+  const err = await deploy({ repoRoot: root, env: { ...ENV, CLAUDINITE_DASHBOARD_CLIENT_ID: 'Iv1.var' }, dryRun: true, log: () => {} }).catch((e) => e);
+  assert.ok(err instanceof NeedsAction, String(err));
+  assert.match(err.message, /member\.GENERATED\.json is missing.*cn tasks flat --write/);
+});
+
 test('the deploy takes its client id from the same repository variable the page does', async () => {
   const root = member({});
   const out = await deploy({

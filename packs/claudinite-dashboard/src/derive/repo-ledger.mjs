@@ -147,7 +147,7 @@ export function longestGap(squares) {
   return worst;
 }
 
-export function repoMachine({ hourRows, runSummary, ci, usage, mount, canon, strip, declaredTasks, now }) {
+export function repoMachine({ hourRows, runSummary, ci, usage, strip, declaredTasks, now }) {
   const squares = schedulerHours(hourRows, { now });
   const gap = longestGap(squares);
   const ranAtAll = squares.some((s) => s.state === 'ran');
@@ -175,15 +175,6 @@ export function repoMachine({ hourRows, runSummary, ci, usage, mount, canon, str
     note: generated === null ? 'no fold — every figure below it reads not recorded' : `stamped ${new Date(generated).toISOString().slice(11, 16)} UTC`,
   };
 
-  const drift = {
-    level: !canon ? 'none' : (mount?.state === 'behind-engine' ? 'serious' : mount?.state === 'behind' ? 'machine' : 'good'),
-    state: mount?.state ?? null,
-    note: !canon ? 'unknown — no canonRepo configured'
-      : mount?.state === 'behind-engine' ? `engine v${mount.engineVersion} · canon v${canon.engineVersion}`
-        : mount?.state === 'behind' ? `${mount.behindPacks?.length ?? 0} pack(s) behind`
-          : 'current',
-  };
-
   const nextHour = strip?.hours?.find((h) => h.tasks.length) ?? null;
   const held = strip?.hours?.some((h) => h.held) ?? false;
   const wake = {
@@ -196,7 +187,7 @@ export function repoMachine({ hourRows, runSummary, ci, usage, mount, canon, str
       : 'not read — no roster',
   };
 
-  return { scheduler, executor, ci, foldAge, drift, wake };
+  return { scheduler, executor, ci, foldAge, wake };
 }
 
 // --- the block ------------------------------------------------------------------------

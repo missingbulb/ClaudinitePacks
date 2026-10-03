@@ -3,7 +3,9 @@ import assert from 'node:assert/strict';
 import { FLAT_TASKS_PATH, FLAT_DASHBOARD_PATH } from '../src/read/flat.mjs';
 import { USAGE_PATH, LEGACY_USAGE_PATH, TASKS_USAGE_PATH, LEGACY_TASKS_USAGE_PATH } from '../src/read/usage.mjs';
 import { valuesPath, legacyValuesPath } from '../src/read/contributions.mjs';
-import * as flat from '../../../engine/pack_loader/generate-flat-declarations.mjs';
+import { spawnSync } from 'node:child_process';
+import { MEMBER_PATH } from '../src/read/member.mjs';
+import { CN, needsCn } from '../../../tools/test/cn-tasks.mjs';
 import * as tasksFormat from '../../claudinite-tasks/tasks/usage-fold/tasks-usage-format.mjs';
 import * as review from '../../claudinite-growth/tasks/usage-review/report.mjs';
 import { installSdk } from '../../../tools/test/sdk-stand-in.mjs';
@@ -17,9 +19,17 @@ const fold = await import('../../claudinite-tasks/tasks/usage-fold/worker.mjs');
 // looked for a moved file at neither path would show a member with history as empty.
 const posix = (p) => p.split(/[\\/]/).join('/');
 
-test('the page reads each file at the path its writer writes it', () => {
-  assert.equal(FLAT_TASKS_PATH, posix(flat.FLAT_TASKS_FILE));
-  assert.equal(FLAT_DASHBOARD_PATH, posix(flat.FLAT_DASHBOARD_FILE));
+// The three flat files are `cn`'s to write, so their paths are asked of the binary.
+test('the page reads each flat file at the path cn writes it', needsCn, () => {
+  const r = spawnSync(CN, ['tasks', 'flat', '--paths', '--json'], { encoding: 'utf8' });
+  assert.equal(r.status, 0, r.stderr);
+  const paths = JSON.parse(r.stdout);
+  assert.equal(FLAT_TASKS_PATH, posix(paths.tasks));
+  assert.equal(FLAT_DASHBOARD_PATH, posix(paths.dashboards));
+  assert.equal(MEMBER_PATH, posix(paths.member));
+});
+
+test('the page reads each pack-written file at the path its writer writes it', () => {
   assert.equal(USAGE_PATH, fold.USAGE_PATH);
   assert.equal(LEGACY_USAGE_PATH, fold.LEGACY_USAGE_PATH);
   assert.equal(TASKS_USAGE_PATH, tasksFormat.TASKS_USAGE_PATH);

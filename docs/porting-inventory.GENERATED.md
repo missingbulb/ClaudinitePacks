@@ -31,7 +31,7 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 | chrome-extension | 61002.1 | 46 | 2 | 4 | 3 | 4 | 7 | 9 | 0 | 8 |
 | claude-code-web-users-support | 60928.1 | 13 | 1 | 4 | 0 | 8 | 7 | 0 | 1 | 8 |
 | claudinite-canon-curation | 61002.2 | 65 | 3 | 6 | 18 | 5 | 10 | 0 | 0 | 13 |
-| claudinite-dashboard | 61002.1 | 16 | 3 | 1 | 4 | 44 | 42 | 1 | 4 | 10 |
+| claudinite-dashboard | 61003.1 | 16 | 3 | 0 | 4 | 44 | 46 | 1 | 4 | 0 |
 | claudinite-fleet-sheepdog | 61003.3 | 30 | 2 | 0 | 4 | 0 | 1 | 0 | 0 | 0 |
 | claudinite-growth | 61003.1 | 159 | 8 | 0 | 16 | 10 | 13 | 0 | 0 | 0 |
 | claudinite-lifecycle | 61003.2 | 42 | 3 | 0 | 2 | 1 | 6 | 0 | 0 | 2 |
@@ -62,7 +62,7 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 | spec-driven-product | 60928.1 | 31 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | web-scraping | 60928.1 | 35 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | web-speech | 60928.1 | 33 | 3 | 6 | 0 | 1 | 5 | 0 | 0 | 10 |
-| **38 packs** | | 1195 | 72 | 61 | 69 | 116 | 164 | 11 | 5 | 82 |
+| **38 packs** | | 1195 | 72 | 60 | 69 | 116 | 168 | 11 | 5 | 72 |
 
 ## aws-sam
 
@@ -239,10 +239,6 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 
 ## claudinite-dashboard
 
-### coded-check (1)
-
-- `worldRules/descriptor-usable.mjs` (imports `engine/`)
-
 ### task (4)
 
 - `tasks/deploy-oauth-exchange/task.json`
@@ -259,7 +255,7 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 - `src/derive/explore.mjs`
 - `src/derive/fleet-growth.mjs`
 - `src/derive/fleet-ledger.mjs`
-- `src/derive/fleet.mjs` (imports `engine/`)
+- `src/derive/fleet.mjs`
 - `src/derive/model.mjs`
 - `src/derive/next-work.mjs`
 - `src/derive/pricing.mjs`
@@ -271,16 +267,16 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 - `src/read/auth.mjs`
 - `src/read/budget.mjs`
 - `src/read/cache.mjs`
-- `src/read/canon.mjs` (imports `engine/`)
 - `src/read/config.mjs`
 - `src/read/contributions.mjs`
 - `src/read/dormancy.mjs`
 - `src/read/flat.mjs`
 - `src/read/fleet-sweep.mjs`
 - `src/read/github.mjs`
+- `src/read/member.mjs`
 - `src/read/pr-fields.mjs`
 - `src/read/queue-vocabulary.mjs`
-- `src/read/settings-read.mjs` (imports `engine/`)
+- `src/read/roster.mjs`
 - `src/read/signin-vars.mjs`
 - `src/read/usage.mjs`
 - `src/render/board-view.mjs`
@@ -293,11 +289,11 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 - `tasks/deploy-oauth-exchange/deploy.mjs`
 - `tasks/publish-pages/github-api.mjs`
 - `tooling/build-site.mjs`
-- `tooling/deployment-config.mjs` (imports `engine/`)
+- `tooling/deployment-config.mjs`
 - `tooling/oauth-exchange.mjs`
 - `tooling/serve.mjs`
 
-### test (42)
+### test (46)
 
 - `test/activity.test.mjs`
 - `test/auth.test.mjs`
@@ -310,19 +306,20 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 - `test/contrib-view.test.mjs`
 - `test/contributions.test.mjs`
 - `test/declaration-text-drift.test.mjs`
-- `test/deployment-config.test.mjs` (imports `engine/`)
-- `test/descriptor-usable.test.mjs`
+- `test/deployment-config.test.mjs`
+- `test/descriptor-drift.test.mjs`
 - `test/dormancy-drift.test.mjs`
 - `test/explore.test.mjs`
-- `test/flat-paths-drift.test.mjs` (imports `engine/`)
+- `test/flat-paths-drift.test.mjs`
 - `test/flat.test.mjs`
 - `test/fleet-growth.test.mjs`
 - `test/fleet-ledger.test.mjs`
 - `test/fleet-sweep.test.mjs`
-- `test/fleet.test.mjs` (imports `engine/`)
-- `test/github.test.mjs` (imports `engine/`)
+- `test/fleet.test.mjs`
+- `test/github.test.mjs`
 - `test/grouped-head.test.mjs`
 - `test/machine-view.test.mjs`
+- `test/member.test.mjs`
 - `test/model.test.mjs`
 - `test/next-work.test.mjs`
 - `test/pack.test.mjs`
@@ -330,11 +327,14 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 - `test/pricing.test.mjs`
 - `test/queue-vocabulary.test.mjs`
 - `test/rate-policy.test.mjs`
+- `test/roster.test.mjs`
 - `test/sheet.test.mjs`
+- `test/sign-in-return.test.mjs`
 - `test/substantive-commit-drift.test.mjs`
 - `test/task-calendar-drift.test.mjs`
 - `test/tasks-machine.test.mjs`
-- `test/tasks/deploy-oauth-exchange/deploy.test.mjs` (imports `engine/`)
+- `test/tasks/deploy-oauth-exchange/deploy.test.mjs`
+- `test/tasks/publish-pages/preconditions.test.mjs`
 - `test/tasks/publish-pages/worker.test.mjs`
 - `test/ui.test.mjs`
 - `test/usage.test.mjs`

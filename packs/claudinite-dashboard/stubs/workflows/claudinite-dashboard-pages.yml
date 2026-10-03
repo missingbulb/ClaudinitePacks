@@ -5,7 +5,7 @@
 # actions, which `uses:` alone can invoke. Nothing here decides, builds or configures.
 # The `claudinite-dashboard/publish-pages` task does all of that, pushes the built tree
 # to `gh-pages`, and fires this by `workflow_dispatch`. Dispatching by hand redeploys
-# the last build; a rebuild is the task's (`create-work-item --wake`).
+# the last build; a rebuild is the task's (the scheduler workflow's `wake` input).
 
 name: Claudinite dashboard
 

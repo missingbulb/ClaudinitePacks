@@ -125,10 +125,7 @@ page already has, naming the file that would carry it.
   contributing pack. See below; this is the surface with the least room and the most to
   prove.
 - **Deployment cards** (`fleet.deployment`, an id list rendered as a repo card is) —
-  rendered once, from the packs the deployment repo itself declares; a `generated` source
-  may name `"repo": "canon"`, which resolves to the configured `canonRepo` (absent that
-  config, the card is absent and says so). This is how the canon shows recently added
-  packs on a fleet page.
+  rendered once, from the packs the deployment repo itself declares.
 
 ### The fleet mini-card
 
@@ -207,7 +204,7 @@ worst-first ordering was not claimed by whoever shouted loudest.
 
 ## What it costs
 
-Discovery is free: both views already read `.claudinite-settings.json` and the tree
+Discovery is free: both views already read the member's declaration and the tree
 listing at the head sha, so a contribution exists exactly when
 `…/packs/<id>/dashboard.json` — and its values file — appear in a listing already in
 hand. No probe reads.
@@ -269,7 +266,7 @@ nothing, and that is the ordinary case.** Sixteen of the thirty-two carry conven
 rather than state — there is no number a repo's tree could answer for `node`, `leaflet`
 or `ios` — so they carry no descriptor and their repos never render the region. Two more
 abstain deliberately: `claudinite-dashboard` would be reporting on itself, and
-`claudinite-lifecycle`'s mount freshness is already a core panel on both views.
+`claudinite-lifecycle`'s freshness is already a core column on the fleet view.
 
 Of the rest, the split that matters is whether a writer exists. Seven contribute from
 machinery already running — the release packs off `latest-release` and `git-github` off

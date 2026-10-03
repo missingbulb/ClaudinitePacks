@@ -12,7 +12,11 @@ here changes those rules, it adds fields under them. Page readers are named by f
 member's `sessions-and-elements.json` at head sha; ***tasks fold*** is the second past-data file
 beside it, `task-runs-and-costs.json`, written by its own task on its own watermark — a
 member folding one and not the other is ordinary, so nothing reads across the two;
-*declaration* is the task file at head sha;
+*declaration* is the task file at head sha; *member* is the member's
+`.claudinite/flat/member.GENERATED.json` at head sha, which its own `cn` writes (a Node
+member's `.claudinite-settings.json` where there is none); *roster* is the deployment's
+`.claudinite/fleet/roster.GENERATED.json` at head sha, one engine verdict per member,
+landed by its `fleet-roster` task;
 *config* is the deployment's `dashboard.config.json`. A figure with two sources takes the live
 one for the days it reaches and the fold for the rest, as `queueSeries` and `hourSeries` in
 [`usage.mjs`](../src/read/usage.mjs) already do.
@@ -24,7 +28,8 @@ one for the days it reaches and the fold for the rest, as `queueSeries` and `hou
 | Executor failed / total, 24 h; in flight | both | fold `hours[h].executor`, `failed`; live runs `status` | `hourSeries`, `ciStatus` |
 | CI on main | repo | live runs | `ciStatus` |
 | Fold age, members folding | both | fold `generated` | `readUsage` |
-| Updates (fleet) / Drift (repo) | both | declaration stamp vs `canonRepo` | `mountState` |
+| Updates; a member's freshness | fleet | roster `members[].freshness` (absent roster → *unknown*) | `readRoster`, `freshnessOf` |
+| Declared packs, dormancy, engine | both | member `packs.declared`, `dormant`, `engine` | `readMember` |
 | Next wake, 24 h strip | both | declaration anchors, `nextAsk.at` per roster row | `buildRoster`; page bucketing (§3) |
 | Merged PRs; nobody in the loop | both | live issues page with merged PRs kept (§3); fold `prs` | `projectPull` (§3) |
 | Caught before merge | both | fold `checks.work` (`failures`, `ciFailures`, `runs`, `errors`) | `growthSeries` |
@@ -210,7 +215,7 @@ holds its lane with `last-run-not-failed` — is a critical tick at *now*.
 
 ### The `rates` config
 
-The per-model rate table lives in `.claudinite-settings.json`, under this pack's declaration
+The per-model rate table lives in the member's settings, under this pack's declaration
 `config`, key `rates`:
 
 ```jsonc

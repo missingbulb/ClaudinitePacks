@@ -35,7 +35,7 @@ Green state is one line: *nothing is waiting on you*.
 
 **Question.** Is *this* scheduler running, on cadence, right now — and when does it next act?
 
-Six cells. Where the fleet's heartbeat is one square per member, the repo's is **one square
+Five cells. Where the fleet's heartbeat is one square per member, the repo's is **one square
 per hour**, 6 × 10 px, because the question one level down is *did it run when it should
 have*, hour by hour.
 
@@ -45,7 +45,6 @@ have*, hour by hour.
 | **Executor** | failed / total in 24 h, and what is in flight now | `hours[*].failed` summed over 24 h; in flight from `runs.status ∈ {queued, in_progress}` | fold `hours` + live runs | ≥ 1 failed → warning; the failed run's task named from the hour's `tasks` list where the fold has it |
 | **CI on main** | one word plus age | `ciStatus(runs, default_branch)` in [`fleet.mjs`](../src/derive/fleet.mjs) | live runs | failing → critical (nothing the queue lands is safe) |
 | **Fold age** | `now − usage.generated` | the stamp | fold | > 6 h on a repo whose head moved → warning; no fold → *no fold*, and every fold-derived figure below reads *not recorded* |
-| **Drift** | `engine −1 · 2 packs`, the versions named | `mountState` | declaration stamp vs `canonRepo` | behind on the engine → serious; no canon configured → *unknown*, never *current* |
 | **Next wake** | `05:00 · 7 tasks · in 19 h`, then a 24 h tick strip, one tick per task anchor, hover naming the task | the roster's own `nextAsk.at` per row (`buildRoster` in [`model.mjs`](../src/derive/model.mjs)) bucketed by hour | task declarations at head sha | a declaring repo with no anchor inside 24 h → serious (unwired); a task whose next ask is `held` (a failure park on a declaration carrying `last-run-not-failed`) is a critical tick at *now* |
 
 **Expand →** the 48-hour table: hour, scheduler, executor, sessions, failed, tasks executed
@@ -151,7 +150,8 @@ to repo ([pack-contributions.md](pack-contributions.md)).
 ## What is deliberately absent
 
 - **A tile row.** Minutes waiting and items parked are Start here and SPEED's stuck row; PRs,
-  issues and stars are the census pill; CI, runs in flight and drift are the machine.
+  issues and stars are the census pill; CI and runs in flight are the machine. Freshness is not on this page: it is the fleet
+  manager's verdict, published in its fleet-roster, and the fleet page reads it.
 - **A per-day stacked chart of queue closes.** The outcome *words* matter (obsolete against
   done), but the day was the wrong axis: nobody asks which day obsolete happened, they ask
   which task. Total and spark on the headline; the split per task in the expand.
