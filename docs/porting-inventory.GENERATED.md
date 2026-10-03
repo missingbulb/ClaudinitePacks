@@ -9,7 +9,7 @@ coded checks become Go; tasks stay Node against `@claudinite/sdk`; tests are rew
 the pinned `cn`, or dropped when they check only file shapes or doc text. A file that imports
 Claudinite's `engine/` by relative path does not run here until its slice replaces the import.
 
-`minEngineVersion` across the shelf: `60928.1` (4 packs), `61001.1.0` (34 packs).
+`minEngineVersion` across the shelf: `60928.1` (3 packs), `61001.1.0` (35 packs).
 A two-part one is a Claudinite Node engine version, which the Engine's `shared/version` (three
 parts, `<day>.<n>.0`) does not read; a ported pack's first version sets `minEngineVersion` to the
 `cn` version it was tested on.
@@ -50,7 +50,7 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 | html | 61003.1 | 9 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | ios | 61003.1 | 7 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | jwt | 61003.1 | 20 | 3 | 0 | 0 | 0 | 6 | 0 | 0 | 6 |
-| leaflet | 60928.1 | 12 | 1 | 2 | 0 | 0 | 2 | 0 | 0 | 4 |
+| leaflet | 61003.1 | 12 | 1 | 2 | 0 | 0 | 3 | 0 | 0 | 0 |
 | macos | 60928.1 | 46 | 2 | 3 | 0 | 0 | 5 | 0 | 0 | 6 |
 | node | 61002.1 | 20 | 2 | 2 | 0 | 0 | 3 | 0 | 0 | 0 |
 | numpy-image-processing | 61003.1 | 14 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -62,7 +62,7 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 | spec-driven-product | 61003.1 | 31 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | web-scraping | 61003.1 | 35 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | web-speech | 60928.1 | 33 | 3 | 6 | 0 | 1 | 5 | 0 | 0 | 10 |
-| **38 packs** | | 1195 | 72 | 58 | 69 | 115 | 174 | 11 | 5 | 53 |
+| **38 packs** | | 1195 | 72 | 58 | 69 | 115 | 175 | 11 | 5 | 49 |
 
 ## aws-sam
 
@@ -657,13 +657,14 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 
 ### coded-check (2)
 
-- `worldRules/asset-integrity.mjs` (imports `engine/`)
-- `worldRules/tile-attribution.mjs` (imports `engine/`)
+- `checks/asset_integrity.go`
+- `checks/tile_attribution.go`
 
-### test (2)
+### test (3)
 
-- `test/pack.test.mjs` (imports `engine/`)
-- `test/tile-attribution.test.mjs` (imports `engine/`)
+- `checks/checks_test.go`
+- `checks/helpers_test.go`
+- `test/declared_test.go`
 
 ## macos
 
