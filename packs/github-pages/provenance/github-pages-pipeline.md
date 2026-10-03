@@ -70,3 +70,9 @@
   it.
 - **Mechanism:** the description, as before.
 - **Actor:** @missingbulb (owner).
+
+## 2026-10-03 · trigger-changed · names the checks by their cn ids
+- **Reason:** the two checks are now Go, whose ids carry no `gp/` prefix, so "when a gp/ check
+  fires" names an id no finding prints; the description names `site-config` and `deploy-workflow`.
+- **Actor:** @missingbulb (owner), through the chunk 17 plan (ClaudinitePacks#30 T2).
+- **Mechanism:** the skill's `description`, which the harness matches against the session.

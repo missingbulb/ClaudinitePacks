@@ -42,7 +42,7 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 | firebase | 61002.1 | 29 | 2 | 1 | 0 | 1 | 3 | 0 | 0 | 0 |
 | flutter | 61003.1 | 26 | 2 | 0 | 0 | 0 | 2 | 0 | 0 | 0 |
 | git-github | 61003.1 | 33 | 3 | 0 | 0 | 1 | 1 | 0 | 0 | 1 |
-| github-pages | 61002.1 | 13 | 1 | 2 | 3 | 4 | 3 | 1 | 0 | 4 |
+| github-pages | 61003.1 | 13 | 1 | 2 | 3 | 4 | 6 | 1 | 0 | 0 |
 | google-identity | 61002.1 | 9 | 2 | 1 | 0 | 0 | 3 | 0 | 0 | 0 |
 | headless-browser | 61003.1 | 31 | 2 | 0 | 0 | 0 | 4 | 0 | 0 | 1 |
 | hello | 1.4 | 14 | 3 | 4 | 4 | 0 | 0 | 0 | 0 | 0 |
@@ -62,7 +62,7 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 | spec-driven-product | 61003.1 | 31 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | web-scraping | 61003.1 | 35 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | web-speech | 60928.1 | 33 | 3 | 6 | 0 | 1 | 5 | 0 | 0 | 10 |
-| **38 packs** | | 1195 | 72 | 59 | 69 | 116 | 169 | 11 | 5 | 61 |
+| **38 packs** | | 1195 | 72 | 59 | 69 | 116 | 172 | 11 | 5 | 57 |
 
 ## aws-sam
 
@@ -567,8 +567,8 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 
 ### coded-check (2)
 
-- `worldRules/deploy-workflow.mjs` (imports `engine/`)
-- `worldRules/site-config.mjs` (imports `engine/`)
+- `checks/deploy_workflow.go`
+- `checks/site_config.go`
 
 ### task (3)
 
@@ -578,14 +578,17 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 
 ### src (4)
 
-- `build-site.mjs` (imports `engine/`)
+- `build-site.mjs`
 - `lib.mjs`
 - `migrations/2026-09-17-github-pages-vendoring/migration.mjs`
 - `tasks/site-release/github-api.mjs`
 
-### test (3)
+### test (6)
 
-- `test/pack.test.mjs` (imports `engine/`)
+- `checks/checks_test.go`
+- `checks/helpers_test.go`
+- `test/declared_test.go`
+- `test/pack.test.mjs`
 - `test/tasks/site-release/preconditions.test.mjs`
 - `test/tasks/site-release/worker.test.mjs`
 
