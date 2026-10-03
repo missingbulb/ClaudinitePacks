@@ -39,3 +39,10 @@
 - **Reason:** the seam file is gone with pack contributions.
 - **Actor:** @missingbulb (owner), asking to drop pack contributions altogether.
 - **Mechanism:** unchanged carrier; its import graph seeds from module manifests and skill checks.
+
+## 2026-10-03 · retired · cn loads no pack module
+- **Reason:** the failure it guarded, a top-level `await` in a `pack.mjs` re-imported mid-discovery
+  stranding a member's mount, cannot happen where the engine imports no pack module
+  (ClaudiniteEngine design record 117).
+- **Actor:** Claude, ClaudinitePacks#30 T3.
+- **Model:** Claude Opus 5.5

@@ -1,11 +1,11 @@
 # pack-version-history
 
-Each pack's `VERSIONS.md` answers "what did version N ship?" — and since a version is cut on the
-base branch after its changes land ([pack-version-bump](../pack-version-bump/README.md)), no
-pull request can write that row itself. This task derives it: for every version a pack's
-manifest ever declared, the first-parent commits between the previous version's bump and this
-one's that touched a shipping file of the pack are the pull requests it shipped, and the row
-names them by their squash-merge subjects, which carry the pull request numbers.
+Each pack's `VERSIONS.md` answers "what did version N ship?" — and a row naming the pull request
+that cut a version can only be written once that pull request has a number and has landed. This
+task derives it from `cn pack history --json`: for every version a pack's manifest ever declared,
+the first-parent commits between the previous version's bump and this one's that touched a
+shipping file of the pack are the pull requests it shipped, and the row names them by their
+squash-merge subjects, which carry the pull request numbers.
 
 Only the versions with no row gain one. A row already in the file stands as written, whatever
 wrote it, so a hand-written account of a version is never replaced by a list of titles. The

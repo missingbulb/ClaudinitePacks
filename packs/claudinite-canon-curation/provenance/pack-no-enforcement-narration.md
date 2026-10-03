@@ -18,3 +18,10 @@
   by the pack.mjs name alone.
 - **Actor:** @missingbulb (owner), asking for pack.json manifests.
 - **Mechanism:** unchanged carrier; its path and field patterns name both spellings.
+
+## 2026-10-03 · moved · the check is an engine built-in
+- **Reason:** cn runs no pack JavaScript checks, and the check's code reads the engine's own rule
+  shapes (ClaudiniteEngine#68 Q1, code to the engine).
+- **Actor:** Claude, ClaudinitePacks#30 T3.
+- **Model:** Claude Opus 5.5
+- **Mechanism:** cn's built-in, active where this pack is declared.

@@ -9,7 +9,7 @@ coded checks become Go; tasks stay Node against `@claudinite/sdk`; tests are rew
 the pinned `cn`, or dropped when they check only file shapes or doc text. A file that imports
 Claudinite's `engine/` by relative path does not run here until its slice replaces the import.
 
-`minEngineVersion` across the shelf: `61001.1.0` (37 packs), `61003.1.0` (1 pack).
+`minEngineVersion` across the shelf: `61001.1.0` (36 packs), `61003.1.0` (2 packs).
 A two-part one is a Claudinite Node engine version, which the Engine's `shared/version` (three
 parts, `<day>.<n>.0`) does not read; a ported pack's first version sets `minEngineVersion` to the
 `cn` version it was tested on.
@@ -29,8 +29,8 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 | aws-sam | 61002.1 | 25 | 2 | 1 | 0 | 0 | 3 | 0 | 0 | 0 |
 | basics | 61002.3 | 189 | 2 | 13 | 5 | 2 | 8 | 0 | 0 | 0 |
 | chrome-extension | 61003.1 | 46 | 2 | 4 | 3 | 4 | 8 | 9 | 0 | 0 |
-| claude-code-web-users-support | 61003.1 | 13 | 1 | 2 | 0 | 8 | 6 | 0 | 1 | 3 |
-| claudinite-canon-curation | 61002.2 | 65 | 3 | 6 | 18 | 5 | 10 | 0 | 0 | 13 |
+| claude-code-web-users-support | 61003.1 | 13 | 1 | 2 | 0 | 3 | 4 | 0 | 1 | 0 |
+| claudinite-canon-curation | 61003.1 | 64 | 3 | 0 | 16 | 1 | 2 | 0 | 0 | 0 |
 | claudinite-dashboard | 61003.1 | 16 | 3 | 0 | 4 | 44 | 46 | 1 | 4 | 0 |
 | claudinite-fleet-sheepdog | 61003.3 | 30 | 2 | 0 | 4 | 0 | 1 | 0 | 0 | 0 |
 | claudinite-growth | 61003.1 | 159 | 8 | 0 | 16 | 10 | 13 | 0 | 0 | 0 |
@@ -62,7 +62,7 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 | spec-driven-product | 61003.1 | 31 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | web-scraping | 61003.1 | 35 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | web-speech | 61003.1 | 33 | 3 | 4 | 0 | 0 | 3 | 0 | 0 | 0 |
-| **38 packs** | | 1195 | 72 | 54 | 69 | 114 | 162 | 11 | 5 | 16 |
+| **38 packs** | | 1194 | 72 | 48 | 67 | 105 | 152 | 11 | 5 | 0 |
 
 ## aws-sam
 
@@ -158,25 +158,18 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 - `checks/checks.go`
 - `checks/store.go`
 
-### src (8)
+### src (3)
 
-- `copy_user_pack_to_repo.mjs` (imports `engine/`)
 - `migrations/2026-08-07-claude-code-web-users-support/migration.mjs`
-- `read_github_login.mjs`
-- `session-prepare.mjs`
-- `session-start.mjs`
 - `store_codeowners.mjs`
-- `user_pack_address.mjs`
-- `write_store_codeowners.mjs` (imports `engine/`)
+- `write_store_codeowners.mjs`
 
-### test (6)
+### test (4)
 
 - `checks/checks_test.go`
 - `checks/helpers_test.go`
 - `test/declared_test.go`
-- `test/read_github_login.test.mjs`
-- `test/session-start.test.mjs` (imports `engine/`)
-- `test/user_pack_address.test.mjs`
+- `test/write_store_codeowners.test.mjs`
 
 ### other (1)
 
@@ -184,16 +177,7 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 
 ## claudinite-canon-curation
 
-### coded-check (6)
-
-- `skills/writing-claudinite-skills/checks.mjs`
-- `skills/writing-claudinite-skills/no-enforcement-narration.mjs` (imports `engine/`)
-- `skills/writing-claudinite-skills/usage-declared.mjs` (imports `engine/`)
-- `worldRules/no-enforcement-narration.mjs` (imports `engine/`)
-- `worldRules/pack-discovery-entry-await.mjs` (imports `engine/`)
-- `worldRules/pack-version-log-ordered.mjs` (imports `engine/`)
-
-### task (18)
+### task (16)
 
 - `tasks/canon-prose-to-checks/task.json`
 - `tasks/canon-prose-to-checks/task.md`
@@ -204,8 +188,6 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 - `tasks/growth-promote/preconditions.mjs`
 - `tasks/growth-promote/task.json`
 - `tasks/growth-promote/task.md`
-- `tasks/pack-version-bump/task.json`
-- `tasks/pack-version-bump/worker.mjs`
 - `tasks/pack-version-history/task.json`
 - `tasks/pack-version-history/worker.mjs`
 - `tasks/revalidate-from-source/task.json`
@@ -214,25 +196,13 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 - `tasks/usage-triage/task.json`
 - `tasks/usage-triage/task.md`
 
-### src (5)
+### src (1)
 
-- `canon-config.mjs` (imports `engine/`)
-- `pack-surface.mjs`
-- `pack-versions.mjs` (imports `engine/`)
-- `promote-scope.mjs` (imports `engine/`)
 - `tasks/pack-version-history/deliver.mjs`
 
-### test (10)
+### test (2)
 
-- `test/declared-checks.test.mjs`
-- `test/pack-discovery-entry-await.test.mjs` (imports `engine/`)
-- `test/pack-surface.test.mjs`
-- `test/pack-version-log-ordered.test.mjs`
-- `test/pack-versions.test.mjs`
-- `test/pack.test.mjs` (imports `engine/`)
-- `test/promote-scope.test.mjs` (imports `engine/`)
-- `test/skills/writing-claudinite-skills/no-enforcement-narration.test.mjs` (imports `engine/`)
-- `test/skills/writing-claudinite-skills/usage-declared.test.mjs` (imports `engine/`)
+- `test/declared_test.go`
 - `test/tasks.test.mjs`
 
 ## claudinite-dashboard

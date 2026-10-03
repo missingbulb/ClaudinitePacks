@@ -21,7 +21,7 @@ Un-declaring the pack freezes canon absorption without touching the members' sid
 
 ## Configuration
 
-The pack entry takes one optional key, read by [canon-config.mjs](canon-config.mjs):
+The pack entry takes one optional key, read by the engine (`cn growth promote-scope`):
 
 ```json
 { "id": "claudinite-canon-curation", "config": { "write_paths": ["packs", "skills"] } }
@@ -49,7 +49,6 @@ why.
 | `growth-promote` | a participating member changed its local packs in the window | a PR against the canon's default branch |
 | `growth-discover-packs` | weekly, over every covered member | a PR against the canon's default branch, plus an adopt issue in each member that evidenced the pack |
 | `revalidate-from-source` | monthly, over the packs that declared an upstream source | a PR against the canon's default branch, superseding the month before's if it is still open |
-| `pack-version-bump` | daily when commits landed under `packs/`, and on every push to the canon's default branch (its workflow) | a commit straight onto the canon's default branch |
 | `pack-version-history` | weekly, when commits landed under `packs/` | a self-landing PR touching only `packs/*/provenance/VERSIONS.md` |
 | `canon-prose-to-checks` | weekly, on a canon somebody worked in that week | a PR converting the shelf's always-testable prose into checks |
 | `canon-rule-revalidation` | weekly | corrections to shelf rules whose environment claim no longer probes true |
@@ -93,16 +92,19 @@ What a canon session follows when it names, configures, writes or polices a pack
 
 | Check | Severity | Reason | Enforcement |
 |---|---|---|---|
-| `pack-no-enforcement-narration` | medium | complexity | check: blocking |
-| `pack-discovery-entry-await` | critical | correctness | check: blocking |
-| `pack-version-log-ordered` | high | correctness | check: blocking |
-| `skill-no-enforcement-narration` | medium | complexity | check: blocking |
-| `skill-usage-declared` | high | correctness | check: blocking |
+| `pack-no-enforcement-narration` | medium | complexity | engine built-in: blocking |
+| `pack-version-log-ordered` | high | correctness | engine built-in: blocking |
+| `skill-no-enforcement-narration` | medium | complexity | engine built-in: blocking |
+| `skill-usage-declared` | high | correctness | engine built-in: blocking |
 | `pack-independence` | high | correctness | declared check: blocking |
 | `pack-directory-kebab-case` | high | correctness | declared check: blocking |
 | `corpus-count-in-prose` | low | complexity | declared check: advisory |
 | `home-only-path-in-canon-prose` | high | correctness | declared check: blocking |
 | `named-import-of-new-engine-export` | critical | correctness | declared check: blocking |
+
+The four engine built-ins are `cn`'s own, active wherever this pack is declared; the pack carries
+their prose and nothing of their code. `pack-discovery-entry-await` is retired: `cn` loads no
+`pack.mjs`, so a top-level `await` in one strands no member's mount.
 
 `pack-independence` is barrier **data**, not code: `forbidReferences`
 entries in [declared-checks.json](declared-checks.json), compiled by the engine's reference
@@ -142,23 +144,16 @@ scanning. The [barrier guide](../basics/barriers.md) documents the edge vocabula
   for, and this task does not give it one. The reason a source is worth watching, and what a
   reconciliation concluded, belong in the pack's `references.md`.
 
-- **[tasks/pack-version-bump/](tasks/pack-version-bump/README.md)** — the one writer of a pack's
-  `version`. A pack's directory reaches a member only when the canon's number exceeds the
-  member's, so every shipping change needs a fresh one and no two changes may share one; the
-  worker reads the base branch after a merge, finds each pack's last bump and cuts today's next
-  version for every pack with a shipping change since. A pull request never bumps a pack itself,
-  and no check asks it to. The canon's `pack-versions.yml` workflow runs the same worker on every
-  push to the default branch; the daily task covers the merges GitHub turns into no push run.
 - **[tasks/pack-version-history/](tasks/pack-version-history/README.md)** — the weekly derivation
   of each pack's `VERSIONS.md` from git: which pull requests landed between one version and the
-  next. Rows already written stand; only the versions with no row gain one.
+  next, as `cn pack history --json` answers it. Rows already written stand; only the versions with
+  no row gain one.
 - **[item-routing.md](item-routing.md)** — the shared worthiness + routing method promote (and an
   owner-requested retrospective pass) defers to, so every decision about admitting and placing an
   item is made the same way.
-- **[promote-scope.mjs](promote-scope.mjs)** — the write-surface gate on promote's PRs: promote may
-  write only under the corpus roots above. The canon's own CI invokes its `runCli`, keyed on the
-  promote branch prefix; nothing in a tree marks a diff as a promote run, so the gate cannot
-  self-gate.
+- **`cn growth promote-scope --base <ref>`** — the write-surface gate on promote's PRs: promote may
+  write only under the corpus roots above. The canon's own CI runs it, keyed on the promote branch
+  prefix; nothing in a tree marks a diff as a promote run, so the gate cannot self-gate.
 - **[skills/extract-packs-from-a-project/](skills/extract-packs-from-a-project/SKILL.md)** — the
   pack-writing method both tasks above apply: decompose a project into its facets, sort its rules to
   the one owner each, author the packs those facets earn. Whether a project's insight becomes a pack
@@ -192,7 +187,8 @@ All three are ordinary, **independent** planner units — there is no barrier an
 Each stage reads only what is already **merged**: promote processes whatever sits on members'
 default branches when it runs, so a lesson extracted tonight is promoted **tomorrow** night (the
 extract PR's merge shows up in the next night's local-pack signal), and reaches other members' dedup
-once the promote PR is approved and merged. That approval was always the dominant latency, so
+once the promote PR is approved and merged and the shelf publishes the new version, which a `cn`
+member receives on its next update (a Node-engine member keeps the version it last vendored). That approval was always the dominant latency, so
 barrier machinery would buy little; if the cadence ever matters, promote can run more often without
 any design change.
 
@@ -204,7 +200,8 @@ PR trail but not a human reviewer; auto-merge keeps the fleet's daily lesson-cap
 review requests.
 
 **Central execution, no plumbing.** Promote runs from the canon home repo with a fleet-wide token,
-so it reads every participating member and opens its canon PR directly there — no consumer-side
+so it reads every participating member — a member on the Node engine and a `cn` member alike — and
+opens its canon PR directly there — no consumer-side
 Action, no cross-repo PAT, no labelled-issue up-path. The planner hands its gate the `fleetMembers`
 aggregate (which members changed, and what they declare), and the gate hands the worker the changed
 participants as `targets`.

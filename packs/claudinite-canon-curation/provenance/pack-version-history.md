@@ -64,12 +64,20 @@
   pack.mjs, rules are found in worldRules/ and workRules/ and nothing is listed.
 - **Actor:** @missingbulb (owner), asking for pack.json manifests.
 
-## 2026-10-02 · ported · pack-version-history delivers through `@claudinite/sdk`
+## 2026-10-02 · moved · pack-version-history delivers through `@claudinite/sdk`
 - **Reason:** the runner's generated-file lane it delivered through is gone.
 - **Actor:** build lead, completing ClaudinitePacks #20 so the runner's removal lands with every importer ported.
 - **Mechanism:** a pack-local delivery copy over the SDK's `git` and `github.openPr`.
 
-## 2026-10-02 · hardened · the delivery refuses the base branch
+## 2026-10-02 · strengthened · the delivery refuses the base branch
 - **Reason:** review of ClaudinitePacks #20: the delivery force-pushes to whatever branch it is handed, and the engine's `git` bounds no ref.
 - **Actor:** build lead, reviewing ClaudinitePacks #20.
 - **Mechanism:** `deliver.mjs` throws before any write when `target.branch` is the base; the copy is held to its siblings by `tools/test/pack-copies.test.mjs`.
+
+## 2026-10-03 · moved · the history walk is `cn pack history --json`
+- **Reason:** the walk lived in pack-versions.mjs beside the retired bump task; the engine owns the
+  vendored-set rule it depends on (ClaudiniteEngine#68 Q1).
+- **Actor:** Claude, ClaudinitePacks#30 T3.
+- **Model:** Claude Opus 5.5
+- **Mechanism:** the worker renders the missing rows from the command's JSON and keeps the file's
+  own header and every standing row.
