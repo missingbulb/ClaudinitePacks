@@ -7,8 +7,10 @@
 // endpoint against another.
 //
 // TWO STORES, split by who has to edit them. Everything describing what the dashboard
-// COVERS — its mode, owner, roster, exclusions — is the member's own declaration,
-// where it is reviewable in a diff. The sign-in pair are REPOSITORY VARIABLES: they
+// COVERS — its mode, owner, exclusions — is the member's own declaration, where it is
+// reviewable in a diff, and is read here out of the member file its `cn` writes from it
+// (`.claudinite/flat/member.GENERATED.json`), the one JSON statement of a declaration
+// kept in YAML, TOML or JSON. The sign-in pair are REPOSITORY VARIABLES: they
 // are the two values an owner sets while standing in the GitHub App's settings page,
 // and `exchangeUrl` in particular is minted by a deploy rather than authored, so
 // asking for a commit to record it puts a merge between the endpoint going live and
@@ -23,8 +25,9 @@
 // pair before this existed must keep working rather than losing its Sign in button on
 // the next build. That fallback is the migration, not a second supported store.
 import { readFile } from 'node:fs/promises';
-import { settingsPath } from '../../../engine/settings-file.mjs';
+import { join } from 'node:path';
 import { SIGN_IN_VARS } from '../src/read/signin-vars.mjs';
+import { MEMBER_PATH } from '../src/read/member.mjs';
 
 export const PACK_ID = 'claudinite-dashboard';
 
@@ -33,15 +36,19 @@ export const PACK_ID = 'claudinite-dashboard';
 // that reads the filesystem.
 export { SIGN_IN_VARS } from '../src/read/signin-vars.mjs';
 
+// This pack's `config` as the member declares it, or `{}` where the member file is
+// absent, unreadable or names no config for it.
 export async function declaredConfig(repoRoot) {
-  let decl = null;
+  let member = null;
   try {
-    decl = JSON.parse(await readFile(settingsPath(repoRoot), 'utf8'));
+    member = JSON.parse(await readFile(join(repoRoot, MEMBER_PATH), 'utf8'));
   } catch {
     return {};
   }
-  const entry = (decl?.packs ?? []).find((p) => (typeof p === 'string' ? p : p?.id) === PACK_ID);
-  return (typeof entry === 'object' && entry?.config) || {};
+  const declared = Array.isArray(member?.packs?.declared) ? member.packs.declared : [];
+  const entry = declared.find((p) => (typeof p === 'string' ? p : p?.id) === PACK_ID);
+  const config = typeof entry === 'object' ? entry?.config : null;
+  return config && typeof config === 'object' && !Array.isArray(config) ? { ...config } : {};
 }
 
 // The declaration with the sign-in pair resolved: the variable where it is set, the

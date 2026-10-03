@@ -6,7 +6,7 @@ import {
   summariseMember, rankMembers, rollUp, packSpread, taskSpread, attentionBreakdown,
   memberAttention, fleetAttention, estimateMinutes, estimateNote, parkMinutes, parkMinutesNote,
 } from '../derive/fleet.mjs';
-import { readCanon, priceStampedPacks } from '../read/canon.mjs';
+import { readRoster } from '../read/roster.mjs';
 import { activitySeries, delta, commitDays } from '../derive/activity.mjs';
 import { readUsage, readTasksUsage } from '../read/usage.mjs';
 import {
@@ -26,7 +26,7 @@ import {
 import { band, slip, machineCell, beats, wakeTicks, figureRow, pulseChart, detailTable, expander } from '../render/sheet.mjs';
 import { fleetLedger, machinePanel, fmtTokens, fmtHours, fmtAge, STUCK_DAYS } from '../derive/fleet-ledger.mjs';
 import { wakeStrip } from '../derive/model.mjs';
-import { settingsTextAtSha } from '../read/settings-read.mjs';
+import { readMember } from '../read/member.mjs';
 import { sweepPhases } from '../read/fleet-sweep.mjs';
 
 // --- the passes ------------------------------------------------------------------
@@ -44,9 +44,9 @@ import { sweepPhases } from '../read/fleet-sweep.mjs';
 // Everything is wrapped: a member that 404s, times out or is rate-limited becomes a
 // row that SAYS SO, because one unreadable repo must not blank the other eleven.
 
-// Pass one. Three calls, and for a repo that does not run Claudinite they are the
-// only three it ever costs — which is most of the saving on a fleet where not
-// everything is adopted.
+// Pass one. Three calls for a cn member, four for a Node one or a repo that does not
+// run Claudinite — and for the last those are all it ever costs, which is most of the
+// saving on a fleet where not everything is adopted.
 async function readIdentity(repo, token) {
   try {
     const meta = await gh.getRepo(repo, token);
@@ -54,16 +54,14 @@ async function readIdentity(repo, token) {
     // and it arrives in the call the content cache already makes for the sha.
     const head = await gh.getHead(repo, meta.default_branch, token);
     const sha = head.sha;
-    const configText = await settingsTextAtSha(gh, repo, sha, token);
-
-    let declaration = null;
-    if (configText) {
-      try { declaration = JSON.parse(configText); } catch { declaration = null; }
-    }
+    // What the member says about itself: its member file, or a Node member's
+    // settings. An unreadable one is read as no declaration, as it always was.
+    const { member } = await readMember({ repo, sha, token, gh });
 
     return {
       repo,
-      declaration,
+      member,
+      declaration: member?.declaration ?? null,
       defaultBranch: meta.default_branch,
       stars: meta.stars,
       archived: meta.archived,
@@ -290,7 +288,7 @@ function stateTags(s) {
   if (s.private) tags.push(['private', 'private', 'private on GitHub']);
   if (s.dormant) {
     tags.push(['dormant', 'dormant',
-      'dormant by its own declaration — its scheduler is stopped, so its mount and scheduler are not measured and no fleet-wide operation touches it']);
+      'dormant by its own declaration — its scheduler is stopped, so its freshness and scheduler are not measured and no fleet-wide operation touches it']);
   }
   if (s.sleep?.state === 'sleepy') {
     const last = s.sleep.lastMeaningfulAt
@@ -576,9 +574,10 @@ function memberRows(s, onOpen, now) {
   // --- Claudinite: what the machinery is doing here -------------------------------
 
   // How much Claudinite is declared here, wearing whether it is current. Two facts
-  // read together, and the second is a scheduler run on nearly every row — so it earns a
-  // corner of the first rather than a column beside it, with the versions on hover.
-  const packs = el('td', { className: 'nw' }, [packMark(s.packs.length, s.mount)]);
+  // read together, and the second says the same thing on nearly every row — so it earns
+  // a corner of the first rather than a column beside it, with the roster's sentence on
+  // hover.
+  const packs = el('td', { className: 'nw' }, [packMark(s.packs.length, s.freshness)]);
 
   // Queue: the state mix as one thin bar plus the counts that are non-zero, so a
   // member with nothing open reads as empty rather than as a row of zeros.
@@ -651,8 +650,8 @@ function memberRows(s, onOpen, now) {
 }
 
 // The deployment's own cards — the fleet questions no single member's page can
-// answer. Rendered from the packs the deployment repo (and the canon, when one is
-// configured) declares, and absent entirely when neither contributes any.
+// answer. Rendered from the packs the deployment repo declares, and absent entirely
+// when none contributes any.
 function renderDeployment(contributions, now) {
   const section = $('fleet-contrib');
   if (!section) return;
@@ -1024,7 +1023,7 @@ export function renderSheet({ ledger, machine, candidates, sweeping, progress, s
     machineCell({
       level: m.updates.level, label: 'Updates',
       value: m.updates.stale,
-      unit: m.updates.stale === null ? 'not judged' : `of ${m.updates.total} behind the canon`,
+      unit: m.updates.stale === null ? 'not judged' : `of ${m.updates.total} behind`,
       // The denominator is the AWAKE fleet, so the dormant members it leaves out are
       // named rather than silently missing from the count.
       note: m.dormant.length ? `${m.updates.note} · ${m.dormant.length} dormant, not measured` : m.updates.note,
@@ -1182,7 +1181,7 @@ function perMemberRows(ledger) {
   return rows;
 }
 
-function renderFleet(summaries, reads, now, onOpen, canon, progress = null, deployment = null) {
+function renderFleet(summaries, reads, now, onOpen, roster, progress = null, deployment = null) {
   // ARCHIVED IS OUT OF THE FLEET (owner, 2026-09-13). GitHub has frozen the repo, so
   // nothing there converges, runs or can be acted on, and every figure a row could
   // carry would be about a repository nobody can change. They are counted under the
@@ -1214,7 +1213,7 @@ function renderFleet(summaries, reads, now, onOpen, canon, progress = null, depl
   const strip = rosterRows.length ? wakeStrip(rosterRows, now) : null;
   renderSheet({
     ledger,
-    machine: machinePanel(resolved, resolvedReads, { now, canon, strip }),
+    machine: machinePanel(resolved, resolvedReads, { now, rostered: Boolean(roster), strip }),
     candidates,
     sweeping,
     progress,
@@ -1242,7 +1241,7 @@ function renderFleet(summaries, reads, now, onOpen, canon, progress = null, depl
   const table = $('fleet');
   const body = groupedHead(table, MEMBER_GROUPS);
   if (!summaries.length) { body.append(emptyRow(MEMBER_COLS, 'No members in the roster.')); return; }
-  const repaint = () => renderFleet(summaries, reads, now, onOpen, canon, progress, deployment);
+  const repaint = () => renderFleet(summaries, reads, now, onOpen, roster, progress, deployment);
   const keep = FILTERS[memberFilter].keep;
   // THREE BANDS, in the order a reader spends attention on them. The fleet proper is
   // ranked worst-first as always; the two bands below it are members nothing is
@@ -1305,7 +1304,10 @@ export async function loadFleet({ repos, ignored = [], token, config, onOpen, on
   gh.resetCounters();
   const now = Date.now();
 
-  const canon = await readCanon(config, token);
+  // The manager's roster, from the deployment repo: every member's freshness, judged
+  // once by the sweep that published it. Read before the first row is summarised, so no
+  // row claims unknown for a member the roster does judge.
+  const roster = await readRoster({ repo: config?.deploymentRepo ?? null, token, gh });
   // Read before the sweep so the panel is there from the first paint: it is two small
   // reads, and it is the thing a viewer opening this page in the morning came for.
 
@@ -1320,7 +1322,7 @@ export async function loadFleet({ repos, ignored = [], token, config, onOpen, on
   // What the page is allowed to claim right now: how many members are RANKED (not how
   // many have been touched), and which pass is filling the rest in.
   let progress = { done: 0, total: repos.length, label: null };
-  const paint = () => renderFleet(summaries, reads, now, onOpen, canon, progress, deployment);
+  const paint = () => renderFleet(summaries, reads, now, onOpen, roster, progress, deployment);
   paint();
   readDeploymentContributions({ config, token, gh })
     .then((d) => { deployment = d; paint(); })
@@ -1351,10 +1353,6 @@ export async function loadFleet({ repos, ignored = [], token, config, onOpen, on
           // know (`archived`), and the summary reads the two together.
           m.read.ignored = ignoredSet.has(m.repo);
           reads[m.i] = m.read;
-          // The canon side of the mount comparison, priced from what this member
-          // stamps. In this pass rather than beside the summary, so every member's
-          // packs are priced before the first row claims a mount is current.
-          await priceStampedPacks(canon, m.read.declaration);
         },
       },
       { id: 'attention', label: 'Reading queues', appliesTo: adopted, run: (m) => readAttention(m.read, token) },
@@ -1370,7 +1368,7 @@ export async function loadFleet({ repos, ignored = [], token, config, onOpen, on
         // empty one, and a row saying "nothing parked" about a member whose issues
         // have not been fetched is a wrong statement rather than a partial one.
         const ranked = phase !== 'identity' || !adopted(member);
-        if (ranked) summaries[member.i] = summariseMember(member.read, { now, canon });
+        if (ranked) summaries[member.i] = summariseMember(member.read, { now, roster });
       }
       progress = { done: summaries.filter(Boolean).length, total: repos.length, label };
       onProgress?.({ phase, label, done, total, repo: member?.repo ?? null });
@@ -1387,5 +1385,5 @@ export async function loadFleet({ repos, ignored = [], token, config, onOpen, on
 
   progress = { done: summaries.filter(Boolean).length, total: repos.length, label: null };
   paint();
-  return { summaries: summaries.filter(Boolean), now, canon };
+  return { summaries: summaries.filter(Boolean), now, roster };
 }

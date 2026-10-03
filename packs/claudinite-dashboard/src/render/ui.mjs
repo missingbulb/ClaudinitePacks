@@ -157,30 +157,29 @@ export function attentionMark(rows, { width = 92 } = {}) {
   ]);
 }
 
-// The pack count, with the mount's verdict worn as a badge on it. Two facts that are
-// read together — how much Claudinite is declared here, and whether what is declared
-// is current — and almost always the badge says the same thing, so it earns a corner
-// rather than a column. The detail is the hover.
-export function packMark(count, mount) {
-  const badge = MOUNT_BADGE[mount?.state] ?? MOUNT_BADGE.unknown;
-  return el('div', { className: 'pack-mark', title: badge.title(mount) }, [
+// The pack count, with the member's freshness worn as a badge on it. Two facts that
+// are read together — how much Claudinite is declared here, and whether what is
+// declared is current — and almost always the badge says the same thing, so it earns a
+// corner rather than a column. The detail is the hover: the roster's own sentence.
+export function packMark(count, freshness) {
+  const badge = FRESHNESS_BADGE[freshness?.state] ?? FRESHNESS_BADGE.unknown;
+  const title = freshness?.detail || badge.title;
+  return el('div', { className: 'pack-mark', title }, [
     el('div', { className: 'n num', textContent: count == null ? '—' : String(count) }),
-    el('div', { className: `badge ${badge.cls}`, textContent: badge.glyph, role: 'img', 'aria-label': badge.title(mount) }),
+    el('div', { className: `badge ${badge.cls}`, textContent: badge.glyph, role: 'img', 'aria-label': title }),
   ]);
 }
 
-// `unknown` is not `current`: with no canon configured there is nothing to compare
-// against, and a scheduler run there would claim a check that never happened.
-const packList = (mount) => (mount.behindPacks ?? [])
-  .map((p) => `${p.pack} v${p.version} < canon v${p.canonVersion}`).join('\n');
-
-const MOUNT_BADGE = {
-  current: { glyph: '✓', cls: 'ok', title: (m) => `mount current — engine v${m.engineVersion}` },
-  behind: { glyph: '⏱', cls: 'info', title: (m) => `mount behind canon:\n${packList(m)}` },
-  'behind-engine': { glyph: '⏱', cls: 'serious', title: (m) => `mount on engine v${m.engineVersion}, canon is v${m.canonEngineVersion}` },
-  unversioned: { glyph: '?', cls: 'warning', title: () => 'the mount stamp carries no versions — it predates the versioned update flows' },
-  none: { glyph: '?', cls: 'warning', title: () => 'declares Claudinite but carries no mount stamp' },
-  unknown: { glyph: '·', cls: 'idle', title: () => 'mount freshness unknown — no canon configured to compare against' },
+// `unknown` is not `fresh`: with no roster published there is nothing that judged it,
+// and a tick there would claim a check that never happened.
+const FRESHNESS_BADGE = {
+  fresh: { glyph: '✓', cls: 'ok', title: 'at the published versions' },
+  behind: { glyph: '⏱', cls: 'info', title: 'behind the published versions' },
+  'no-stamp': { glyph: '?', cls: 'warning', title: 'declares packs but has never been vendored' },
+  'no-scheduler': { glyph: '?', cls: 'warning', title: 'no scheduler workflow, so nothing will converge it' },
+  node: { glyph: '·', cls: 'idle', title: 'runs the Node engine, which the roster does not compare' },
+  dormant: { glyph: '·', cls: 'idle', title: 'dormant — not measured' },
+  unknown: { glyph: '·', cls: 'idle', title: 'freshness unknown — this deployment runs no fleet-roster' },
 };
 
 // A member's last 90 days of commits, as a filled area over time.
@@ -548,8 +547,9 @@ export const groupStarts = (groups) => {
 // hover text for free.
 //
 // The scale is stated, never implied: an unlabelled column chart invites reading two
-// panels' bars against each other when their maxima differ.
-export function stackedColumns(days, series, { height = 84, label = (d) => d.day, detail = null } = {}) {
+// panels' bars against each other when their maxima differ. `unit` is what one column
+// spans, so the peak of an hourly chart reads per hour rather than per day.
+export function stackedColumns(days, series, { height = 84, label = (d) => d.day, detail = null, unit = 'day' } = {}) {
   const NS = 'http://www.w3.org/2000/svg';
   const svgEl = (tag, attrs = {}) => {
     const n = document.createElementNS(NS, tag);
@@ -578,7 +578,7 @@ export function stackedColumns(days, series, { height = 84, label = (d) => d.day
   const svg = svgEl('svg', {
     viewBox: `0 0 ${width} ${height}`, preserveAspectRatio: 'none',
     class: 'chart', role: 'img',
-    'aria-label': `${days.length} days, peak ${peak} on ${days[totals.indexOf(peak)]?.day ?? '—'}`,
+    'aria-label': `${days.length} ${unit}s, peak ${peak} on ${days.length ? label(days[totals.indexOf(peak)]) : '—'}`,
   });
 
   // What a column is ABOUT, appended to every segment's hover. A stacked bar answers
@@ -617,9 +617,9 @@ export function stackedColumns(days, series, { height = 84, label = (d) => d.day
   return el('div', { className: 'chart-wrap' }, [
     svg,
     el('div', { className: 'chart-axis' }, [
-      el('span', { className: 'sub', textContent: days[0]?.day ?? '' }),
-      el('span', { className: 'sub', textContent: `peak ${peak}/day` }),
-      el('span', { className: 'sub', textContent: days[days.length - 1]?.day ?? '' }),
+      el('span', { className: 'sub', textContent: days.length ? label(days[0]) : '' }),
+      el('span', { className: 'sub', textContent: `peak ${peak}/${unit}` }),
+      el('span', { className: 'sub', textContent: days.length ? label(days[days.length - 1]) : '' }),
     ]),
   ]);
 }

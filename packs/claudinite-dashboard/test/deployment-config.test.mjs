@@ -1,17 +1,19 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { removeTree } from '../../../engine/remove-tree.mjs';
 import { deploymentConfig, SIGN_IN_VARS } from '../tooling/deployment-config.mjs';
 
 const member = (config) => {
   const root = mkdtempSync(join(tmpdir(), 'claudinite-depcfg-'));
-  writeFileSync(join(root, '.claudinite-settings.json'),
-    JSON.stringify({ packs: [{ id: 'claudinite-dashboard', config }] }, null, 2));
+  mkdirSync(join(root, '.claudinite', 'flat'), { recursive: true });
+  writeFileSync(join(root, '.claudinite', 'flat', 'member.GENERATED.json'),
+    JSON.stringify({ version: 1, packs: { declared: [{ id: 'claudinite-dashboard', config }] } }, null, 2));
   return root;
 };
+
+const removeTree = (root) => rmSync(root, { recursive: true, force: true });
 
 test('a repository variable is the sign-in pair\'s store, and reports no fallback', async (t) => {
   const root = member({ mode: 'repo' });
@@ -52,6 +54,20 @@ test('an empty variable is unset, not an override', async (t) => {
 test('a repo with neither store configured is an ordinary token-box deployment', async (t) => {
   const root = member({ mode: 'repo' });
   t.after(() => removeTree(root));
+  const { cfg, legacy } = await deploymentConfig(root, {});
+  assert.equal(cfg.clientId, undefined);
+  assert.deepEqual(legacy, []);
+});
+
+// The member file is the one statement of the declaration a build reads: a Node
+// settings file beside nothing is not consulted, so a member whose `cn` has not yet
+// written its flat files builds a token-box page rather than half-reading a format
+// that is retiring.
+test('only the member file is read; a Node settings file alone declares nothing', async (t) => {
+  const root = mkdtempSync(join(tmpdir(), 'claudinite-depcfg-'));
+  t.after(() => removeTree(root));
+  writeFileSync(join(root, '.claudinite-settings.json'),
+    JSON.stringify({ packs: [{ id: 'claudinite-dashboard', config: { clientId: 'Iv1.node' } }] }));
   const { cfg, legacy } = await deploymentConfig(root, {});
   assert.equal(cfg.clientId, undefined);
   assert.deepEqual(legacy, []);

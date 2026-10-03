@@ -19,9 +19,8 @@ import {
   PARKED,
 } from '../derive/model.mjs';
 import {
-  ciStatus, mountState, parkMinutes, summariseRuns,
+  ciStatus, parkMinutes, summariseRuns,
 } from '../derive/fleet.mjs';
-import { readCanon, priceStampedPacks } from '../read/canon.mjs';
 import { workRows, rowsFor, viewCounts, defaultView, VIEWS } from '../derive/work.mjs';
 import { repoCandidates } from '../derive/next-work.mjs';
 import { readUsage, readTasksUsage, growthSeries, queueSeries, hourSeries } from '../read/usage.mjs';
@@ -42,8 +41,8 @@ import { buildPanel } from '../derive/explore.mjs';
 import { tasksMachine } from '../derive/tasks-machine.mjs';
 import { machinePanel } from '../render/machine-view.mjs';
 import { wakeStrip } from '../derive/model.mjs';
-import { settingsTextAtSha, SETTINGS_FILE } from '../read/settings-read.mjs';
-// The scheduler's own predicate, over the declaration this view already parsed — so the
+import { readMember, MEMBER_PATH, NODE_SETTINGS_PATH } from '../read/member.mjs';
+// The scheduler's own predicate, over the member this view already read — so the
 // page's idea of dormant and the member's own can never differ.
 import { isDormant } from '../read/dormancy.mjs';
 
@@ -73,8 +72,7 @@ const CI_UI = {
 //
 // A tile is coloured only when it is REPORTING something, so a coloured tile always
 // means look here — and a tile whose answer is unknown says so rather than showing a
-// zero. The mount tile especially: with no canon configured there is nothing to compare
-// against, and "current" would be a claim nothing checked.
+// zero.
 const taskCell = (r) => el('td', {}, [
   el('div', { className: 'name', textContent: r.task ?? '(unparsed title)' }),
   el('div', { className: 'sub', textContent: r.pack ?? '' }),
@@ -257,11 +255,6 @@ export function renderRepoSheet({ ledger, machine, candidates, strip, repo }) {
       value: m.foldAge.age === null ? null : fmtAge(m.foldAge.age), unit: 'old', note: m.foldAge.note,
     }),
     machineCell({
-      level: m.drift.level, label: 'Drift',
-      value: m.drift.state === 'current' ? 'current' : (m.drift.state === null ? null : 'behind'),
-      unit: '', note: m.drift.note,
-    }),
-    machineCell({
       level: m.wake.level, label: 'Next wake',
       value: m.wake.at ? `${m.wake.at.slice(11)}:00` : null,
       unit: m.wake.at ? `${m.wake.tasks} task${m.wake.tasks === 1 ? '' : 's'}` : 'nothing in 24 h',
@@ -428,7 +421,7 @@ export function renderWork(all, repo, now, view, board = null, context = null, d
   // reads as a badly stuck repo — the single impression it exists to give accurately —
   // and every remedy it offers is one the declaration has already refused. So the
   // tasks elements come out and the block says what is actually true. Nothing else on
-  // the page changes: the mount, the ledger and the contributions are all still facts
+  // the page changes: the ledger and the contributions are still facts
   // about a dormant repo.
   $('work-dormant').hidden = !dormant;
   $('work-views').hidden = dormant;
@@ -545,7 +538,7 @@ function renderRuns(hours) {
           + `${failed ? ` · ${failed} failed` : ''} in ${RUN_HOURS}h`,
       }),
       chartLegend(RUN_SERIES),
-      stackedColumns(hours, RUN_SERIES, { label: (h) => `${h.hour.replace('T', ' ')}:00Z`, detail: hourDetail }),
+      stackedColumns(hours, RUN_SERIES, { label: (h) => `${h.hour.replace('T', ' ')}:00Z`, detail: hourDetail, unit: 'hour' }),
       el('div', {
         className: 'sub',
         textContent: unfolded
@@ -647,14 +640,11 @@ export async function loadRepo({ repo, token, config = null, onError }) {
   const headCommit = await gh.getHead(repo, meta.default_branch, token);
   const sha = headCommit.sha;
 
-  const configText = await settingsTextAtSha(gh, repo, sha, token);
-  if (!configText) onError?.(`${repo} has no ${SETTINGS_FILE} — it does not run Claudinite, so there are no declared tasks.`);
-  let declaration = null;
-  try { declaration = configText ? JSON.parse(configText) : null; } catch {
-    onError?.(`${SETTINGS_FILE} is present but is not valid JSON — the roster will be empty.`);
-  }
+  const { member, fault } = await readMember({ repo, sha, token, gh });
+  if (fault) onError?.(`${fault} — the roster will be empty.`);
+  else if (!member) onError?.(`${repo} has neither ${MEMBER_PATH} nor ${NODE_SETTINGS_PATH} — it does not run Claudinite, so there are no declared tasks.`);
+  const declaration = member?.declaration ?? null;
   const schedule = declaration?.taskScheduler ?? null;
-  if (declaration && !schedule) onError?.('No taskScheduler block — next-anchor times cannot be computed.');
 
   const [{ paths, truncated }, runs, issuePage, usage, tasksUsage] = await Promise.all([
     gh.listTreeAtSha(repo, sha, token).catch((e) => { onError?.(`The tree could not be read — ${e.message}`); return { paths: [], truncated: false }; }),
@@ -697,11 +687,6 @@ export async function loadRepo({ repo, token, config = null, onError }) {
   const periodFor = (k) => rows.find((r) => r.key === k)?.periodMs ?? null;
   const open = items.filter((i) => i.state === 'open').map((i) => describeItem(i, now, { periodFor, isOpen }));
 
-  // The canon reference for the drift tile. Optional in every direction: with none
-  // configured the tile reads `unknown` rather than inventing `current`.
-  const canon = await readCanon(config, token);
-  if (canon) await priceStampedPacks(canon, declaration);
-
   // What this repo's own packs report. Discovery is free — the declaration and the
   // tree listing are both already in hand — and every read below is content at a sha,
   // so a warm load spends nothing on it.
@@ -732,8 +717,6 @@ export async function loadRepo({ repo, token, config = null, onError }) {
     runSummary: summariseRuns(runs, now, usage),
     ci: ciCell(ciStatus(runs, meta.default_branch), now),
     usage,
-    mount: declaration ? mountState(declaration, canon) : null,
-    canon,
     strip,
     declaredTasks: tasks.length,
     now,
@@ -746,7 +729,7 @@ export async function loadRepo({ repo, token, config = null, onError }) {
   const boardContext = { repo, items: issuePage.issues, prs: issuePage.prs, rows: all, now };
   const anythingLive = counts.stuck || counts.pending;
   renderWork(all, repo, now, anythingLive ? 'board' : defaultView(counts), board, boardContext,
-    isDormant(declaration));
+    isDormant(member));
   renderContributions(contributions, now);
   // Today's closes come from the issue page already fetched — the fold's own read is
   // watermarked and hourly, so the last hour or two is exactly what it has not seen.

@@ -17,3 +17,9 @@
 - **Reason:** owner decision, 2026-09-25: the field names what happens when the check fails, and
   *severity* keeps its impact sense; what this element enforces is unchanged.
 - **Actor:** @missingbulb (owner).
+
+## 2026-10-03 · moved · the check is the engine's built-in, and the pack's rule is deleted
+- **Reason:** `cn` runs no pack `worldRules/*.mjs`; the check is `checks/builtin/descriptor_usable.go`, tagged `claudinite-dashboard` and active wherever the pack is declared, with the same findings, and `cn dashboard descriptor` prints its verdicts by hand.
+- **Actor:** build lead, through ClaudiniteEngine chunk 16b (#65).
+- **Model:** Claude Opus 5.5, per the commit trailer.
+- **Mechanism:** `worldRules/` and its test deleted; `test/descriptor-drift.test.mjs` holds the page's `parseDescriptor` to `cn dashboard descriptor` over every descriptor on the shelf and the edge cases.

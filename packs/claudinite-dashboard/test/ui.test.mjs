@@ -202,3 +202,31 @@ test('a member with nothing waiting says so, and draws no bar', () => {
   assert.equal(mark.find('bar').length, 0);
   assert.match(mark.text, /nothing waiting/);
 });
+
+// --- the column chart's scale ---------------------------------------------------------
+
+// A chart whose columns are hours states its peak per hour, and names its ends and its
+// peak by the label it was given — an hourly series carries no `day` to fall back on.
+test('an hourly chart reads its peak per hour and names its columns by their label', async () => {
+  class SvgEl extends FakeEl {
+    constructor(tag) { super(tag); this.attrs = {}; }
+    setAttribute(k, v) { this.attrs[k] = v; }
+  }
+  const prior = globalThis.document;
+  globalThis.document = { createElement: (tag) => new FakeEl(tag), createElementNS: (_ns, tag) => new SvgEl(tag) };
+  try {
+    const { stackedColumns } = await import('../src/render/ui.mjs');
+    const series = [{ label: 'runs', color: 'red', value: (h) => h.n }];
+    const hours = [{ hour: '2026-10-02T05', n: 1 }, { hour: '2026-10-02T06', n: 3 }];
+    const label = (h) => `${h.hour.replace('T', ' ')}:00Z`;
+    const chart = stackedColumns(hours, series, { label, unit: 'hour' });
+    const axis = chart.find('chart-axis')[0].children.map((c) => c.textContent);
+    assert.deepEqual(axis, ['2026-10-02 05:00Z', 'peak 3/hour', '2026-10-02 06:00Z']);
+    assert.equal(chart.children[0].attrs['aria-label'], '2 hours, peak 3 on 2026-10-02 06:00Z');
+
+    // The contrast: a day chart is unchanged.
+    const days = stackedColumns([{ day: '2026-10-01', n: 2 }, { day: '2026-10-02', n: 0 }], series);
+    assert.deepEqual(days.find('chart-axis')[0].children.map((c) => c.textContent), ['2026-10-01', 'peak 2/day', '2026-10-02']);
+    assert.equal(days.children[0].attrs['aria-label'], '2 days, peak 2 on 2026-10-01');
+  } finally { globalThis.document = prior; }
+});

@@ -76,6 +76,30 @@ test('a build is pushed as one commit, the workflow dispatched, and its run foll
   ]);
 });
 
+// The real build, run by the worker against a cn member: the defect this pack carried
+// onto cn was a build that found no engine beside the pack, published nothing and
+// still succeeded. What lands on the pages branch is the pack's page alone.
+test('the real build on a cn member pushes the pack\'s page and nothing outside it', async (t) => {
+  const dir = await mkdtemp(join(tmpdir(), 'cd-pages-'));
+  t.after(() => rm(dir, { recursive: true, force: true }));
+  const { origin: bare, root } = memberRepo(dir, {
+    '.claudinite/settings.yaml': 'packs:\n  - id: claudinite-dashboard\n    config: { mode: repo }\n',
+    '.claudinite/flat/member.GENERATED.json': JSON.stringify({
+      version: 1, settings: { path: '.claudinite/settings.yaml', format: 'yaml' }, engine: null,
+      packs: { channel: 'stable', declared: [{ id: 'claudinite-dashboard', config: { mode: 'repo' } }] }, dormant: false, held: {},
+    }),
+  });
+  sdk.params.root = root;
+  gitAnswer(root);
+  const result = await publish({ repoRoot: root, repo: REPO, ref: 'main', gh: fakeGh(), followMs: 500, log: () => {} });
+  assert.equal(result.published, true);
+  assert.deepEqual(git(bare, ['ls-tree', '--name-only', PAGES_BRANCH]).split('\n').sort(), ['.nojekyll', STAMP_FILE, 'index.html', 'packs']);
+  const files = git(bare, ['ls-tree', '-r', '--name-only', PAGES_BRANCH]).split('\n');
+  assert.ok(files.includes('packs/claudinite-dashboard/index.html'));
+  assert.deepEqual(files.filter((f) => f.startsWith('packs/') && !f.startsWith('packs/claudinite-dashboard/')), [], 'no sibling pack');
+  assert.deepEqual(files.filter((f) => f.startsWith('engine/')), [], 'no engine');
+});
+
 test('a re-run is a re-push, never a conflict', async (t) => {
   const { origin: bare, root } = await member(t);
   gitAnswer(root);

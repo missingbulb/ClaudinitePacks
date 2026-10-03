@@ -25,15 +25,16 @@
 // loads, not in requests — because "1,400 left" means something different to a
 // one-repo page than to a forty-member fleet.
 
-// Requests one member costs on a cold cache: repo metadata, head sha, the
-// declaration, the tree, the live open listing, one history page of issues, one runs
-// page, and a year of commit activity for the row's graph. A warm member costs fewer and a not-adopted one costs
-// three, so this is the ceiling rather than the average — budgeting against the
-// ceiling is what keeps the last member on the list readable.
+// Requests one member costs on a cold cache: repo metadata, head sha, the member file,
+// the tree, the live open listing, one history page of issues, one runs page, and a
+// year of commit activity for the row's graph. A warm member costs fewer, a Node member
+// one more (the settings file its missing member file sends the read on to) and a
+// not-adopted one four. The thresholds below are tuned against this figure, so it
+// stays the cn member's cost rather than following the rarer shape up.
 export const COST_PER_MEMBER = 8;
 
-// The page's own fixed overhead: the viewer, plus the canon reference the fleet's
-// mount column compares against.
+// The page's own fixed overhead: the viewer, plus the deployment's fleet-roster, read
+// once at its head sha and free on a warm load.
 export const COST_FIXED = 3;
 
 export const MINUTE_MS = 60e3;

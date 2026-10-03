@@ -163,7 +163,7 @@
   .machine { display: grid; grid-template-columns: 0.95fr 1.7fr 1fr 0.9fr 1.6fr; gap: 0; }
   /* Six cells one level down, where the fleet's five ask about every member: the repo
      adds CI on main, and its heartbeat is one square per HOUR rather than per member. */
-  .machine.repo { grid-template-columns: 1.5fr 0.85fr 0.85fr 0.85fr 0.8fr 1.4fr; }
+  .machine.repo { grid-template-columns: 1.5fr 0.85fr 0.85fr 0.85fr 1.4fr; }
   .machine.repo .cell { padding-left: 10px; padding-right: 10px; }
   .machine.repo .cell .v { font-size: 18px; }
   .machine .cell { padding: 2px 14px 0; border-left: 1px solid var(--ledger); min-width: 0; }
@@ -436,7 +436,7 @@
   /* --- member state tags: what KIND of member a row is, beside its name ---
      Three marks that must never read as one another: `private` is GitHub's own
      flag, `dormant` is the member's declaration (its scheduler is stopped, so the
-     fleet measures neither its mount nor its scheduler), and `sleepy` is a reading
+     fleet measures neither its freshness nor its scheduler), and `sleepy` is a reading
      of the last fortnight's commits on a member that is otherwise fully in the
      fleet. Dormant is solid and quiet, sleepy is dashed — a state nothing declared
      and that can change back tomorrow. */
@@ -542,6 +542,8 @@
   .chart-card { background: var(--surface); border: 1px solid var(--border);
                 border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
   .chart-card .k { font-size: 12px; color: var(--ink-2); }
+  /* A detail table wider than a phone scrolls inside its card instead of widening the page. */
+  .chart-card > table { display: block; overflow-x: auto; }
   .chart-wrap { display: flex; flex-direction: column; gap: 5px; }
   svg.chart { width: 100%; height: 84px; display: block; }
   svg.chart rect.col { opacity: .92; }
@@ -776,7 +778,7 @@
   .commit-line.meaningful { stroke: var(--s-blue); stroke-width: 1.4; }
   .commit-graph .sub { margin-top: 2px; }
 
-  /* The pack count wearing the mount's verdict. */
+  /* The pack count wearing the member's freshness. */
   .pack-mark { position: relative; display: inline-block; padding-right: 13px; }
   .pack-mark .n { font-size: 19px; line-height: 1.1; }
   .pack-mark .badge { position: absolute; top: -1px; right: 0; font-size: 12px; line-height: 1; }
@@ -1041,9 +1043,10 @@
         <strong>7 minutes</strong> each. Nothing here measures how long a park actually takes, and the
         honest way to publish a number nothing measures is to publish the assumption where you can argue
         with it. A broken <em>scheduler</em> is not counted into it — that is not a queue of work to get
-        through — though it is still reported. <strong>Packs</strong> wears the mount's verdict as a
-        badge: a scheduler run when what is declared here is current, a timer when it is behind, and the versions
-        on hover. Two facts read together, and the second says the same thing on nearly every row, so it
+        through — though it is still reported. <strong>Packs</strong> wears the member's freshness as a
+        badge, from the roster this deployment's fleet-roster task publishes: a tick when what is declared
+        here is at the published versions, a timer when it is behind, and the roster's own sentence on
+        hover; a deployment that publishes no roster reads unknown. Two facts read together, and the second says the same thing on nearly every row, so it
         earns a corner rather than a column.
       </p>
       <p class="legend">Click a member to open its scheduler in full.</p>
@@ -1122,8 +1125,7 @@
     <p class="panel gap" id="work-dormant" hidden>
       This repo declares its <strong>scheduler dormant</strong>, so nothing is instantiated, readied or
       picked up. Its declared tasks and any open work items are not drawn here, because none of them
-      can move — the rest of the page is still live, and a mount that has fallen behind canon is still
-      reported as behind. Clear <code>dormant</code> on the <code>claudinite-tasks</code> pack entry to
+      can move — the rest of the page is still live. Clear <code>dormant</code> on the <code>claudinite-tasks</code> pack entry to
       wake it; a dormant spell is not replayed, so it simply starts scheduling again from now.
     </p>
     <div class="views" id="work-views"></div>

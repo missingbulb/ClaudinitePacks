@@ -24,15 +24,13 @@
 //   independently and a read that failed becomes a row saying so, so a single private
 //   repo or a rate-limit stumble cannot blank the page.
 
-import { stripComments } from '../../../../engine/checks/helpers/code-scanning.mjs';
 import { periodMs } from './task-calendar.mjs';
 import {
   STATUS_BLOCKED, STATUS_READY, STATUS_RUNNING_EXECUTOR, STATUS_RUNNING_AGENT, URGENT, STATUS_NEEDS_HUMAN_APPROVAL, STATUS_NEEDS_HUMAN_ACTION,
 } from '../read/queue-vocabulary.mjs';
 import { outcomeOf, isParked } from '../read/queue-vocabulary.mjs';
-import { installedVersions } from '../../../../engine/installed-versions.mjs';
-import { VERSION_SOURCE, versionFromLiteral, isVersion, versionAbove } from '../../../../engine/version.mjs';
 import { isDormant } from '../read/dormancy.mjs';
+import { verdictFor } from '../read/roster.mjs';
 import { describeItem, isWorkItem, parseWorkItemTitle, taskDeclarationPaths, PARKED } from './model.mjs';
 import { commitDays, commitClasses, DAY_MS } from './activity.mjs';
 import { itemCandidate, pickCandidate } from './next-work.mjs';
@@ -47,88 +45,38 @@ const levelRank = (l) => {
 
 const ms = (t) => (t == null ? null : new Date(t).getTime());
 
-// --- the canon side of the comparison ---------------------------------------------
+// --- freshness, as the fleet's manager publishes it -------------------------------
 
-// The canon's versions are lifted as TEXT, like every declaration field: the page
-// reads the canon over the API, where there is nothing to import. Comment-stripped
-// so prose naming the field can never be mistaken for it, and null — never a guess —
-// when the pattern is not there.
-const ENGINE_VERSION_RE = new RegExp(String.raw`ENGINE_VERSION\s*=\s*'?(${VERSION_SOURCE})'?`);
-const PACK_VERSION_RE = new RegExp(String.raw`(?:^|[{,\s])"?version"?:\s*['"]?(${VERSION_SOURCE})['"]?`, 'm');
-
-// Every pack the canon's catalog offers, at the version its Version column carries:
-// the whole canon side priced in one read. Null when the catalog has no such column,
-// so the reader falls back to manifests rather than reading an empty map as no packs.
-export function parseDirectoryVersions(text) {
-  const rows = String(text ?? '').split('\n').filter((l) => l.startsWith('|'))
-    .map((l) => l.split(/(?<!\\)\|/).slice(1, -1).map((c) => c.trim()));
-  const col = rows.find((r) => r[0] === 'Pack')?.indexOf('Version') ?? -1;
-  if (col < 1) return null;
-  const out = {};
-  for (const r of rows) {
-    const id = /^`([^`]+)`$/.exec(r[0] ?? '')?.[1];
-    const v = id ? versionFromLiteral(r[col]) : null;
-    if (v !== null) out[id] = v;
-  }
-  return out;
-}
-
-export function parseEngineVersion(text) {
-  const m = ENGINE_VERSION_RE.exec(stripComments(String(text ?? '')));
-  return m ? versionFromLiteral(m[1]) : null;
-}
-
-export function parsePackVersion(text) {
-  const m = PACK_VERSION_RE.exec(stripComments(String(text ?? '')));
-  return m ? versionFromLiteral(m[1]) : null;
-}
-
-// --- mount freshness ------------------------------------------------------------
-
-// Whether a member's mount is current, judged on the versions it has installed —
-// the only thing left to judge it on, and the only thing that was ever right. The
-// `ref` and `updated` that sat beside them held the provenance of the last FULL
-// re-vendor, so a member converging nightly carried a months-old pair forever and
-// anything judging either read every healthy member as behind or stalled (#1065,
-// the same class as #786); #1252 deleted both.
+// The Updates verdict for one member, from its row in the manager's roster artifact
+// (`read/roster.mjs`) — the engine's own `fleet.Verdict`, judged by the sweep against
+// what the member's own update would move it to. The page prices nothing itself: there
+// is no canon to compare against, and pricing in the browser would mean npm packuments
+// and signed pack indexes for every member on every load.
 //
-// `canon` is the reference to compare against: its live `engineVersion` and the
-// canon's own per-pack versions (`packVersions`, possibly partial — the loader
-// fetches only the packs members actually stamp). A pack the canon side cannot
-// price is counted `unknownPacks`, never silently judged current. With no canon
-// supplied the honest answer is `unknown`, not `current`.
-export function mountState(declaration, canon = null) {
-  if (!declaration) return { state: 'none', engineVersion: null };
-  // The shape reader canonicalizes as it goes: a version is stored data, and a pack
-  // renamed since it was written still keys under the old spelling in the retired
-  // block, which must compare rather than read as unknown.
-  const { engineVersion, packVersions } = installedVersions(declaration);
+// The states are the verdict's own, by root cause: `fresh`, `behind` (the detail names
+// each gap), `no-scheduler`, `no-stamp`, and `node` for a member the sweep does not
+// compare. `unknown` is the page's, and it SAYS which absence it is — no roster in this
+// deployment, no row for this repo, a row the sweep could not judge — rather than
+// reading as current.
+export const FRESHNESS_STATES = Object.freeze(['fresh', 'behind', 'no-scheduler', 'no-stamp', 'node']);
 
-  if (engineVersion == null && Object.keys(packVersions).length === 0) {
-    // A stamp with no versions predates the versioned flows entirely — this member
-    // has not converged since they landed, which is its own kind of stale.
-    return { state: 'unversioned', engineVersion };
-  }
-  if (canon?.engineVersion == null) return { state: 'unknown', engineVersion };
+export const NO_ROSTER = 'unknown — this deployment runs no fleet-roster, so nothing published this member\'s freshness';
 
-  if (isVersion(engineVersion) && versionAbove(canon.engineVersion, engineVersion)) {
-    return { state: 'behind-engine', engineVersion, canonEngineVersion: canon.engineVersion };
-  }
-
-  const behindPacks = [];
-  let comparedPacks = 0;
-  let unknownPacks = 0;
-  for (const [pack, version] of Object.entries(packVersions ?? {})) {
-    const canonVersion = canon.packVersions?.[pack];
-    if (canonVersion == null) { unknownPacks += 1; continue; }
-    comparedPacks += 1;
-    if (versionAbove(canonVersion, version)) behindPacks.push({ pack, version, canonVersion });
-  }
-  if (behindPacks.length) {
-    return { state: 'behind', engineVersion, behindPacks, comparedPacks, unknownPacks };
-  }
-  return { state: 'current', engineVersion, comparedPacks, unknownPacks };
+export function freshnessOf(verdict, { rostered = true } = {}) {
+  if (!rostered) return { state: 'unknown', detail: NO_ROSTER };
+  if (!verdict) return { state: 'unknown', detail: 'unknown — the fleet-roster artifact has no row for this repo' };
+  if (verdict.dormant === true) return { state: 'dormant', detail: 'dormant — the fleet-roster does not measure it' };
+  const f = verdict.freshness;
+  if (f && FRESHNESS_STATES.includes(f.state)) return { state: f.state, detail: typeof f.detail === 'string' ? f.detail : '' };
+  if (f?.state) return { state: 'unknown', detail: `unknown — the fleet-roster's state "${f.state}" is newer than this page` };
+  if (verdict.error) return { state: 'unknown', detail: `unknown — the fleet-roster could not judge it: ${verdict.error}` };
+  if (verdict.covered === false) return { state: 'unknown', detail: 'unknown — the fleet-roster read it as declaring no packs' };
+  return { state: 'unknown', detail: 'unknown — the fleet-roster carries no freshness for it' };
 }
+
+// The states that are an update which did not land: one the nightly update has not
+// caught up with, and two where nothing would ever converge the member.
+export const STALE_FRESHNESS = Object.freeze(['behind', 'no-stamp', 'no-scheduler']);
 
 // --- is anyone working here ------------------------------------------------------
 
@@ -168,12 +116,12 @@ export function sleepState(classes, { now } = {}) {
 // Everything a fleet row shows about one member, plus the reasons it needs looking
 // at. `read` is what the loader managed to fetch; a member it could not read arrives
 // with `error` set and every other field absent.
-export function summariseMember(read, { now, canon = null } = {}) {
+export function summariseMember(read, { now, roster = null } = {}) {
   const {
     repo, error = null, declaration = null, items = null, runs = null, paths = null,
     prs = null, head = null, stars = null, defaultBranch = null, commits = undefined,
     usage = null, windowCommits = undefined, archived = false, private: isPrivate = null,
-    ignored = false,
+    ignored = false, member = null,
   } = read ?? {};
 
   if (error) {
@@ -281,20 +229,20 @@ export function summariseMember(read, { now, canon = null } = {}) {
   const runSummary = summariseRuns(runs ?? [], now, usage);
   const ci = ciStatus(runs ?? [], defaultBranch);
   // A DORMANT member declared its own scheduler stopped, and the fleet takes that at
-  // its word (owner, 2026-09-13): its mount is not measured and its scheduler is not
+  // its word (owner, 2026-09-13): its freshness is not measured and its scheduler is not
   // judged. Nothing converges it and no fleet-wide operation touches it, so both
   // verdicts would be findings nobody owns — which is a different thing from the row
   // being quiet about the repo, since the row says dormant where they would have sat.
-  const dormant = isDormant(declaration);
-  const mount = dormant
-    ? { state: 'dormant', engineVersion: installedVersions(declaration).engineVersion }
-    : mountState(declaration, canon);
+  const dormant = isDormant(member ?? declaration);
+  const freshness = dormant
+    ? { state: 'dormant', detail: 'dormant — its scheduler is stopped by declaration, so its freshness is not measured' }
+    : freshnessOf(verdictFor(roster, repo), { rostered: Boolean(roster) });
   const classes = commitClasses(windowCommits);
   const sleep = sleepState(classes, { now });
 
   const n = (count, word) => `${count} ${word}${count > 1 ? 's' : ''}`;
   // Every reason carries a `kind`, because the row shows some of these twice
-  // otherwise: parks have their own column with an estimate beside them, the mount
+  // otherwise: parks have their own column with an estimate beside them, freshness
   // is a badge on the pack count, and CI is a dot. The RANKING still reads all of
   // them — a member is ordered by everything true of it — and only the rendering
   // drops what already has a cell of its own.
@@ -321,15 +269,14 @@ export function summariseMember(read, { now, canon = null } = {}) {
   if (dormant) {
     // Not a fault, and not a silence either: the reader is told why the two Claudinite
     // verdicts are absent from this row.
-    reasons.push({ kind: 'mount', level: 'info', text: 'dormant — its scheduler is stopped by declaration, so its mount and scheduler are not measured' });
-  } else if (mount.state === 'behind-engine') {
-    reasons.push({ kind: 'mount', level: 'serious', text: `mount is on engine v${mount.engineVersion}, canon is v${canon?.engineVersion}` });
-  } else if (mount.state === 'behind') {
-    reasons.push({ kind: 'mount', level: 'info', text: `mount behind canon on ${mount.behindPacks.map((p) => p.pack).join(', ')}` });
-  } else if (mount.state === 'unversioned') {
-    reasons.push({ kind: 'mount', level: 'warning', text: 'declares Claudinite but records no installed versions — the mount has never been converged' });
-  } else if (mount.state === 'none') {
-    reasons.push({ kind: 'mount', level: 'warning', text: 'declares Claudinite but carries no mount stamp' });
+    reasons.push({ kind: 'mount', level: 'info', text: 'dormant — its scheduler is stopped by declaration, so its freshness and scheduler are not measured' });
+  } else if (freshness.state === 'behind') {
+    // Routine: the member's own nightly update is what lands it, and the detail names
+    // every gap the roster found.
+    reasons.push({ kind: 'mount', level: 'info', text: freshness.detail || 'behind the published versions' });
+  } else if (freshness.state === 'no-stamp' || freshness.state === 'no-scheduler') {
+    // Nothing will ever converge this member, which no amount of waiting fixes.
+    reasons.push({ kind: 'mount', level: 'warning', text: freshness.detail || `freshness: ${freshness.state}` });
   }
   // A repo that declares tasks and has never produced a work item is not idle — its
   // scheduler is not running. That is invisible in every per-repo number here, which
@@ -392,7 +339,11 @@ export function summariseMember(read, { now, canon = null } = {}) {
     // read" rather than an empty quarter that reads as a repo nobody touched.
     commits: commitDays(commits, { now, classes }),
     work: humanWork(items, prs, now),
-    mount,
+    freshness,
+    // Which engine this member runs, and what it says it holds — from its own member
+    // file, or a Node member's stamp — for the row's hover.
+    shape: member?.shape ?? null,
+    engine: member?.engine ?? null,
     schedule: declaration.taskScheduler ?? null,
   };
 }
@@ -554,7 +505,7 @@ export function rollUp(summaries) {
     warnedMembers: adopted.filter((s) => s.warned > 0).length,
     failingMembers: awake.filter((s) => s.runs?.consecutiveFailures > 0).length,
     neverRan: awake.filter((s) => s.runs && !s.runs.everRan).length,
-    behindMembers: awake.filter((s) => ['behind', 'behind-engine', 'unversioned'].includes(s.mount?.state)).length,
+    behindMembers: awake.filter((s) => STALE_FRESHNESS.includes(s.freshness?.state)).length,
     // The two states the grid marks, counted so a filter can say how many it will show.
     dormantMembers: adopted.filter((s) => s.dormant).length,
     sleepyMembers: adopted.filter((s) => s.sleep?.state === 'sleepy').length,

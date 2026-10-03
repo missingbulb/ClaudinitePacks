@@ -1,9 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { removeTree } from '../../../../../engine/remove-tree.mjs';
 import {
   SOURCE, DEFAULT_WORKER_NAME, COMPATIBILITY_DATE, NeedsAction,
   resolveOrigins, uploadForm, probe, deploy, wiringNote,
@@ -11,10 +10,13 @@ import {
 
 const member = (config) => {
   const root = mkdtempSync(join(tmpdir(), 'claudinite-deploy-'));
-  writeFileSync(join(root, '.claudinite-settings.json'),
-    JSON.stringify({ packs: [{ id: 'claudinite-dashboard', config }] }, null, 2));
+  mkdirSync(join(root, '.claudinite', 'flat'), { recursive: true });
+  writeFileSync(join(root, '.claudinite', 'flat', 'member.GENERATED.json'),
+    JSON.stringify({ version: 1, packs: { declared: [{ id: 'claudinite-dashboard', config }] } }, null, 2));
   return root;
 };
+
+const removeTree = (root) => rmSync(root, { recursive: true, force: true });
 
 const ENV = {
   CLOUDFLARE_API_TOKEN: 'cf-token',

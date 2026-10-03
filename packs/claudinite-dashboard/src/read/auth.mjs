@@ -28,6 +28,10 @@
 const STATE_KEY = 'claudinite-dashboard:oauth-state';
 const TOKEN_KEY = 'claudinite-dashboard:token';
 const REMEMBER_KEY = 'claudinite-dashboard:remember';
+// The query the viewer signed in from — `?repo=` — which GitHub does not carry back:
+// it returns to the bare `redirect_uri` with only `code` and `state`.
+const RETURN_KEY = 'claudinite-dashboard:oauth-return';
+const CALLBACK_PARAMS = ['code', 'state', 'error', 'error_description', 'error_uri'];
 
 // WHERE THE CREDENTIAL LIVES IS THE VIEWER'S CALL, asked as `Remember me` beside the
 // sign-in it applies to. Unremembered it goes to sessionStorage and dies with the
@@ -89,6 +93,9 @@ export function isOAuthConfigured(config) {
 export function beginSignIn(config) {
   const state = randomState();
   try { sessionStorage.setItem(STATE_KEY, state); } catch { /* private mode */ }
+  const here = new URLSearchParams(location.search);
+  for (const k of CALLBACK_PARAMS) here.delete(k);
+  try { sessionStorage.setItem(RETURN_KEY, here.toString()); } catch { /* private mode */ }
   const url = new URL('https://github.com/login/oauth/authorize');
   url.searchParams.set('client_id', config.clientId);
   url.searchParams.set('redirect_uri', config.redirectUri ?? location.origin + location.pathname);
@@ -114,9 +121,12 @@ export async function completeSignIn(config, { search = location.search, replace
   const oauthError = params.get('error');
 
   const scrub = () => {
+    let back = null;
+    try { back = sessionStorage.getItem(RETURN_KEY); sessionStorage.removeItem(RETURN_KEY); } catch { /* private mode */ }
     if (!replaceUrl) return;
     const url = new URL(location.href);
-    for (const k of ['code', 'state', 'error', 'error_description']) url.searchParams.delete(k);
+    for (const k of CALLBACK_PARAMS) url.searchParams.delete(k);
+    for (const [k, v] of new URLSearchParams(back ?? '')) if (!url.searchParams.has(k)) url.searchParams.set(k, v);
     history.replaceState(null, '', url);
   };
 

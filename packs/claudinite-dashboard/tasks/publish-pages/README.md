@@ -32,14 +32,17 @@ No secret: the push, the dispatch and the follow use the Action's own token.
 ## When it runs
 
 Daily, after the engine's `engine/update` task, and only when the mount or the
-member's declaration moved in the window. A change to either repository variable is
-not a signal the queue sees — force a republish with `create-work-item --wake` on the
-task's standing item.
+member's declaration moved in the window — its `.claudinite/settings.*` file, or a Node
+member's `.claudinite-settings.json`, which the precondition names until phase 9 retires
+that shape. A change to either repository variable is not a signal the queue sees —
+force a republish by dispatching the scheduler workflow with `wake` naming
+`claudinite-dashboard/publish-pages`.
 
 ## What a run does
 
-1. Builds the site into a scratch directory. A build that refuses (no `mode`) fails
-   here; a mount that does not carry the page yet ends the run with nothing to publish.
+1. Builds the site into a scratch directory from the declaration in
+   `.claudinite/flat/member.GENERATED.json`. A build that refuses (no `mode`, or a retired
+   key) fails here; a pack present without its page ends the run with nothing to publish.
 2. Writes `deployed.json` at the site root — the sources' sha — and force-pushes the
    tree as a single root commit to `gh-pages`. No history is kept: the branch holds
    the last build and nothing else.

@@ -14,6 +14,7 @@
 
 import { priceWindow, RATES_KEY } from './pricing.mjs';
 import { DAY_MS, dayKey, dayLadder } from './activity.mjs';
+import { STALE_FRESHNESS } from './fleet.mjs';
 import {
   isQueueItem, isParked, outcomeOf,
 } from '../read/queue-vocabulary.mjs';
@@ -463,23 +464,19 @@ const level = (...verdicts) => ['critical', 'serious', 'you', 'machine', 'good']
 // Claudinite itself not landing anywhere, and the two must not read alike.
 const fleetWideBound = (total) => Math.sqrt(Math.max(0, total ?? 0));
 
-// A mount the nightly update has not landed on. `behind` and `behind-engine` are a
-// converge that stopped moving; `unversioned` and `none` are one that never arrived at
-// all, which is the worse case rather than an unreadable one.
-const STALE_MOUNT = new Set(['behind', 'behind-engine', 'unversioned', 'none']);
-
-// Which stale member to name when only a few are: the one whose mount is furthest from
-// the canon, since that is the one whose failure explains the rest.
-const STALE_RANK = { none: 0, unversioned: 1, 'behind-engine': 2, behind: 3 };
+// Which stale member to name when only a few are: one nothing will ever converge
+// before one the nightly update has merely not caught up with, since that is the one
+// whose failure explains the rest.
+const STALE_RANK = { 'no-stamp': 0, 'no-scheduler': 1, behind: 2 };
 
 // The five cells, each already carrying its verdict and the one line naming the worst
 // member — a name is what the reader acts on, where a count is something to go and
 // look up. Except when the fault is the fleet's: past `fleetWideBound` the line names
 // the count instead, because no single member is the thing to go and look at.
-export function machinePanel(summaries, reads, { now, canon = null, strip = null } = {}) {
+export function machinePanel(summaries, reads, { now, rostered = false, strip = null } = {}) {
   // THE MACHINE IS THE AWAKE FLEET. A dormant member declared its scheduler stopped
   // (owner, 2026-09-13), so it is out of every cell here: it has no heartbeat to be
-  // late, no mount anything will converge, and no anchor that will fire. Counting one
+  // late, nothing any update will converge, and no anchor that will fire. Counting one
   // in a denominator makes an obedient repo read as a missing member.
   const all = (summaries ?? []).filter((s) => s?.status === 'adopted');
   const adopted = all.filter((s) => !s.dormant);
@@ -547,23 +544,23 @@ export function machinePanel(summaries, reads, { now, canon = null, strip = null
   };
 
   // UPDATES — the members Claudinite's own nightly update did not land on, and the
-  // band's TOP SIGNAL (owner, 2026-09-07): a fleet whose mounts have stopped moving is
+  // band's TOP SIGNAL (owner, 2026-09-07): a fleet whose members have stopped moving is
   // the whole machine failing, where a late scheduler or a failed executor run is one
-  // member having a bad hour. Judged on the outcome — the stamp — whatever stopped it,
-  // since the stamp is what every member reports and it cannot report a landing that
-  // did not happen. Unknown with no canon configured, and unknown is SAID rather than
-  // read as current.
-  const stale = [...adopted.filter((s) => STALE_MOUNT.has(s.mount?.state))]
-    .sort((a, b) => STALE_RANK[a.mount.state] - STALE_RANK[b.mount.state]);
-  const fleetWide = Boolean(canon) && stale.length > fleetWideBound(adopted.length);
+  // member having a bad hour. Judged on the outcome — the manager's roster, which
+  // measured each member against what its own update would move it to — whatever
+  // stopped it. Unknown where the deployment publishes no roster, and unknown is SAID
+  // rather than read as current.
+  const stale = [...adopted.filter((s) => STALE_FRESHNESS.includes(s.freshness?.state))]
+    .sort((a, b) => STALE_RANK[a.freshness.state] - STALE_RANK[b.freshness.state]);
+  const fleetWide = rostered && stale.length > fleetWideBound(adopted.length);
   const updates = {
-    level: canon ? level(fleetWide ? 'critical' : null, stale.length ? 'you' : null, 'good') : 'none',
-    stale: canon ? stale.length : null,
+    level: rostered ? level(fleetWide ? 'critical' : null, stale.length ? 'you' : null, 'good') : 'none',
+    stale: rostered ? stale.length : null,
     total: adopted.length,
     fleetWide,
-    note: !canon ? 'unknown — no canonRepo configured'
-      : fleetWide ? `${stale.length} of ${adopted.length} members are not on the current mount`
-        : stale.length ? `${shortRepo(stale[0].repo)} worst` : 'every mount current',
+    note: !rostered ? 'unknown — this deployment runs no fleet-roster'
+      : fleetWide ? `${stale.length} of ${adopted.length} members are not at the published versions`
+        : stale.length ? `${shortRepo(stale[0].repo)} worst` : 'every member current',
   };
 
   // NEXT WAKE — when the fleet next acts, and the 24-hour strip behind it.

@@ -189,7 +189,7 @@ test('the pulse marks today as its own state, and leaves an unfolded day blank',
 
 // --- the machine ---------------------------------------------------------------------
 
-const summary = (repo, runs, over = {}) => ({ repo, status: 'adopted', declaredTasks: 2, runs, mount: { state: 'current' }, ...over });
+const summary = (repo, runs, over = {}) => ({ repo, status: 'adopted', declaredTasks: 2, runs, freshness: { state: 'fresh', detail: '' }, ...over });
 
 test('the heartbeat is green inside cadence, amber past twice it, and critical on never', () => {
   const m = machinePanel([
@@ -221,30 +221,29 @@ test('a strip that IS read, with nothing in it, is the serious verdict', () => {
   assert.match(m.wake.note, /nothing wakes/);
 });
 
-test('updates are UNKNOWN with no canon, and never read as current', () => {
-  const m = machinePanel([summary('o/a', { everRan: true, lastAt: NOW, inFlight: 0 })], [], { now: NOW, canon: null });
+test('updates are UNKNOWN with no fleet-roster, and never read as current', () => {
+  const m = machinePanel([summary('o/a', { everRan: true, lastAt: NOW, inFlight: 0 })], [], { now: NOW, rostered: false });
   assert.equal(m.updates.stale, null);
   assert.equal(m.updates.level, 'none');
-  assert.match(m.updates.note, /unknown/);
+  assert.match(m.updates.note, /unknown.*fleet-roster/);
 });
 
 // --- the updates cell: the machine's top signal ---------------------------------------
 
-const CANON = { engineVersion: '60907.1', packVersions: {} };
 const fleet = (total, stale) => Array.from({ length: total }, (_, i) =>
   summary(`o/m${i}`, { everRan: true, lastAt: NOW, inFlight: 0 },
-    { mount: { state: i < stale ? 'behind' : 'current', behindPacks: [{ pack: 'acme-pack' }] } }));
+    { freshness: i < stale ? { state: 'behind', detail: 'acme-pack 1 → 2' } : { state: 'fresh', detail: '' } }));
 
 test('the bound SCALES with the fleet — the same count is fleet-wide on a small one', () => {
   // Owner, 2026-09-07: past sqrt(members) stale it is the fleet that has stopped
   // updating. Four members is the whole story on a fleet of thirteen and a bad night on
   // a fleet of twenty-five, so the pair is what a fixed threshold cannot satisfy.
-  assert.equal(machinePanel(fleet(13, 4), [], { now: NOW, canon: CANON }).updates.fleetWide, true);
-  assert.equal(machinePanel(fleet(25, 4), [], { now: NOW, canon: CANON }).updates.fleetWide, false);
+  assert.equal(machinePanel(fleet(13, 4), [], { now: NOW, rostered: true }).updates.fleetWide, true);
+  assert.equal(machinePanel(fleet(25, 4), [], { now: NOW, rostered: true }).updates.fleetWide, false);
 });
 
-test('a handful of stale mounts is the cell\'s own amber count, not an alarm', () => {
-  const m = machinePanel(fleet(13, 3), [], { now: NOW, canon: CANON });
+test('a handful of stale members is the cell\'s own amber count, not an alarm', () => {
+  const m = machinePanel(fleet(13, 3), [], { now: NOW, rostered: true });
   assert.equal(m.updates.stale, 3);
   assert.equal(m.updates.total, 13);
   assert.equal(m.updates.fleetWide, false, '3 of 13 is under sqrt(13)');
@@ -252,28 +251,42 @@ test('a handful of stale mounts is the cell\'s own amber count, not an alarm', (
 });
 
 test('past the bound the updates cell is CRITICAL and says the fleet, not a member', () => {
-  const m = machinePanel(fleet(13, 8), [], { now: NOW, canon: CANON });
+  const m = machinePanel(fleet(13, 8), [], { now: NOW, rostered: true });
   assert.equal(m.updates.stale, 8);
   assert.equal(m.updates.fleetWide, true);
   assert.equal(m.updates.level, 'critical');
   assert.match(m.updates.note, /8 of 13/);
 });
 
-test('a mount that never converged counts as an update that did not land', () => {
-  // `unversioned` and `none` are not "behind by a version" — they are a member the
-  // update has never reached, which is the worse case, not an unreadable one.
+test('a member nothing will converge counts as an update that did not land, and is named first', () => {
+  // `no-stamp` and `no-scheduler` are not "behind by a version" — they are a member the
+  // update can never reach, which is the worse case, not an unreadable one.
   const summaries = [
-    summary('o/a', { everRan: true, lastAt: NOW, inFlight: 0 }, { mount: { state: 'unversioned' } }),
-    summary('o/b', { everRan: true, lastAt: NOW, inFlight: 0 }, { mount: { state: 'none' } }),
-    summary('o/c', { everRan: true, lastAt: NOW, inFlight: 0 }, { mount: { state: 'current' } }),
+    summary('o/a', { everRan: true, lastAt: NOW, inFlight: 0 }, { freshness: { state: 'behind', detail: 'acme-pack 1 → 2' } }),
+    summary('o/b', { everRan: true, lastAt: NOW, inFlight: 0 }, { freshness: { state: 'no-stamp', detail: '' } }),
+    summary('o/c', { everRan: true, lastAt: NOW, inFlight: 0 }, { freshness: { state: 'no-scheduler', detail: '' } }),
+    summary('o/d', { everRan: true, lastAt: NOW, inFlight: 0 }),
+    summary('o/e', { everRan: true, lastAt: NOW, inFlight: 0 }, { freshness: { state: 'node', detail: '' } }),
+    summary('o/f', { everRan: true, lastAt: NOW, inFlight: 0 }, { freshness: { state: 'unknown', detail: '' } }),
   ];
-  const m = machinePanel(summaries, [], { now: NOW, canon: CANON });
-  assert.equal(m.updates.stale, 2);
-  assert.equal(m.updates.fleetWide, true, '2 of 3 is past sqrt(3)');
+  const m = machinePanel(summaries, [], { now: NOW, rostered: true });
+  assert.equal(m.updates.stale, 3);
+  assert.equal(m.updates.fleetWide, true, '3 of 6 is past sqrt(6)');
 });
 
-test('every mount current is the good verdict with nothing to name', () => {
-  const m = machinePanel(fleet(13, 0), [], { now: NOW, canon: CANON });
+test('below the bound the line names the member nothing will converge before a behind one', () => {
+  const summaries = [
+    summary('o/a', { everRan: true, lastAt: NOW, inFlight: 0 }, { freshness: { state: 'behind', detail: 'acme-pack 1 → 2' } }),
+    summary('o/b', { everRan: true, lastAt: NOW, inFlight: 0 }, { freshness: { state: 'no-stamp', detail: '' } }),
+    ...Array.from({ length: 11 }, (_, i) => summary(`o/m${i}`, { everRan: true, lastAt: NOW, inFlight: 0 })),
+  ];
+  const m = machinePanel(summaries, [], { now: NOW, rostered: true });
+  assert.equal(m.updates.fleetWide, false);
+  assert.match(m.updates.note, /^b worst/);
+});
+
+test('every member fresh is the good verdict with nothing to name', () => {
+  const m = machinePanel(fleet(13, 0), [], { now: NOW, rostered: true });
   assert.equal(m.updates.stale, 0);
   assert.equal(m.updates.level, 'good');
   assert.equal(m.updates.fleetWide, false);

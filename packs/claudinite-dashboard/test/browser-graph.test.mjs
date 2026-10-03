@@ -1,9 +1,10 @@
 // THE PAGE'S IMPORT GRAPH MUST STAY BROWSER-PURE.
 //
 // The dashboard is served as raw ESM: the browser fetches `index.html`, follows its
-// module script, and follows every relative import from there — including the reaches
-// into `../../engine/`, which is the whole point of the design (the page imports the
-// mechanism it renders rather than restating it). Nothing bundles, so there is no build
+// module script, and follows every relative import from there. The site the build
+// stages is this pack and nothing else, so every import must also stay inside it: a
+// climb to an engine or a sibling pack resolves in this repo and 404s on the published
+// site. Nothing bundles, so there is no build
 // step to rewrite a `node:` builtin into something a browser can load. One such import
 // anywhere in the graph fails the page's FIRST module load, and the whole dashboard is
 // a blank screen.
@@ -11,9 +12,9 @@
 // It fails in the browser and NOWHERE ELSE — every Node test keeps passing, since Node
 // resolves `node:fs` happily — so the property is pinned here.
 //
-// The graph is WALKED rather than listed. A hand-kept list of "the engine modules the
-// page imports" is a snapshot of one day's graph: it stayed green while the page grew
-// an import of `engine/settings-file.mjs`, which reads the disk (#1286). Walking from
+// The graph is WALKED rather than listed. A hand-kept list of "the modules the page
+// imports" is a snapshot of one day's graph: it stayed green while the page grew an
+// import of a module that reads the disk (#1286). Walking from
 // the real entry point means a module the page starts importing tomorrow is covered the
 // day it is imported.
 import { test } from 'node:test';
@@ -72,6 +73,11 @@ test('every module the page loads is browser-pure', async () => {
     assert.doesNotMatch(code, /\brequire\s*\(/, `${rel} uses require()`);
     assert.doesNotMatch(code, /\bprocess\./, `${rel} touches process`);
   }
+});
+
+test('no module the page loads lives outside this pack', async () => {
+  const outside = [...(await graph()).keys()].filter((f) => relative(PAGE, f).startsWith('..')).map((f) => relative(ROOT, f));
+  assert.deepEqual(outside, [], 'the published site is this pack alone');
 });
 
 // The queue's vocabulary is what the page renders, so the walk has to prove it reached

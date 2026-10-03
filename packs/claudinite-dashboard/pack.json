@@ -1,5 +1,5 @@
 {
-  "version": "61002.1",
+  "version": "61003.1",
   "minEngineVersion": "61001.1.0",
   "githubActions": [
     "dispatchWorkflow"
@@ -16,8 +16,8 @@
   "questions": [
     {
       "id": "mode",
-      "prompt": "Is this deployment this repo's OWN dashboard, or the fleet overview across many repos? A fleet deployment also needs to name where its members come from — an \"owner\" whose repos are enumerated in the browser as the viewer (the one to prefer), or an explicit \"repos\" list or roster artifact.",
-      "distill": "set config.mode to \"repo\" or \"fleet\" — there is no default and the build refuses to publish without it; a \"fleet\" answer must come with a roster source (owner/repos/rosterUrl), and a \"repo\" answer with none"
+      "prompt": "Is this deployment this repo's OWN dashboard, or the fleet overview across many repos? A fleet deployment also names an \"owner\", whose repos are enumerated in the browser as the viewer, and optionally an \"exclude\" list.",
+      "distill": "set config.mode to \"repo\" or \"fleet\" — there is no default and the build refuses to publish without it; a \"fleet\" answer must come with config.owner, and a \"repo\" answer with none; never write repos, rosterFile, rosterUrl or canonRepo, which the build refuses"
     }
   ],
   "adoptionHandover": [

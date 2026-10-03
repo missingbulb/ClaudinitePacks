@@ -1,27 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  rosterFrom, loadConfig, loadRoster, DEFAULTS, isFleetConfig, ignored, inFleet, resolveRoster, resolveMode,
+  loadConfig, DEFAULTS, isFleetConfig, ignored, inFleet, resolveRoster, resolveMode, RETIRED_KEYS,
 } from '../src/read/config.mjs';
 import { isOAuthConfigured } from '../src/read/auth.mjs';
-
-// The roster's source is a fleet artifact this page does not own, so it accepts the
-// shapes such an artifact plausibly has rather than dictating one.
-test('rosterFrom reads a keyed fleet artifact, a plain array, and a repos array', () => {
-  assert.deepEqual(rosterFrom({ repos: { 'o/a': {}, 'o/b': {} } }), ['o/a', 'o/b']);
-  assert.deepEqual(rosterFrom(['o/a', 'o/b']), ['o/a', 'o/b']);
-  assert.deepEqual(rosterFrom({ repos: ['o/a'] }), ['o/a']);
-});
-
-test('rosterFrom yields nothing for a shape it does not recognise', () => {
-  for (const doc of [null, undefined, 42, {}, { members: ['o/a'] }]) {
-    assert.deepEqual(rosterFrom(doc), [], `unexpected roster from ${JSON.stringify(doc)}`);
-  }
-});
-
-test('rosterFrom drops non-string entries rather than rendering them', () => {
-  assert.deepEqual(rosterFrom(['o/a', null, 7, 'o/b']), ['o/a', 'o/b']);
-});
 
 // Absent config is a valid deployment (a member repo, served locally), so every miss
 // has to be a default rather than an error — a throw here would be a blank page.
@@ -42,22 +24,6 @@ test('a config file is merged over the defaults', async () => {
   assert.equal(c.clientId, 'Iv1.x');
   assert.equal(c.defaultRepo, 'o/a');
   assert.equal(c.exchangeUrl, null, 'unset keys keep their default');
-});
-
-test('an inline repos list wins over a roster url, and neither is required', async () => {
-  let fetched = false;
-  globalThis.fetch = async () => { fetched = true; return { ok: true, json: async () => ['o/z'] }; };
-
-  assert.deepEqual(await loadRoster({ repos: ['o/a'], rosterUrl: './r.json' }), ['o/a']);
-  assert.equal(fetched, false, 'an inline list means no fetch at all');
-
-  assert.deepEqual(await loadRoster({ repos: [], rosterUrl: './r.json' }), ['o/z']);
-  assert.deepEqual(await loadRoster({ repos: [] }), []);
-});
-
-test('an unreachable roster is empty, not an error', async () => {
-  globalThis.fetch = async () => { throw new Error('offline'); };
-  assert.deepEqual(await loadRoster({ rosterUrl: './r.json' }), []);
 });
 
 // Sign-in needs BOTH halves: a client id with nowhere to exchange the code would
@@ -83,8 +49,6 @@ test('the deployment STATES which page it is — the roster source no longer imp
   // quietly re-read as a repo page, and it cannot, because the mode is not derived
   // from the roster at all.
   assert.equal(isFleetConfig({ owner: 'missingbulb' }), false);
-  assert.equal(isFleetConfig({ rosterUrl: './roster.json' }), false);
-  assert.equal(isFleetConfig({ repos: ['o/a', 'o/b'] }), false);
   assert.equal(isFleetConfig({}), false);
   assert.equal(isFleetConfig(null), false);
 });
@@ -114,21 +78,26 @@ test('a stated mode that contradicts the config is refused in BOTH directions', 
   // without the second, `mode: repo` beside an owner silently ignores the owner.
   assert.throws(() => resolveMode({ mode: 'fleet' }), /names no roster source/);
   assert.throws(() => resolveMode({ mode: 'repo', owner: 'missingbulb' }), /roster source/);
-  assert.throws(() => resolveMode({ mode: 'repo', rosterUrl: './r.json' }), /roster source/);
-  assert.throws(() => resolveMode({ mode: 'repo', repos: ['o/a', 'o/b'] }), /roster source/);
 });
 
-test('the agreeing shapes pass, and a rosterFile counts as a roster source', () => {
+test('the agreeing shapes pass', () => {
   assert.equal(resolveMode({ mode: 'fleet', owner: 'missingbulb' }), 'fleet');
-  assert.equal(resolveMode({ mode: 'fleet', rosterUrl: './r.json' }), 'fleet');
-  assert.equal(resolveMode({ mode: 'fleet', repos: ['o/a', 'o/b'] }), 'fleet');
-  // The build reads `rosterFile` (a path in the repo) where the page reads `rosterUrl`;
-  // both are roster sources and the guard has to know it, or Shepherd's legacy
-  // declaration reads as a fleet mode naming nothing.
-  assert.equal(resolveMode({ mode: 'fleet', rosterFile: 'usage-fleet.GENERATED.json' }), 'fleet');
   assert.equal(resolveMode({ mode: 'repo' }), 'repo');
-  // A single-entry `repos` is not a roster: it is this repo, named.
-  assert.equal(resolveMode({ mode: 'repo', repos: ['o/a'] }), 'repo');
+});
+
+// Keys nothing reads any more fail the build loudly rather than publishing a page that
+// quietly ignores them: a fixed member list, a roster artifact, a canon to price
+// against. Each is refused whatever the mode, and the sentence names the record.
+test('a retired key is refused by name, in either mode, citing row 111', () => {
+  const values = { repos: ['o/a', 'o/b'], rosterFile: 'usage-fleet.GENERATED.json', rosterUrl: './r.json', canonRepo: 'o/canon' };
+  assert.deepEqual(Object.keys(RETIRED_KEYS).sort(), Object.keys(values).sort());
+  for (const [key, value] of Object.entries(values)) {
+    for (const base of [{ mode: 'fleet', owner: 'missingbulb' }, { mode: 'repo' }]) {
+      assert.throws(() => resolveMode({ ...base, [key]: value }), (e) => e.message.includes(`"${key}"`) && /row 111/.test(e.message), `${key} in ${base.mode}`);
+    }
+  }
+  // A key present but null is the default an older generator wrote, not a choice.
+  assert.equal(resolveMode({ mode: 'repo', canonRepo: null }), 'repo');
 });
 
 // The roster stopped subtracting anyone, but the predicate stays exported for a
@@ -179,18 +148,8 @@ test('a fork is not a member — it is someone else\'s project', async () => {
   assert.deepEqual((await resolveRoster({ owner: 'o' }, 't', gh)).repos, ['o/mine']);
 });
 
-test('a stated roster keeps its ignored members, named', async () => {
-  const out = await resolveRoster({ repos: ['o/a', 'o/b'], exclude: ['b'] }, 't', {});
-  assert.deepEqual(out.repos, ['o/a', 'o/b']);
-  assert.deepEqual(out.ignored, ['o/b']);
-});
-
-test('a stated roster wins over enumeration, and a failed enumeration is not an empty fleet', async () => {
-    const gh = { listOwnerRepos: async () => { throw new Error('403'); } };
-  const stated = await resolveRoster({ owner: 'o', repos: ['o/a', 'o/b'] }, 't', gh);
-  assert.deepEqual(stated.repos, ['o/a', 'o/b']);
-  assert.equal(stated.source, 'configured');
-
+test('a failed enumeration is not an empty fleet', async () => {
+  const gh = { listOwnerRepos: async () => { throw new Error('403'); } };
   const failed = await resolveRoster({ owner: 'o' }, 't', gh);
   assert.deepEqual(failed.repos, []);
   // `complete: false` plus the error is what makes the page say the list could not be

@@ -3,12 +3,11 @@
 // dashboard serves a member repo checked out locally and a fleet-wide Pages site,
 // and only the config differs.
 //
-// THE ROSTER IS NORMALLY NOT A LIST. A fleet deployment names an `owner` and the page
-// enumerates that owner's repos AS THE VIEWER, so the membership is decided at read
-// time by what this person can actually see. That is what keeps a fleet page from
-// leaking a repo's existence to someone without access, and it is why no repo list is
-// baked into any file here. An explicit `repos` list and a `rosterUrl` artifact are
-// both still accepted — a deployment that wants a fixed set says so.
+// THE ROSTER IS NOT A LIST. A fleet deployment names an `owner` and the page enumerates
+// that owner's repos AS THE VIEWER, so the membership is decided at read time by what
+// this person can actually see. That is what keeps a fleet page from leaking a repo's
+// existence to someone without access, and it is why no repo list is baked into any
+// file here: `owner` and `exclude` are the whole of a fleet's config.
 //
 // Absent config is a valid deployment, not a broken one: it means whatever repo the URL
 // names, and a gate that says sign-in has not been configured. So every key here is
@@ -22,9 +21,10 @@
 //     "exchangeUrl": "https://…/github-oauth",           // the code→token endpoint
 //     "redirectUri": "https://owner.github.io/Repo/",    // defaults to this page's URL
 //     "scope":       "repo",                             // classic OAuth Apps only
-//     "rosterUrl":   "./fleet-roster.GENERATED.json",    // the repo selector's source
-//     "repos":       ["owner/a", "owner/b"],             // an inline roster instead
+//     "owner":       "octo",                             // a fleet: whose repos, as the viewer
+//     "exclude":     ["octo/old"],                       // …and which of them are not members
 //     "defaultRepo": "owner/a",
+//     "deploymentRepo": "owner/site",                    // the repo the site is published from
 //     "rates":       { "claude-opus-5": { "in": 15, "cacheRead": 1.5, "out": 75 } }
 //   }
 //
@@ -44,13 +44,14 @@ export const DEFAULTS = {
   exchangeUrl: null,
   redirectUri: null,
   scope: null,
-  rosterUrl: null,
-  repos: [],
   // Whose repos this deployment covers, enumerated as the viewer, and which of them are
   // not in the fleet. Both optional: unset means this is one repo's own page.
   owner: null,
   exclude: [],
   defaultRepo: null,
+  // The repository the site is published from, which the build knows and the page
+  // cannot: where a fleet deployment's roster artifact and its own cards are read.
+  deploymentRepo: null,
   // USD per MILLION tokens, per model, per counter — the one deployment-specific fact
   // behind every dollar figure the page shows. Null is a supported state and not a
   // broken one: an unpriced page still counts tokens, and says which key to set.
@@ -67,53 +68,39 @@ export async function loadConfig(url = './dashboard.config.json') {
   }
 }
 
-// The repo list for the selector. Three sources, in precedence order: an explicit
-// inline list, a roster artifact, or nothing — and "nothing" is a single-repo
-// deployment, which is the member case.
-//
-// A roster is read for its KEYS under `repos` when it is a fleet artifact (the shape
-// Shepherd already generates), or as a plain array of names. Both are accepted
-// because the artifact's job is not to serve this page and its shape is not ours to
-// dictate.
-export function rosterFrom(doc) {
-  if (Array.isArray(doc)) return doc.filter((x) => typeof x === 'string');
-  if (Array.isArray(doc?.repos)) return doc.repos.filter((x) => typeof x === 'string');
-  if (doc?.repos && typeof doc.repos === 'object') return Object.keys(doc.repos);
-  return [];
-}
-
-export async function loadRoster(config) {
-  if (config.repos?.length) return config.repos;
-  if (!config.rosterUrl) return [];
-  try {
-    const res = await fetch(config.rosterUrl, { cache: 'no-store' });
-    if (!res.ok) return [];
-    return rosterFrom(await res.json());
-  } catch {
-    return [];
-  }
-}
-
 // The two dashboards this pack builds. A deployment is one or the other and says so.
 export const MODES = Object.freeze(['repo', 'fleet']);
 
-// Whether a config names anywhere for members to come from. Both spellings of the same
-// idea travel together on purpose: the BUILD reads `rosterFile`, a path inside the repo,
-// and the PAGE reads `rosterUrl`, a URL beside it — a guard that knew only one would
-// read a legacy fleet declaration as naming nothing. A single-entry `repos` is this
-// repo, named, and not a roster.
-export const hasRosterSource = (config) =>
-  Boolean(config?.owner || config?.rosterUrl || config?.rosterFile || (config?.repos?.length ?? 0) > 1);
+// Whether a config names anywhere for members to come from: an owner to enumerate.
+export const hasRosterSource = (config) => Boolean(config?.owner);
+
+// Keys a deployment used to set that nothing reads any more (design record row 111).
+// Each is refused rather than ignored, because a deployment still carrying one believes
+// the page does something it does not — a fixed member list, a roster artifact, a canon
+// to price members against — and a silently ignored key is exactly that failure.
+export const RETIRED_KEYS = Object.freeze({
+  repos: 'a fleet is "owner" (enumerated as the viewer) plus "exclude"; a fixed member list is not read',
+  rosterFile: 'a fleet is "owner" (enumerated as the viewer) plus "exclude"; a roster artifact is not read',
+  rosterUrl: 'a fleet is "owner" (enumerated as the viewer) plus "exclude"; a roster artifact is not read',
+  canonRepo: 'there is no canon to price members against; a fleet\'s freshness is the roster its fleet-roster task publishes',
+});
 
 // The mode, or a throw. This is the only place the judgment lives, so the build and the
 // page cannot drift into two matching-looking expressions that disagree at one input.
 //
-// It refuses three things, and the third is the one worth having: a mode that
-// CONTRADICTS the rest of the config. `fleet` naming no roster source would publish a
-// fleet page over nothing; `repo` beside an owner would silently ignore the owner. Both
-// are a deployment that believes something the site is not doing, which is exactly the
+// It refuses four things. A retired key, which a deployment still carrying it believes
+// is read. A missing mode, and one that is not a mode. And the one worth having: a mode
+// that CONTRADICTS the rest of the config. `fleet` naming no owner would publish a fleet
+// page over nothing; `repo` beside an owner would silently ignore the owner. Both are a
+// deployment that believes something the site is not doing, which is exactly the
 // failure the key exists to make loud.
 export function resolveMode(config) {
+  const retired = Object.keys(RETIRED_KEYS).filter((k) => config?.[k] !== undefined && config?.[k] !== null);
+  if (retired.length) {
+    throw new Error(
+      `the claudinite-dashboard config sets ${retired.map((k) => `"${k}"`).join(', ')}, which nothing reads any more `
+      + `(design record row 111): ${retired.map((k) => RETIRED_KEYS[k]).join('; ')}. Remove ${retired.length === 1 ? 'it' : 'them'}.`);
+  }
   const mode = config?.mode ?? null;
   if (mode === null) {
     throw new Error(
@@ -126,8 +113,8 @@ export function resolveMode(config) {
   }
   if (mode === 'fleet' && !hasRosterSource(config)) {
     throw new Error(
-      'mode is "fleet" but the config names no roster source — add "owner" (enumerated as the viewer), '
-      + 'or "repos"/"rosterUrl"/"rosterFile". A fleet page over nothing is the state this guard exists to catch.');
+      'mode is "fleet" but the config names no roster source — add "owner", whose repos the page enumerates as '
+      + 'the viewer. A fleet page over nothing is the state this guard exists to catch.');
   }
   if (mode === 'repo' && hasRosterSource(config)) {
     throw new Error(
@@ -164,9 +151,8 @@ export const ignored = (fullName, exclude = []) =>
 export const inFleet = (repo, exclude = []) =>
   !repo.archived && !repo.fork && !ignored(repo.full_name, exclude);
 
-// The roster, resolved. Static sources win — a deployment that named its members meant
-// it — and `owner` is enumerated live as the viewer. `gh` is injected so this is
-// testable without a network and so config.mjs owes the GitHub client nothing.
+// The roster, resolved: `owner` enumerated live as the viewer. `gh` is injected so this
+// is testable without a network and so config.mjs owes the GitHub client nothing.
 export async function resolveRoster(config, token, gh) {
   const exclude = config?.exclude ?? [];
   // The ignored NAMES travel beside the roster rather than being subtracted from it:
@@ -174,8 +160,6 @@ export async function resolveRoster(config, token, gh) {
   // here — it is GitHub's own flag, read per repo with everything else about it.
   const markIgnored = (repos) => repos.filter((r) => ignored(r, exclude));
 
-  const stated = await loadRoster(config);
-  if (stated.length) return { repos: stated, ignored: markIgnored(stated), source: 'configured', complete: true };
   if (!config?.owner) return { repos: [], ignored: [], source: 'none', complete: true };
   try {
     const { repos, complete } = await gh.listOwnerRepos(config.owner, token);

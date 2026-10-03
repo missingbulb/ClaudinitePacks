@@ -6,8 +6,8 @@ what is queued, what has run, and what the corpus has been costing and catching.
 **Two modes, and a deployment states which one it is.** `mode` is `"repo"` — that
 repo's own page — or `"fleet"` — the overview across a roster. It is the one key with
 **no default**: the build refuses to publish a deployment that did not say, and refuses
-a mode that contradicts the rest of the config (`fleet` naming no roster source,
-`repo` naming one).
+a mode that contradicts the rest of the config (`fleet` naming no `owner`, `repo`
+naming one).
 
 The end-state specification of both pages, the fields the fold gains for them and the
 visual identity is [docs/](docs/README.md); this file describes what a reader of the
@@ -19,8 +19,8 @@ because someone declared it. Adopting it wires the GitHub Pages deploy.
 ## Adopting it
 
 ```jsonc
-// .claudinite-settings.json
-{ "packs": ["claudinite-dashboard"] }
+// .claudinite/settings.json — or the same declaration in YAML or TOML
+{ "packs": [{ "id": "claudinite-dashboard", "config": { "mode": "repo" } }] }
 ```
 
 That is the whole of it for a member: the dashboard covers this repo and publishes to
@@ -37,20 +37,24 @@ Everything else is optional `config` on the declaration:
 
 | Key | Default | What it buys |
 |---|---|---|
-| `mode` | **none — required** | `"repo"` or `"fleet"`. The build fails without it, and fails when it disagrees with the roster keys below |
+| `mode` | **none — required** | `"repo"` or `"fleet"`. The build fails without it, and fails when it disagrees with `owner` |
 | `owner` | — | Whose repos this deployment covers. The page **enumerates them in the browser, as the viewer** — so this is a fleet deployment, and the fleet a person sees is exactly the fleet they can read. The way to build a fleet dashboard |
 | `exclude` | none | Repos under that owner that are not members (either `owner/name` or the bare name). Archived and forked repos leave by their own state |
-| `repos` | — | An explicit member list instead, for a deployment that wants a fixed set |
-| `rosterFile` | — | A generated artifact in the repo listing members — the legacy shape, still read |
-| `canonRepo` | — | The repo whose live engine and pack versions member stamps are compared against; unset means freshness reads *unknown* rather than being guessed |
 | `clientId`, `exchangeUrl` | — | **Legacy.** Both together turn on **Sign in with GitHub**, but they live as the repository variables `CLAUDINITE_DASHBOARD_CLIENT_ID` and `CLAUDINITE_DASHBOARD_EXCHANGE_URL` now; a declaration still carrying them is read as the fallback and the build says so |
 | `redirectUri` | the page's URL | Override when the callback differs |
 | `defaultRepo` | this repo | Which repo a single-repo deployment shows |
 | `rates` | — | USD per **million** tokens, per model, per counter: `{ "claude-opus-5": { "in": 15, "cacheRead": 1.5, "out": 75 } }`. `cacheWrite` is optional and falls back to `in`. Unset is a supported deployment, not a broken one — every dollar figure then reads *unpriced* and names this key, and the token counts stand; a model the table does not name is an unpriced remainder, counted in tokens and never folded into the sum |
 
+`repos`, `rosterFile`, `rosterUrl` and `canonRepo` are **refused**: a build whose
+declaration carries one fails naming it, since a fleet is `owner` plus `exclude` and
+freshness comes from the fleet-roster (below), not from a canon.
+
+The build reads the declaration out of `.claudinite/flat/member.GENERATED.json`, which
+the member's own `cn` writes from its settings in whichever format they are kept.
+
 It has **two views**, and which one you land on is the URL:
 
-- **Fleet** — every member at once, worst first. What a deployment with a roster
+- **Fleet** — every member at once, worst first. What a deployment naming an `owner`
   opens on.
 - **Repo** — one member's scheduler in full. Reached by clicking a member, or
   `?repo=owner/name` directly.
@@ -91,7 +95,7 @@ Two places put it back where it belongs, and nothing else should serve it:
 `src/`, and [`tooling/build-site.mjs`](tooling/build-site.mjs) *moves* it up to the
 served root while staging — a move rather than a copy, so no second, broken entry is
 left behind at `src/index.html`. A staged tree that skipped either step is caught by
-`the staged tree mirrors the mount, with the root a redirect`.
+`the staged tree is the pack alone, with the root a redirect`.
 
 The layering runs one way: a view may reach any layer below it, and anything two views
 both need moves *down* rather than sideways. The one edge that crosses back is
@@ -99,8 +103,7 @@ both need moves *down* rather than sideways. The one edge that crosses back is
 explains — the layout leaves that visible rather than hiding it.
 
 Depth stops at one level under `src/`: sibling layer folders sit at folder distance two
-of each other, and a second level would turn every cross-folder import into a reach and add
-another `../` to the climbs into `engine/`.
+of each other, and a second level would turn every cross-folder import into a reach.
 
 Everything the browser loads is under `src/`, which is how the site build decides what to
 publish — a directory the tree already names, rather than a list of filenames to keep in
@@ -151,7 +154,7 @@ wanted it say so, and nothing else on the page is affected.
 | Panel | Answers |
 |---|---|
 | **Start here** | The one piece of work most worth doing in this repo, named with the issue to open and what it costs you — the top row of the same ranking the work table is ordered by |
-| **At a glance** | Minutes waiting on a person and what they are made of, items parked, open pull requests and issues, CI on the default branch, runs in flight, stars, and drift against the canon |
+| **At a glance** | Minutes waiting on a person and what they are made of, items parked, open pull requests and issues, CI on the default branch, runs in flight and stars |
 | **Work** | One row per piece of work, in three views — **stuck** (what has stopped, and for how long), **pending** (what is moving, and what happens next), **all** (what each task is and what it has done). The page opens on the worst view that has anything in it |
 | **What the queue closed** | Per-day outcomes over a fortnight — today from the live issue page, the days before it from the fold |
 | **What ran** | 48 hours of scheduler runs, executor runs and agent sessions per hour; hovering an hour names the tasks that executed in it |
@@ -207,10 +210,10 @@ second. So nothing on it is a total for its own sake.
 | **What the corpus is doing across the fleet** | The detail behind the block above, from each member's usage fold: workload this week against last, the two check scopes side by side, which rules actually fire, which skills load and which are mounted everywhere and never do, and one row per member. A member that does not fold is named and counted in nothing |
 | **Fleet activity** | What the fleet *did* per day — work closed by outcome, runs and their pass rate, **how often the checks ran and caught something**, and which members moved at all |
 | **Rollup tiles** | How many *members* need a human — not how many items exist |
-| **Members** | Every member ranked worst-first, in three column groups asked in the order a reader asks them: **Activity** (90 days of commits, as a weekly curve, with a second line for the commits that were genuine project work), **Waiting on a person** (an estimate in minutes, what it is made of, then issues and pull requests) and **Claudinite** (packs wearing the mount's verdict, queue, outcomes, scheduler). Stars and CI ride in the member cell — they are how you recognise a row, not findings about it, and so do the state tags below |
+| **Members** | Every member ranked worst-first, in three column groups asked in the order a reader asks them: **Activity** (90 days of commits, as a weekly curve, with a second line for the commits that were genuine project work), **Waiting on a person** (an estimate in minutes, what it is made of, then issues and pull requests) and **Claudinite** (packs wearing the member's freshness from the fleet-roster, queue, outcomes, scheduler). Stars and CI ride in the member cell — they are how you recognise a row, not findings about it, and so do the state tags below |
 | **Tasks across the fleet** | One task, everywhere it runs — a shared pack's task parked in four members at once is a canon problem no single repo's page reveals |
 | **Pack adoption** | Which packs are in use and how widely — who a change to a pack would reach |
-| **What this deployment's packs report** | The fleet-scope cards, from the packs the deployment repo and the canon declare |
+| **What this deployment's packs report** | The fleet-scope cards, from the packs the deployment repo declares |
 
 Each member's row is followed by a **subrow** of what its own packs report — see
 [below](#what-a-pack-contributes).
@@ -236,7 +239,7 @@ cover — a scheduler fault, a recovery-rule trip — shows **no figure**, never
 It invents no judgement of its own. A candidate is the worst thing another module has
 already decided is wrong — an item's `troubles` (the queue's real recovery rules) or a
 member summary's `reasons` — so the block can never disagree with the row further down
-that says the same thing, and an `info`-level fact (a mount one pack behind) is reported
+that says the same thing, and an `info`-level fact (a member one pack behind) is reported
 below and never prodded about. Mid-sweep the fleet's block says it is still reading:
 "nothing is waiting on you" read off four of forty members is a wrong statement rather
 than a partial one.
@@ -266,7 +269,7 @@ Three tags sit beside a member's name, and they are deliberately unalike:
 - **private** — GitHub's own flag, carried through untouched. Who can see a member is part
   of recognising it.
 - **dormant** — the member's own declaration (`dormant` on its `claudinite-tasks` entry).
-  Its scheduler is stopped, so the page measures **neither its mount nor its scheduler**
+  Its scheduler is stopped, so the page measures **neither its freshness nor its scheduler**
   and no fleet-wide operation runs against it; the row says `dormant` where those two
   verdicts would have sat, and the machine band's cells leave it out of their denominators
   and name how many they left out. It is still a member: dormancy is about upkeep.
@@ -393,14 +396,14 @@ which it is a floor rather than a count.
 Two signals are visible *only* here, because no single repo's page has the
 comparison:
 
-- **Mount drift** — each member's stamped `engineVersion` and `packVersions` against
-  the canon's live ones (`engine/version.mjs`, and each declared pack's version off
-  `packs/directory.GENERATED.md`, or its manifest where the catalog does not offer it).
-  Never judged on the stamp's `ref` or `updated`: the versioned flows stamp versions
-  and nothing else, so those two hold the provenance of the last *full* re-vendor and
-  read months stale on every healthy member. Needs `canonRepo` in the config; without
-  it freshness reads *unknown* rather than being guessed, and a pack the canon side
-  cannot price is counted unpriced, never judged current.
+- **Freshness** — whether each member holds what its own update would move it to,
+  read off the fleet-roster artifact the deployment's `fleet-roster` task publishes
+  (`.claudinite/fleet/roster.GENERATED.json`, one verdict per member) rather than priced
+  in the browser. *Behind* is routine, the nightly update lands it; *no stamp* and *no
+  scheduler* are warnings, since nothing would ever converge such a member; a Node
+  member is shown as one and not compared. A deployment that runs no fleet-roster has
+  no artifact, and every member's freshness then reads *unknown*, saying why, rather
+  than being guessed.
 - **A scheduler that never ran** — a member that declares tasks and has never
   produced a work item is not idle, it is unwired. Every per-repo number for it is a
   perfectly healthy zero.
@@ -550,7 +553,7 @@ working through these has the settings page open in the next tab.
 - [ ] Create a Cloudflare API token — `https://dash.cloudflare.com/profile/api-tokens` — template **Edit Cloudflare Workers**, name `claudinite-dashboard-deploy`, **Account Resources** *Include* the hosting account, **Zone Resources** *Include · All zones*
 - [ ] Copy the token — shown once, on the confirmation screen
 - [ ] Add it as the Actions secret `CLOUDFLARE_API_TOKEN` — `<repo>/settings/secrets/actions/new`
-- [ ] Run `create-work-item claudinite-dashboard/deploy-oauth-exchange`, and copy the `workers.dev` URL it reports
+- [ ] Run `cn work create claudinite-dashboard/deploy-oauth-exchange`, and copy the `workers.dev` URL it reports
 - [ ] Add it as the variable `CLAUDINITE_DASHBOARD_EXCHANGE_URL` — `<repo>/settings/variables/actions/new`
 
 **Done when** a signed-in viewer's rate pill reads `…/5000 · user`.
@@ -641,7 +644,7 @@ goes when it runs out is the order the fleet is read in — and that order is
 
 | Pass | What it reads | What it buys |
 |---|---|---|
-| identity | repo, head, the declaration | what this repo is, and whether it runs Claudinite at all — the only three calls a non-member ever costs |
+| identity | repo, head, the member file (a Node member's settings file where there is none) | what this repo is, and whether it runs Claudinite at all — the only four calls a non-member ever costs |
 | attention | one issues page, one runs page | every fault a row can report: the lead card, the tiles, the ranking |
 | depth | the tree, the member's usage fold | declared tasks, and the month behind each row's figures |
 | packs | each declared pack's descriptor and values | the member's own cards, plus `latest-release` where a pack asks for it |
@@ -671,45 +674,29 @@ quota degrades to "uncached", never to an error. **Clear cache** forces a cold r
 
 ## How publishing works
 
-[`build-site.mjs`](tooling/build-site.mjs) stages the page and the engine modules it imports
-into `_site/`, then writes the roster and the `dashboard.config.json` the page reads —
-derived from the declaration's `config`, so there is no second place to configure the
-same thing.
+[`build-site.mjs`](tooling/build-site.mjs) stages the pack's own `src/` and its icon into
+`_site/`, then writes the `dashboard.config.json` the page reads — derived from the
+declaration's `config` as the member file states it, so there is no second place to
+configure the same thing. The page imports nothing outside this pack, so nothing else
+is staged: no engine and no sibling pack.
 
-Two things about that split are deliberate:
+The [publish-pages task](tasks/publish-pages/README.md) runs the build, pushes the tree
+to `gh-pages` and fires the seeded workflow, which holds only the four Pages actions
+that need a workflow job. `.github/workflows/` is the one directory an update cannot
+push to, so the workflow is frozen at adoption and nothing in it can need to change.
 
-- **The workflow is seeded; the build script is not.** `.github/workflows/` is the one
-  directory the nightly update cannot push to, so a deploy workflow can only arrive by
-  being written at adoption — and it never converges after. It is therefore a thin
-  shim that calls `build-site.mjs` out of the mount, exactly as the scheduler stub
-  calls the engine's scheduler run. Only the file that must be frozen is frozen.
+- **The staged tree keeps the pack's place**, publishing at
+  `/packs/claudinite-dashboard/` with the root as a redirect, so a deployment's URL is
+  the same whichever build produced it.
+- **The build refuses rather than guessing**: a declaration with no `mode`, a mode
+  that contradicts `owner`, or a retired key fails it, and nothing is published.
 
-- **It follows the scheduler rather than only a push.** The mount is the page's
-  source, and the push that moves it is a Claudinite update PR auto-merged by the
-  Actions token — which fires no workflow, by GitHub's design. A deployment triggered
-  on `push` alone therefore keeps serving whatever the last *human* merge built, for
-  as long as nobody merges by hand: Shepherd's sat two pack versions behind for days,
-  still rendering a mount verdict the pack had already deleted. So the stub also
-  triggers on the vendored scheduler completing — the member's one permitted
-  schedule, followed rather than competed with — and asks an Actions cache entry,
-  keyed on the page's sources, whether this exact tree is already live before it
-  builds anything.
+The build is inert in one case alone, the pack present without its page: it exits clean
+with no `_site`, and the task publishes nothing rather than replacing a working site
+with an empty one.
 
-  **An already-adopted deployment does not get this.** Nothing converges
-  `.github/workflows/`, so an existing member's copy has to be brought in line by
-  hand, once.
-- **The staged tree mirrors the mount's layout**, publishing at
-  `/packs/claudinite-dashboard/` with the root as a redirect. That is load-bearing, not
-  tidiness: the page imports the queue's modules by relative path so it cannot drift
-  from them, and flattening it to the site root sends those imports above the root —
-  the page would not boot.
-
-The build is inert until the mount carries the pack (adopted, not yet converged): it
-exits clean with no `_site`, and the workflow skips the deploy rather than replacing a
-working site with an empty artifact.
-
-`serve.mjs` is for local use only: it binds loopback, serves the checkout read-only,
-and never talks to GitHub.
+`serve.mjs` is for local use only: it binds loopback, serves the pack read-only, and
+never talks to GitHub.
 
 ## Why it carries its own copy of the queue's vocabulary
 
@@ -747,12 +734,13 @@ tool hardcodes no queue label outside its vocabulary copy.
 
 ## Checks
 
-One check, and it holds another pack's `dashboard.json` to what this
-page's own reader accepts — not a second copy of the schema, which ordinary tooling
-already validates, but the thing a schema cannot check: that the file is usable, and
-that the ids its views select by resolve. The failure is otherwise silent, since a
-rejected descriptor renders as one apologetic line in a viewer's browser and nothing
-goes red where its author is looking.
+One check, `descriptor-usable`, built into the engine and active wherever this pack is
+declared. It holds another pack's `dashboard.json` to what this page's own reader
+accepts — not a second copy of the schema, which ordinary tooling already validates,
+but the thing a schema cannot check: that the file is usable, and that the ids its
+views select by resolve. The failure is otherwise silent, since a rejected descriptor
+renders as one apologetic line in a viewer's browser and nothing goes red where its
+author is looking. `cn dashboard descriptor FILE…` prints the same verdicts by hand.
 
 | Check | Severity | Reason | Enforcement |
 |---|---|---|---|
