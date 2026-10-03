@@ -10,7 +10,7 @@ import { CN, needsCn } from '../test/cn-tasks.mjs';
 import { put, scratch, testChain } from './test-fixture.mjs';
 
 const entry = (version, channel, extra = {}) => ({
-  version, sha256: '0'.repeat(64), size: 1, minEngineVersion: '61001.1.0', requires: [], channel, revoked: false,
+  version, sha256: '0'.repeat(64), size: 1, minEngineVersion: '1.61001.1', requires: [], channel, revoked: false,
   publishedAt: '2026-10-01T00:00:00Z', sourceCommit: '0'.repeat(40), ...extra,
 });
 
@@ -21,13 +21,13 @@ function tree() {
   put(t, 'acme-pack/index.json', JSON.stringify({ v: 1, pack: 'acme-pack', serial: 6, versions: [
     entry('61001.1', 'stable'), entry('61001.2', 'canary'), entry('61001.3', 'canary', { revoked: true }), entry('61001.4', 'canary', { requires: ['acme-pack-two'] }),
   ] }));
-  const manifest = (version, extra) => JSON.stringify({ version, minEngineVersion: '61001.1.0', ruleRoutingGuidance: { belongs: 'acme widgets', excludes: 'x' }, ...extra });
+  const manifest = (version, extra) => JSON.stringify({ version, minEngineVersion: '1.61001.1', ruleRoutingGuidance: { belongs: 'acme widgets', excludes: 'x' }, ...extra });
   const detector = { about: 'an acme.json', paths: '^acme\\.json$', text: { source: '"acme"\\s*:', flags: 'i' }, search: ['acme'] };
   const questions = [{ id: 'goals', prompt: 'What for?', distill: 'one line' }];
   for (const v of ['61001.1', '61001.2', '61001.3']) put(t, `acme-pack/${v}/pack.json`, manifest(v, { relevanceDetector: detector }));
   put(t, 'acme-pack/61001.4/pack.json', manifest('61001.4', { relevanceDetector: { ...detector, text: ['acme', { source: 'b', flags: '' }] }, questions }));
   put(t, 'acme-pack-two/index.json', JSON.stringify({ v: 1, pack: 'acme-pack-two', serial: 1, versions: [entry('61001.1', 'canary')] }));
-  put(t, 'acme-pack-two/61001.1/pack.json', JSON.stringify({ version: '61001.1', minEngineVersion: '61001.1.0' }));
+  put(t, 'acme-pack-two/61001.1/pack.json', JSON.stringify({ version: '61001.1', minEngineVersion: '1.61001.1' }));
   return t;
 }
 
@@ -101,7 +101,7 @@ test('the engine\'s catalog reader agrees with every fixture', needsCn, () => {
 
 test('a published version whose fingerprint the reader refuses stops the render, naming the pack and version', () => {
   const t = tree();
-  put(t, 'acme-pack/61001.1/pack.json', JSON.stringify({ version: '61001.1', minEngineVersion: '61001.1.0', relevanceDetector: { about: 'x', paths: { source: 'a', flags: 'g' } } }));
+  put(t, 'acme-pack/61001.1/pack.json', JSON.stringify({ version: '61001.1', minEngineVersion: '1.61001.1', relevanceDetector: { about: 'x', paths: { source: 'a', flags: 'g' } } }));
   assert.throws(() => renderCatalog(t), (e) => e instanceof CatalogError
     && e.message === 'acme-pack 61001.1: a relevanceDetector pattern carries the g or y flag, which makes .test stateful');
 });

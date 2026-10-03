@@ -1,6 +1,6 @@
 {
   "version": "61002.1",
-  "minEngineVersion": "61001.1.0",
+  "minEngineVersion": "1.61001.1",
   "ruleRoutingGuidance": {
     "belongs": "packaging and import conventions for a Python project — pyproject extras, lazy optional heavy deps, stdlib-only core",
     "excludes": "npm and module packaging — that is node; research methodology is research-project"

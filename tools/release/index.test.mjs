@@ -13,7 +13,7 @@ const NOW = new Date('2026-01-31T00:00:00Z');
 const PACKS_KEY = parsePrivateKey(V.subjects.packs.seed);
 
 const release = (version, extra = {}) => ({
-  packJson: { version, minEngineVersion: '60101.1.0', requires: ['acme-dep'], ...extra },
+  packJson: { version, minEngineVersion: '1.60101.1', requires: ['acme-dep'], ...extra },
   sha256: 'a'.repeat(64),
   size: 123,
   publishedAt: '2026-01-02T03:04:05Z',
@@ -35,7 +35,7 @@ test('newIndex is empty at serial 0; the first addVersion writes serial 1 with a
     version: '60101.1',
     sha256: 'a'.repeat(64),
     size: 123,
-    minEngineVersion: '60101.1.0',
+    minEngineVersion: '1.60101.1',
     requires: ['acme-dep'],
     channel: 'canary',
     revoked: false,
@@ -70,16 +70,19 @@ test('addVersion refuses a pack.json without a string version or minEngineVersio
   assert.throws(() => addVersion(newIndex('acme-pack'), release('60101.1', { minEngineVersion: undefined })), /acme-pack: pack\.json has no string minEngineVersion/);
 });
 
-test('a new version must name its engine as three dot-separated numbers; a published entry is left as it is', () => {
-  for (const bad of ['60101.1', '60101', '60101.1.0.0', 'v60101.1.0', '60101.1.x']) {
+test('a new version must name its engine as <major>.<day>.<n>; a published entry is left as it is', () => {
+  for (const bad of ['60101.1', '60101', '1.60101.1.0', 'v1.60101.1', '1.60101.x', '60101.1.0', '1.60101.0', '1.60100.1', '01.60101.1']) {
     assert.throws(() => addVersion(newIndex('acme-pack'), release('60101.1', { minEngineVersion: bad })),
-      new RegExp(`acme-pack 60101\\.1: minEngineVersion "${bad.replace(/\./g, '\\.')}" is not three dot-separated numbers`));
+      new RegExp(`acme-pack 60101\\.1: minEngineVersion "${bad.replace(/\./g, '\\.')}" is not <major>\\.<day>\\.<n>`));
+  }
+  for (const good of ['1.60101.1', '0.0.0', '12.111231.40']) {
+    assert.equal(packFields('acme-pack', { version: '60101.1', minEngineVersion: good }, { isNew: true }).minEngineVersion, good);
   }
   assert.equal(packFields('acme-pack', { version: '60101.1', minEngineVersion: '60101.1' }).minEngineVersion, '60101.1');
   const published = { ...three(), versions: three().versions.map((e) => ({ ...e, minEngineVersion: '60101.1' })) };
   const promoted = setRevoked(setChannel(published, '60101.2', 'stable'), '60101.1', true);
   assert.deepEqual(promoted.versions.map((e) => e.minEngineVersion), ['60101.1', '60101.1', '60101.1']);
-  assert.equal(addVersion(published, release('60103.1')).versions.at(-1).minEngineVersion, '60101.1.0');
+  assert.equal(addVersion(published, release('60103.1')).versions.at(-1).minEngineVersion, '1.60101.1');
 });
 
 test('addVersion turns absent requires into []', () => {

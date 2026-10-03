@@ -1,7 +1,7 @@
 {
   "version": "61003.2",
   "engine": true,
-  "minEngineVersion": "61001.1.0",
+  "minEngineVersion": "1.61001.1",
   "ruleRoutingGuidance": {
     "belongs": "using Claudinite itself — the vendored mount, the pack declaration, bootstrapping, adopting packs, the self-refresh update",
     "excludes": "working discipline and the task lifecycle — basics; authoring Claudinite content, scheduled tasks included — claudinite-growth; git — git-github"

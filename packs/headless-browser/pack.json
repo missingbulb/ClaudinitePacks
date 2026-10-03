@@ -1,6 +1,6 @@
 {
   "version": "61003.1",
-  "minEngineVersion": "61001.1.0",
+  "minEngineVersion": "1.61001.1",
   "ruleRoutingGuidance": {
     "belongs": "driving a real browser from code — resolving and pinning the build, faking the page world, capture mechanics",
     "excludes": "which engine a UI golden needs and its review gate — basics writing-tests; workflow wiring — git-github"

@@ -129,7 +129,7 @@ export function render(inv, { frozenAt }) {
     '',
     `\`minEngineVersion\` across the shelf: ${[...floors].sort(([a], [b]) => byBytes(a, b)).map(([v, n]) => `\`${v}\` (${n} pack${n === 1 ? '' : 's'})`).join(', ')}.`,
     "A two-part one is a Claudinite Node engine version, which the Engine's `shared/version` (three",
-    'parts, `<day>.<n>.0`) does not read; a ported pack\'s first version sets `minEngineVersion` to the',
+    'parts, `<major>.<day>.<n>`) does not read; a ported pack\'s first version sets `minEngineVersion` to the',
     '`cn` version it was tested on.',
     '',
     'Classes: `content` (`RULES.md`, `README.md`, every other `.md`, `provenance/**`, `badge.svg`);',

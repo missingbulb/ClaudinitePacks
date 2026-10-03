@@ -9,9 +9,9 @@ coded checks become Go; tasks stay Node against `@claudinite/sdk`; tests are rew
 the pinned `cn`, or dropped when they check only file shapes or doc text. A file that imports
 Claudinite's `engine/` by relative path does not run here until its slice replaces the import.
 
-`minEngineVersion` across the shelf: `61001.1.0` (36 packs), `61003.1.0` (2 packs).
+`minEngineVersion` across the shelf: `1.61001.1` (36 packs), `1.61003.1` (2 packs).
 A two-part one is a Claudinite Node engine version, which the Engine's `shared/version` (three
-parts, `<day>.<n>.0`) does not read; a ported pack's first version sets `minEngineVersion` to the
+parts, `<major>.<day>.<n>`) does not read; a ported pack's first version sets `minEngineVersion` to the
 `cn` version it was tested on.
 
 Classes: `content` (`RULES.md`, `README.md`, every other `.md`, `provenance/**`, `badge.svg`);
