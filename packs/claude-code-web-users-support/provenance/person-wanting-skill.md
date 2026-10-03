@@ -20,3 +20,10 @@
 - **Reason:** pack.json is the preferred manifest; where the text told a reader to list a module in
   pack.mjs, rules are found in worldRules/ and workRules/ and nothing is listed.
 - **Actor:** @missingbulb (owner), asking for pack.json manifests.
+
+## 2026-10-03 · weakened · no worldRules/ folder in a person's pack
+- **Reason:** the engine now copies a person's pack at session start and takes its Markdown and JSON
+  only; cn runs no JavaScript rules, so the rule no longer offers a `worldRules/` folder, and a
+  check of one's own is a `declared-checks.json` entry.
+- **Actor:** Claude, porting the session step into the engine (ClaudiniteEngine#68).
+- **Model:** Claude Opus 5.5

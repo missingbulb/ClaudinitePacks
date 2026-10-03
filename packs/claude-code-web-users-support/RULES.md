@@ -16,10 +16,10 @@
   ```
 
 - **A person wanting a skill or a check of their own, not just rules** - put it in that same
-  directory, which is an ordinary pack: `skills/<name>/SKILL.md`, `worldRules/`,
-  `declared-checks.json`, and a `pack.json` setting neither `id` nor `version` where one is
-  needed at all. It is copied into every session they open on a project declaring this pack, so
-  it may hold nothing a project owns. (person-wanting-skill)
+  directory, which is an ordinary pack: `skills/<name>/SKILL.md`, `declared-checks.json`,
+  and a `pack.json` setting neither `id` nor `version` where one is needed at all. It is copied
+  into every session they open on a project declaring this pack, so it may hold nothing a
+  project owns. (person-wanting-skill)
 
 - **A web session halt-gated on a missing toolchain requirement** — re-paste
   [`environment-setup-command.sh`](environment-setup-command.sh) whole and unedited into the

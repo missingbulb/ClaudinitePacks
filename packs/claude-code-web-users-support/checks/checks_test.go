@@ -126,8 +126,8 @@ func TestPreferencesProvenance(t *testing.T) {
 	}
 }
 
-// The readings are the scripts' that stay beside the checks, the session
-// step's address and the CODEOWNERS writer: node holds the two equal.
+// The readings are the script's that stays beside the checks, the
+// CODEOWNERS writer's address and block: node holds the two equal.
 func TestReadingsMatchTheScripts(t *testing.T) {
 	node, err := exec.LookPath("node")
 	if err != nil {
@@ -138,8 +138,7 @@ func TestReadingsMatchTheScripts(t *testing.T) {
 	names := []string{"octocat", "a-b", "-a", "a-", "a--b", "A", strings.Repeat("z", 39), strings.Repeat("z", 40), "", "a.b", "é"}
 	files := []string{"preferences/octocat/RULES.md", "preferences/b/x/y", "preferences/Bad/RULES.md", "preferences/README.md", "other/a/b", "preferences/b/z"}
 	script := `
-import { resolveStore, isUsableIdentity } from './user_pack_address.mjs';
-import { codeownersBlock } from './store_codeowners.mjs';
+import { resolveStore, isUsableIdentity, codeownersBlock } from './store_codeowners.mjs';
 const { configs, names, files } = JSON.parse(process.argv[1]);
 console.log(JSON.stringify({
   stores: configs.map((c) => { const s = resolveStore(JSON.parse(c)); return s ? s.repo + ' ' + s.path : ''; }),

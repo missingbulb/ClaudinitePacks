@@ -138,3 +138,14 @@
   claude-code-web-users-support`; `minEngineVersion` `61003.1.0`, since the checks build against
   the SDK's `RuleBlocks`, which no engine before that day carries. claude-code-web-users-support
   61003.1.
+
+## 2026-10-03 · scope-changed · the session step moves into the engine
+- **Reason:** cn runs no pack session scripts, so the copy of a person's pack is an engine
+  SessionStart step active where this pack is declared (ClaudiniteEngine#68 Q4);
+  session-prepare.mjs, session-start.mjs, copy_user_pack_to_repo.mjs, read_github_login.mjs and
+  user_pack_address.mjs go, and write_store_codeowners.mjs reads the store through `cn settings
+  config`.
+- **Actor:** Claude, ClaudinitePacks#30 T2.
+- **Model:** Claude Opus 5.5
+- **Mechanism:** the engine's growth/userpack step at `cn hook session-start`; the store address and
+  the CODEOWNERS block stay in store_codeowners.mjs, held equal to the checks' Go by their test.

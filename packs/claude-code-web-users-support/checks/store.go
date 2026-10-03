@@ -30,8 +30,9 @@ var (
 // directory in it.
 type store struct{ repo, path string }
 
-// resolveStore reads the pack's config as user_pack_address.mjs does, the
-// session step's reading: ok is false when it names no usable store.
+// resolveStore reads the pack's config as store_codeowners.mjs does, and
+// as the engine's session step does: ok is false when it names no usable
+// store.
 func resolveStore(raw json.RawMessage) (store, bool) {
 	var config map[string]any
 	if err := json.Unmarshal(raw, &config); err != nil || config == nil {
