@@ -24,3 +24,9 @@
   it.
 - **Mechanism:** the description, as before.
 - **Actor:** @missingbulb (owner).
+
+## 2026-10-03 · trigger-changed · adoption is `cn init` and the work it leaves
+- **Reason:** `cn init` does what `bootstrap.mjs`, the vendor set and the migration records did, and prints the questions, the handover and the next step; the skill now names that command, `cn settings answer`, the routine and the one issue. `interview.mjs` went with it: it imported the Node engine, and `cn` computes the pending set.
+- **Actor:** build lead, ClaudiniteEngine#55.
+- **Model:** Claude Opus 5.5 (1M context)
+- **Mechanism:** the description names `cn init` and the handover issue; re-vendoring left the triggers, since the engine's update task refreshes a member. claudinite-lifecycle 61003.1.

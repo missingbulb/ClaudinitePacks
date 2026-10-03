@@ -23,3 +23,8 @@
 - **Mechanism:** none until that slice; ClaudiniteEngine's `parity/deferred.txt` names it, and
   the differential refuses any subtraction it does not explain.
 - **Landed:** pending.
+
+## 2026-10-03 · moved · a `cn verify` rule beside rules-index-current
+- **Reason:** every converge `cn` runs writes the index, so whether it is current is a member-shape question; a missing index is a deprecation, since no earlier `cn` release wrote one.
+- **Actor:** build lead, ClaudiniteEngine#55.
+- **Mechanism:** `cn verify`'s `skills-index-current`, proven against the Node rule by the parity answered face.

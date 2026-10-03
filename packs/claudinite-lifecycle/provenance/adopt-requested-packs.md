@@ -46,3 +46,8 @@
   one; `task:origin:ad-hoc` is the spelling a scheduler run adopts.
 - **Actor:** @missingbulb (owner).
 - **Model:** Opus 5
+
+## 2026-10-03 · reworded · the fingerprint sentence goes; requested entries go through `cn adopt` and `cn settings answer`
+- **Reason:** `fingerprint-fit.mjs` lived in a canon clone the `cn` flow never fetches, and `cn` carries no fingerprint.
+- **Actor:** build lead, ClaudiniteEngine#55.
+- **Model:** Claude Opus 5.5 (1M context)

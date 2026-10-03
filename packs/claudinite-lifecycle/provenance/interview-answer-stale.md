@@ -28,3 +28,8 @@
 - **Mechanism:** none until that slice; ClaudiniteEngine's `parity/deferred.txt` names it, and
   the differential refuses any subtraction it does not explain.
 - **Landed:** pending.
+
+## 2026-10-03 · moved · a `cn` built-in tagged claudinite-lifecycle
+- **Reason:** the engine's `init` and adoption slice ports it; the Node rule's verdicts are recorded as parity fixtures.
+- **Actor:** build lead, ClaudiniteEngine#55.
+- **Mechanism:** compiled into `cn`, running only where this pack is declared; its on_fail as before.

@@ -38,24 +38,23 @@ not prose: the session that has lost its rules is the session least able to noti
 | `claudinite-isolation` | high | complexity | declared: blocking |
 | `shared-tree-edit-guard` | high | correctness | declared: blocking |
 | `shared-tree-immutable` | high | correctness | cn built-in: advisory |
-| `seeded-file-stale` | high | correctness | ports with adoption |
+| `seeded-file-stale` | high | correctness | cn built-in: advisory |
 | `scheduler-workflow-shape` | high | correctness | declared: blocking |
 | `skill-loaded-before-editing` | high | correctness | cn built-in: blocking |
-| `skills-index-current` | medium | correctness | ports with adoption |
+| `skills-index-current` | medium | correctness | `cn verify` rule |
 | `flat-declarations-current` | medium | correctness | cn built-in: blocking |
 
 Where each one runs:
 
-- **Inside `cn`.** `shared-tree-immutable` and `flat-declarations-current` are `cn` built-ins
-  tagged with this pack: they run only where the pack is declared and list under it in
-  `cn check list`; the pack carries no code for them. `skill-loaded-before-editing` is a `cn`
-  built-in on every member.
-- **Ports with a later slice.** `seeded-file-stale` and `skills-index-current` (and the adoption
-  skills' two below) port with the engine's `init` and adoption slice. Until then they do not run.
+- **Inside `cn`.** `shared-tree-immutable`, `flat-declarations-current` and `seeded-file-stale`
+  (and the adoption skills' two below) are `cn` built-ins tagged with this pack: they run only
+  where the pack is declared and list under it in `cn check list`; the pack carries no code for
+  them. `skill-loaded-before-editing` is a `cn` built-in on every member.
 - **Declared.** `claudinite-lifecycle-declared`, `claudinite-isolation`, `shared-tree-edit-guard`
   and `scheduler-workflow-shape` are this pack's `declared-checks.json`.
 - **Answered by `cn verify`, no longer checks here.** `rules-index-current` (verify's
-  `rules-index-current` and `claude-md-import`), `conformance-workflow` and
+  `rules-index-current` and `claude-md-import`), `skills-index-current` (verify's rule of that
+  name: an index missing a skill a declared pack holds breaks, a missing index is a deprecation), `conformance-workflow` and
   `conformance-work-scope` (verify's `member-workflows`, against the engine's CI template, which
   runs `cn check world` over the change on every pull request), and `legacy-shape-in-use` (verify's
   `settings-checks` deprecations and `min-engine-version-legacy`).
@@ -64,6 +63,8 @@ What goes wrong when one fires:
 
 - `claudinite-lifecycle-declared` — this pack's entry is gone from `packs.declared` in `.claudinite/settings.*`, so none of the rules above run and the session cannot tell.
 - `claudinite-isolation` — the repo's own code reaches into `.claudinite/`, so the next canon refactor is a breaking migration for code the canon does not own (a declared `forbidReferences` barrier edge).
+- `adoption-answers-pending` — the branch declares a pack whose question its entry has no answer for; ask the owner and record it with `cn settings answer`.
+- `interview-answer-stale` — an entry stores an answer to a question its pack no longer asks.
 - `seeded-file-stale` — a file some pack seeded at adoption has fallen behind that pack's template, and since a seeded file is never converged nothing else would ever say so: the member goes on running a copy whose pack has moved.
 - `scheduler-workflow-shape` — the scheduler's cron, concurrency or dispatch guard has drifted, or it no longer runs `cn schedule run`: staggering, double-run safety or manual runs break.
 - `flat-declarations-current` - `.claudinite/flat/tasks.GENERATED.json` or `dashboard.GENERATED.json` no longer matches a declared pack's `task.json` or `dashboard.json`, so the dashboard and a session asking what runs here read a roster that is not the repo's. Regenerate with `cn tasks flat --write`; every converge `cn` runs writes them beside the rules index.
@@ -80,26 +81,26 @@ the files it must be loaded for under `force-load-on-file-edits-paths` in its SK
 `metadata` (the harness's own `paths` is a limiter on when it offers a skill, so it cannot carry
 this), the engine's PreToolUse guard holds a file tool aimed there until the session has
 loaded that skill, and this rule catches the edits the guard never saw (a `sed`, a heredoc) by
-asking the diff the same question. Both read one resolver,
-`engine/pack_loader/path-scoped-skills.mjs`. A load is a `Skill` tool call or a `Read` of the
-skill's own SKILL.md. `skills-index-current` keeps the generated
-`.claudinite/flat/claudinite-skills.GENERATED.md` — every mounted skill with what loads it, the
-scoped ones first — naming what the declared packs actually bundle.
+asking the diff the same question. A load is a `Skill` tool call or a `Read` of the skill's own
+SKILL.md. Every converge `cn` runs writes `.claudinite/flat/claudinite-skills.GENERATED.md` beside
+the rules index — every mounted skill with what loads it, the scoped ones first, and no file when
+no declared pack bundles a skill — and `skills-index-current` keeps it naming what the declared
+packs actually bundle.
 
 ## Skills
 
 | Skill | For |
 |---|---|
-| [`adopt-claudinite`](skills/adopt-claudinite/SKILL.md) | setting a project up on Claudinite for the first time — mount, hooks, checks, skills — and re-vendoring one to pick up updates |
-| [`adopt-pack`](skills/adopt-pack/SKILL.md) | adding a pack to a repo that already runs Claudinite: declare, interview, re-vendor, scaffold, land |
+| [`adopt-claudinite`](skills/adopt-claudinite/SKILL.md) | setting a project up on Claudinite for the first time: `cn init`, its questions recorded with `cn settings answer`, the executor routine, one pull request and the HANDOVER issue |
+| [`adopt-pack`](skills/adopt-pack/SKILL.md) | adding packs to a repo that already runs Claudinite: `cn adopt`, the interview, scaffolding, the HANDOVER issue, landing |
 
-The adoption skills bundle two more checks of the same kind, over the answers a member stores
-against each declared pack's questions:
+Two more checks of the same kind judge the answers a member stores against each declared pack's
+questions; both are `cn` built-ins tagged with this pack:
 
 | Check | Severity | Reason | Enforcement |
 |---|---|---|---|
-| `adoption-answers-pending` | medium | complexity | ports with adoption |
-| `interview-answer-stale` | low | complexity | ports with adoption |
+| `adoption-answers-pending` | medium | complexity | cn built-in: blocking (work) |
+| `interview-answer-stale` | low | complexity | cn built-in: advisory |
 
 ## Tasks
 

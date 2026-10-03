@@ -56,3 +56,8 @@
 - **Reason:** the Node engine's `.claudinite-settings.json` is not a `cn` member's declaration, which is `.claudinite/settings.{yaml,toml,json}`, and `cn adopt` is what pulls a pack's `requires` closure in.
 - **Actor:** build lead, ClaudiniteEngine#49 (a `cn` member declares itself in `.claudinite/settings.*`; `cn settings import` reads the Node file once, on move day).
 - **Mechanism:** the skill names `packs.declared`, `checks.rules`/`checks.accept` and `cn adopt`. claudinite-lifecycle 61002.4.
+
+## 2026-10-03 · reworded · `cn adopt` declares, vendors, seeds and stamps; `cn settings answer` records
+- **Reason:** the re-vendor step and the workflow scaffolding are what `cn adopt` now does and prints; the interview's writer is `cn settings answer`. The unattended rule stands as it was.
+- **Actor:** build lead, ClaudiniteEngine#55.
+- **Model:** Claude Opus 5.5 (1M context)
