@@ -1,6 +1,6 @@
 # packs/ — the corpus content, active by declaration
 
-Each `packs/<name>/` bundles a pack's **prose** (`RULES.md`, injected at session start when the pack is active), its **checks** (run at every Stop), and its **bundled skills** (`<pack>/skills/`, mounted at session start). **No pack is active by default** - every pack, `basics` included, activates only when declared under `packs.declared` in `.claudinite/settings.*` (bootstrap's `--init` seeds `basics` plus the fingerprinted technology packs; the nightly update backfills the explicit `basics` declaration into existing consumers). Discovery is structural - any `packs/<name>/` carrying a `pack.json` (or `pack.mjs`) is a pack, and that manifest is the pack's index: what it owns, the checks it runs in each scope, the skills it bundles. A pack's `README.md` is **optional** and carries only what the manifest cannot - provenance, design rationale, an index of its prose. A README that restates the manifest is duplication with a drift risk, and several had already drifted.
+Each `packs/<name>/` bundles a pack's **prose** (`RULES.md`, injected at session start when the pack is active), its **checks** (run at every Stop), and its **bundled skills** (`<pack>/skills/`, mounted at session start). **No pack is active by default** - every pack, `basics` included, activates only when declared under `packs.declared` in `.claudinite/settings.*` (`cn init --packs` declares exactly the packs it is given and their `requires`; none is seeded by default). Discovery is structural - any `packs/<name>/` carrying a `pack.json` (or `pack.mjs`) is a pack, and that manifest is the pack's index: what it owns, the checks it runs in each scope, the skills it bundles. A pack's `README.md` is **optional** and carries only what the manifest cannot - provenance, design rationale, an index of its prose. A README that restates the manifest is duplication with a drift risk, and several had already drifted.
 
 ## Packs
 
@@ -89,7 +89,7 @@ The `"packs"` list and the rest of `.claudinite-settings.json` are validated **w
 
 A pack states the packs it depends on in an optional `requires` field on its manifest - a plain array of pack ids: a project-class pack leans on the framework that implements it (`spec-driven-product` requires `executable-requirements`).
 
-This is **not a check** — a pack can't be imported without its dependencies, so the resolution happens **when the declaration is written**, at bootstrap `--init` and the update backfill ([bootstrap.md](../bootstrap.md) Part 2): [`resolveDeclaredPacks`](../engine/pack_loader/pack-registry.mjs) pulls each declared pack's transitive `requires` closure into `.claudinite-settings.json`. The prerequisite is materialized and visible in the file — droppable like every other entry, the same reason `basics` is written explicitly rather than defaulted — rather than resolved implicitly at run time. Declared ids keep their order; each pack's pulled-in dependencies land right after it.
+This is **not a check** — a pack can't be imported without its dependencies, so the resolution happens **when the declaration is written**, by `cn init` and `cn adopt`, which pull each declared pack's transitive `requires` closure into `packs.declared` in `.claudinite/settings.*`. The prerequisite is materialized and visible in the file — droppable like every other entry, the same reason `basics` is written explicitly rather than defaulted — rather than resolved implicitly at run time. Declared ids keep their order; each pack's pulled-in dependencies land right after it.
 
 ## The manifest spec (`pack.json`)
 
@@ -268,13 +268,12 @@ A pack may declare a toolchain (or per-repo deps) a cloud session needs but the 
 
 and a repo points it elsewhere with `{ "packs": [ { "id": "node", "config": { "dirs": ["firebase/functions"] } } ] }`. A `pack.mjs` may still give either as a function of the params.
 
-[`env-requirements.mjs`](../engine/pack_loader/env-requirements.mjs) drives everything from the repo's **active** packs (same activation as prose/checks):
-
-- `node .claudinite/shared/engine/pack_loader/env-requirements.mjs install` runs every active pack's `setup` in the checkout. The corpus's one generic [`environment-setup-command.sh`](claude-code-web-users-support/environment-setup-command.sh) — the web pack's, pasted into the environment's Setup script field — calls this.
-- `node .claudinite/shared/engine/pack_loader/env-requirements.mjs check` runs at session start (web only) and **asserts** — it runs each `probe` directly against the running environment and injects the halt-gate context if a requirement is missing. No version flag: the probes are the source of truth, and a genuinely new requirement fails its probe and prompts a re-run. Never installs.
-- `node .claudinite/shared/engine/pack_loader/env-requirements.mjs plan` prints what `install` would run (review / debug).
-
-Wiring a consumer up — the check hook + the pack entries' `config`, with the script pasted from the corpus copy — is [bootstrap.md](../bootstrap.md) Part 9. A pack with no `env` field adds nothing; universal git hygiene lives in the generic script, not a pack.
+`cn` validates the `env` field at load and runs neither half of it yet. The install half is the
+corpus's one generic [`environment-setup-command.sh`](claude-code-web-users-support/environment-setup-command.sh),
+the web pack's, pasted into the environment's Setup script field; it still drives the Node mount,
+and moving it is the member move's step (ClaudiniteEngine#23). The SessionStart probe that would
+halt a session missing a requirement is the engine's session-context work, not adoption's. A pack
+with no `env` field adds nothing; universal git hygiene lives in the generic script, not a pack.
 
 ## Adoption interview (`questions`)
 
@@ -294,25 +293,24 @@ folder-access graph, pulled in everywhere basics is declared, asks nothing and s
 inert until a repo writes one (#1681).
 
 The answers live **verbatim** on the pack's entry in `.claudinite/settings.*` (`answers:
-{ "<question-id>": "<answer>" }` — [engine/checks/README.md](../engine/checks/README.md)): the settings file
-records the project's intent beside the `config` distilled from it — provenance for the
-configuration, versioned and diffable, and re-derivable if the pack's config shape later changes.
-The **gap** — declared question ids minus answered ids — drives the asking
-([interview.mjs](claudinite-lifecycle/skills/adopt-claudinite/interview.mjs) — the adoption skill's bundled
-machinery): at adoption every question is pending; when the canon later adds
-a question to a pack, just that one surfaces in every consumer; a pack with no questions adds
-nothing. An answered question stays answered — "n/a, none wanted" is an answer, distinct from
-never-asked.
+{ "<question-id>": "<answer>" }`), written by `cn settings answer <pack>/<question> <text>`, the
+one writer: the settings file records the project's intent beside the `config` distilled from it
+— provenance for the configuration, versioned and diffable, and re-derivable if the pack's config
+shape later changes. The **gap** — declared question ids minus answered ids, skipping an entry a
+`requires` pulled in that carries neither `config` nor `answers` — drives the asking: at adoption
+every question is pending; when the canon later adds a question to a pack, just that one surfaces
+in every member; a pack with no questions adds nothing. An answered question stays answered —
+"n/a, none wanted" is an answer, distinct from never-asked.
 
-The posture is **strict at bootstrap, mild everywhere else**. The adoption flow
-([bootstrap.md](../bootstrap.md) Part 2) interviews the owner off `bootstrap.mjs`'s pending-question report — a human is
-present by construction. Outside it, pending questions surface only as a mild SessionStart note
-(the `interview-check` step) telling an interactive session to ask at a natural moment and an
-unattended one to ignore it entirely — **never a conformance finding**, so a nightly update or
-a new canon question can never block the fleet. The one sweep-side finding is hygiene: a stored
-answer whose question the pack no longer declares (renamed or removed upstream) is an *advisory*
-`config` finding, and a malformed `questions` declaration is a blocking one like any broken
-manifest.
+The posture is **strict at adoption, mild everywhere else**. `cn init` and `cn adopt` print the
+pending set as a QUESTIONS block for the session to ask (a human is present by construction), and
+the `adoption-answers-pending` work check blocks the commit on the branch that declared the pack.
+Outside it, pending questions surface only as one SessionStart line telling an interactive
+session to ask at a natural moment and an unattended one to ignore it — **never a world
+finding**, so a nightly update or a new canon question can never block the fleet. The one world
+check is hygiene: `interview-answer-stale` advises on a stored answer whose question the pack no
+longer declares (renamed or removed upstream), and a malformed `questions` declaration keeps the
+pack from loading like any broken manifest.
 
 ## Corpus size — checks vs prose
 

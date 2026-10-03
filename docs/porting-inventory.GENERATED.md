@@ -34,7 +34,7 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 | claudinite-dashboard | 61002.1 | 16 | 3 | 1 | 4 | 44 | 42 | 1 | 4 | 10 |
 | claudinite-fleet-sheepdog | 61002.2 | 29 | 1 | 1 | 8 | 24 | 23 | 0 | 0 | 9 |
 | claudinite-growth | 61002.4 | 159 | 8 | 0 | 18 | 14 | 16 | 0 | 0 | 10 |
-| claudinite-lifecycle | 61002.4 | 42 | 3 | 0 | 2 | 2 | 6 | 0 | 0 | 4 |
+| claudinite-lifecycle | 61003.1 | 42 | 3 | 0 | 2 | 1 | 5 | 0 | 0 | 2 |
 | claudinite-tasks | 61002.3 | 23 | 3 | 0 | 5 | 26 | 14 | 0 | 0 | 1 |
 | cloudflare-site | 61002.1 | 16 | 1 | 3 | 3 | 4 | 7 | 0 | 0 | 3 |
 | cloudflare-workers | 60928.1 | 16 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -62,7 +62,7 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 | spec-driven-product | 60928.1 | 31 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | web-scraping | 60928.1 | 35 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | web-speech | 60928.1 | 33 | 3 | 6 | 0 | 1 | 5 | 0 | 0 | 10 |
-| **38 packs** | | 1194 | 71 | 62 | 75 | 145 | 189 | 11 | 5 | 103 |
+| **38 packs** | | 1194 | 71 | 62 | 75 | 144 | 188 | 11 | 5 | 101 |
 
 ## aws-sam
 
@@ -485,17 +485,15 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 - `tasks/adopt-requested-packs/task.json`
 - `tasks/adopt-requested-packs/task.md`
 
-### src (2)
+### src (1)
 
-- `skills/adopt-claudinite/interview.mjs` (imports `engine/`)
 - `tasks/adopt-requested-packs/protocol.mjs`
 
-### test (6)
+### test (5)
 
 - `test/declared_test.go`
 - `test/mandatory.test.mjs` (imports `engine/`)
 - `test/pack.test.mjs` (imports `engine/`)
-- `test/skills/adopt-claudinite/interview.test.mjs` (imports `engine/`)
 - `test/task-policies.test.mjs`
 - `test/tasks/adopt-requested-packs/task.test.mjs`
 
