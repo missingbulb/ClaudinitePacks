@@ -1,6 +1,6 @@
 {
   "v": 1,
-  "serial": 85,
+  "serial": 86,
   "packs": [
     {
       "id": "android",
@@ -115,9 +115,9 @@
     },
     {
       "id": "claudinite-canon-curation",
-      "version": "61002.2",
+      "version": "61003.1",
       "channel": "canary",
-      "minEngineVersion": "61001.1.0",
+      "minEngineVersion": "61003.1.0",
       "requires": [],
       "relevanceDetector": null,
       "belongs": "curating a canon's packs/ shelf — promoting member lessons, sweeping members for unhomed technologies, authoring and policing its packs"
