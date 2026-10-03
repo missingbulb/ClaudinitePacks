@@ -33,7 +33,7 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 | claudinite-canon-curation | 61003.1 | 64 | 3 | 0 | 16 | 1 | 2 | 0 | 0 | 0 |
 | claudinite-dashboard | 61003.1 | 16 | 3 | 0 | 4 | 44 | 46 | 1 | 4 | 0 |
 | claudinite-fleet-sheepdog | 61003.3 | 30 | 2 | 0 | 4 | 0 | 1 | 0 | 0 | 0 |
-| claudinite-growth | 61003.1 | 159 | 8 | 0 | 16 | 10 | 13 | 0 | 0 | 0 |
+| claudinite-growth | 61003.2 | 159 | 8 | 0 | 16 | 10 | 13 | 0 | 0 | 0 |
 | claudinite-lifecycle | 61003.2 | 42 | 3 | 0 | 2 | 1 | 4 | 0 | 0 | 0 |
 | claudinite-tasks | 61003.1 | 23 | 3 | 0 | 5 | 26 | 14 | 0 | 0 | 0 |
 | cloudflare-site | 61003.1 | 16 | 1 | 2 | 3 | 4 | 7 | 0 | 0 | 0 |
