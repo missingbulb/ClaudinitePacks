@@ -28,7 +28,7 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 | app-store-release | 61003.1 | 4 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | aws-sam | 61002.1 | 25 | 2 | 1 | 0 | 0 | 3 | 0 | 0 | 0 |
 | basics | 61002.3 | 189 | 2 | 13 | 5 | 2 | 8 | 0 | 0 | 0 |
-| chrome-extension | 61002.1 | 46 | 2 | 4 | 3 | 4 | 7 | 9 | 0 | 8 |
+| chrome-extension | 61003.1 | 46 | 2 | 4 | 3 | 4 | 8 | 9 | 0 | 0 |
 | claude-code-web-users-support | 60928.1 | 13 | 1 | 4 | 0 | 8 | 7 | 0 | 1 | 8 |
 | claudinite-canon-curation | 61002.2 | 65 | 3 | 6 | 18 | 5 | 10 | 0 | 0 | 13 |
 | claudinite-dashboard | 61003.1 | 16 | 3 | 0 | 4 | 44 | 46 | 1 | 4 | 0 |
@@ -36,7 +36,7 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 | claudinite-growth | 61003.1 | 159 | 8 | 0 | 16 | 10 | 13 | 0 | 0 | 0 |
 | claudinite-lifecycle | 61003.2 | 42 | 3 | 0 | 2 | 1 | 6 | 0 | 0 | 2 |
 | claudinite-tasks | 61003.1 | 23 | 3 | 0 | 5 | 26 | 14 | 0 | 0 | 1 |
-| cloudflare-site | 61002.1 | 16 | 1 | 3 | 3 | 4 | 7 | 0 | 0 | 3 |
+| cloudflare-site | 61003.1 | 16 | 1 | 2 | 3 | 4 | 7 | 0 | 0 | 0 |
 | cloudflare-workers | 61003.1 | 16 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | executable-requirements | 61002.1 | 21 | 1 | 1 | 0 | 0 | 2 | 0 | 0 | 0 |
 | firebase | 61002.1 | 29 | 2 | 1 | 0 | 1 | 3 | 0 | 0 | 0 |
@@ -62,7 +62,7 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 | spec-driven-product | 61003.1 | 31 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | web-scraping | 61003.1 | 35 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | web-speech | 60928.1 | 33 | 3 | 6 | 0 | 1 | 5 | 0 | 0 | 10 |
-| **38 packs** | | 1195 | 72 | 60 | 69 | 116 | 168 | 11 | 5 | 72 |
+| **38 packs** | | 1195 | 72 | 59 | 69 | 116 | 169 | 11 | 5 | 61 |
 
 ## aws-sam
 
@@ -122,10 +122,10 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 
 ### coded-check (4)
 
-- `workRules/version-bumped.mjs` (imports `engine/`)
-- `worldRules/content-script-module-syntax.mjs` (imports `engine/`)
-- `worldRules/declarative-content-set-icon.mjs` (imports `engine/`)
-- `worldRules/release-workflows.mjs` (imports `engine/`)
+- `checks/content_script_module_syntax.go`
+- `checks/declarative_content_set_icon.go`
+- `checks/release_workflows.go`
+- `checks/version_bumped.go`
 
 ### task (3)
 
@@ -140,15 +140,16 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 - `stubs/actions/bump-extension-patch/bump.mjs`
 - `stubs/actions/read-release-config/read-config.mjs`
 
-### test (7)
+### test (8)
 
+- `checks/content_script_module_syntax_test.go`
+- `checks/declarative_content_set_icon_test.go`
+- `checks/helpers_test.go`
+- `checks/release_workflows_test.go`
+- `checks/version_bumped_test.go`
 - `test/bump-extension-version.test.mjs`
-- `test/content-script-module-syntax.test.mjs` (imports `engine/`)
-- `test/fingerprint.test.mjs` (imports `engine/`)
-- `test/pack.test.mjs` (imports `engine/`)
-- `test/release.test.mjs` (imports `engine/`)
+- `test/declared_test.go`
 - `test/tasks.test.mjs`
-- `test/version-bumped.test.mjs`
 
 ## claude-code-web-users-support
 
@@ -490,11 +491,10 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 
 ## cloudflare-site
 
-### coded-check (3)
+### coded-check (2)
 
-- `worldRules/beacon-token-is-not-committed.mjs` (imports `engine/`)
-- `worldRules/no-second-publisher.mjs` (imports `engine/`)
-- `worldRules/publishes-a-site-directory.mjs` (imports `engine/`)
+- `checks/checks.go`
+- `checks/wrangler.go`
 
 ### task (3)
 
@@ -511,13 +511,13 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 
 ### test (7)
 
+- `checks/checks_test.go`
+- `checks/helpers_test.go`
+- `test/declared_test.go`
 - `test/lib.test.mjs`
 - `test/tasks/site-release/preconditions.test.mjs`
 - `test/tasks/site-release/preflight.test.mjs`
 - `test/tasks/site-release/worker.test.mjs`
-- `test/worldRules/beacon-token-is-not-committed.test.mjs`
-- `test/worldRules/no-second-publisher.test.mjs`
-- `test/worldRules/publishes-a-site-directory.test.mjs`
 
 ## executable-requirements
 
