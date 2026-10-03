@@ -61,4 +61,4 @@
 - **Reason:** a `cn` member keeps its declaration in `.claudinite/settings.{json,yaml,toml}`, so a precondition naming only `.claudinite-settings.json` never saw it move; the build read the declaration through the Node engine, absent on a `cn` member, and published nothing while succeeding.
 - **Actor:** build lead, through ClaudiniteEngine chunk 16b (#65).
 - **Model:** Claude Opus 5.5, per the commit trailer.
-- **Mechanism:** `mount-moved || commits-under:.claudinite/settings.* || commits-under:.claudinite-settings.json`, the last term held until phase 9 retires the Node shape; the build stages the pack's `src/` alone and reads `.claudinite/flat/member.GENERATED.json`.
+- **Mechanism:** `mount-moved || commits-under:.claudinite/settings. || commits-under:.claudinite-settings.json` (`commits-under` is a literal path prefix, so the trailing dot covers every format and a `*` would match nothing), the last term held until phase 9 retires the Node shape; the build stages the pack's `src/` alone and reads `.claudinite/flat/member.GENERATED.json`, refusing a repo where it is missing or unreadable by naming it and `cn tasks flat --write`.

@@ -63,7 +63,11 @@ if (!await exists(join(pageSource, PAGE_AT))) {
 
 // --- settings, from the member's own declaration ---------------------------------
 
-const { cfg, legacy } = await deploymentConfig(repoRoot);
+const { cfg, legacy, memberFault } = await deploymentConfig(repoRoot);
+if (memberFault) {
+  process.stderr.write(`claudinite-dashboard: ${memberFault}\n`);
+  process.exit(1);
+}
 // A deployment still carrying the sign-in pair in its declaration builds correctly and
 // is told, once, where the pair lives now. Silence here would leave it on the old
 // footing indefinitely, since nothing converges a member's own settings file.

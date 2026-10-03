@@ -58,4 +58,4 @@
 - **Reason:** the deploy and the build share one settings reader, which read the Node settings file through the engine; a `cn` member has neither.
 - **Actor:** build lead, through ClaudiniteEngine chunk 16b (#65).
 - **Model:** Claude Opus 5.5, per the commit trailer.
-- **Mechanism:** `tooling/deployment-config.mjs` reads this pack's `config` out of `.claudinite/flat/member.GENERATED.json`; the repository variables still take precedence.
+- **Mechanism:** `tooling/deployment-config.mjs` reads this pack's `config` out of `.claudinite/flat/member.GENERATED.json`; the repository variables still take precedence. A member file that is missing or does not read is a `NeedsAction` naming the file and `cn tasks flat --write`, distinct from a member that declared no config.

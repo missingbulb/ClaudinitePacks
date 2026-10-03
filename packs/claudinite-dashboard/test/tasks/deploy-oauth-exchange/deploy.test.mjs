@@ -118,6 +118,17 @@ test('a missing clientId, an unresolvable origin and a missing secret are each a
 
 // One reader for the deploy and the site build, so the endpoint cannot be minted for a
 // different App than the button authorizes against.
+// The member file is where the deploy reads its origins and worker name from; one
+// never written is named with the command that writes it, even when the client id
+// arrives by variable.
+test('a member with no member file is a NeedsAction naming it and cn tasks flat --write', async (t) => {
+  const root = mkdtempSync(join(tmpdir(), 'claudinite-deploy-'));
+  t.after(() => removeTree(root));
+  const err = await deploy({ repoRoot: root, env: { ...ENV, CLAUDINITE_DASHBOARD_CLIENT_ID: 'Iv1.var' }, dryRun: true, log: () => {} }).catch((e) => e);
+  assert.ok(err instanceof NeedsAction, String(err));
+  assert.match(err.message, /member\.GENERATED\.json is missing.*cn tasks flat --write/);
+});
+
 test('the deploy takes its client id from the same repository variable the page does', async () => {
   const root = member({});
   const out = await deploy({

@@ -336,7 +336,8 @@ export async function readRepoContributions({ repo, token, gh }) {
   try {
     const meta = await gh.getRepo(repo, token);
     const sha = await gh.getHeadSha(repo, meta.default_branch, token);
-    const { member } = await readMember({ repo, sha, token, gh });
+    const { member, fault } = await readMember({ repo, sha, token, gh });
+    if (fault) return { repo, contributions: [], error: new Error(fault) };
     if (!member) return { repo, contributions: [] };
     const declaration = member.declaration;
     const tree = await gh.listTreeAtSha(repo, sha, token);

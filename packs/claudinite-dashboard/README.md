@@ -50,7 +50,9 @@ declaration carries one fails naming it, since a fleet is `owner` plus `exclude`
 freshness comes from the fleet-roster (below), not from a canon.
 
 The build reads the declaration out of `.claudinite/flat/member.GENERATED.json`, which
-the member's own `cn` writes from its settings in whichever format they are kept.
+the member's own `cn` writes from its settings in whichever format they are kept. A
+repo where that file is missing or does not read is refused, naming the file and
+`cn tasks flat --write`, the command that writes it.
 
 It has **two views**, and which one you land on is the URL:
 

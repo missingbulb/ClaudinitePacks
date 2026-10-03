@@ -2,7 +2,7 @@
 // asks it from three places (the repo view, the fleet view, the contributions panel),
 // and one shape out of it whichever engine the member runs:
 //
-//   { shape: 'cn' | 'node', settingsPath, declared: [{ id, config }], dormant,
+//   { shape: 'cn' | 'node', settingsPath, declared: [{ id, config }], dormant (null: unstated),
 //     engine: { version } | null, held: { <pack>: <version> }, declaration }
 //
 // A `cn` member states itself in `.claudinite/flat/member.GENERATED.json`, which its
@@ -82,7 +82,7 @@ export function memberFromFile(text) {
     shape: 'cn',
     settingsPath: typeof doc.settings?.path === 'string' ? doc.settings.path : null,
     declared,
-    dormant: doc.dormant === true,
+    dormant: typeof doc.dormant === 'boolean' ? doc.dormant : null,
     engine: typeof doc.engine?.version === 'string' ? { version: doc.engine.version } : null,
     held,
     declaration: { packs: declared.map(({ id, config }) => (config === undefined ? { id } : { id, config })) },

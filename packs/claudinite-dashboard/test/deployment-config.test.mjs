@@ -59,16 +59,39 @@ test('a repo with neither store configured is an ordinary token-box deployment',
   assert.deepEqual(legacy, []);
 });
 
-// The member file is the one statement of the declaration a build reads: a Node
-// settings file beside nothing is not consulted, so a member whose `cn` has not yet
-// written its flat files builds a token-box page rather than half-reading a format
-// that is retiring.
-test('only the member file is read; a Node settings file alone declares nothing', async (t) => {
+// The member file is the one statement of the declaration a build reads, and one
+// absent is a fault the caller names rather than an empty declaration: a member whose
+// `cn` has not written its flat files is told to run `cn tasks flat --write`, never to
+// set a mode its settings file may already state. A Node settings file beside it is
+// not consulted.
+test('a missing member file is a fault naming it and the command that writes it', async (t) => {
   const root = mkdtempSync(join(tmpdir(), 'claudinite-depcfg-'));
   t.after(() => removeTree(root));
   writeFileSync(join(root, '.claudinite-settings.json'),
     JSON.stringify({ packs: [{ id: 'claudinite-dashboard', config: { clientId: 'Iv1.node' } }] }));
-  const { cfg, legacy } = await deploymentConfig(root, {});
+  const { cfg, legacy, memberFault } = await deploymentConfig(root, {});
   assert.equal(cfg.clientId, undefined);
   assert.deepEqual(legacy, []);
+  assert.match(memberFault, /member\.GENERATED\.json is missing/);
+  assert.match(memberFault, /cn tasks flat --write/);
+});
+
+// A file that is there but does not read is a different fault from one never written.
+test('a malformed member file is a fault of its own, also naming the command', async (t) => {
+  const root = mkdtempSync(join(tmpdir(), 'claudinite-depcfg-'));
+  t.after(() => removeTree(root));
+  mkdirSync(join(root, '.claudinite', 'flat'), { recursive: true });
+  writeFileSync(join(root, '.claudinite', 'flat', 'member.GENERATED.json'), '{"packs":');
+  const { memberFault } = await deploymentConfig(root, {});
+  assert.match(memberFault, /member\.GENERATED\.json is not valid JSON/);
+  assert.match(memberFault, /cn tasks flat --write/);
+
+  writeFileSync(join(root, '.claudinite', 'flat', 'member.GENERATED.json'), '{"version":1}');
+  assert.match((await deploymentConfig(root, {})).memberFault, /carries no packs\.declared list.*cn tasks flat --write/);
+});
+
+test('a readable member file is no fault, whether or not it declares this pack', async (t) => {
+  const root = member({ mode: 'repo' });
+  t.after(() => removeTree(root));
+  assert.equal((await deploymentConfig(root, {})).memberFault, null);
 });

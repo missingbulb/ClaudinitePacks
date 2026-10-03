@@ -27,7 +27,7 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { SIGN_IN_VARS } from '../src/read/signin-vars.mjs';
-import { MEMBER_PATH } from '../src/read/member.mjs';
+import { MEMBER_PATH, memberFromFile } from '../src/read/member.mjs';
 
 export const PACK_ID = 'claudinite-dashboard';
 
@@ -36,37 +36,43 @@ export const PACK_ID = 'claudinite-dashboard';
 // that reads the filesystem.
 export { SIGN_IN_VARS } from '../src/read/signin-vars.mjs';
 
-// This pack's `config` as the member declares it, or `{}` where the member file is
-// absent, unreadable or names no config for it.
+const WRITE_IT = 'run `cn tasks flat --write` and commit what it writes';
+
+// This pack's `config` as the member declares it, `{}` where the member file names no
+// config for it, and `fault`: null, or why the member file cannot be read, naming the
+// file and the command that writes it. A file never written and one that does not read
+// are different faults, and neither is a member that simply declared nothing.
 export async function declaredConfig(repoRoot) {
-  let member = null;
+  let text;
   try {
-    member = JSON.parse(await readFile(join(repoRoot, MEMBER_PATH), 'utf8'));
-  } catch {
-    return {};
+    text = await readFile(join(repoRoot, MEMBER_PATH), 'utf8');
+  } catch (e) {
+    const why = e?.code === 'ENOENT' ? 'is missing' : `could not be read (${e?.code ?? e?.message ?? e})`;
+    return { config: {}, fault: `${MEMBER_PATH} ${why}: ${WRITE_IT}` };
   }
-  const declared = Array.isArray(member?.packs?.declared) ? member.packs.declared : [];
-  const entry = declared.find((p) => (typeof p === 'string' ? p : p?.id) === PACK_ID);
-  const config = typeof entry === 'object' ? entry?.config : null;
-  return config && typeof config === 'object' && !Array.isArray(config) ? { ...config } : {};
+  const member = memberFromFile(text);
+  if (member.fault) return { config: {}, fault: `${member.fault}: ${WRITE_IT}` };
+  const config = member.declared.find((p) => p.id === PACK_ID)?.config;
+  return { config: config ? { ...config } : {}, fault: null };
 }
 
 // The declaration with the sign-in pair resolved: the variable where it is set, the
 // declared value otherwise. `legacy` names the keys that fell back, for the caller to
 // report — a deployment still configuring these in git is working but on the old
-// footing, and silence would leave that indefinitely undiscovered.
+// footing, and silence would leave that indefinitely undiscovered. `memberFault` is
+// declaredConfig's, for the caller to refuse on.
 //
 // An empty variable is UNSET, not an override: a repository variable cleared in the
 // settings box still arrives as an empty string, and reading that as "no client id"
 // where the declaration has one would turn a cleared box into a silently disabled
 // button.
 export async function deploymentConfig(repoRoot, env = process.env) {
-  const cfg = await declaredConfig(repoRoot);
+  const { config: cfg, fault: memberFault } = await declaredConfig(repoRoot);
   const legacy = [];
   for (const [key, variable] of Object.entries(SIGN_IN_VARS)) {
     const fromVar = String(env[variable] ?? '').trim();
     if (fromVar) cfg[key] = fromVar;
     else if (cfg[key]) legacy.push(`${key} (set \`${variable}\` instead)`);
   }
-  return { cfg, legacy };
+  return { cfg, legacy, memberFault };
 }

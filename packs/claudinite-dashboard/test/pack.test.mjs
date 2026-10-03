@@ -231,15 +231,18 @@ test('a declaration that states no mode publishes nothing and says why', async (
 });
 
 // The member file is the declaration this build reads. A member whose cn has not
-// written it — or a Node member's settings file standing alone — states no mode here.
-test('a repo with no member file is refused for the same reason, whatever settings file it keeps', async (t) => {
+// written it — or a Node member's settings file standing alone — is told which file
+// is missing and the command that writes it, not that its mode is unset.
+test('a repo with no member file is refused naming that file, whatever settings file it keeps', async (t) => {
   const m = await member(REPO, { memberFile: false });
   cleanup(t, m);
   await writeFile(join(m.dir, '.claudinite-settings.json'), JSON.stringify(REPO));
 
   const res = await build(m, { GITHUB_REPOSITORY: 'o/x' }).catch((e) => e);
   assert.ok(res instanceof Error);
-  assert.match(String(res.stderr ?? res.message), /does not say which dashboard it is/);
+  assert.match(String(res.stderr ?? res.message), /member\.GENERATED\.json is missing.*cn tasks flat --write/);
+  assert.doesNotMatch(String(res.stderr ?? res.message), /does not say which dashboard it is/);
+  assert.equal(existsSync(join(m.dir, CONFIG_AT)), false, 'and nothing is published');
 });
 
 test('a mode that contradicts the config is refused too, in both directions', async (t) => {

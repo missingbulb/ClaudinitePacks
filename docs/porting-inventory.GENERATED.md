@@ -31,7 +31,7 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 | chrome-extension | 61002.1 | 46 | 2 | 4 | 3 | 4 | 7 | 9 | 0 | 8 |
 | claude-code-web-users-support | 60928.1 | 13 | 1 | 4 | 0 | 8 | 7 | 0 | 1 | 8 |
 | claudinite-canon-curation | 61002.2 | 65 | 3 | 6 | 18 | 5 | 10 | 0 | 0 | 13 |
-| claudinite-dashboard | 61003.1 | 16 | 3 | 0 | 4 | 44 | 45 | 1 | 4 | 0 |
+| claudinite-dashboard | 61003.1 | 16 | 3 | 0 | 4 | 44 | 46 | 1 | 4 | 0 |
 | claudinite-fleet-sheepdog | 61003.3 | 30 | 2 | 0 | 4 | 0 | 1 | 0 | 0 | 0 |
 | claudinite-growth | 61003.1 | 159 | 8 | 0 | 16 | 10 | 13 | 0 | 0 | 0 |
 | claudinite-lifecycle | 61003.2 | 42 | 3 | 0 | 2 | 1 | 6 | 0 | 0 | 2 |
@@ -62,7 +62,7 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 | spec-driven-product | 60928.1 | 31 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | web-scraping | 60928.1 | 35 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | web-speech | 60928.1 | 33 | 3 | 6 | 0 | 1 | 5 | 0 | 0 | 10 |
-| **38 packs** | | 1195 | 72 | 60 | 69 | 116 | 167 | 11 | 5 | 72 |
+| **38 packs** | | 1195 | 72 | 60 | 69 | 116 | 168 | 11 | 5 | 72 |
 
 ## aws-sam
 
@@ -293,7 +293,7 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 - `tooling/oauth-exchange.mjs`
 - `tooling/serve.mjs`
 
-### test (45)
+### test (46)
 
 - `test/activity.test.mjs`
 - `test/auth.test.mjs`
@@ -334,6 +334,7 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 - `test/task-calendar-drift.test.mjs`
 - `test/tasks-machine.test.mjs`
 - `test/tasks/deploy-oauth-exchange/deploy.test.mjs`
+- `test/tasks/publish-pages/preconditions.test.mjs`
 - `test/tasks/publish-pages/worker.test.mjs`
 - `test/ui.test.mjs`
 - `test/usage.test.mjs`

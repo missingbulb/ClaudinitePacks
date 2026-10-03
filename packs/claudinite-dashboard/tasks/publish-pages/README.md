@@ -41,8 +41,9 @@ force a republish by dispatching the scheduler workflow with `wake` naming
 ## What a run does
 
 1. Builds the site into a scratch directory from the declaration in
-   `.claudinite/flat/member.GENERATED.json`. A build that refuses (no `mode`, or a retired
-   key) fails here; a pack present without its page ends the run with nothing to publish.
+   `.claudinite/flat/member.GENERATED.json`. A build that refuses (a member file missing or
+   unreadable, which it names with `cn tasks flat --write`; no `mode`; or a retired key)
+   fails here; a pack present without its page ends the run with nothing to publish.
 2. Writes `deployed.json` at the site root — the sources' sha — and force-pushes the
    tree as a single root commit to `gh-pages`. No history is kept: the branch holds
    the last build and nothing else.

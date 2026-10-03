@@ -164,7 +164,8 @@ export async function probe(url, allowedOrigin, { fetchImpl = fetch, attempts = 
 }
 
 export async function deploy({ repoRoot, env = process.env, dryRun = false, log = console.log, fetchImpl = fetch } = {}) {
-  const { cfg } = await deploymentConfig(repoRoot, env);
+  const { cfg, memberFault } = await deploymentConfig(repoRoot, env);
+  if (memberFault) throw new NeedsAction(memberFault);
   const repoSlug = env.CLAUDINITE_REPO || env.GITHUB_REPOSITORY || '';
 
   // A repository variable, not a secret — see the header.

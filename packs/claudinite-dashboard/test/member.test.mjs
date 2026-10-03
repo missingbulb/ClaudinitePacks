@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { nodeStamp, memberFromNode, memberFromFile, readMember, MEMBER_PATH, NODE_SETTINGS_PATH } from '../src/read/member.mjs';
+import { isDormant } from '../src/read/dormancy.mjs';
 
 // --- the Node stamp, by the frozen engine's rules ------------------------------------
 
@@ -68,11 +69,16 @@ test('a cn member is read off its member file, its dormancy as stated', () => {
 });
 
 // The contrast: an engine-less member file (packs not yet loadable) reads as no engine,
-// and a dormant field that is not exactly `true` reads awake.
-test('an engine-less, not-quite-dormant member file reads as no engine and awake', () => {
+// and a dormant field the file does not state as a boolean reads unknown, never awake:
+// `null`, which the dormancy predicate still treats as not dormant.
+test('an engine-less member file reads as no engine, and an unstated dormancy as unknown', () => {
   const m = memberFromFile(JSON.stringify({ ...FILE, engine: null, dormant: 'true' }));
   assert.equal(m.engine, null);
-  assert.equal(m.dormant, false);
+  assert.equal(m.dormant, null);
+  const { dormant: _omit, ...withoutDormant } = FILE;
+  assert.equal(memberFromFile(JSON.stringify(withoutDormant)).dormant, null);
+  assert.equal(memberFromFile(JSON.stringify({ ...FILE, dormant: false })).dormant, false);
+  assert.equal(isDormant(memberFromFile(JSON.stringify(withoutDormant))), false);
 });
 
 test('a member file the page cannot read is a named fault', () => {
