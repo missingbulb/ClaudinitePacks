@@ -143,7 +143,7 @@
 - **Model:** Claude Opus 5.5 (1M context)
 
 ## 2026-10-03 · reworded · `cn provenance brief` and `apply` are named; the hand route is an older engine's
-- **Reason:** cn ports the brief (ClaudiniteEngine#68) beside apply, so a run writes the brief and
+- **Reason:** cn ports the brief (ClaudiniteEngine#73) beside apply, so a run writes the brief and
   applies it with the engine's own verbs; the history-and-append route stays for an engine that
   predates them.
 - **Actor:** build lead, ClaudiniteEngine#68.
