@@ -53,10 +53,11 @@ export function commitAll(src, message) {
   git(src, 'commit', '-q', '-m', message);
 }
 
-// A test root and a packs key it certifies, valid around now.
-export function testChain(dir, use = 'packs') {
+// A test root and a packs key it certifies, valid around now; `root` reuses another chain's root
+// (its `rootKey`), `from`/`to` move the window (milliseconds from now).
+export function testChain(dir, use = 'packs', { root: reuse, from = -86400e3, to = 30 * 86400e3 } = {}) {
   const raw = (k, type) => k.export({ format: 'der', type }).subarray(-32);
-  const root = generateKeyPairSync('ed25519');
+  const root = reuse ?? generateKeyPairSync('ed25519');
   const subject = generateKeyPairSync('ed25519');
   const rootPub = raw(root.publicKey, 'spki');
   const subjectPub = raw(subject.publicKey, 'spki');
@@ -64,14 +65,25 @@ export function testChain(dir, use = 'packs') {
   const iso = (ms) => new Date(Math.floor(ms / 1000) * 1000).toISOString().replace('.000Z', 'Z');
   const body = Buffer.from(JSON.stringify({
     v: 1, keyId: keyId(subjectPub), publicKey: subjectPub.toString('base64url'), use,
-    issuer: keyId(rootPub), notBefore: iso(now - 86400e3), notAfter: iso(now + 30 * 86400e3),
+    issuer: keyId(rootPub), notBefore: iso(now + from), notAfter: iso(now + to),
   }));
   const cert = { payload: body.toString('base64url'), signature: edSign(null, Buffer.concat([Buffer.from(DOMAINS.certificate), body]), root.privateKey).toString('base64url') };
   mkdirSync(join(dir, 'roots'), { recursive: true });
   writeFileSync(join(dir, 'roots/test-root.pub'), `${rootPub.toString('base64url')}\n`);
   writeFileSync(join(dir, 'packs.key'), `${raw(subject.privateKey, 'pkcs8').toString('base64url')}\n`);
   writeFileSync(join(dir, 'packs.cert.json'), JSON.stringify(cert, null, 2) + '\n');
-  return { roots: join(dir, 'roots'), key: join(dir, 'packs.key'), cert: join(dir, 'packs.cert.json'), certificate: cert, keyId: keyId(subjectPub) };
+  return { roots: join(dir, 'roots'), key: join(dir, 'packs.key'), cert: join(dir, 'packs.cert.json'), certificate: cert, keyId: keyId(subjectPub), rootKey: root };
+}
+
+// Commits edit(tree) on top of the remote's vendored branch, as a writer other than the release
+// programs would, and pushes it.
+export function editVendored(w, edit, message = 'edit') {
+  const clone = join(scratch(), 'edit');
+  git(w.root, 'clone', '-q', '--branch', 'vendored', w.remote, clone);
+  edit(clone);
+  git(clone, 'add', '-A');
+  git(clone, 'commit', '-q', '-m', message);
+  git(clone, 'push', '-q', 'origin', 'vendored');
 }
 
 export function run(args, env = {}) {

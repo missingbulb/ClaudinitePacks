@@ -9,6 +9,11 @@ test('keys/roots holds the key ceremony root and standby root, and nothing else'
   assert.deepEqual(roots.map((r) => keyId(r)).sort(), ['196c6acb9cc31774', 'ea85f35421f375fc']);
 });
 
+test('keys/retired-dev-roots holds the development root and standby that signed vendored before ClaudiniteEngine#5', () => {
+  const roots = readRoots(fileURLToPath(new URL('../../keys/retired-dev-roots/', import.meta.url)));
+  assert.deepEqual(roots.map((r) => keyId(r)).sort(), ['0d8e65ad8093ff2e', '4e445e16c1bb8d61']);
+});
+
 test('sign.mjs reaches no key file: it imports only node: modules and names no keys/ path', () => {
   const src = readFileSync(new URL('./sign.mjs', import.meta.url), 'utf8');
   const imports = [...src.matchAll(/^\s*import\b[^'"]*['"]([^'"]+)['"]/gm)].map((m) => m[1]);

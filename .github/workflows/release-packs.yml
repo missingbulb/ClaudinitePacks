@@ -73,7 +73,9 @@ jobs:
           printf '%s\n' "$PACKS_KEY" > "$RUNNER_TEMP/packs.key"
           printf '%s\n' "$PACKS_CERT" > "$RUNNER_TEMP/packs.cert.json"
           signing=(--key "$RUNNER_TEMP/packs.key" --cert "$RUNNER_TEMP/packs.cert.json")
-          node tools/release/release.mjs publish --archives "$RUNNER_TEMP/archives" --roots keys/roots --summary "$GITHUB_STEP_SUMMARY" "${signing[@]}"
+          # The development roots signed vendored before ClaudiniteEngine#5; publish re-signs what they
+          # alone vouch for, and nothing else trusts them.
+          node tools/release/release.mjs publish --archives "$RUNNER_TEMP/archives" --roots keys/roots --previous-roots keys/retired-dev-roots --summary "$GITHUB_STEP_SUMMARY" "${signing[@]}"
 
   upload:
     needs: publish

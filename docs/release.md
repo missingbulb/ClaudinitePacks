@@ -227,9 +227,20 @@ ClaudiniteEngine's key ceremony stores (its `cmd/cn-keys/README.md`); the run fa
 set. Every signature is checked against `keys/roots/`, the ceremony's root and standby root, which
 `tools/sign/roots.test.mjs` pins by key id. The tests sign with throwaway chains of their own.
 
-`publish` also re-signs, bytes unchanged, every index and the catalog on `vendored` that does not
-verify against `--roots`, in one commit after the release commits (`Re-sign … under the current
-roots`), so a new key or new roots reach the whole branch in one run.
+Neither `publish` nor `promote`/`revoke` puts the key on bytes nothing vouches for. Before carrying
+an index or the catalog forward, they check its own signature (`tools/release/trust.mjs`):
+
+- verifies against `--roots` now: kept as it is;
+- verifies against `--roots` only at an instant inside its certificate's window (an expired or
+  rotated certificate), or there against `--previous-roots`: `publish` re-signs it, bytes
+  unchanged, in one commit after the release commits (`Re-sign <n> indexes and the catalog under
+  the current roots`);
+- anything else, a missing signature or bytes the signature does not cover included: the run fails
+  before it pushes anything.
+
+`--previous-roots` names roots trusted for that re-signing and nothing else. `release-packs.yml`
+passes `keys/retired-dev-roots/`, the development roots that signed `vendored` before
+ClaudiniteEngine#5, until the branch has been re-signed under `keys/roots/`.
 
 The `packs` certificate lasts 90 days; renew it with key-ceremony's `rotate` mode, which the same
 README describes.

@@ -138,7 +138,7 @@ test('build runs the release, sign and vendor tests and the build; publish runs 
   assert.doesNotMatch(runs(build), /tools\/import|'tools\/\*\.test\.mjs'/);
   assert.match(runs(build), /node tools\/release\/release\.mjs build --out /);
   assert.doesNotMatch(runs(publish), /node --test|release\.mjs build|vendor\.mjs/);
-  assert.match(runs(publish), /node tools\/release\/release\.mjs publish --archives .* --roots keys\/roots --summary "\$GITHUB_STEP_SUMMARY"/);
+  assert.match(runs(publish), /node tools\/release\/release\.mjs publish --archives .* --roots keys\/roots --previous-roots keys\/retired-dev-roots --summary "\$GITHUB_STEP_SUMMARY"/);
   assert.match(runs(publish), /::error::the release environment must hold both CN_PACKS_KEY and CN_PACKS_CERT/);
   assert.doesNotMatch(runs(publish), /development key/);
   const checkout = publish.steps.find((s) => s.uses?.startsWith('actions/checkout@'));
@@ -257,4 +257,14 @@ test('promote-packs: the promote job writes in the release environment; upload f
   assert.match(runs(upload), /node tools\/release\/release\.mjs upload --r2 claudinite-packs --roots keys\/roots --remote origin --summary "\$GITHUB_STEP_SUMMARY"/);
   const secrets = upload.steps.flatMap((s) => Object.entries(s.env ?? {})).filter(([, v]) => String(v).includes('secrets.'));
   assert.deepEqual(secrets.map(([k]) => k).sort(), ['CLOUDFLARE_ACCOUNT_ID', 'CLOUDFLARE_API_TOKEN']);
+});
+
+test('only publish names keys/retired-dev-roots, and only as --previous-roots', () => {
+  for (const file of ['release-packs.yml', 'promote-packs.yml']) {
+    const runs = Object.values(workflow(file).jobs).flatMap((j) => j.steps.map((s) => s.run ?? '')).join('\n');
+    for (const line of runs.split('\n').filter((l) => l.includes('retired-dev-roots') && !l.trim().startsWith('#'))) {
+      assert.match(line, /release\.mjs publish .*--previous-roots keys\/retired-dev-roots /, `${file}: ${line}`);
+      assert.doesNotMatch(line, /--roots keys\/retired-dev-roots/, `${file}: ${line}`);
+    }
+  }
 });

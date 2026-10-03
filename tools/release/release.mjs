@@ -4,7 +4,7 @@
 //   node tools/release/release.mjs plan [--content] [--packs <dir>] [--repo <dir>]
 //                                  [--remote <name|url>]
 //   node tools/release/release.mjs build --out <dir> [--packs <dir>]
-//   node tools/release/release.mjs publish --archives <dir> --roots <dir>
+//   node tools/release/release.mjs publish --archives <dir> --roots <dir> [--previous-roots <dir>]
 //                                  [--key <file> --cert <file>] [--repo <dir>]
 //                                  [--remote <name|url>] [--summary <file>] [--now <instant>]
 //   node tools/release/release.mjs upload --r2 <bucket|dry-run> --roots <dir>
@@ -26,9 +26,11 @@
 // index and the re-rendered signed catalog (catalog.mjs) as one commit, refuses a published
 // version whose unpacked files differ (the gzip bytes alone may), re-verifies every index it
 // wrote and the catalog against --roots, and pushes once. --now moves only
-// that self-check's instant, for tests. Every index and the catalog already on the branch that
-// does not verify against --roots is re-signed, bytes unchanged, in one more commit, so a change of
-// key or roots converges in one run. The signing key is --key/--cert, else the files
+// that self-check's instant, for tests. Every index and the catalog already on the branch is
+// judged by trust.mjs before publish carries it forward: one whose signature verifies against
+// --roots only inside its certificate's window, or against --previous-roots (named for the one run
+// after a change of roots), is re-signed, bytes unchanged, in one more commit; one nothing vouches
+// for fails the run before any commit. The signing key is --key/--cert, else the files
 // CN_PACKS_KEY/CN_PACKS_CERT name; there is no other. `upload` makes the
 // R2 bucket hold every object on the branch and reads them back through the CDN (r2.mjs);
 // `dry-run` lists them. `evidence`, `promote` and `revoke` read canary evidence and rewrite index
@@ -45,6 +47,7 @@ import { CATALOG, CATALOG_SIG, CatalogError, signCatalog, validateDetector, veri
 import { addVersion, assertSerialAdvances, IndexError, newIndex, packFields, readIndex, serialize, signIndex, verifyIndex } from './index.mjs';
 import { choosePromotions, githubReader, readEvidence, rewriteBranch } from './promote.mjs';
 import { branchObjects, missingCredentials, R2Error, runUpload } from './r2.mjs';
+import { trustOf } from './trust.mjs';
 
 const REPO_ROOT = fileURLToPath(new URL('../../', import.meta.url));
 const BRANCH_README = `# vendored
@@ -229,40 +232,33 @@ function signingKey(opts) {
   return { key: parsePrivateKey(readFileSync(keyPath, 'utf8')), certificate: JSON.parse(readFileSync(certPath, 'utf8')) };
 }
 
-// Re-signs, bytes unchanged, every index and the catalog in the branch's tree that does not verify
-// against roots at now; returns the pack ids re-signed and whether the catalog was.
-function resignStale(branch, roots, now, key, certificate) {
+// Re-signs under roots, bytes unchanged, every index and the catalog in the branch's tree whose
+// signature is stale (trust.mjs), other than the packs and catalog this run just wrote, which the
+// self-check judges; returns the pack ids re-signed and whether the catalog was, or null. Throws on
+// anything untrusted before writing.
+function resignStale(branch, trust, key, certificate, written = []) {
   const { tree } = branch;
-  const verifies = (verify, bytes, sigFile) => {
-    try {
-      verify(bytes, JSON.parse(readFileSync(sigFile, 'utf8')), roots, now);
-      return true;
-    } catch {
-      return false;
-    }
-  };
   const ids = readdirSync(tree, { withFileTypes: true }).filter((d) => d.isDirectory() && existsSync(join(tree, d.name, 'index.json'))).map((d) => d.name).sort();
   const packs = [];
-  for (const id of ids) {
+  for (const id of ids.filter((i) => !written.some((p) => p.id === i))) {
     const bytes = readFileSync(join(tree, id, 'index.json'));
-    if (verifies(verifyIndex, bytes, join(tree, id, 'index.sig.json'))) continue;
-    writeFileSync(join(tree, id, 'index.sig.json'), JSON.stringify(signIndex(bytes, key, certificate), null, 2) + '\n');
-    packs.push({ id, serial: readIndex(bytes).serial });
+    if (trustOf(`${id}/index.json`, bytes, join(tree, id, 'index.sig.json'), verifyIndex, trust) === 'stale') packs.push({ id, serial: readIndex(bytes).serial, bytes });
   }
-  let catalogSerial = null;
-  if (existsSync(join(tree, CATALOG))) {
+  let catalog = null;
+  if (!written.length && existsSync(join(tree, CATALOG))) {
     const bytes = readFileSync(join(tree, CATALOG));
-    if (!verifies(verifyCatalog, bytes, join(tree, CATALOG_SIG))) {
-      writeFileSync(join(tree, CATALOG_SIG), JSON.stringify(signCatalog(bytes, key, certificate), null, 2) + '\n');
-      catalogSerial = JSON.parse(bytes.toString('utf8')).serial;
-    }
+    if (trustOf(CATALOG, bytes, join(tree, CATALOG_SIG), verifyCatalog, trust) === 'stale') catalog = bytes;
   }
-  if (!packs.length && catalogSerial === null) return null;
-  const names = [...packs.map((p) => p.id), ...(catalogSerial === null ? [] : ['the catalog'])];
+  if (!packs.length && !catalog) return null;
+  for (const p of packs) writeFileSync(join(tree, p.id, 'index.sig.json'), JSON.stringify(signIndex(p.bytes, key, certificate), null, 2) + '\n');
+  if (catalog) writeFileSync(join(tree, CATALOG_SIG), JSON.stringify(signCatalog(catalog, key, certificate), null, 2) + '\n');
+  const catalogSerial = catalog ? JSON.parse(catalog.toString('utf8')).serial : null;
+  const names = [...packs.map((p) => p.id), ...(catalog ? ['the catalog'] : [])];
   const list = names.length === 1 ? names[0] : `${names.slice(0, -1).join(', ')} and ${names.at(-1)}`;
-  branch.writeBranchCommit([...packs.map((p) => p.id), ...(catalogSerial === null ? [] : [CATALOG_SIG])], `Re-sign ${list} under the current roots`);
+  const counted = [...(packs.length ? [`${packs.length} ${packs.length === 1 ? 'index' : 'indexes'}`] : []), ...(catalog ? ['the catalog'] : [])].join(' and ');
+  branch.writeBranchCommit([...packs.map((p) => p.id), ...(catalog ? [CATALOG_SIG] : [])], `Re-sign ${counted} under the current roots\n\n${list}.`);
   console.log(`re-signed ${list} under the given roots`);
-  return { packs, catalogSerial };
+  return { packs: packs.map(({ id, serial }) => ({ id, serial })), catalogSerial };
 }
 
 function publish(opts) {
@@ -270,6 +266,9 @@ function publish(opts) {
   const archives = resolve(opts.archives);
   const manifest = checkSums(archives);
   const roots = readRoots(resolve(opts.roots));
+  const previousRoots = opts['previous-roots'] ? readRoots(resolve(opts['previous-roots'])) : null;
+  const now = selfCheckInstant(opts.now);
+  const trust = { roots, previousRoots, now };
   const { key, certificate } = signingKey(opts);
   console.log(`signing key id ${keyId(key.publicKey)}`);
   const repo = resolve(opts.repo ?? '.');
@@ -282,7 +281,9 @@ function publish(opts) {
     const conflicts = [];
     for (const p of manifest.packs) {
       const indexFile = join(tree, p.id, 'index.json');
-      const previous = existsSync(indexFile) ? readIndex(readFileSync(indexFile)) : null;
+      const previousBytes = existsSync(indexFile) ? readFileSync(indexFile) : null;
+      if (previousBytes) trustOf(`${p.id}/index.json`, previousBytes, join(tree, p.id, 'index.sig.json'), verifyIndex, trust);
+      const previous = previousBytes ? readIndex(previousBytes) : null;
       const entry = previous?.versions.find((e) => e.version === p.version);
       if (entry || existsSync(join(tree, p.id, p.version))) {
         if (!entry) conflicts.push(`${p.id} ${p.version} is on ${BRANCH} but not in its index`);
@@ -299,10 +300,9 @@ function publish(opts) {
       pending.push({ ...p, previous });
     }
     if (conflicts.length) throw new ReleaseError(`refusing to overwrite a published version:\n${conflicts.join('\n')}`);
-    const now = selfCheckInstant(opts.now);
     if (!pending.length) {
       console.log('nothing to publish');
-      const resigned = resignStale(branch, roots, now, key, certificate);
+      const resigned = resignStale(branch, trust, key, certificate);
       if (resigned) {
         branch.selfCheck(resigned.packs, roots, now, resigned.catalogSerial);
         branch.push();
@@ -333,9 +333,8 @@ function publish(opts) {
       console.log(`Release ${p.id} ${p.version}`);
     }
 
-    const resigned = resignStale(branch, roots, now, key, certificate);
-    branch.selfCheck([...written.filter((p) => !resigned?.packs.some((r) => r.id === p.id)), ...(resigned?.packs ?? [])], roots, now,
-      resigned?.catalogSerial ?? written.at(-1).catalogSerial);
+    const resigned = resignStale(branch, trust, key, certificate, written);
+    branch.selfCheck([...written, ...(resigned?.packs ?? [])], roots, now, written.at(-1).catalogSerial);
     branch.push();
     console.log(`pushed ${written.length} release commit(s) to ${BRANCH}`);
 
@@ -469,7 +468,7 @@ async function main([cmd, ...args]) {
   if (cmd === 'promote') return rewrite('promote', parseArgs(args, ['evidence', 'canaries', 'pack', 'version', 'by', 'roots', 'key', 'cert', 'repo', 'remote', 'summary']));
   if (cmd === 'revoke') return rewrite('revoke', parseArgs(args, ['pack', 'version', 'by', 'roots', 'key', 'cert', 'repo', 'remote', 'summary']));
   if (cmd === 'upload') return upload(parseArgs(args, ['r2', 'roots', 'repo', 'remote', 'summary']));
-  if (cmd === 'publish') return publish(parseArgs(args, ['archives', 'roots', 'key', 'cert', 'repo', 'remote', 'summary', 'now']));
+  if (cmd === 'publish') return publish(parseArgs(args, ['archives', 'roots', 'previous-roots', 'key', 'cert', 'repo', 'remote', 'summary', 'now']));
   console.error('usage: release.mjs plan | build --out <dir> | publish --archives <dir> --roots <dir> | upload --r2 <bucket|dry-run> --roots <dir> | evidence --out <file> | promote | revoke (see the header)');
   return 2;
 }
