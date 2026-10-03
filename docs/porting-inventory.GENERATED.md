@@ -9,7 +9,7 @@ coded checks become Go; tasks stay Node against `@claudinite/sdk`; tests are rew
 the pinned `cn`, or dropped when they check only file shapes or doc text. A file that imports
 Claudinite's `engine/` by relative path does not run here until its slice replaces the import.
 
-`minEngineVersion` across the shelf: `60928.1` (3 packs), `61001.1.0` (35 packs).
+`minEngineVersion` across the shelf: `60928.1` (2 packs), `61001.1.0` (36 packs).
 A two-part one is a Claudinite Node engine version, which the Engine's `shared/version` (three
 parts, `<day>.<n>.0`) does not read; a ported pack's first version sets `minEngineVersion` to the
 `cn` version it was tested on.
@@ -51,7 +51,7 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 | ios | 61003.1 | 7 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | jwt | 61003.1 | 20 | 3 | 0 | 0 | 0 | 6 | 0 | 0 | 6 |
 | leaflet | 61003.1 | 12 | 1 | 2 | 0 | 0 | 3 | 0 | 0 | 0 |
-| macos | 60928.1 | 46 | 2 | 3 | 0 | 0 | 5 | 0 | 0 | 6 |
+| macos | 61003.1 | 46 | 2 | 3 | 0 | 0 | 3 | 0 | 0 | 0 |
 | node | 61002.1 | 20 | 2 | 2 | 0 | 0 | 3 | 0 | 0 | 0 |
 | numpy-image-processing | 61003.1 | 14 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | play-store-release | 61003.1 | 4 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -62,7 +62,7 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 | spec-driven-product | 61003.1 | 31 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | web-scraping | 61003.1 | 35 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | web-speech | 60928.1 | 33 | 3 | 6 | 0 | 1 | 5 | 0 | 0 | 10 |
-| **38 packs** | | 1195 | 72 | 58 | 69 | 115 | 175 | 11 | 5 | 49 |
+| **38 packs** | | 1195 | 72 | 58 | 69 | 115 | 173 | 11 | 5 | 43 |
 
 ## aws-sam
 
@@ -670,17 +670,15 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 
 ### coded-check (3)
 
-- `worldRules/minimum-system-version-agrees.mjs` (imports `engine/`)
-- `worldRules/signal-teardown-routing.mjs` (imports `engine/`)
-- `worldRules/swift-toolchain-gate.mjs` (imports `engine/`)
+- `checks/minimum_system_version_agrees.go`
+- `checks/signal_teardown_routing.go`
+- `checks/swift_toolchain_gate.go`
 
-### test (5)
+### test (3)
 
-- `test/minimum-system-version-agrees.test.mjs`
-- `test/notarize-then-staple.test.mjs`
-- `test/signal-teardown-routing.test.mjs` (imports `engine/`)
-- `test/sudden-termination-vs-teardown.test.mjs` (imports `engine/`)
-- `test/swift-toolchain-gate.test.mjs` (imports `engine/`)
+- `checks/checks_test.go`
+- `checks/helpers_test.go`
+- `test/declared_test.go`
 
 ## node
 
