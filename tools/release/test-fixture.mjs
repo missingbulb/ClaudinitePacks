@@ -2,7 +2,7 @@
 // throwaway signing chain, and the release program run as a subprocess.
 import { execFileSync, spawnSync } from 'node:child_process';
 import { createHash, generateKeyPairSync, sign as edSign } from 'node:crypto';
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -10,14 +10,6 @@ import { DOMAINS, keyId } from '../sign/sign.mjs';
 
 export const RELEASE = fileURLToPath(new URL('./release.mjs', import.meta.url));
 export const REPO_ROOT = fileURLToPath(new URL('../../', import.meta.url));
-export const DEV_ROOTS = join(REPO_ROOT, 'keys/dev/roots');
-// The development certificate's notBefore plus one day: an instant inside its window that does
-// not move with the clock, so the dev-key case stays green past the certificate's expiry.
-export function devCertInstant() {
-  const cert = JSON.parse(readFileSync(join(REPO_ROOT, 'keys/dev/packs.cert.json'), 'utf8'));
-  const body = JSON.parse(Buffer.from(cert.payload, 'base64url').toString('utf8'));
-  return new Date(Date.parse(body.notBefore) + 86400e3).toISOString();
-}
 export const scratch = () => mkdtempSync(join(tmpdir(), 'acme-release-'));
 
 export const GIT_ENV = {

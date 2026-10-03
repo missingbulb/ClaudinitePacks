@@ -117,7 +117,7 @@ test('the build job reads only and holds no environment; publish holds release a
 });
 
 test('both jobs take Node from .node-version, and every action is pinned to a commit sha', () => {
-  for (const file of ['release-packs.yml', 'verify-import.yml', 'dev-key-expiry.yml', 'promote-packs.yml']) {
+  for (const file of ['release-packs.yml', 'verify-import.yml', 'promote-packs.yml']) {
     const w = workflow(file);
     for (const [name, job] of Object.entries(w.jobs)) {
       for (const step of job.steps.filter((s) => s.uses)) {
@@ -138,8 +138,9 @@ test('build runs the release, sign and vendor tests and the build; publish runs 
   assert.doesNotMatch(runs(build), /tools\/import|'tools\/\*\.test\.mjs'/);
   assert.match(runs(build), /node tools\/release\/release\.mjs build --out /);
   assert.doesNotMatch(runs(publish), /node --test|release\.mjs build|vendor\.mjs/);
-  assert.match(runs(publish), /node tools\/release\/release\.mjs publish --archives .* --roots keys\/dev\/roots --summary "\$GITHUB_STEP_SUMMARY"/);
-  assert.match(runs(publish), /::warning::signed with the development key/);
+  assert.match(runs(publish), /node tools\/release\/release\.mjs publish --archives .* --roots keys\/roots --summary "\$GITHUB_STEP_SUMMARY"/);
+  assert.match(runs(publish), /::error::the release environment must hold both CN_PACKS_KEY and CN_PACKS_CERT/);
+  assert.doesNotMatch(runs(publish), /development key/);
   const checkout = publish.steps.find((s) => s.uses?.startsWith('actions/checkout@'));
   assert.equal(checkout.with['fetch-depth'], 0);
   assert.equal(checkout.with['persist-credentials'], true);
@@ -208,16 +209,6 @@ test('release-plan runs on every pull request and on dispatch, reads only, holds
   assert.match(runs, /^node tools\/directory\/render\.mjs --check --remote origin$/m);
 });
 
-test('dev-key-expiry runs weekly off the hour and on dispatch, reads only, and runs the expiry script', () => {
-  const w = workflow('dev-key-expiry.yml');
-  assert.deepEqual(Object.keys(w.on).sort(), ['schedule', 'workflow_dispatch']);
-  const [minute] = w.on.schedule[0].cron.split(' ');
-  assert.notEqual(minute, '0', 'GitHub drops on-the-hour crons under load');
-  assert.deepEqual(w.permissions, { contents: 'read' });
-  const runs = Object.values(w.jobs).flatMap((j) => j.steps.map((s) => s.run ?? '')).join('\n');
-  assert.match(runs, /^node tools\/release\/dev-key-expiry\.mjs$/m);
-});
-
 test('upload runs after publish in the release environment, reads only, and gets the two Cloudflare secrets and nothing else', () => {
   const { publish, upload } = workflow('release-packs.yml').jobs;
   assert.equal(upload.needs, 'publish');
@@ -230,7 +221,7 @@ test('upload runs after publish in the release environment, reads only, and gets
   assert.deepEqual(secrets.map(([k]) => k).sort(), ['CLOUDFLARE_ACCOUNT_ID', 'CLOUDFLARE_API_TOKEN']);
   for (const [k, v] of secrets) assert.equal(v, `\${{ secrets.${k} }}`);
   const runs = (job) => job.steps.map((s) => s.run ?? '').join('\n');
-  assert.match(runs(upload), /node tools\/release\/release\.mjs upload --r2 claudinite-packs --roots keys\/dev\/roots --remote origin --summary "\$GITHUB_STEP_SUMMARY"/);
+  assert.match(runs(upload), /node tools\/release\/release\.mjs upload --r2 claudinite-packs --roots keys\/roots --remote origin --summary "\$GITHUB_STEP_SUMMARY"/);
   assert.doesNotMatch(runs(upload), /node --test|release\.mjs (build|publish)|vendor\.mjs/);
   assert.doesNotMatch(runs(publish), /release\.mjs upload/);
 });
@@ -263,7 +254,7 @@ test('promote-packs: the promote job writes in the release environment; upload f
   assert.doesNotMatch(r, /node --test|release\.mjs (build|publish)|vendor\.mjs/);
   const env = Object.assign({}, ...promote.steps.map((s) => s.env ?? {}));
   assert.equal(env.ACTOR, '${{ github.actor }}');
-  assert.match(runs(upload), /node tools\/release\/release\.mjs upload --r2 claudinite-packs --roots keys\/dev\/roots --remote origin --summary "\$GITHUB_STEP_SUMMARY"/);
+  assert.match(runs(upload), /node tools\/release\/release\.mjs upload --r2 claudinite-packs --roots keys\/roots --remote origin --summary "\$GITHUB_STEP_SUMMARY"/);
   const secrets = upload.steps.flatMap((s) => Object.entries(s.env ?? {})).filter(([, v]) => String(v).includes('secrets.'));
   assert.deepEqual(secrets.map(([k]) => k).sort(), ['CLOUDFLARE_ACCOUNT_ID', 'CLOUDFLARE_API_TOKEN']);
 });

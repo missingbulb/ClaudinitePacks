@@ -8,7 +8,7 @@ import { readRoots } from '../sign/sign.mjs';
 import { verifyCatalog } from './catalog.mjs';
 import { readIndex, verifyIndex } from './index.mjs';
 import {
-  build, commitAll, DEV_ROOTS, devCertInstant, git, packJson, publish, put, REPO_ROOT, run, scratch, sha256, show, testChain, vendoredLog, world,
+  build, commitAll, git, packJson, publish, put, REPO_ROOT, run, scratch, sha256, show, testChain, vendoredLog, world,
 } from './test-fixture.mjs';
 
 test('first run publishes every pack: unpacked set, archive, signed index, one commit each', () => {
@@ -136,13 +136,37 @@ test('a pack.json without minEngineVersion fails the build naming the pack', () 
   assert.equal(spawnSync('git', ['rev-parse', '--verify', '-q', 'vendored'], { cwd: w.remote }).status, 1);
 });
 
-test('without CN_PACKS_KEY and CN_PACKS_CERT it signs with the development key and says so', () => {
+test('without CN_PACKS_KEY and CN_PACKS_CERT it refuses and writes nothing', () => {
   const w = world();
-  const p = publish(w, build(w).archives, { roots: DEV_ROOTS }, ['--now', devCertInstant()]);
+  const p = publish(w, build(w).archives, { roots: testChain(scratch()).roots });
+  assert.notEqual(p.status, 0);
+  assert.match(p.out, /CN_PACKS_KEY and CN_PACKS_CERT/);
+  assert.equal(spawnSync('git', ['rev-parse', '--verify', '-q', 'vendored'], { cwd: w.remote }).status, 1);
+});
+
+test('publish re-signs every index and the catalog that no longer verify against --roots, leaving their bytes alone', () => {
+  const w = world();
+  const old = testChain(scratch());
+  const b = build(w);
+  assert.equal(publish(w, b.archives, old).status, 0);
+  const before = Object.fromEntries(['acme-pack/index.json', 'acme-pack-two/index.json', 'catalog.json'].map((f) => [f, show(w, f)]));
+  const fresh = testChain(scratch());
+  const p = publish(w, b.archives, fresh);
   assert.equal(p.status, 0, p.out);
-  assert.match(p.out, /^signing with the development key keys\/dev\/packs\.key \(trusted by no member\)$/m);
-  const devCert = JSON.parse(readFileSync(join(REPO_ROOT, 'keys/dev/packs.cert.json'), 'utf8'));
-  assert.deepEqual(JSON.parse(show(w, 'acme-pack/index.sig.json')).certificate, devCert);
+  assert.match(p.out, /^re-signed acme-pack, acme-pack-two and the catalog under the given roots$/m);
+  assert.equal(vendoredLog(w)[0], 'Re-sign acme-pack, acme-pack-two and the catalog under the current roots');
+  const roots = readRoots(fresh.roots);
+  for (const id of ['acme-pack', 'acme-pack-two']) {
+    assert.deepEqual(show(w, `${id}/index.json`), before[`${id}/index.json`]);
+    assert.equal(verifyIndex(show(w, `${id}/index.json`), JSON.parse(show(w, `${id}/index.sig.json`)), roots, new Date()).keyId, fresh.keyId);
+  }
+  assert.deepEqual(show(w, 'catalog.json'), before['catalog.json']);
+  assert.equal(verifyCatalog(show(w, 'catalog.json'), JSON.parse(show(w, 'catalog.sig.json')), roots, new Date()).keyId, fresh.keyId);
+  const again = publish(w, b.archives, fresh);
+  assert.equal(again.status, 0, again.out);
+  assert.match(again.out, /^nothing to publish$/m);
+  assert.doesNotMatch(again.out, /re-signed/);
+  assert.equal(vendoredLog(w).length, 3);
 });
 
 test('--now moves only the self-check instant; publishedAt stays the real clock', () => {
@@ -221,7 +245,7 @@ test('upload to a bucket without CLOUDFLARE_API_TOKEN or CLOUDFLARE_ACCOUNT_ID f
 
 test('upload with nothing on vendored says so and succeeds', () => {
   const w = world();
-  const u = run(['upload', '--r2', 'dry-run', '--repo', w.src, '--remote', w.remote, '--roots', DEV_ROOTS]);
+  const u = run(['upload', '--r2', 'dry-run', '--repo', w.src, '--remote', w.remote, '--roots', testChain(scratch()).roots]);
   assert.equal(u.status, 0, u.out);
   assert.match(u.out, /nothing on vendored to upload/);
 });
