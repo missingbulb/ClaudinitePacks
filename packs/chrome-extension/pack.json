@@ -1,5 +1,5 @@
 {
-  "version": "61002.1",
+  "version": "61003.1",
   "minEngineVersion": "61001.1.0",
   "ruleRoutingGuidance": {
     "belongs": "writing and shipping a Chrome extension: MV3 service-worker, permission, content-script and auth gotchas, plus Web Store release, versioning and privacy",

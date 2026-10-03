@@ -46,3 +46,11 @@
 - **Actor:** @missingbulb (owner), asking for pack.json manifests.
 - **Mechanism:** pack.json, which the loader prefers over pack.mjs; a canon pack now needs engine
   60928.1, the first to read it.
+
+## 2026-10-03 · scope-changed · the coded checks run on cn
+- **Reason:** the six checks are rewritten in Go against the SDK, the call-site readings lib.mjs
+  held beside them, so a cn member runs them, and the declared checks' tests become fixture cases
+  run through cn; the version also moves the pack off the two-part Node floor.
+- **Actor:** build lead, ClaudinitePacks#30 T2.
+- **Mechanism:** `checks/*.go` against the SDK, `test/` through `cn check --pack web-speech`;
+  `minEngineVersion` `61001.1.0`, the floor the SDK names. web-speech 61003.1.

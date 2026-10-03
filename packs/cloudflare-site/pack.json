@@ -1,5 +1,5 @@
 {
-  "version": "61002.1",
+  "version": "61003.1",
   "minEngineVersion": "61001.1.0",
   "ruleRoutingGuidance": {
     "belongs": "serving a static site from Cloudflare: the published tree, custom domains, the nightly release that uploads it",

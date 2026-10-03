@@ -53,7 +53,7 @@
 - **Mechanism:** pack.json, which the loader prefers over pack.mjs; a canon pack now needs engine
   60928.1, the first to read it.
 
-## 2026-10-02 · ported · task declarations and the pack-version workers leave the Node runner
+## 2026-10-02 · moved · task declarations and the pack-version workers leave the Node runner
 - **Reason:** the `$schema` key pointed at `claudinite-tasks/task.schema.json`, which left with the Node runner; the engine validates a declaration itself (`cn tasks contract`) and publishes no schema file, so the key is dropped as the hello pack's tasks do. The pack-version workers pushed and opened pull requests through the runner's delivery modules, and two declared checks judged its `src/` tree.
 - **Actor:** build lead, completing ClaudinitePacks #20 so the runner's removal lands with every importer ported.
 - **Mechanism:** the workers push through the SDK's `git` and open through `github.openPr` (granted in pack.json), pack-version-history carrying its own delivery copy; the two `src/`-scoped checks are retired. canon-curation 61002.1.
@@ -62,3 +62,12 @@
 - **Reason:** `60928.1` is a Node engine version, which `cn` reads only as the legacy two-part form any engine satisfies (ClaudiniteEngine#18); a new version must name the `cn` release it needs, and release-packs refused claudinite-canon-curation 61002.1 for carrying it. `61001.1.0` is the engine floor, below which no `cn` is released, so it holds back no engine the old value admitted.
 - **Actor:** build lead, repairing release-packs on main after ClaudinitePacks #20.
 - **Mechanism:** the manifest's `minEngineVersion`, which the pack update enforces; `release.mjs plan` now refuses a two-part value on a version to publish before the merge. claudinite-canon-curation 61002.1.
+
+## 2026-10-03 · scope-changed · the pack's code moves into the engine
+- **Reason:** cn runs no pack JavaScript checks or helpers (ClaudiniteEngine#68 Q1): the four checks
+  are engine built-ins, the promote write-surface gate is `cn growth promote-scope`, the history
+  walk is `cn pack history`, and pack-version-bump and pack-discovery-entry-await retire.
+- **Actor:** Claude, ClaudinitePacks#30 T3.
+- **Model:** Claude Opus 5.5
+- **Mechanism:** `"engine": true` in pack.json; the pack carries prose, tasks, skills and declared
+  checks.

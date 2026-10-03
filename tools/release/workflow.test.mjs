@@ -205,6 +205,7 @@ test('release-plan runs on every pull request and on dispatch, reads only, holds
   assert.doesNotMatch(JSON.stringify(job), /secrets\./);
   const runs = job.steps.map((s) => s.run ?? '').join('\n');
   assert.match(runs, /^node tools\/release\/release\.mjs plan --content --remote origin$/m);
+  assert.match(runs, /^node tools\/directory\/render\.mjs --check --remote origin$/m);
 });
 
 test('dev-key-expiry runs weekly off the hour and on dispatch, reads only, and runs the expiry script', () => {

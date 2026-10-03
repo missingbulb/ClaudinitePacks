@@ -15,3 +15,10 @@
 - **Reason:** pack.json is the preferred manifest; where the text told a reader to list a module in
   pack.mjs, rules are found in worldRules/ and workRules/ and nothing is listed.
 - **Actor:** @missingbulb (owner), asking for pack.json manifests.
+
+## 2026-10-03 · policy-changed · a converted rule lands as a declared or Go check
+- **Reason:** the shelf runs on cn, which runs declared checks and Go checks on the check SDK and no
+  `worldRules/` module.
+- **Actor:** Claude, ClaudinitePacks#30 T3.
+- **Model:** Claude Opus 5.5
+- **Mechanism:** the task's instructions.

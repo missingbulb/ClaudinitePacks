@@ -1,6 +1,6 @@
 {
-  "version": "60928.1",
-  "minEngineVersion": "60928.1",
+  "version": "61003.1",
+  "minEngineVersion": "61001.1.0",
   "ruleRoutingGuidance": {
     "belongs": "acquiring data from a site you do not own: finding its data surface, fetching defensively, caching raw payloads",
     "excludes": "Actions triggers and secrets wiring — that is git-github; publishing a site you own — that is public-website"

@@ -3,15 +3,13 @@ import assert from 'node:assert/strict';
 import {
   hookMarks, readMark, countCorpusUse, countMoments, countToolCalls, countCheckTiming, parseTiming, LOAD_CAUSES,
 } from '../../../tasks/usage-fold/corpus-use.mjs';
-// Namespace imports for the same reason the pack's own modules use them: these
-// engine exports are newer than this pack's delivery of the counters that read
-// them, and the two lanes ship apart. The probe is what the fold itself does, and
-// asserting it here is asserting the real shape rather than a convenience.
-import * as timing from '../../../../../engine/checks/check-timing.mjs';
-import * as scoped from '../../../../../engine/pack_loader/path-scoped-skills.mjs';
-
-const { renderTiming } = timing;
-const { hitsCall, hitsPrompt, hitsPath, globToRegExp } = scoped;
+// The fold takes its trigger predicates and the timing line from the engine
+// that runs it; these stand-ins carry only the shapes the counters read.
+const renderTiming = (scope, totalMs, rules) =>
+  [`claudinite-check-timing v1 ${scope} total=${totalMs}`, ...rules.map(({ id, ms }) => `${id}=${ms}`)].join(' ');
+const hitsCall = (d, c) => d.kind === 'toolCall' && d.tool === c.name && d.pattern.test(String(c.input?.[d.field] ?? ''));
+const hitsPrompt = (d, text) => d.kind === 'prompt' && d.pattern.test(text ?? '');
+const hitsPath = (d, path) => d.re.test(path);
 
 // The entry shapes are the real ones — a hook's stderr reaches the transcript as a
 // meta user turn, and every load is a tool_use block.
@@ -127,7 +125,7 @@ test('moments count every occasion a declaration named, loaded or not', () => {
   const declarations = [
     { skill: 'acme-skill', kind: 'toolCall', tool: 'Bash', field: 'command', pattern: /git commit/ },
     { skill: 'acme-skill-e', kind: 'prompt', pattern: /\/acme-skill-e/ },
-    { skill: 'acme-skill-i', re: globToRegExp('**/*.test.mjs') },
+    { skill: 'acme-skill-i', re: /^(?:.*\/)?[^/]*\.test\.mjs$/ },
   ];
   const hits = { call: hitsCall, prompt: hitsPrompt, path: hitsPath };
   const entries = [
@@ -151,7 +149,7 @@ test('moments record NO key where the engine could not resolve the declarations'
   assert.deepEqual(countMoments(entries, declarations, { call: hitsCall }), {}, 'a partial set is no set');
 });
 
-test('the timing reader reads what the engine\'s renderer writes — the two lanes ship apart', () => {
+test('the timing reader reads the v1 timing line', () => {
   const line = renderTiming('work', 1175, [{ id: 'acme-check-b', ms: 928 }, { id: 'acme-check-c', ms: 132 }]);
   assert.deepEqual(parseTiming(line), {
     scope: 'work',

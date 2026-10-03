@@ -85,3 +85,41 @@ func TestLifecycleDeclaredReadsEverySettingsFormat(t *testing.T) {
 	}
 	fixture.Run(t, "local/acme-pack", cases)
 }
+
+// claudinite-isolation fires on a consumer file reaching into the vendored
+// mount and stays open for the wiring files and the member's own packs.
+func TestClaudiniteIsolation(t *testing.T) {
+	const id = "finding claudinite-isolation src/tool.mjs"
+	quiet := map[string]string{"flat-declarations-current": "off"}
+	violating := map[string]string{
+		"src/tool.mjs": "const p = \".claudinite/shared/engine/checks/check_the_world.mjs\";\n",
+	}
+	shared := map[string]string{
+		".claudinite/shared/engine/checks/check_the_world.mjs": "engine\n",
+		".claudinite/shared/engine/hooks/stop-command.mjs":     "engine\n",
+	}
+	wiring := map[string]string{
+		".claude/settings.json": "{ \"hooks\": { \"Stop\": [ { \"hooks\": [ { \"type\": \"command\", \"command\": \"node $CLAUDE_PROJECT_DIR/.claudinite/shared/engine/hooks/stop-command.mjs\" } ] } ] } }\n",
+		".gitignore":            "/.claudinite/*\n!/.claudinite/shared/\n",
+		".github/workflows/claudinite-checks-ci.yml": "run: node .claudinite/shared/engine/checks/check_the_world.mjs\n",
+		".claudinite/local/packs/mine/check.mjs":     "import { run } from \"../../shared/engine/check_the_world.mjs\";\n",
+		"CLAUDE.md":                                  "@.claudinite/flat/claudinite-rules.GENERATED.md\n",
+	}
+	merge := func(ms ...map[string]string) map[string]string {
+		out := map[string]string{}
+		for _, m := range ms {
+			for k, v := range m {
+				out[k] = v
+			}
+		}
+		return out
+	}
+	fixture.Run(t, "claudinite-lifecycle", []fixture.Case{
+		{Name: "a consumer file referencing the mount", Rules: quiet, Member: merge(violating, shared), Expect: []string{id + ":1"}},
+		{Name: "the wiring files and local packs stay open", Rules: quiet, Member: merge(wiring, shared)},
+		{Name: "an import reaching the mount", Rules: quiet, Member: map[string]string{
+			"src/tool.mjs": "import x from \"../.claudinite/shared/engine/checks/helpers/findings.mjs\";\n",
+			".claudinite/shared/engine/checks/helpers/findings.mjs": "engine\n",
+		}, Expect: []string{id + ":1"}},
+	})
+}

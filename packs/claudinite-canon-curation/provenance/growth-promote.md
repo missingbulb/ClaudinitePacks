@@ -58,3 +58,10 @@
 - **Reason:** pack.json is the preferred manifest; where the text told a reader to list a module in
   pack.mjs, rules are found in worldRules/ and workRules/ and nothing is listed.
 - **Actor:** @missingbulb (owner), asking for pack.json manifests.
+
+## 2026-10-03 · policy-changed · a promote raises the version of each pack it changes
+- **Reason:** pack-version-bump is retired; the release publishes a version once, so changed content
+  under a published number fails the shelf's CI.
+- **Actor:** Claude, ClaudinitePacks#30 T3.
+- **Model:** Claude Opus 5.5
+- **Mechanism:** the task's instructions.

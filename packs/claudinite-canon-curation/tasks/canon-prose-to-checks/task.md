@@ -8,7 +8,7 @@ it on every turn, whether or not it ever applies. Converting one to a check move
 moment the rule is actually broken.
 
 **The corpus is the roots this repo curates** — the `packs/` shelf, plus any root this pack's
-`write_paths` config names ([canon-config.mjs](../../canon-config.mjs) resolves them). Work the
+`write_paths` config names (`cn growth promote-scope` resolves them). Work the
 *backlog*: prose a promotion run just wrote is that run's own upgrade pass, not this sweep's.
 
 ## The method lives in the skill
@@ -23,8 +23,8 @@ don't re-derive it here. This worker frames the unattended run around it and nam
 1. **Pick convertible prose** under the corpus above — rules that govern **how we work** (not what a
    product does — see the skill's first gate), that are *always testable*, and that no existing check
    already covers. Converting one or two solid rules well beats churning many shakily.
-2. **Convert per the skill** - author the rule module in its owning pack's `worldRules/` or
-   `workRules/`, and add the fixture test that fires on a violating input and stays quiet on a clean
+2. **Convert per the skill** - author the check in its owning pack - a `declared-checks.json`
+   entry, or a Go check under `checks/` on the check SDK - and add the fixture test that fires on a violating input and stays quiet on a clean
    one. Then apply the skill's **deletion test** to the prose the check now stands beside.
 3. **Deliver by the shared procedure —
    [deliver-pr.md](../../../claudinite-tasks/public/deliver-pr.md)**, under the title

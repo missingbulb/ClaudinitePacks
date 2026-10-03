@@ -42,6 +42,12 @@ the vendored set drops (`test/`, `docs/`,
 `provenance/` at the pack root, and `checks/*_test.go`) needs no bump. The publish job's own
 refusal is the backstop after the merge.
 
+The same job runs `tools/directory/render.mjs --check --remote origin`, which fails when
+`packs/directory.GENERATED.md` differs from a fresh render of the pack manifests and the
+catalog's stable versions; run `node tools/directory/render.mjs` and commit the result. A
+promotion moves the catalog after its pull request has merged, so the next pull request carries
+the regenerated directory.
+
 A pack's Go checks and the fixtures under its `test/` run with `sh tools/checks/test.sh`, which
 takes the `cn` to build against from `CLAUDINITE_CN`. Until ClaudiniteEngine#2 lets this repo pin
 a published `cn`, that run lives in ClaudiniteEngine's CI, against the commit its
@@ -200,6 +206,18 @@ fails the run; the next run re-derives from the new tip.
   revokes automatically. A dispatch without a pack takes the hourly path.
 
 The job summary records the evidence read and every promotion or revocation.
+
+Until ClaudiniteEngine#21 gives the canaries workflows the evidence can read, promotion is the
+dispatch, by a person, after ClaudiniteEngine's live-packs rehearsal (ClaudiniteEngine#68 T6) has
+passed over the real shelf.
+
+## What a canon task may write
+
+The curation tasks of `claudinite-canon-curation` open pull requests against `main`; none
+publishes, and a person merges each. A `growth-promote` pull request may write only under the
+shelf (and any second corpus root the pack's `write_paths` names): `cn growth promote-scope --base
+origin/main` fails on any other path, and this repository's CI runs it on the promote branches
+once this repository runs `cn`.
 
 ## Keys
 

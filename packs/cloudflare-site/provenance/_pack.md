@@ -100,3 +100,11 @@
 - **Reason:** `60928.1` is a Node engine version, which `cn` reads only as the legacy two-part form any engine satisfies (ClaudiniteEngine#18); a new version must name the `cn` release it needs, and release-packs refused cloudflare-site 61002.1 for carrying it. `61001.1.0` is the engine floor, below which no `cn` is released, so it holds back no engine the old value admitted.
 - **Actor:** build lead, repairing release-packs on main after ClaudinitePacks #20.
 - **Mechanism:** the manifest's `minEngineVersion`, which the pack update enforces; `release.mjs plan` now refuses a two-part value on a version to publish before the merge. cloudflare-site 61002.1.
+
+## 2026-10-03 · scope-changed · the coded checks run on cn
+- **Reason:** the three checks are rewritten in Go against the SDK, the wrangler readings beside
+  them, so a cn member runs them; the release task's lib.mjs keeps its own reading, which a test
+  holds equal.
+- **Actor:** build lead, ClaudinitePacks#30 T2.
+- **Mechanism:** `checks/*.go` against the SDK, `test/` through `cn check --pack cloudflare-site`;
+  `minEngineVersion` `61001.1.0`, the floor the SDK names. cloudflare-site 61003.1.

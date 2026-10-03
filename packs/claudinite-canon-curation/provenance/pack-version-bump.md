@@ -60,7 +60,15 @@
 - **Mechanism:** the worker patches `packs/directory.GENERATED.md` in the same commit; the
   renderer's drift guard holds the patch byte-identical to a fresh render.
 
-## 2026-10-02 · ported · pack-version-bump pushes through `@claudinite/sdk`
+## 2026-10-02 · moved · pack-version-bump pushes through `@claudinite/sdk`
 - **Reason:** it pushed through the removed runner's git helpers.
 - **Actor:** build lead, completing ClaudinitePacks #20 so the runner's removal lands with every importer ported.
 - **Mechanism:** fetch and push through the SDK's `git`, the commit message from `commitMessage`, a rejected push retried from a fresh base.
+
+## 2026-10-03 · retired · a pull request raises its own pack's version
+- **Reason:** cn has no task to cut a version on the base branch after a merge, and the release
+  publishes a version once, so the shelf's CI already refuses changed content under a published
+  number; the pull request that changes a pack raises it (ClaudiniteEngine design record 116).
+- **Actor:** Claude, ClaudinitePacks#30 T3.
+- **Model:** Claude Opus 5.5
+- **Mechanism:** none; `release.mjs plan --content` in the shelf's CI.

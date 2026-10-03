@@ -9,7 +9,7 @@ coded checks become Go; tasks stay Node against `@claudinite/sdk`; tests are rew
 the pinned `cn`, or dropped when they check only file shapes or doc text. A file that imports
 Claudinite's `engine/` by relative path does not run here until its slice replaces the import.
 
-`minEngineVersion` across the shelf: `60928.1` (18 packs), `61001.1.0` (20 packs).
+`minEngineVersion` across the shelf: `61001.1.0` (36 packs), `61003.1.0` (2 packs).
 A two-part one is a Claudinite Node engine version, which the Engine's `shared/version` (three
 parts, `<day>.<n>.0`) does not read; a ported pack's first version sets `minEngineVersion` to the
 `cn` version it was tested on.
@@ -24,45 +24,45 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 
 | pack | version | content | declared | coded-check | task | src | test | workflow | other | engine/ importers |
 |---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| android | 60928.1 | 4 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| app-store-release | 60928.1 | 4 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| android | 61003.1 | 4 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| app-store-release | 61003.1 | 4 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | aws-sam | 61002.1 | 25 | 2 | 1 | 0 | 0 | 3 | 0 | 0 | 0 |
 | basics | 61002.3 | 189 | 2 | 13 | 5 | 2 | 8 | 0 | 0 | 0 |
-| chrome-extension | 61002.1 | 46 | 2 | 4 | 3 | 4 | 7 | 9 | 0 | 8 |
-| claude-code-web-users-support | 60928.1 | 13 | 1 | 4 | 0 | 8 | 7 | 0 | 1 | 8 |
-| claudinite-canon-curation | 61002.2 | 65 | 3 | 6 | 18 | 5 | 10 | 0 | 0 | 13 |
+| chrome-extension | 61003.1 | 46 | 2 | 4 | 3 | 4 | 8 | 9 | 0 | 0 |
+| claude-code-web-users-support | 61003.1 | 13 | 1 | 2 | 0 | 3 | 4 | 0 | 1 | 0 |
+| claudinite-canon-curation | 61003.1 | 64 | 3 | 0 | 16 | 1 | 2 | 0 | 0 | 0 |
 | claudinite-dashboard | 61003.1 | 16 | 3 | 0 | 4 | 44 | 46 | 1 | 4 | 0 |
 | claudinite-fleet-sheepdog | 61003.3 | 30 | 2 | 0 | 4 | 0 | 1 | 0 | 0 | 0 |
 | claudinite-growth | 61003.1 | 159 | 8 | 0 | 16 | 10 | 13 | 0 | 0 | 0 |
-| claudinite-lifecycle | 61003.2 | 42 | 3 | 0 | 2 | 1 | 6 | 0 | 0 | 2 |
-| claudinite-tasks | 61003.1 | 23 | 3 | 0 | 5 | 26 | 14 | 0 | 0 | 1 |
-| cloudflare-site | 61002.1 | 16 | 1 | 3 | 3 | 4 | 7 | 0 | 0 | 3 |
-| cloudflare-workers | 60928.1 | 16 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| claudinite-lifecycle | 61003.2 | 42 | 3 | 0 | 2 | 1 | 4 | 0 | 0 | 0 |
+| claudinite-tasks | 61003.1 | 23 | 3 | 0 | 5 | 26 | 14 | 0 | 0 | 0 |
+| cloudflare-site | 61003.1 | 16 | 1 | 2 | 3 | 4 | 7 | 0 | 0 | 0 |
+| cloudflare-workers | 61003.1 | 16 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | executable-requirements | 61002.1 | 21 | 1 | 1 | 0 | 0 | 2 | 0 | 0 | 0 |
 | firebase | 61002.1 | 29 | 2 | 1 | 0 | 1 | 3 | 0 | 0 | 0 |
-| flutter | 60928.1 | 26 | 2 | 0 | 0 | 0 | 2 | 0 | 0 | 0 |
-| git-github | 61003.1 | 33 | 3 | 0 | 0 | 1 | 1 | 0 | 0 | 1 |
-| github-pages | 61002.1 | 13 | 1 | 2 | 3 | 4 | 3 | 1 | 0 | 4 |
+| flutter | 61003.1 | 26 | 2 | 0 | 0 | 0 | 2 | 0 | 0 | 0 |
+| git-github | 61003.1 | 33 | 3 | 0 | 0 | 1 | 1 | 0 | 0 | 0 |
+| github-pages | 61003.1 | 13 | 1 | 2 | 3 | 4 | 6 | 1 | 0 | 0 |
 | google-identity | 61002.1 | 9 | 2 | 1 | 0 | 0 | 3 | 0 | 0 | 0 |
-| headless-browser | 60928.1 | 31 | 2 | 0 | 0 | 0 | 4 | 0 | 0 | 1 |
+| headless-browser | 61003.1 | 31 | 2 | 0 | 0 | 0 | 3 | 0 | 0 | 0 |
 | hello | 1.4 | 14 | 3 | 4 | 4 | 0 | 0 | 0 | 0 | 0 |
-| host-page | 60928.1 | 19 | 1 | 3 | 0 | 1 | 1 | 0 | 0 | 4 |
-| html | 60928.1 | 9 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| ios | 60928.1 | 7 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| jwt | 60928.1 | 20 | 3 | 0 | 0 | 0 | 6 | 0 | 0 | 6 |
-| leaflet | 60928.1 | 12 | 1 | 2 | 0 | 0 | 2 | 0 | 0 | 4 |
-| macos | 60928.1 | 46 | 2 | 3 | 0 | 0 | 5 | 0 | 0 | 6 |
+| host-page | 61003.1 | 19 | 1 | 2 | 0 | 0 | 3 | 0 | 0 | 0 |
+| html | 61003.1 | 9 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| ios | 61003.1 | 7 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| jwt | 61003.1 | 20 | 3 | 0 | 0 | 0 | 1 | 0 | 0 | 0 |
+| leaflet | 61003.1 | 12 | 1 | 2 | 0 | 0 | 3 | 0 | 0 | 0 |
+| macos | 61003.1 | 46 | 2 | 3 | 0 | 0 | 3 | 0 | 0 | 0 |
 | node | 61002.1 | 20 | 2 | 2 | 0 | 0 | 3 | 0 | 0 | 0 |
-| numpy-image-processing | 60928.1 | 14 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| play-store-release | 60928.1 | 4 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| product-wiki | 61002.2 | 34 | 2 | 0 | 2 | 1 | 1 | 0 | 0 | 1 |
+| numpy-image-processing | 61003.1 | 14 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| play-store-release | 61003.1 | 4 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| product-wiki | 61002.2 | 34 | 2 | 0 | 2 | 1 | 1 | 0 | 0 | 0 |
 | public-website | 61002.1 | 12 | 1 | 1 | 0 | 3 | 3 | 0 | 0 | 0 |
 | python | 61002.1 | 12 | 1 | 3 | 0 | 0 | 2 | 0 | 0 | 0 |
-| research-project | 60928.1 | 63 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| spec-driven-product | 60928.1 | 31 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| web-scraping | 60928.1 | 35 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| web-speech | 60928.1 | 33 | 3 | 6 | 0 | 1 | 5 | 0 | 0 | 10 |
-| **38 packs** | | 1195 | 72 | 60 | 69 | 116 | 168 | 11 | 5 | 72 |
+| research-project | 61003.1 | 63 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| spec-driven-product | 61003.1 | 31 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| web-scraping | 61003.1 | 35 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| web-speech | 61003.1 | 33 | 3 | 4 | 0 | 0 | 3 | 0 | 0 | 0 |
+| **38 packs** | | 1194 | 72 | 48 | 67 | 105 | 152 | 11 | 5 | 0 |
 
 ## aws-sam
 
@@ -122,10 +122,10 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 
 ### coded-check (4)
 
-- `workRules/version-bumped.mjs` (imports `engine/`)
-- `worldRules/content-script-module-syntax.mjs` (imports `engine/`)
-- `worldRules/declarative-content-set-icon.mjs` (imports `engine/`)
-- `worldRules/release-workflows.mjs` (imports `engine/`)
+- `checks/content_script_module_syntax.go`
+- `checks/declarative_content_set_icon.go`
+- `checks/release_workflows.go`
+- `checks/version_bumped.go`
 
 ### task (3)
 
@@ -140,45 +140,36 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 - `stubs/actions/bump-extension-patch/bump.mjs`
 - `stubs/actions/read-release-config/read-config.mjs`
 
-### test (7)
+### test (8)
 
+- `checks/content_script_module_syntax_test.go`
+- `checks/declarative_content_set_icon_test.go`
+- `checks/helpers_test.go`
+- `checks/release_workflows_test.go`
+- `checks/version_bumped_test.go`
 - `test/bump-extension-version.test.mjs`
-- `test/content-script-module-syntax.test.mjs` (imports `engine/`)
-- `test/fingerprint.test.mjs` (imports `engine/`)
-- `test/pack.test.mjs` (imports `engine/`)
-- `test/release.test.mjs` (imports `engine/`)
+- `test/declared_test.go`
 - `test/tasks.test.mjs`
-- `test/version-bumped.test.mjs`
 
 ## claude-code-web-users-support
 
-### coded-check (4)
+### coded-check (2)
 
-- `worldRules/preferences-provenance.mjs` (imports `engine/`)
-- `worldRules/store-codeowners.mjs` (imports `engine/`)
-- `worldRules/store-configured.mjs` (imports `engine/`)
-- `worldRules/store-file-names.mjs` (imports `engine/`)
+- `checks/checks.go`
+- `checks/store.go`
 
-### src (8)
+### src (3)
 
-- `copy_user_pack_to_repo.mjs` (imports `engine/`)
 - `migrations/2026-08-07-claude-code-web-users-support/migration.mjs`
-- `read_github_login.mjs`
-- `session-prepare.mjs`
-- `session-start.mjs`
 - `store_codeowners.mjs`
-- `user_pack_address.mjs`
-- `write_store_codeowners.mjs` (imports `engine/`)
+- `write_store_codeowners.mjs`
 
-### test (7)
+### test (4)
 
-- `test/preferences-provenance.test.mjs`
-- `test/read_github_login.test.mjs`
-- `test/session-start.test.mjs` (imports `engine/`)
-- `test/store-codeowners.test.mjs` (imports `engine/`)
-- `test/store-configured.test.mjs`
-- `test/store-pack-names.test.mjs`
-- `test/user_pack_address.test.mjs`
+- `checks/checks_test.go`
+- `checks/helpers_test.go`
+- `test/declared_test.go`
+- `test/write_store_codeowners.test.mjs`
 
 ### other (1)
 
@@ -186,16 +177,7 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 
 ## claudinite-canon-curation
 
-### coded-check (6)
-
-- `skills/writing-claudinite-skills/checks.mjs`
-- `skills/writing-claudinite-skills/no-enforcement-narration.mjs` (imports `engine/`)
-- `skills/writing-claudinite-skills/usage-declared.mjs` (imports `engine/`)
-- `worldRules/no-enforcement-narration.mjs` (imports `engine/`)
-- `worldRules/pack-discovery-entry-await.mjs` (imports `engine/`)
-- `worldRules/pack-version-log-ordered.mjs` (imports `engine/`)
-
-### task (18)
+### task (16)
 
 - `tasks/canon-prose-to-checks/task.json`
 - `tasks/canon-prose-to-checks/task.md`
@@ -206,8 +188,6 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 - `tasks/growth-promote/preconditions.mjs`
 - `tasks/growth-promote/task.json`
 - `tasks/growth-promote/task.md`
-- `tasks/pack-version-bump/task.json`
-- `tasks/pack-version-bump/worker.mjs`
 - `tasks/pack-version-history/task.json`
 - `tasks/pack-version-history/worker.mjs`
 - `tasks/revalidate-from-source/task.json`
@@ -216,25 +196,13 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 - `tasks/usage-triage/task.json`
 - `tasks/usage-triage/task.md`
 
-### src (5)
+### src (1)
 
-- `canon-config.mjs` (imports `engine/`)
-- `pack-surface.mjs`
-- `pack-versions.mjs` (imports `engine/`)
-- `promote-scope.mjs` (imports `engine/`)
 - `tasks/pack-version-history/deliver.mjs`
 
-### test (10)
+### test (2)
 
-- `test/declared-checks.test.mjs`
-- `test/pack-discovery-entry-await.test.mjs` (imports `engine/`)
-- `test/pack-surface.test.mjs`
-- `test/pack-version-log-ordered.test.mjs`
-- `test/pack-versions.test.mjs`
-- `test/pack.test.mjs` (imports `engine/`)
-- `test/promote-scope.test.mjs` (imports `engine/`)
-- `test/skills/writing-claudinite-skills/no-enforcement-narration.test.mjs` (imports `engine/`)
-- `test/skills/writing-claudinite-skills/usage-declared.test.mjs` (imports `engine/`)
+- `test/declared_test.go`
 - `test/tasks.test.mjs`
 
 ## claudinite-dashboard
@@ -423,11 +391,9 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 
 - `tasks/adopt-requested-packs/protocol.mjs`
 
-### test (6)
+### test (4)
 
 - `test/declared_test.go`
-- `test/mandatory.test.mjs` (imports `engine/`)
-- `test/pack.test.mjs` (imports `engine/`)
 - `test/task-policies.test.mjs`
 - `test/tasks/adopt-requested-packs/protocol.test.mjs`
 - `test/tasks/adopt-requested-packs/task.test.mjs`
@@ -473,7 +439,7 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 
 ### test (14)
 
-- `test/tasks/usage-fold/corpus-use.test.mjs` (imports `engine/`)
+- `test/tasks/usage-fold/corpus-use.test.mjs`
 - `test/tasks/usage-fold/deliver.test.mjs`
 - `test/tasks/usage-fold/fold-tasks-usage.test.mjs`
 - `test/tasks/usage-fold/fold-usage.test.mjs`
@@ -490,11 +456,10 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 
 ## cloudflare-site
 
-### coded-check (3)
+### coded-check (2)
 
-- `worldRules/beacon-token-is-not-committed.mjs` (imports `engine/`)
-- `worldRules/no-second-publisher.mjs` (imports `engine/`)
-- `worldRules/publishes-a-site-directory.mjs` (imports `engine/`)
+- `checks/checks.go`
+- `checks/wrangler.go`
 
 ### task (3)
 
@@ -511,13 +476,13 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 
 ### test (7)
 
+- `checks/checks_test.go`
+- `checks/helpers_test.go`
+- `test/declared_test.go`
 - `test/lib.test.mjs`
 - `test/tasks/site-release/preconditions.test.mjs`
 - `test/tasks/site-release/preflight.test.mjs`
 - `test/tasks/site-release/worker.test.mjs`
-- `test/worldRules/beacon-token-is-not-committed.test.mjs`
-- `test/worldRules/no-second-publisher.test.mjs`
-- `test/worldRules/publishes-a-site-directory.test.mjs`
 
 ## executable-requirements
 
@@ -561,14 +526,14 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 
 ### test (1)
 
-- `test/pack.test.mjs` (imports `engine/`)
+- `test/declared_test.go`
 
 ## github-pages
 
 ### coded-check (2)
 
-- `worldRules/deploy-workflow.mjs` (imports `engine/`)
-- `worldRules/site-config.mjs` (imports `engine/`)
+- `checks/deploy_workflow.go`
+- `checks/site_config.go`
 
 ### task (3)
 
@@ -578,14 +543,17 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 
 ### src (4)
 
-- `build-site.mjs` (imports `engine/`)
+- `build-site.mjs`
 - `lib.mjs`
 - `migrations/2026-09-17-github-pages-vendoring/migration.mjs`
 - `tasks/site-release/github-api.mjs`
 
-### test (3)
+### test (6)
 
-- `test/pack.test.mjs` (imports `engine/`)
+- `checks/checks_test.go`
+- `checks/helpers_test.go`
+- `test/declared_test.go`
+- `test/pack.test.mjs`
 - `test/tasks/site-release/preconditions.test.mjs`
 - `test/tasks/site-release/worker.test.mjs`
 
@@ -603,12 +571,11 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 
 ## headless-browser
 
-### test (4)
+### test (3)
 
 - `test/capture-without-font-wait.test.mjs`
 - `test/insecure-fake-origin.test.mjs`
 - `test/networkidle-wait.test.mjs`
-- `test/pack.test.mjs` (imports `engine/`)
 
 ## hello
 
@@ -628,58 +595,49 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 
 ## host-page
 
-### coded-check (3)
+### coded-check (2)
 
-- `worldRules/page-observers-disconnected.mjs` (imports `engine/`)
-- `worldRules/synthetic-input-events-bubble.mjs` (imports `engine/`)
-- `worldRules/synthetic-input-events-target-app-node.mjs` (imports `engine/`)
+- `checks/checks.go`
+- `checks/lib.go`
 
-### src (1)
+### test (3)
 
-- `lib.mjs`
-
-### test (1)
-
-- `test/host-page-contracts.test.mjs` (imports `engine/`)
+- `checks/checks_test.go`
+- `checks/helpers_test.go`
+- `test/declared_test.go`
 
 ## jwt
 
-### test (6)
+### test (1)
 
-- `test/pack.test.mjs` (imports `engine/`)
-- `test/skills/jwt-minting/hardcoded-secret.test.mjs` (imports `engine/`)
-- `test/skills/jwt-minting/sign-sets-expiry.test.mjs` (imports `engine/`)
-- `test/skills/jwt-validation/none-not-accepted.test.mjs` (imports `engine/`)
-- `test/skills/jwt-validation/verify-binds-audience.test.mjs` (imports `engine/`)
-- `test/skills/jwt-validation/verify-pins-algorithms.test.mjs` (imports `engine/`)
+- `test/declared_test.go`
 
 ## leaflet
 
 ### coded-check (2)
 
-- `worldRules/asset-integrity.mjs` (imports `engine/`)
-- `worldRules/tile-attribution.mjs` (imports `engine/`)
+- `checks/asset_integrity.go`
+- `checks/tile_attribution.go`
 
-### test (2)
+### test (3)
 
-- `test/pack.test.mjs` (imports `engine/`)
-- `test/tile-attribution.test.mjs` (imports `engine/`)
+- `checks/checks_test.go`
+- `checks/helpers_test.go`
+- `test/declared_test.go`
 
 ## macos
 
 ### coded-check (3)
 
-- `worldRules/minimum-system-version-agrees.mjs` (imports `engine/`)
-- `worldRules/signal-teardown-routing.mjs` (imports `engine/`)
-- `worldRules/swift-toolchain-gate.mjs` (imports `engine/`)
+- `checks/minimum_system_version_agrees.go`
+- `checks/signal_teardown_routing.go`
+- `checks/swift_toolchain_gate.go`
 
-### test (5)
+### test (3)
 
-- `test/minimum-system-version-agrees.test.mjs`
-- `test/notarize-then-staple.test.mjs`
-- `test/signal-teardown-routing.test.mjs` (imports `engine/`)
-- `test/sudden-termination-vs-teardown.test.mjs` (imports `engine/`)
-- `test/swift-toolchain-gate.test.mjs` (imports `engine/`)
+- `checks/checks_test.go`
+- `checks/helpers_test.go`
+- `test/declared_test.go`
 
 ## node
 
@@ -707,7 +665,7 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 
 ### test (1)
 
-- `test/pack.test.mjs` (imports `engine/`)
+- `test/declared_test.go`
 
 ## public-website
 
@@ -742,23 +700,15 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 
 ## web-speech
 
-### coded-check (6)
+### coded-check (4)
 
-- `worldRules/mic-capture-released.mjs` (imports `engine/`)
-- `worldRules/mic-constraints-not-screen-capture.mjs` (imports `engine/`)
-- `worldRules/stt-error-map-has-default.mjs` (imports `engine/`)
-- `worldRules/stt-interim-results-gated.mjs` (imports `engine/`)
-- `worldRules/stt-terminal-handlers.mjs` (imports `engine/`)
-- `worldRules/tts-speak-settles.mjs` (imports `engine/`)
+- `checks/lib.go`
+- `checks/mic.go`
+- `checks/stt.go`
+- `checks/tts.go`
 
-### src (1)
+### test (3)
 
-- `lib.mjs`
-
-### test (5)
-
-- `test/skills/web-speech-io/capture-pagehide-teardown.test.mjs` (imports `engine/`)
-- `test/skills/web-speech-io/recognition-feature-detect.test.mjs` (imports `engine/`)
-- `test/skills/web-speech-io/service-worker-speech.test.mjs` (imports `engine/`)
-- `test/speech-contracts.test.mjs` (imports `engine/`)
-- `test/tts-voices-cached-empty.test.mjs`
+- `checks/checks_test.go`
+- `checks/helpers_test.go`
+- `test/declared_test.go`

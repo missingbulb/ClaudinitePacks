@@ -73,3 +73,11 @@
   usage no manifest backs is not an adoption.
 - **Actor:** @missingbulb (owner), in review of #2382.
 - **Mechanism:** paths over near-root dependency manifests, text over the declared package names.
+
+## 2026-10-03 · scope-changed · the first version on the cn floor
+- **Reason:** `60928.1` named a Node engine version, which `cn` read only as the legacy two-part
+  form; with that tolerance retired (ClaudiniteEngine#18) a two-part entry is one `cn` skips, so
+  the pack's newest version names `61001.1.0`, the floor every ported pack names. Nothing in the
+  pack runs, so no higher floor is a claim anything tests.
+- **Actor:** build lead, ClaudinitePacks#30 T1.
+- **Mechanism:** the manifest's `minEngineVersion`, which the pack update enforces. jwt 61003.1.
