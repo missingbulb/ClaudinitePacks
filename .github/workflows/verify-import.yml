@@ -68,3 +68,5 @@ jobs:
           node-version-file: .node-version
       - name: Every changed pack carries a new version
         run: node tools/release/release.mjs plan --content --remote origin
+      - name: The pack directory is current with the manifests and the catalog
+        run: node tools/directory/render.mjs --check --remote origin
