@@ -1,6 +1,6 @@
 {
   "v": 1,
-  "serial": 100,
+  "serial": 101,
   "packs": [
     {
       "id": "android",
@@ -559,9 +559,9 @@
     },
     {
       "id": "spec-driven-product",
-      "version": "60928.1",
+      "version": "61003.1",
       "channel": "canary",
-      "minEngineVersion": "60928.1",
+      "minEngineVersion": "61001.1.0",
       "requires": [
         "executable-requirements"
       ],
