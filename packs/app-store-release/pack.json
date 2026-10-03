@@ -1,6 +1,6 @@
 {
-  "version": "60928.1",
-  "minEngineVersion": "60928.1",
+  "version": "61003.1",
+  "minEngineVersion": "61001.1.0",
   "ruleRoutingGuidance": {
     "belongs": "shipping to the Apple App Store: App Store Connect, provisioning, App Attest, TestFlight, review guidelines, release cadence",
     "excludes": "iOS coding, Info.plist and Xcode project practices — that is ios; backend environment split — firebase"

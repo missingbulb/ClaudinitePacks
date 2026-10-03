@@ -9,7 +9,7 @@ coded checks become Go; tasks stay Node against `@claudinite/sdk`; tests are rew
 the pinned `cn`, or dropped when they check only file shapes or doc text. A file that imports
 Claudinite's `engine/` by relative path does not run here until its slice replaces the import.
 
-`minEngineVersion` across the shelf: `60928.1` (18 packs), `61001.1.0` (20 packs).
+`minEngineVersion` across the shelf: `60928.1` (5 packs), `61001.1.0` (33 packs).
 A two-part one is a Claudinite Node engine version, which the Engine's `shared/version` (three
 parts, `<day>.<n>.0`) does not read; a ported pack's first version sets `minEngineVersion` to the
 `cn` version it was tested on.
@@ -24,8 +24,8 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 
 | pack | version | content | declared | coded-check | task | src | test | workflow | other | engine/ importers |
 |---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| android | 60928.1 | 4 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| app-store-release | 60928.1 | 4 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| android | 61003.1 | 4 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| app-store-release | 61003.1 | 4 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | aws-sam | 61002.1 | 25 | 2 | 1 | 0 | 0 | 3 | 0 | 0 | 0 |
 | basics | 61002.3 | 189 | 2 | 13 | 5 | 2 | 8 | 0 | 0 | 0 |
 | chrome-extension | 61002.1 | 46 | 2 | 4 | 3 | 4 | 7 | 9 | 0 | 8 |
@@ -37,30 +37,30 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 | claudinite-lifecycle | 61003.2 | 42 | 3 | 0 | 2 | 1 | 6 | 0 | 0 | 2 |
 | claudinite-tasks | 61003.1 | 23 | 3 | 0 | 5 | 26 | 14 | 0 | 0 | 1 |
 | cloudflare-site | 61002.1 | 16 | 1 | 3 | 3 | 4 | 7 | 0 | 0 | 3 |
-| cloudflare-workers | 60928.1 | 16 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| cloudflare-workers | 61003.1 | 16 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | executable-requirements | 61002.1 | 21 | 1 | 1 | 0 | 0 | 2 | 0 | 0 | 0 |
 | firebase | 61002.1 | 29 | 2 | 1 | 0 | 1 | 3 | 0 | 0 | 0 |
-| flutter | 60928.1 | 26 | 2 | 0 | 0 | 0 | 2 | 0 | 0 | 0 |
+| flutter | 61003.1 | 26 | 2 | 0 | 0 | 0 | 2 | 0 | 0 | 0 |
 | git-github | 61003.1 | 33 | 3 | 0 | 0 | 1 | 1 | 0 | 0 | 1 |
 | github-pages | 61002.1 | 13 | 1 | 2 | 3 | 4 | 3 | 1 | 0 | 4 |
 | google-identity | 61002.1 | 9 | 2 | 1 | 0 | 0 | 3 | 0 | 0 | 0 |
-| headless-browser | 60928.1 | 31 | 2 | 0 | 0 | 0 | 4 | 0 | 0 | 1 |
+| headless-browser | 61003.1 | 31 | 2 | 0 | 0 | 0 | 4 | 0 | 0 | 1 |
 | hello | 1.4 | 14 | 3 | 4 | 4 | 0 | 0 | 0 | 0 | 0 |
 | host-page | 60928.1 | 19 | 1 | 3 | 0 | 1 | 1 | 0 | 0 | 4 |
-| html | 60928.1 | 9 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| ios | 60928.1 | 7 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| jwt | 60928.1 | 20 | 3 | 0 | 0 | 0 | 6 | 0 | 0 | 6 |
+| html | 61003.1 | 9 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| ios | 61003.1 | 7 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| jwt | 61003.1 | 20 | 3 | 0 | 0 | 0 | 6 | 0 | 0 | 6 |
 | leaflet | 60928.1 | 12 | 1 | 2 | 0 | 0 | 2 | 0 | 0 | 4 |
 | macos | 60928.1 | 46 | 2 | 3 | 0 | 0 | 5 | 0 | 0 | 6 |
 | node | 61002.1 | 20 | 2 | 2 | 0 | 0 | 3 | 0 | 0 | 0 |
-| numpy-image-processing | 60928.1 | 14 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| play-store-release | 60928.1 | 4 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| numpy-image-processing | 61003.1 | 14 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| play-store-release | 61003.1 | 4 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | product-wiki | 61002.2 | 34 | 2 | 0 | 2 | 1 | 1 | 0 | 0 | 1 |
 | public-website | 61002.1 | 12 | 1 | 1 | 0 | 3 | 3 | 0 | 0 | 0 |
 | python | 61002.1 | 12 | 1 | 3 | 0 | 0 | 2 | 0 | 0 | 0 |
-| research-project | 60928.1 | 63 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| spec-driven-product | 60928.1 | 31 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| web-scraping | 60928.1 | 35 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| research-project | 61003.1 | 63 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| spec-driven-product | 61003.1 | 31 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| web-scraping | 61003.1 | 35 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | web-speech | 60928.1 | 33 | 3 | 6 | 0 | 1 | 5 | 0 | 0 | 10 |
 | **38 packs** | | 1195 | 72 | 60 | 69 | 116 | 168 | 11 | 5 | 72 |
 

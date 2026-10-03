@@ -351,3 +351,17 @@ test('plan fails a version to publish whose fingerprint the catalog reader refus
   const after = planContent(w);
   assert.equal(after.status, 0, after.out);
 });
+
+// Every version on main is on vendored once the release runs (plan refuses a changed pack without a
+// bump, publish refuses a reused version), so each pack's pack.json here is the newest version of
+// it on the branch: none may name a Node engine, which cn's Select skips.
+test('the newest version of every pack on the branch names a three-part minEngineVersion', () => {
+  const two = [];
+  for (const id of git(REPO_ROOT, 'ls-tree', '--name-only', 'HEAD', 'packs/').trim().split('\n')) {
+    const file = join(REPO_ROOT, id, 'pack.json');
+    let manifest;
+    try { manifest = JSON.parse(readFileSync(file, 'utf8')); } catch { continue; }
+    if (!/^\d+\.\d+\.\d+$/.test(String(manifest.minEngineVersion))) two.push(`${id.replace('packs/', '')} ${manifest.version}: ${manifest.minEngineVersion}`);
+  }
+  assert.deepEqual(two, []);
+});
