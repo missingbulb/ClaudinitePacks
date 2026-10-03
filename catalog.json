@@ -1,6 +1,6 @@
 {
   "v": 1,
-  "serial": 99,
+  "serial": 100,
   "packs": [
     {
       "id": "android",
@@ -550,9 +550,9 @@
     },
     {
       "id": "research-project",
-      "version": "60928.1",
+      "version": "61003.1",
       "channel": "canary",
-      "minEngineVersion": "60928.1",
+      "minEngineVersion": "61001.1.0",
       "requires": [],
       "relevanceDetector": null,
       "belongs": "methodology for iterating an algorithm over sample inputs against annotated ground truth — scoring, phases, session continuity"
