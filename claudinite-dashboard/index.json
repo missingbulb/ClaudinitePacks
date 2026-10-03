@@ -1,7 +1,7 @@
 {
   "v": 1,
   "pack": "claudinite-dashboard",
-  "serial": 2,
+  "serial": 3,
   "versions": [
     {
       "version": "60928.2",
@@ -28,6 +28,19 @@
       "revoked": false,
       "publishedAt": "2026-10-02T21:08:50Z",
       "sourceCommit": "be046455426cab06c677ba22b22eef19e722360f"
+    },
+    {
+      "version": "61003.1",
+      "sha256": "78aef22781d8f451c6bd7ab2d51f18aeb1bdd839375ab531598148561c1e57a7",
+      "size": 258000,
+      "minEngineVersion": "61001.1.0",
+      "requires": [
+        "claudinite-tasks"
+      ],
+      "channel": "canary",
+      "revoked": false,
+      "publishedAt": "2026-10-03T11:23:31Z",
+      "sourceCommit": "efe50194dbbc0a2c2fd5b5503500592ef5676fcf"
     }
   ]
 }

@@ -1,6 +1,6 @@
 {
   "v": 1,
-  "serial": 80,
+  "serial": 81,
   "packs": [
     {
       "id": "android",
@@ -124,7 +124,7 @@
     },
     {
       "id": "claudinite-dashboard",
-      "version": "61002.1",
+      "version": "61003.1",
       "channel": "canary",
       "minEngineVersion": "61001.1.0",
       "requires": [
@@ -135,7 +135,7 @@
       "questions": [
         {
           "id": "mode",
-          "prompt": "Is this deployment this repo's OWN dashboard, or the fleet overview across many repos? A fleet deployment also needs to name where its members come from — an \"owner\" whose repos are enumerated in the browser as the viewer (the one to prefer), or an explicit \"repos\" list or roster artifact."
+          "prompt": "Is this deployment this repo's OWN dashboard, or the fleet overview across many repos? A fleet deployment also names an \"owner\", whose repos are enumerated in the browser as the viewer, and optionally an \"exclude\" list."
         }
       ]
     },
