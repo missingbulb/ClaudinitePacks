@@ -39,7 +39,7 @@ import { join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { DOMAINS, keyId, parsePrivateKey, readRoots, SignError } from '../sign/sign.mjs';
 import { BRANCH, fetchVendored, git, openBranch, packIds, ReleaseError, showFile } from './branch.mjs';
-import { CATALOG, CATALOG_SIG, writeCatalog } from './catalog.mjs';
+import { CATALOG, CATALOG_SIG, CatalogError, validateDetector, writeCatalog } from './catalog.mjs';
 import { addVersion, assertSerialAdvances, IndexError, newIndex, packFields, readIndex, serialize, signIndex } from './index.mjs';
 import { choosePromotions, githubReader, readEvidence, rewriteBranch } from './promote.mjs';
 import { branchObjects, missingCredentials, R2Error, runUpload } from './r2.mjs';
@@ -80,7 +80,7 @@ function readPacks(packsDir) {
       if (!existsSync(file)) throw new ReleaseError(`${id}: no pack.json`);
       let json;
       try { json = JSON.parse(readFileSync(file, 'utf8')); } catch (e) { throw new ReleaseError(`${id}: pack.json does not parse: ${e.message}`); }
-      packs.push({ id, ...packFields(id, json) });
+      packs.push({ id, ...packFields(id, json), relevanceDetector: json.relevanceDetector });
     } catch (e) {
       if (!(e instanceof ReleaseError || e instanceof IndexError)) throw e;
       errors.push(e.message);
@@ -117,6 +117,9 @@ async function plan(opts, { content = false } = {}) {
           refused++;
           console.log(`::error::${e.message}`);
         }
+        const problems = validateDetector(p.relevanceDetector);
+        if (problems.length) refused++;
+        for (const problem of problems) console.log(`::error::${p.id} ${p.version}: ${problem}`);
         continue;
       }
       if (!content) { console.log(`published ${p.id} ${p.version}`); continue; }
@@ -432,7 +435,7 @@ async function main([cmd, ...args]) {
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   main(process.argv.slice(2)).then((code) => { process.exitCode = code; }).catch((e) => {
-    if (!(e instanceof ReleaseError || e instanceof IndexError || e instanceof SignError || e instanceof R2Error || e.code === 'ENOENT')) throw e;
+    if (!(e instanceof ReleaseError || e instanceof IndexError || e instanceof CatalogError || e instanceof SignError || e instanceof R2Error || e.code === 'ENOENT')) throw e;
     console.error(`release.mjs: ${e.message}`);
     process.exitCode = 1;
   });

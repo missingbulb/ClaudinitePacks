@@ -1,0 +1,12 @@
+{
+  "detector": {
+    "about": "x",
+    "paths": {
+      "source": "a",
+      "flags": "g"
+    }
+  },
+  "expect": [
+    "a relevanceDetector pattern carries the g or y flag, which makes .test stateful"
+  ]
+}

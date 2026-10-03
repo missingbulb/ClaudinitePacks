@@ -54,3 +54,9 @@
 - **Actor:** build lead, ClaudiniteEngine#61.
 - **Model:** Claude Opus 5.5 (1M context)
 - **Mechanism:** the task's `code_work`, `cn fleet add-packs --scan-for-needed-packs=true --repos=all-covered-members`, with `FLEET_GITHUB_TOKEN` its declared secret; a forced item's Context overrides each parameter.
+
+## 2026-10-03 · policy-changed · each member is fingerprinted on its own channel
+- **Reason:** the corpus was the catalog as the enforcer's own channel saw it, so a stable enforcer measured a canary member against packs its update would never deliver, and a canary pack was offered to no one unless the enforcer itself went canary. A member is now offered exactly what its own update delivers, the channel its freshness is already judged on; the floor and a force's id check read every id either channel offers. A documented `channel: canary` on the enforcer was the alternative, rejected because it makes the enforcer's own update canary to make a scan work.
+- **Actor:** build lead, ClaudiniteEngine#65.
+- **Model:** Claude Opus 5.5 (1M context)
+- **Mechanism:** `cn fleet add-packs` reading the catalog per member; its count line names both channels.

@@ -19,3 +19,9 @@
 - **Actor:** build lead, ClaudiniteEngine#61.
 - **Model:** Claude Opus 5.5 (1M context)
 - **Mechanism:** a RULES.md rule naming `cn fleet judge`.
+
+## 2026-10-03 · reworded · the roster artifact holds the last sweep's answer
+- **Reason:** `fleet-roster` now publishes every member's verdict, so a reader asking whether a member is behind has the last daily answer without a sweep of their own.
+- **Actor:** build lead, ClaudiniteEngine#65.
+- **Model:** Claude Opus 5.5 (1M context)
+- **Mechanism:** the RULES.md rule names `.claudinite/fleet/roster.GENERATED.json` beside `cn fleet judge`.

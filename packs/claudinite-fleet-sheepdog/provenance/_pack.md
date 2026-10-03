@@ -134,3 +134,9 @@
 - **Actor:** build lead, ClaudiniteEngine#61.
 - **Model:** Claude Opus 5.5 (1M context)
 - **Mechanism:** the pack manifest. claudinite-fleet-sheepdog 61003.2.
+
+## 2026-10-03 · scope-changed · the roster is published, and add-packs reads each member's channel
+- **Reason:** the fleet dashboard reads freshness from the enforcer's roster artifact instead of pricing members itself, and the fit sweep offers a member what its own update would deliver.
+- **Actor:** build lead, ClaudiniteEngine#65.
+- **Model:** Claude Opus 5.5 (1M context)
+- **Mechanism:** the pack manifest and its first `merge-rules.json`. claudinite-fleet-sheepdog 61003.3.

@@ -1,0 +1,15 @@
+{
+  "detector": {
+    "about": "x",
+    "paths": {
+      "source": "a"
+    },
+    "text": {
+      "source": "b"
+    },
+    "search": [
+      "b"
+    ]
+  },
+  "expect": []
+}

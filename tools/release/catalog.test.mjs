@@ -1,9 +1,12 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { parsePrivateKey, readRoots } from '../sign/sign.mjs';
-import { CATALOG, CATALOG_SIG, renderCatalog, signCatalog, verifyCatalog, writeCatalog } from './catalog.mjs';
+import { CATALOG, CATALOG_SIG, CatalogError, renderCatalog, signCatalog, validateDetector, verifyCatalog, writeCatalog } from './catalog.mjs';
+import { CN, needsCn } from '../test/cn-tasks.mjs';
 import { put, scratch, testChain } from './test-fixture.mjs';
 
 const entry = (version, channel, extra = {}) => ({
@@ -64,4 +67,41 @@ test('the catalog is signed for use packs under its own domain, and written besi
   assert.equal(verifyCatalog(bytes, signed, readRoots(chain.roots), new Date()).keyId, chain.keyId);
   assert.throws(() => verifyCatalog(Buffer.concat([bytes, Buffer.from(' ')]), signed, readRoots(chain.roots), new Date()), /signature does not verify/);
   assert.deepEqual(signCatalog(bytes, key, chain.certificate).certificate, chain.certificate);
+});
+
+// The shared corpus: each a manifest's detector and the sentences the engine's catalog reader
+// prints for it.
+const DETECTORS = join(import.meta.dirname, 'testdata', 'detectors');
+const corpus = () => readdirSync(DETECTORS).filter((f) => f.endsWith('.json')).sort()
+  .map((f) => ({ name: f, ...JSON.parse(readFileSync(join(DETECTORS, f), 'utf8')) }));
+
+test('a fingerprint is judged in the engine catalog reader\'s sentences', () => {
+  const cases = corpus();
+  assert.ok(cases.length >= 20, `only ${cases.length} detector fixtures`);
+  for (const c of cases) assert.deepEqual(validateDetector(c.detector), c.expect, c.name);
+});
+
+test('a string pattern is one the catalog writes as {source, flags}, so it is no problem', () => {
+  assert.deepEqual(validateDetector({ about: 'x', paths: '^a$', text: 'b', search: ['b'] }), []);
+  assert.deepEqual(validateDetector({ about: 'x', paths: '^a$', text: ['b', 4], search: ['b'] }), ['relevanceDetector.text is a RegExp or a list of them']);
+});
+
+test('the engine\'s catalog reader agrees with every fixture', needsCn, () => {
+  const dir = mkdtempSync(join(tmpdir(), 'acme-detector-'));
+  try {
+    for (const c of corpus()) {
+      const file = join(dir, 'world.json');
+      writeFileSync(file, JSON.stringify({ detector: c.detector }));
+      const r = spawnSync(CN, ['fleet', 'decide', 'detector', '--world', file], { encoding: 'utf8' });
+      assert.equal(r.status, 0, `${c.name}: ${r.stderr}`);
+      assert.deepEqual(JSON.parse(r.stdout), c.expect, c.name);
+    }
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('a published version whose fingerprint the reader refuses stops the render, naming the pack and version', () => {
+  const t = tree();
+  put(t, 'acme-pack/61001.1/pack.json', JSON.stringify({ version: '61001.1', minEngineVersion: '61001.1.0', relevanceDetector: { about: 'x', paths: { source: 'a', flags: 'g' } } }));
+  assert.throws(() => renderCatalog(t), (e) => e instanceof CatalogError
+    && e.message === 'acme-pack 61001.1: a relevanceDetector pattern carries the g or y flag, which makes .test stateful');
 });

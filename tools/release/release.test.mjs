@@ -333,3 +333,21 @@ test('plan fails a version to publish whose minEngineVersion publish would refus
   const after = planContent(w);
   assert.equal(after.status, 0, after.out);
 });
+
+test('plan fails a version to publish whose fingerprint the catalog reader refuses, and publish never moves the branch', () => {
+  const w = world();
+  put(w.src, 'packs/acme-pack-two/pack.json', packJson('60101.1', { relevanceDetector: { about: 'x', paths: { source: 'a', flags: 'g' }, extra: 1 } }));
+  commitAll(w.src, 'a sticky fingerprint');
+  const before = planContent(w);
+  assert.equal(before.status, 1, before.out);
+  assert.match(before.stdout, /^::error::acme-pack-two 60101\.1: relevanceDetector declares "extra", which is not one of about, paths, text, search$/m);
+  assert.match(before.stdout, /^::error::acme-pack-two 60101\.1: a relevanceDetector pattern carries the g or y flag, which makes \.test stateful$/m);
+  const refused = publish(w, build(w).archives, testChain(scratch()));
+  assert.equal(refused.status, 1, refused.out);
+  assert.match(refused.out, /^release\.mjs: acme-pack-two 60101\.1: relevanceDetector declares "extra"/m);
+  put(w.src, 'packs/acme-pack-two/pack.json', packJson('60101.1', { relevanceDetector: { about: 'x', paths: { source: 'a' } } }));
+  commitAll(w.src, 'a fingerprint the reader takes');
+  assert.equal(publish(w, build(w).archives, testChain(scratch())).status, 0);
+  const after = planContent(w);
+  assert.equal(after.status, 0, after.out);
+});

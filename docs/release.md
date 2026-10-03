@@ -35,7 +35,9 @@ vendors each pack whose version is already on `vendored` and compares the files 
 unpacked set. A differing, missing or extra path fails the job with
 `published <id> <version> CHANGED: differing: <path>` (or `missing:`, `extra:`); bump that pack's
 `pack.json` version. A version to publish whose `pack.json` the publish job would refuse fails
-too, with the same `::error::` line, such as a two-part `minEngineVersion`. A change only to what
+too, with the same `::error::` line, such as a two-part `minEngineVersion` or a
+`relevanceDetector` the engine's catalog reader would refuse (`<id> <version>: <sentence>`, one line
+per problem). A change only to what
 the vendored set drops (`test/`, `docs/`,
 `provenance/` at the pack root, and `checks/*_test.go`) needs no bump. The publish job's own
 refusal is the backstop after the merge.
@@ -154,7 +156,11 @@ forced pack's questions against it, so nothing needs a clone of the shelf.
 
 - `serial` is the sum of every index's serial, so it advances with any index rewrite.
 - `relevanceDetector` is the manifest's, `null` where the pack has none, with every pattern written
-  as `{source, flags}` (a manifest may spell one as a bare string) and `text` always a list.
+  as `{source, flags}` (a manifest may spell one as a bare string) and `text` always a list. It
+  is validated as the engine's catalog reader validates it, in `cn fleet decide detector`'s
+  sentences (`validateDetector`, held to that command by `tools/release/testdata/detectors/`), and
+  a version whose fingerprint fails stops the render, naming the pack and version, so a bad
+  manifest never reaches the branch.
 - `belongs` is `ruleRoutingGuidance.belongs`; `questions` keeps each adoption question's `id` and
   `prompt`. Either key is absent where the manifest has nothing to say.
 

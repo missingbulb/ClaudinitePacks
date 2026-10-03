@@ -1,0 +1,9 @@
+{
+  "detector": {
+    "about": "a Python project",
+    "paths": {
+      "source": "(^|/)pyproject\\.toml$"
+    }
+  },
+  "expect": []
+}

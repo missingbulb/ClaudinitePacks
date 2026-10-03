@@ -8,7 +8,7 @@ The task is parameterised over the two ways a pack comes to be missing (no param
 
 | run | parameters | first stage |
 |---|---|---|
-| weekly (scheduled) | `--scan-for-needed-packs=true --repos=all-covered-members`, on the `code_work` line in [`task.json`](task.json) | the **scan**: fingerprint every covered member's tree against every pack the shelf's signed `catalog.json` offers on this repo's channel, and *suspect* what its declaration does not carry |
+| weekly (scheduled) | `--scan-for-needed-packs=true --repos=all-covered-members`, on the `code_work` line in [`task.json`](task.json) | the **scan**: fingerprint every covered member's tree against every pack the shelf's signed `catalog.json` offers on **each member's** channel, and *suspect* what its declaration does not carry |
 | forced (hand-created item) | the item's Context, one `--context` line each: `SCAN_FOR_NEEDED_PACKS=false`, `REPOS=Alpha Beta`, `ADD_PACKS=<ids>`, `PACK_CONFIG=<pack>.<key>=<v>`, `PACK_ANSWER=<pack>.<question>=<answer>` (values space-separated — the bag splits on commas) | the **force**: the owner names the packs, repos, config and interview answers — nothing is suspected, because it was decided |
 
 A force **refuses itself entirely** — before any issue is written — on a repo this fleet ignores, a pack id the catalog does not offer, a repo that is not a covered member or is dormant, `all-covered-members` as a target, or **any adoption-interview question the overrides did not answer**: an answer is the owner's to give, never one this task may infer.

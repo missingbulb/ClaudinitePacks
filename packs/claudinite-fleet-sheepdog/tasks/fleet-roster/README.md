@@ -12,12 +12,13 @@ That one roster then answers two questions, each with its own issue family and i
 |---|---|---|---|
 | is this repo a **member**? | adoption | an uncovered repo under the owner | a `fleet-adoption` issue asking for `cn init` |
 | is that membership still **meaning** anything? | freshness | a covered member whose mount has fallen behind | the run report's freshness section |
+| what does every repository read as? | the roster artifact | one `fleet.Verdict` per enumerated repository, the manager's own row with `scope: home` | `.claudinite/fleet/roster.GENERATED.json` in this repo, which a fleet dashboard reads |
 
-It **reports; it does not repair** — `expected_outcome: no_code_changes`. Adoption issues open while a repo is uncovered, close `completed` once covered and `not planned` once excluded.
+It **reports; it does not repair** a member. Adoption issues open while a repo is uncovered, close `completed` once covered and `not planned` once excluded. The one file it writes is its own artifact, in this repo: `cn fleet roster` rewrites `.claudinite/fleet/roster.GENERATED.json` when any verdict moved (a recompute that differs only in its `generated` stamp writes nothing), and the executor lands it under `expected_outcome: amend_existing_or_create_new_pr` with the `fleet-roster-artifact` automerge policy, which names that one path, so one pull request accumulates the day's changes and merges without a person.
 
 ### Why freshness files no issue
 
-A per-member drift issue would be a second surface for a fact the dashboard's Drift tile already answers and recomputes on load, and the staler of the two: only ever as current as the last daily sweep. A member that fell behind hours after a sweep would go unreported while open issues named members that had already caught up.
+A per-member drift issue would be a second surface for a fact the roster artifact already publishes for the dashboard, and an issue would need closing when the member caught up, which the artifact simply restates on the next sweep. A member that fell behind hours after a sweep would go unreported while open issues named members that had already caught up.
 
 Coverage still files, because nothing else answers coverage.
 
@@ -72,11 +73,11 @@ Its *implementation* scans every repo under the owner, but its declaration, sche
 
 A repo whose **declaration** cannot be read or parsed is `unknown` to **both** questions — it is the input they share. A repo whose **freshness read** fails (the scheduler read, npm, a pack index) is `unknown` to the **freshness** question alone: the coverage question already read that declaration successfully and keeps its verdict.
 
-Either kind fails the run: no issue is opened for an unknown repo, no open issue is closed on its behalf, and the sweep exits non-zero with both halves' unknowns named together. The executor treats a non-zero code-work subprocess as a failed task and parks the item; a 403 the token's grant explains prints `claudinite-needs-human: action` and parks it `action`, so an unusable token or scope escalates rather than silently shrinking the fleet. Under a key whose license turns the `fleet` surface off, the command reads no member, says why and parks the same way.
+Either kind fails the run: no issue is opened for an unknown repo, no open issue is closed on its behalf, and the sweep exits non-zero with both halves' unknowns named together. The executor treats a non-zero code-work subprocess as a failed task and parks the item; a 403 the token's grant explains prints `claudinite-needs-human: action`; the executor parks the item `needs-human-failure` and names the `action` kind in the park comment, so an unusable token or scope escalates rather than silently shrinking the fleet. Under a key whose license turns the `fleet` surface off, the command reads no member, says why and parks the same way.
 
 ## Why the declaration reads as it does
 
-`code_work: "cn fleet roster"` with `code_work_required_secrets: ["FLEET_GITHUB_TOKEN"]`: the whole pass is deterministic engine code the executor runs as code-work, and the PAT reaches that one step alone.
+`code_work: "cn fleet roster"` with `code_work_required_secrets: ["FLEET_GITHUB_TOKEN"]`: the whole pass is deterministic engine code the executor runs as code-work, and the PAT reaches that one step alone. The artifact lands through the job's own token: a shell `code_work` has no SDK, so the executor commits the change it leaves in the checkout with the task's trailers, pushes it to the branch it resolved and opens or amends the pull request there. `automerge: ["fleet-roster-artifact"]` is the prediction of that diff, the one roster file added or modified, so a diff reaching any other path parks for a person.
 
 This is an **ordinary pack task**, not a fleet mechanism. Its *implementation* scans every repo under the owner over a PAT, but its declaration, scheduling and lifecycle are exactly those of any pack task: it is active because this repo declares the claudinite-fleet-sheepdog pack, and it runs however this repo's tasks run. The cross-repo reach lives in the implementation, never in the declaration.
 
