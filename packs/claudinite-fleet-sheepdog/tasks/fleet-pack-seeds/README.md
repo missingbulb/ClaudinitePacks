@@ -1,6 +1,6 @@
 # Fleet pack seeds — does every member declare what this fleet standardizes on?
 
-**This task runs no agent.** It is `agent_model: none` with `code-work: node worker.mjs`, so the whole pass is the deterministic [`worker.mjs`](worker.mjs) the executor runs as code-work, which calls its sibling in this folder, the sweep ([`check-fleet-pack-seeds.mjs`](check-fleet-pack-seeds.mjs)). This file is the human-facing record of what that worker does; there is no agent phase.
+**This task runs no agent.** Its `code_work` is `cn fleet pack-seeds`, the engine's sweep (the `fleet/seeds` package), which the executor runs with `FLEET_GITHUB_TOKEN` from the task's declared secrets. This file is the human-facing record of what that command does; there is no agent phase.
 
 ## Why it exists
 
@@ -20,13 +20,14 @@ Every id and every config comes from `packSeeds`. The task and its sweep carry t
 
 ## What it does
 
-Daily, over the `FLEET_GITHUB_TOKEN` PAT: read this repo's `claudinite-fleet-sheepdog` entry config (`owner`, `exclude`, `packSeeds`), enumerate every repo that owner owns, and for each **covered** member read its `.claudinite-settings.json` and check whether each seeded pack's code is on its disk. Then, per seed:
+Daily, over the `FLEET_GITHUB_TOKEN` PAT: read this repo's `claudinite-fleet-sheepdog` entry config (`owner`, `exclude`, `packSeeds`), enumerate every repo that owner owns, and for each **covered** member read its `.claudinite/settings.*` and check whether each seeded pack's code is in its mount. Then, per seed:
 
 | state | what happens |
 |---|---|
 | `set` | the member already declares that pack — read and left alone |
 | `writable` | it does not (or declares it with no config) and the pack's code is present → **one commit** |
 | `not-vendored` | its mount does not carry the pack yet → **waits**, no write |
+| `node` | a Node engine member (a root `.claudinite-settings.json`) → **waits** for its move to `cn`, never written from the fleet |
 | dormant / uncovered / archived / excluded / fork | reported under its own state, never written to |
 
 Every repo under the owner lands in the summary under exactly one state. There is **no issue** in either direction: the finding *is* the fix, and it is applied.
@@ -37,13 +38,13 @@ A member that already declares the pack keeps its entry, and one that already ca
 
 ## The mount gate
 
-A declared pack whose code is **not in the member's mount** is a blocking `config` error there ("declares unknown pack"), and a member's mount carries only what that member declared as of its last update. So a seed is written only where the pack's code is already on disk - `.claudinite/shared/packs/<id>/`'s manifest, falling back to `packs/…` so the canon repo (which mounts nothing and runs its live tree) is swept by the same code path.
+A declared pack whose code is **not in the member's mount** is a blocking `config` error there ("declares unknown pack"), and a member's mount carries only what that member declared as of its last update. So a seed is written only where the pack's code is already on disk - `.claudinite/shared/packs/<id>/`'s manifest.
 
 `not-vendored` is a **wait, not a finding**: members update nightly, and each is written the first run after its own mount carries the pack. For a pack arriving with canon, the migration record that ships it declares it and re-vendors the mount in one transactional commit, so most members never pass through this state at all.
 
 ## The write
 
-One PUT to the member's default branch, guarded by the blob sha the read returned (the file moving under the run is a 409, which fails that member and is retried next run). It deliberately does *not* ride the maintenance-branch lane the update delivers migrations on: there is no code in it, nothing to review, and it is idempotent. It does **reformat** the declaration it edits to canonical 2-space JSON — the shape `--init` writes — because it round-trips the file through JSON instead of editing settings as text.
+One PUT to the member's default branch, guarded by the blob sha the read returned (the file moving under the run is a 409, which fails that member and is retried next run). It deliberately does *not* ride the maintenance-branch lane the update delivers migrations on: there is no code in it, nothing to review, and it is idempotent. It edits the declaration in its own format, YAML, TOML or JSON: the `packs` block is spliced by the same writers `cn adopt` uses, and every byte outside it — comments included — is left as it was.
 
 `expected_outcome: no_code_changes` is therefore not a contradiction: the ceiling describes what a task may do to **its own** repo, and this task opens no PR here at all.
 
@@ -64,10 +65,9 @@ A member whose declaration cannot be read, or written (an unusable token, a prot
 Carried over from the declaration's comments when it became `task.json`.
 
 claudinite-fleet-sheepdog task: fleet-pack-seeds — does every member declare the packs this fleet
-standardizes on? `agent_model: 'none'` with `code_work: 'node worker.mjs'`: the whole
-pass is deterministic code the executor runs as code-work — no agent, no dispatch
-issue. The worker calls its sibling, the sweep (check-fleet-pack-seeds.mjs): read
-every covered member's declaration and add the seeds it lacks.
+standardizes on? `code_work: 'cn fleet pack-seeds'`: the whole pass is deterministic
+code the executor runs as code-work — no agent, no dispatch issue. The sweep reads
+every covered member's declaration and adds the seeds it lacks.
 
 WHY: some packs need a parameter no member can derive, because the answer is a fact
 about the FLEET rather than about that repo. Canon cannot supply it — a bootstrap run

@@ -48,3 +48,9 @@
 - **Actor:** @missingbulb (owner).
 - **Mechanism:** fingerprint-fit.mjs and remote-context.mjs evaluate `relevanceDetector`; the budget still
   turns an over-wide read into undecided.
+
+## 2026-10-03 · ported · the sweep is `cn fleet add-packs`, fingerprinting against the shelf's catalog
+- **Reason:** the worker and its modules imported the Node engine and fingerprinted against a scratch clone of `canonRepo`; `cn` has no canon to clone, so the corpus is the shelf's signed `catalog.json` (every pack's newest version on this repo's channel, with its `relevanceDetector` and its adoption questions), and the work-list protocol is unchanged on the wire.
+- **Actor:** build lead, ClaudiniteEngine#61.
+- **Model:** Claude Opus 5.5 (1M context)
+- **Mechanism:** the task's `code_work`, `cn fleet add-packs --scan-for-needed-packs=true --repos=all-covered-members`, with `FLEET_GITHUB_TOKEN` its declared secret; a forced item's Context overrides each parameter.

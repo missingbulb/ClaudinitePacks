@@ -1,8 +1,9 @@
 name: promote-packs
 
-# Rewrites pack index entries on the `vendored` branch and then on R2: hourly, promotes the canary
-# versions every configured canary workflow passed (tools/release/canaries.json); on dispatch with
-# a pack and version, promotes or revokes that one entry. docs/release.md.
+# Rewrites pack index entries, and the catalog with them, on the `vendored` branch and then on R2:
+# hourly, promotes the canary versions every configured canary workflow passed
+# (tools/release/canaries.json); on dispatch with a pack and version, promotes or revokes that one
+# entry. docs/release.md.
 on:
   schedule:
     - cron: '17 * * * *'

@@ -1,6 +1,6 @@
 ---
 name: configuring-the-fleet
-description: Editing the fleet enforcer's own config entry: the exclude list, packSeeds, and the matching declaration. Loaded for any edit of .claudinite/settings.* in the enforcer repo.
+description: Editing the fleet enforcer's own config entry: the exclude list, packSeeds, and the matching declaration. Loaded for any edit of .claudinite/settings.*, or of a Node enforcer's .claudinite-settings.json, in the enforcer repo.
 metadata:
   body: guidelines
   usage:
@@ -9,6 +9,7 @@ metadata:
     - ".claudinite/settings.yaml"
     - ".claudinite/settings.toml"
     - ".claudinite/settings.json"
+    - ".claudinite-settings.json"
 ---
 
 # Configuring the fleet
@@ -26,7 +27,12 @@ metadata:
   (adding-changing-packseeds)
 
 - **Declaring a pack this fleet also seeds** — write the same config in both places, spelling
-  every default out on both sides rather than leaving one implicit. `seeds-agree` compares them
+  every default out on both sides rather than leaving one implicit. `fleet-pack-seed-agrees` compares them
   literally, because nothing in this pack may know what one pack's absent key means. A pack the
   fleet standardizes on but this repo does not itself run has nothing to agree with, and is fine.
   (declaring-pack-fleet)
+
+- **Reaching for `canonRepo`** — it is no longer read: there is no canon repository to measure
+  against. Freshness is what each member's own update would move it to, and the fit sweep's corpus
+  is the shelf's signed catalog; a `canonRepo` left on the entry is ignored, so take it off rather
+  than tune it. (reaching-canon-repo)

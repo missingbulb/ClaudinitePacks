@@ -19,3 +19,9 @@
 - **Reason:** the Node engine's `.claudinite-settings.json` is not a `cn` member's declaration, which is `.claudinite/settings.{yaml,toml,json}`; the path trigger watched a file the enforcer repo no longer edits once it moves.
 - **Actor:** build lead, ClaudiniteEngine#49 (a `cn` member declares itself in `.claudinite/settings.*`; `cn settings import` reads the Node file once, on move day).
 - **Mechanism:** `force-load-on-file-edits-paths` names the three `.claudinite/settings.*` spellings, and the description says so. claudinite-fleet-sheepdog 61002.2.
+
+## 2026-10-03 · trigger-changed · a Node enforcer's `.claudinite-settings.json` loads the skill again
+- **Reason:** an enforcer still on the Node engine edits its fleet config in `.claudinite-settings.json` until it moves, and the skill's rules apply to that edit as much as to one of `.claudinite/settings.*`.
+- **Actor:** build lead, ClaudiniteEngine#61.
+- **Model:** Claude Opus 5.5 (1M context)
+- **Mechanism:** `force-load-on-file-edits-paths` names the three `.claudinite/settings.*` spellings and the Node file; the skill gains the `reaching-canon-repo` rule. claudinite-fleet-sheepdog 61003.2.

@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
-import { decodeB64, parsePrivateKey } from '../sign/sign.mjs';
+import { decodeB64, DOMAINS, parsePrivateKey, signMessage } from '../sign/sign.mjs';
 import { addVersion, newIndex, serialize, signIndex } from './index.mjs';
 import {
   applyUpload, branchObjects, deriveCredentials, planUpload, R2Error, runUpload, s3Bucket, setup, signV4, verifyCdn,
@@ -266,6 +266,25 @@ test('verify-cdn names the object whose CDN bytes differ, and fails a signature 
   await assert.rejects(verifyCdn(objects, { fetch: missing.fetch, roots: ROOTS, now: NOW, log: () => {} }), /packs\/acme-pack\/60101\.1\.tar\.gz.*404/);
   const manifestSigned = branch(['60101.1'], { key: parsePrivateKey(SIGN.subjects.manifest.seed), cert: SIGN.certificates.manifest });
   await assert.rejects(verifyCdn(manifestSigned, { fetch: fakeCdn(manifestSigned).fetch, roots: ROOTS, now: NOW, log: () => {} }), /acme-pack\/index\.json.*use "manifest"/);
+});
+
+// The catalog pair rides the upload as an index pair whose signature is read under its own
+// domain: an object carries the domain its sig verifies under.
+test('verify-cdn verifies a pair under the domain its objects name', async () => {
+  const bytes = Buffer.from('{"v":1,"serial":3,"packs":[]}\n');
+  const pair = (domain) => [
+    { id: 'catalog.json', kind: 'index', key: 'packs/catalog.json', serial: 3, body: bytes, domain: DOMAINS.packCatalog },
+    { id: 'catalog.json', kind: 'sig', key: 'packs/catalog.sig.json', serial: 3, domain: DOMAINS.packCatalog,
+      body: Buffer.from(JSON.stringify({ certificate: SIGN.certificates.packs, signature: signMessage(domain, PACKS_KEY, bytes) })) },
+  ];
+  const good = pair(DOMAINS.packCatalog);
+  const lines = [];
+  await verifyCdn(good, { fetch: fakeCdn(good).fetch, roots: ROOTS, now: NOW, log: (l) => lines.push(l) });
+  assert.deepEqual(lines, ['verify-cdn catalog.json ok']);
+  const indexSigned = pair(DOMAINS.packIndex);
+  await assert.rejects(verifyCdn(indexSigned, { fetch: fakeCdn(indexSigned).fetch, roots: ROOTS, now: NOW, log: () => {} }), /packs\/catalog\.json: signature does not verify/);
+  const actions = await planUpload(good, fakeBucket());
+  assert.deepEqual(keys(actions), ['packs/catalog.json', 'packs/catalog.sig.json']);
 });
 
 // A Cloudflare API double: state says what already exists; every call is recorded.

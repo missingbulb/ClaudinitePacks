@@ -6,6 +6,7 @@ import { execFileSync } from 'node:child_process';
 import { mkdirSync, mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { CATALOG, CATALOG_SIG, verifyCatalog } from './catalog.mjs';
 import { IndexError, readIndex, verifyIndex } from './index.mjs';
 
 export const BRANCH = 'vendored';
@@ -78,9 +79,18 @@ export function openBranch(repo, remote) {
       return tip;
     },
     show(path) { return showFile(repo, tip, path); },
-    // Verifies each pack's index at the tip against roots and its expected serial; throws before
-    // anything is pushed.
-    selfCheck(expected, roots, now) {
+    // Verifies each pack's index at the tip against roots and its expected serial, and the
+    // catalog against roots and the serial of the last write; throws before anything is pushed.
+    selfCheck(expected, roots, now, catalogSerial = null) {
+      if (catalogSerial !== null) {
+        try {
+          const bytes = Buffer.from(this.show(CATALOG));
+          verifyCatalog(bytes, JSON.parse(this.show(CATALOG_SIG).toString('utf8')), roots, now);
+          if (JSON.parse(bytes.toString('utf8')).serial !== catalogSerial) throw new IndexError(`serial is not ${catalogSerial}`);
+        } catch (e) {
+          throw new ReleaseError(`self-check failed for ${CATALOG}: ${e.message}; refusing to push`);
+        }
+      }
       for (const { id, serial } of expected) {
         try {
           const bytes = Buffer.from(this.show(`${id}/index.json`));

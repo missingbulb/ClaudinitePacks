@@ -5,6 +5,7 @@ import { writeFileSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { gunzipSync, gzipSync } from 'node:zlib';
 import { readRoots } from '../sign/sign.mjs';
+import { verifyCatalog } from './catalog.mjs';
 import { readIndex, verifyIndex } from './index.mjs';
 import {
   build, commitAll, DEV_ROOTS, devCertInstant, git, packJson, publish, put, REPO_ROOT, run, scratch, sha256, show, testChain, vendoredLog, world,
@@ -47,6 +48,11 @@ test('first run publishes every pack: unpacked set, archive, signed index, one c
     assert.equal(diff.status, 0, diff.stdout);
   }
   assert.ok(readFileSync(join(clone, 'acme-pack/60101.1/skills/acme-skill/SKILL.md')), 'a file the pack .gitignore names still lands');
+  const catalog = readFileSync(join(clone, 'catalog.json'));
+  assert.equal(verifyCatalog(catalog, JSON.parse(readFileSync(join(clone, 'catalog.sig.json'), 'utf8')), readRoots(chain.roots), new Date()).keyId, chain.keyId);
+  assert.deepEqual(JSON.parse(catalog.toString('utf8')).packs.map((e) => `${e.id} ${e.version} ${e.channel}`), ['acme-pack 60101.1 canary', 'acme-pack-two 60101.1 canary'],
+    'the catalog rides each release commit, so the branch never holds an index it does not cover');
+  assert.equal(JSON.parse(catalog.toString('utf8')).serial, 2);
 
   const again = publish(w, b.archives, chain);
   assert.equal(again.status, 0, again.out);
@@ -196,8 +202,10 @@ test('publish no longer lists R2 objects; upload --r2 dry-run lists every object
     assert.ok(u.out.includes(`would PUT packs/${id}/index.json\n`));
     assert.ok(u.out.includes(`would PUT packs/${id}/index.sig.json\n`));
   }
-  assert.equal(u.out.match(/^would PUT /gm).length, 6);
-  assert.match(readFileSync(summary, 'utf8'), /6 object\(s\) would be PUT/);
+  assert.ok(u.out.includes('would PUT packs/catalog.json\n'), u.out);
+  assert.ok(u.out.includes('would PUT packs/catalog.sig.json\n'));
+  assert.equal(u.out.match(/^would PUT /gm).length, 8);
+  assert.match(readFileSync(summary, 'utf8'), /8 object\(s\) would be PUT/);
 });
 
 test('upload to a bucket without CLOUDFLARE_API_TOKEN or CLOUDFLARE_ACCOUNT_ID fails with an error annotation', () => {

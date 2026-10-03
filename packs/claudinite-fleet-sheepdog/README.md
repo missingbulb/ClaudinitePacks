@@ -13,8 +13,8 @@ member executes:
 | sweep | task | asks |
 |---|---|---|
 | `cn fleet roster` | [fleet-roster](tasks/fleet-roster/README.md) (daily) | is this repo a **member**, and is that membership still **meaning** anything? → adoption issues + the run report's freshness section |
-| [scan-for-needed-packs.mjs](tasks/fleet-add-missing-packs/scan-for-needed-packs.mjs) + [force-add-packs.mjs](tasks/fleet-add-missing-packs/force-add-packs.mjs) | [fleet-add-missing-packs](tasks/fleet-add-missing-packs/README.md) (weekly, and forceable) | which packs is a member missing — the ones its **shape** suspects, or the ones the owner named? → a work-list issue *in* each member + that member's scheduler fired; the member's own agent adopts |
-| [check-fleet-pack-seeds.mjs](tasks/fleet-pack-seeds/check-fleet-pack-seeds.mjs) | [fleet-pack-seeds](tasks/fleet-pack-seeds/README.md) (daily) | does a member declare what this fleet **standardizes on**? → the declaration, written |
+| `cn fleet add-packs` | [fleet-add-missing-packs](tasks/fleet-add-missing-packs/README.md) (weekly, and forceable) | which packs is a member missing — the ones its **shape** suspects, or the ones the owner named? → a work-list issue *in* each member + that member's scheduler fired; the member's own agent adopts |
+| `cn fleet pack-seeds` | [fleet-pack-seeds](tasks/fleet-pack-seeds/README.md) (daily) | does a member declare what this fleet **standardizes on**? → the declaration, written |
 | `cn fleet update` | [fleet-update](tasks/fleet-update/README.md) (`manual` — forced runs only) | make every member update **now**, then follow each to the published engine and pack versions → an outcome table, not a dispatch count |
 
 **The roster carries two questions** because they are asked of the same repos from the same walk.
@@ -45,17 +45,19 @@ already carries a config for it, keeps both. The fleet's list is a floor, and a 
 a decision the sweep cannot second-guess.
 
 That is also why the enforcer states a seeded pack's config **twice** — in `packSeeds`, and in its
-own entry for that pack, and why `seeds-agree` holds the two to each other.
+own entry for that pack, and why the `fleet-pack-seed-agrees` check holds the two to each other.
 
 A pack arriving *with* canon reaches the fleet that already exists through a **migration record**
 instead — a `declarePacks` op applied by each member's own update run, in the same transactional
 commit that vendors the pack's code. The sweep is the **standing** half: a migration record is dated
 and retires, while the sweep keeps converging every member the fleet acquires after it is gone.
 
-The fit sweep fingerprints against a scratch clone of `canonRepo`, never against this repo's own
-mount — the mount carries only the packs the enforcer declares, and sweeping against it would report
-every member as fitted while testing almost nothing. Its report names the corpus it measured against,
-so a shrunken denominator is visible rather than silent.
+The fit sweep fingerprints against the shelf's signed `catalog.json` — every pack the shelf offers on
+this repo's channel, with its fingerprint and its adoption questions — never against this repo's own
+mount, which carries only the packs the enforcer declares, so sweeping against it would report every
+member as fitted while testing almost nothing. Its report names how many packs it measured against,
+and a catalog smaller than five packs is refused, so a shrunken denominator is visible rather than
+silent.
 
 **The fit sweep's agent stage splits the way every one here does** — everything decidable in code
 stays in the agentless `code_work`, and the agent is reached only for the part that is genuinely a
@@ -102,7 +104,7 @@ activity that day; fleet-update reports every repo it did *not* dispatch, with t
 sweep answers those over one tree call per member; one that reads file *contents* is resolved by a
 bounded prefetch of exactly the files it asked for, and one that greps every source file exceeds that
 budget and is reported **undecided**. The member's own agent — which has the repo checked out —
-settles those exactly ([fingerprint-fit.mjs](tasks/fleet-add-missing-packs/fingerprint-fit.mjs)). A
+settles those exactly, by running each pack's fingerprint over the checkout. A
 truncated tree listing makes every non-match on that repo undecided for the same reason: "we did not
 look" and "we looked and it isn't there" are different facts, and only one is safe to act on.
 
@@ -136,9 +138,9 @@ The follow polls a real terminal condition:
 each member leaves the loop the moment it reads current, so an already-current fleet finishes
 on the first pass in seconds, and the lever stays an ordinary queue task.
 
-The roster and the lever are engine code, `cn fleet roster` and `cn fleet update`, each its task's
-`code_work`. The engine holds what every sweep shares: the cross-repo REST reads and the one call that
-fires a member's scheduler, the one reader of this pack's entry `config`, and the one statement of what
+Every sweep is engine code — `cn fleet roster`, `cn fleet add-packs`, `cn fleet pack-seeds` and
+`cn fleet update` — each its task's `code_work`. The engine holds what every sweep shares: the cross-repo REST reads, the one call that
+fires a member's scheduler, the one write into a member's tree (the seed's sha-guarded Contents PUT), the one reader of this pack's entry `config`, and the one statement of what
 `FLEET_GITHUB_TOKEN` must be granted (`cn fleet token`) — every "token is not set" message, a `403`'s
 hint and this pack's adoption handover step are rendered from that table, and the pack's test holds the
 handover step to it, so no sweep ever states a subset of its own. `cn fleet judge <owner/name>` answers
@@ -209,18 +211,19 @@ asks the owner for it. A workflow that exists only to hold a secret is redundant
 | Granting or repairing FLEETGITHUBTOKEN | high | correctness | prose: <100 words |
 | A sweep reporting 403 or no-permission | medium | complexity | prose: <50 words |
 
-The config rules (`exclude`, `packSeeds`, the declaration a seed must agree with) are the
+The config rules (`exclude`, `packSeeds`, the declaration a seed must agree with, `canonRepo` no
+longer read) are the
 [`configuring-the-fleet`](skills/configuring-the-fleet/SKILL.md) skill, forced for
-`.claudinite-settings.json`.
+`.claudinite/settings.*` and a Node enforcer's `.claudinite-settings.json`.
 
 ## Skills
 
 | Skill | Trigger |
 |---|---|
-| [`configuring-the-fleet`](skills/configuring-the-fleet/SKILL.md) | any edit of `.claudinite-settings.json` in the fleet-enforcer repo — held by the guard until loaded |
+| [`configuring-the-fleet`](skills/configuring-the-fleet/SKILL.md) | any edit of `.claudinite/settings.*`, or of a Node enforcer's `.claudinite-settings.json`, in the fleet-enforcer repo — held by the guard until loaded |
 
 ## Checks
 
 | Check | Severity | Reason | Enforcement |
 |---|---|---|---|
-| `fleet-pack-seed-agrees` | medium | correctness | check: blocking |
+| `fleet-pack-seed-agrees` | medium | correctness | engine built-in, blocking, active on declaration |

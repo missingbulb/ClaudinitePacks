@@ -20,7 +20,7 @@ An empty work list never reaches you: an item exists only because an issue was m
 A fingerprint **suspects**; it does not prove. Per suspected pack:
 
 - Read that pack's `README.md` and its `ruleRoutingGuidance` (in this repo's mount, `.claudinite/shared/packs/<id>/`). Does this repo's actual use match what the pack owns, or did the marker merely happen to be present? A `package.json` in a repo that ships no JavaScript is a fixture, not a Node project.
-- Where the issue lists fingerprints under **Not decided from outside**, settle them by reading this checkout, which the fleet's REST sweep did not have.
+- The fingerprints the fleet could not decide are listed under *Not decided from outside*; settle them against this checkout, which the fleet's REST sweep did not have, by running each pack's fingerprint over it.
 - A pack you judge **not** wanted is a real answer: say which and why in a comment on the issue. If every suspected pack is declined, close the issue `not planned` — a standing answer the weekly scan honours rather than re-suggesting.
 
 A suspected pack that asks interview questions the repo cannot answer from its own contents follows adopt-pack's unattended rule: never guess, finish what the question does not gate, and hand off in the open.
