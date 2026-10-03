@@ -1,6 +1,6 @@
 {
   "v": 1,
-  "serial": 90,
+  "serial": 91,
   "packs": [
     {
       "id": "android",
@@ -312,9 +312,9 @@
     },
     {
       "id": "headless-browser",
-      "version": "60928.1",
+      "version": "61003.1",
       "channel": "canary",
-      "minEngineVersion": "60928.1",
+      "minEngineVersion": "61001.1.0",
       "requires": [],
       "relevanceDetector": {
         "about": "a browser-automation driver (playwright, puppeteer, pyppeteer) declared in a near-root package.json, requirements*.txt or pyproject.toml",
