@@ -77,3 +77,13 @@ test('the pack-index domain is pinned and separated from the manifest domain', (
   assert.equal(verifyMessage(signed, message, rootKey('root'), 'packs', DOMAINS.packIndex, now).use, 'packs');
   assert.throws(() => verifyMessage(signed, message, rootKey('root'), 'packs', DOMAINS.manifest, now), /signature does not verify/);
 });
+
+test('the pack-catalog domain is pinned and separated from the pack-index domain', () => {
+  assert.equal(DOMAINS.packCatalog, 'claudinite-packcatalog-v1\n');
+  const key = parsePrivateKey(V.subjects.packs.seed);
+  const message = Buffer.from('{"v":1,"serial":1,"packs":[]}\n');
+  const signed = { certificate: V.certificates.packs, signature: signMessage(DOMAINS.packCatalog, key, message) };
+  const now = new Date('2026-01-31T00:00:00Z');
+  assert.equal(verifyMessage(signed, message, rootKey('root'), 'packs', DOMAINS.packCatalog, now).use, 'packs');
+  assert.throws(() => verifyMessage(signed, message, rootKey('root'), 'packs', DOMAINS.packIndex, now), /signature does not verify/);
+});

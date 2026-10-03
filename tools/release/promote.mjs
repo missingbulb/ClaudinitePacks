@@ -6,6 +6,7 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { BRANCH, openBranch, ReleaseError } from './branch.mjs';
+import { CATALOG, CATALOG_SIG, writeCatalog } from './catalog.mjs';
 import { assertSerialAdvances, readIndex, serialize, setChannel, setRevoked, signIndex } from './index.mjs';
 
 export const NO_WORKFLOW_VERDICT = 'no canary workflow is configured; promotion needs a dispatch';
@@ -143,14 +144,15 @@ export function rewriteBranch({ repo, remote, roots, key, certificate, changes, 
       const bytes = serialize(next);
       writeFileSync(file, bytes);
       writeFileSync(join(branch.tree, change.pack, 'index.sig.json'), JSON.stringify(signIndex(bytes, key, certificate), null, 2) + '\n');
+      const catalogSerial = writeCatalog(branch.tree, key, certificate);
       const message = `${VERB[change.action]} ${change.pack} ${change.version}${change.by ? ` (dispatched by ${change.by})` : ''}`;
-      branch.writeBranchCommit([change.pack], message);
-      written.push({ ...change, id: change.pack, serial: next.serial, message });
+      branch.writeBranchCommit([change.pack, CATALOG, CATALOG_SIG], message);
+      written.push({ ...change, id: change.pack, serial: next.serial, catalogSerial, message });
       log(message);
     }
     if (!written.length) return written;
     const last = new Map(written.map((w) => [w.id, w.serial]));
-    branch.selfCheck([...last].map(([id, serial]) => ({ id, serial })), roots, now);
+    branch.selfCheck([...last].map(([id, serial]) => ({ id, serial })), roots, now, written.at(-1).catalogSerial);
     beforePush?.();
     branch.push();
     log(`pushed ${written.length} commit(s) to ${BRANCH}`);

@@ -128,3 +128,9 @@
 - **Actor:** build lead, ClaudiniteEngine#61.
 - **Model:** Claude Opus 5.5 (1M context)
 - **Mechanism:** the pack manifest. claudinite-fleet-sheepdog 61003.1.
+
+## 2026-10-03 · scope-changed · add-packs and pack-seeds are engine commands, the seed check a built-in
+- **Reason:** the two write sweeps' workers and modules and the `seeds-agree` world rule imported the Node engine; `cn` holds them as `cn fleet add-packs`, `cn fleet pack-seeds` and the `fleet-pack-seed-agrees` built-in, and the fit sweep's corpus is the shelf's signed catalog rather than a clone of canon. The pack keeps its declarations, rules and skill.
+- **Actor:** build lead, ClaudiniteEngine#61.
+- **Model:** Claude Opus 5.5 (1M context)
+- **Mechanism:** the pack manifest. claudinite-fleet-sheepdog 61003.2.

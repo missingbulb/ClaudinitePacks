@@ -51,3 +51,9 @@
 - **Reason:** `fingerprint-fit.mjs` lived in a canon clone the `cn` flow never fetches, and `cn` carries no fingerprint.
 - **Actor:** build lead, ClaudiniteEngine#55.
 - **Model:** Claude Opus 5.5 (1M context)
+
+## 2026-10-03 · reworded · the protocol is pinned to `cn fleet protocol`; undecided fingerprints are settled against the checkout
+- **Reason:** the fleet half of the protocol moved into the engine (`cn fleet add-packs`), so the byte-identity guard against the sheepdog's copy had nothing left to compare; the member's copy is now held to what `cn fleet protocol --json` prints. The fleet's suspected list again names the fingerprints it could not decide, under *Not decided from outside*, and the agent settles them by running each over this checkout.
+- **Actor:** build lead, ClaudiniteEngine#61.
+- **Model:** Claude Opus 5.5 (1M context)
+- **Mechanism:** the task's protocol test, which runs `cn fleet protocol --json`; the task.md line on undecided fingerprints. claudinite-lifecycle 61003.2.

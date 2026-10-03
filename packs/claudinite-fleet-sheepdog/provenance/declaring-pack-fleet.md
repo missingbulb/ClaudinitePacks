@@ -14,3 +14,9 @@
 - **Mechanism:** a guideline of the `configuring-the-fleet` skill, which is force-loaded on any edit
   of `.claudinite-settings.json`; the rule's own text is unchanged.
 - **Landed:** #1667 (Closes #1662) · pack version 60903.2.
+
+## 2026-10-03 · reworded · the check is named by its id, `fleet-pack-seed-agrees`
+- **Reason:** `seeds-agree` was the Node world rule's file name, which goes with the rule; the engine's built-in carries the id.
+- **Actor:** build lead, ClaudiniteEngine#61.
+- **Model:** Claude Opus 5.5 (1M context)
+- **Mechanism:** the skill guideline's text; what it asks is unchanged.

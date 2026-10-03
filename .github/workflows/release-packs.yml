@@ -1,8 +1,9 @@
 name: release-packs
 
 # Publishes every pack version not yet on the `vendored` branch: build vendors the archives with
-# no secrets, publish checks them by SHA-256, signs each pack index and pushes, and upload makes
-# the R2 bucket behind packs.claudinite.com hold what the branch holds. docs/release.md.
+# no secrets, publish checks them by SHA-256, signs each pack index and the shelf's catalog and
+# pushes, and upload makes the R2 bucket behind packs.claudinite.com hold what the branch holds.
+# docs/release.md.
 on:
   push:
     branches: [main]

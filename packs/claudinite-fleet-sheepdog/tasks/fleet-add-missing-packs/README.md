@@ -1,27 +1,27 @@
 # Fleet: get every member declaring the packs it is missing
 
-**This task runs no agent.** It is `agent_model: none` with a parameterised `code_work` ([`worker.mjs`](worker.mjs)), so the whole pass is deterministic code the executor runs as code-work. This file is the human-facing record of what that code does; there is no agent phase on the enforcer side. The *agentic* half of the job belongs to each member's own **adopt-requested-packs** task (claudinite-growth) — see "The fan-out model" below.
+**This task runs no agent.** Its `code_work` is `cn fleet add-packs`, the engine's sweep (the `fleet/addpacks` package), which the executor runs with `FLEET_GITHUB_TOKEN` from the task's declared secrets. This file is the human-facing record of what that command does; there is no agent phase on the enforcer side. The *agentic* half of the job belongs to each member's own **adopt-requested-packs** task (claudinite-growth) — see "The fan-out model" below.
 
 ## Two first stages, one parameter set
 
-The task is parameterised over the two ways a pack comes to be missing ([`params.mjs`](params.mjs) — no parameter has a default; both call sites say everything):
+The task is parameterised over the two ways a pack comes to be missing (no parameter has a default; both call sites say everything):
 
 | run | parameters | first stage |
 |---|---|---|
-| weekly (scheduled) | `--scan-for-needed-packs=true --repos=all-covered-members`, on the `code_work` line in [`task.json`](task.json) | the **scan** ([`scan-for-needed-packs.mjs`](scan-for-needed-packs.mjs)): fingerprint every covered member's tree against the canon corpus and *suspect* what its declaration does not carry |
-| forced (hand-created item) | the item's Context, one `--context` line each: `SCAN_FOR_NEEDED_PACKS=false`, `REPOS=Alpha Beta`, `ADD_PACKS=<ids>`, `PACK_CONFIG=<pack>.<key>=<v>`, `PACK_ANSWER=<pack>.<question>=<answer>` (values space-separated — the bag splits on commas) | the **force** ([`force-add-packs.mjs`](force-add-packs.mjs)): the owner names the packs, repos, config and interview answers — nothing is suspected, because it was decided |
+| weekly (scheduled) | `--scan-for-needed-packs=true --repos=all-covered-members`, on the `code_work` line in [`task.json`](task.json) | the **scan**: fingerprint every covered member's tree against every pack the shelf's signed `catalog.json` offers on this repo's channel, and *suspect* what its declaration does not carry |
+| forced (hand-created item) | the item's Context, one `--context` line each: `SCAN_FOR_NEEDED_PACKS=false`, `REPOS=Alpha Beta`, `ADD_PACKS=<ids>`, `PACK_CONFIG=<pack>.<key>=<v>`, `PACK_ANSWER=<pack>.<question>=<answer>` (values space-separated — the bag splits on commas) | the **force**: the owner names the packs, repos, config and interview answers — nothing is suspected, because it was decided |
 
-A force **refuses itself entirely** — before any issue is written — on an unknown pack id, a repo that is not a covered member or is dormant, `all-covered-members` as a target, or **any adoption-interview question the overrides did not answer**: an answer is the owner's to give, never one this task may infer.
+A force **refuses itself entirely** — before any issue is written — on a repo this fleet ignores, a pack id the catalog does not offer, a repo that is not a covered member or is dormant, `all-covered-members` as a target, or **any adoption-interview question the overrides did not answer**: an answer is the owner's to give, never one this task may infer.
 
 ## The fan-out model
 
-Both stages end the same way, per member with work ([`protocol.mjs`](protocol.mjs)):
+Both stages end the same way, per member with work (the protocol `cn fleet protocol` prints, which the member's half holds its own copy to):
 
 1. **Converge one work-list issue in that member** under the `add-packs` label — `Add packs: requested for this repo` (a decision, carrying the exact declaration entries as JSON, config and answers included) or `Add packs: suspected from this repo’s shape` (a suspicion, carrying the evidence and the fingerprints the REST sweep could not decide).
 2. **Mark it** `task:origin:ad-hoc`, with `Task: claudinite-lifecycle/adopt-requested-packs` in the body. The issue then *is* that member's work item: its own scheduler run adopts it, its own executor picks it up. A second work list in the same member names the first in `Blocked-by:`, so the two run one after the other rather than putting two sessions on one declaration.
 3. **Nudge it** by dispatching that member's scheduler — an ordinary run, no `wake`. This is latency only: a member that refuses the dispatch adopts the mark on its own next hour.
 
-The member's agent reads the issue it is running on, its own executor confirms/adopts with the repo checked out, and one reviewed PR lands *there*. Nothing here writes to any member's tree, and no agent anywhere needs cross-repo access — the one fleet credential is `FLEET_GITHUB_TOKEN`, granted as [`fleet-token.mjs`](../../fleet-token.mjs) states it.
+The member's agent reads the issue it is running on, its own executor confirms/adopts with the repo checked out, and one reviewed PR lands *there*. Nothing here writes to any member's tree, and no agent anywhere needs cross-repo access — the one fleet credential is `FLEET_GITHUB_TOKEN`, granted as `cn fleet token` states it.
 
 ## Convergence
 
@@ -59,11 +59,8 @@ rather than split in two, because they differ only in how the work list is made:
   ADD_PACKS=<ids>              the owner already decided: REQUEST these packs,
                                with this config and these interview answers, in
                                these named repos. What a FORCED run sends, through
-                               the item's Context — see worker.mjs for
-                               the full override set and params.mjs for why
-                               neither parameter has a default.
-Both converge the same protocol issues (protocol.mjs) and fire the same
-member-side task.
+                               the item's Context.
+Both converge the same protocol issues and fire the same member-side task.
 
 WHERE THE FLEET REACH COMES FROM: FLEET_GITHUB_TOKEN, the account-spanning PAT —
 with Actions WRITE, because firing another repo's scheduler is an Actions write.
@@ -80,9 +77,9 @@ A hand-created item runs against this too, and it says yes — so what makes a
 forced run different is its Context, not a bypass: the parameters there are
 what run this task as something other than its weekly self.
 The weekly run's PARAMETERS, sent explicitly on the command line rather than
-defaulted inside the worker (params.mjs): the declaration is where a reader looks
+defaulted inside the sweep: the declaration is where a reader looks
 first to learn what the cadence does, so what the cadence does is written here.
-`all-covered-members` is a keyword the caller sends, not a fallback the worker
+`all-covered-members` is a keyword the caller sends, not a fallback the sweep
 assumes — no call site can reach the whole fleet by omission.
 One tree listing per member plus a bounded handful of content reads per
 content-reading fingerprint, plus the per-member issue convergence and one

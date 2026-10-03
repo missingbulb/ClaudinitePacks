@@ -63,3 +63,9 @@
 - **Actor:** @missingbulb (owner), asking for pack.json manifests.
 - **Mechanism:** the worker's vendored probe asks for pack.json and pack.mjs, mount and canon root
   alike.
+
+## 2026-10-03 · ported · the sweep is `cn fleet pack-seeds`, splicing the member's own format
+- **Reason:** the worker imported the Node engine and round-tripped `.claudinite-settings.json` through JSON; a `cn` member declares itself in `.claudinite/settings.*`, so the seed is spliced into its `packs` block in that file's own format and nothing outside the block moves. A Node member is never written from the fleet: it waits for its move.
+- **Actor:** build lead, ClaudiniteEngine#61.
+- **Model:** Claude Opus 5.5 (1M context)
+- **Mechanism:** the task's `code_work`, `cn fleet pack-seeds`, one sha-guarded Contents PUT per member written; the canon-root fallback of the vendored probe goes with canon.

@@ -10,6 +10,7 @@
 //   node tools/sign/sign.mjs keyid <key.pub>
 //   node tools/sign/sign.mjs verify-cert --roots <dir> [--use packs] <cert.json>
 //   node tools/sign/sign.mjs verify-index --roots <dir> <index.json> <index.sig.json>
+//   node tools/sign/sign.mjs verify-catalog --roots <dir> <catalog.json> <catalog.sig.json>
 //
 // A roots directory holds `*.pub` key files. Imports nothing outside Node's standard library.
 import { createHash, createPrivateKey, createPublicKey, sign, verify } from 'node:crypto';
@@ -21,6 +22,7 @@ export const DOMAINS = Object.freeze({
   certificate: 'claudinite-cert-v1\n',
   manifest: 'claudinite-manifest-v1\n',
   packIndex: 'claudinite-packindex-v1\n',
+  packCatalog: 'claudinite-packcatalog-v1\n',
 });
 
 const MAX_VALIDITY_DAYS = { manifest: 365, packs: 90, license: 90, 'license-public': 90 };
@@ -143,7 +145,7 @@ function main(argv) {
     console.log(keyId(parsePublicKey(readFileSync(args[0], 'utf8'))));
     return 0;
   }
-  if (cmd === 'verify-cert' || cmd === 'verify-index') {
+  if (cmd === 'verify-cert' || cmd === 'verify-index' || cmd === 'verify-catalog') {
     const rootsDir = takeFlag(args, '--roots');
     const use = takeFlag(args, '--use') ?? 'packs';
     if (!rootsDir) throw new SignError(`${cmd} needs --roots <dir>`);
@@ -158,8 +160,13 @@ function main(argv) {
       console.log(`valid ${args[0]} signed by ${b.keyId}`);
       return 0;
     }
+    if (cmd === 'verify-catalog' && args.length === 2) {
+      const b = verifyMessage(readJson(args[1]), readFileSync(args[0]), roots, 'packs', DOMAINS.packCatalog, new Date());
+      console.log(`valid ${args[0]} signed by ${b.keyId}`);
+      return 0;
+    }
   }
-  console.error('usage: sign.mjs keyid <key.pub> | verify-cert --roots <dir> [--use packs] <cert.json> | verify-index --roots <dir> <index.json> <index.sig.json>');
+  console.error('usage: sign.mjs keyid <key.pub> | verify-cert --roots <dir> [--use packs] <cert.json> | verify-index --roots <dir> <index.json> <index.sig.json> | verify-catalog --roots <dir> <catalog.json> <catalog.sig.json>');
   return 2;
 }
 

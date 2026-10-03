@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { writeFileSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { readRoots, parsePrivateKey } from '../sign/sign.mjs';
+import { verifyCatalog } from './catalog.mjs';
 import { readIndex, verifyIndex } from './index.mjs';
 import { choosePromotions, githubReader, readEvidence, rewriteBranch } from './promote.mjs';
 import { branchObjects, planUpload } from './r2.mjs';
@@ -21,7 +22,10 @@ function released() {
 
 const signing = (chain) => ({ CN_PACKS_KEY: chain.key, CN_PACKS_CERT: chain.cert });
 const cli = (w, chain, args) => run([...args, '--repo', w.src, '--remote', w.remote, '--roots', chain.roots], signing(chain));
-const otherBlobs = (w, except) => git(w.remote, 'ls-tree', '-r', 'vendored').split('\n').filter((l) => !l.endsWith(`\t${except}/index.json`) && !l.endsWith(`\t${except}/index.sig.json`));
+// The catalog pair is rewritten with every index it covers, so it is never one of the others.
+const otherBlobs = (w, except) => git(w.remote, 'ls-tree', '-r', 'vendored').split('\n')
+  .filter((l) => ![`${except}/index.json`, `${except}/index.sig.json`, 'catalog.json', 'catalog.sig.json'].some((p) => l.endsWith(`\t${p}`)));
+const catalogOf = (w) => JSON.parse(show(w, 'catalog.json').toString('utf8'));
 
 const CONFIG = {
   canaries: [
@@ -156,6 +160,8 @@ test('a dispatched promote promotes one entry regardless of evidence and names w
   assert.equal(ix.serial, 3);
   assert.deepEqual(ix.versions.map((e) => e.channel), ['stable', 'canary']);
   assert.deepEqual(otherBlobs(w, 'acme-pack'), before);
+  verifyCatalog(show(w, 'catalog.json'), JSON.parse(show(w, 'catalog.sig.json').toString('utf8')), readRoots(chain.roots), new Date());
+  assert.deepEqual(catalogOf(w).packs.filter((e) => e.id === 'acme-pack').map((e) => `${e.version} ${e.channel}`), ['60101.1 stable', '60101.2 canary']);
 });
 
 test('a dispatched promote refuses a version not in the index, already stable, or revoked; the branch is untouched', () => {
@@ -181,6 +187,7 @@ test('revoke sets revoked with its own commit and refuses an already-revoked ver
   const ix = readIndex(show(w, 'acme-pack/index.json'));
   assert.equal(ix.serial, 3);
   assert.deepEqual(ix.versions.map((e) => e.revoked), [false, true]);
+  assert.deepEqual(catalogOf(w).packs.filter((e) => e.id === 'acme-pack').map((e) => `${e.version} ${e.channel}`), ['60101.1 canary'], 'a revoked version leaves the catalog');
   const again = cli(w, chain, ['revoke', '--pack', 'acme-pack', '--version', '60101.2', '--by', 'acme-user']);
   assert.notEqual(again.status, 0);
   assert.match(again.out, /already revoked/);

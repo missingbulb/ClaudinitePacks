@@ -176,7 +176,8 @@ const FIRST_WAIT_MS = 5e3;
 const LONGEST_WAIT_MS = 60e3;
 
 // Reads every object back through the CDN, the index pair with ?s=<serial> so no cache rule can
-// answer with the previous serial, and verifies each index's signature. With retry (the run that
+// answer with the previous serial, and verifies each index's signature, under the domain its
+// object names (the catalog's) or the pack index's. With retry (the run that
 // attached the custom domain, which answers 403 or 404 until Cloudflare has provisioned it, and
 // whose name may not resolve yet, so fetch rejects), a 403, a 404 or a rejected fetch is retried
 // with doubling waits until retry.windowMs has passed since the first read; without it, every
@@ -215,13 +216,14 @@ export async function verifyCdn(objects, { fetch = globalThis.fetch, base = `htt
     if (Buffer.compare(got, o.body) !== 0) problems.push(`CDN ${o.key} differs from the branch: sha256 ${sha256(got)}, branch ${sha256(o.body)}`);
     if (!byPack.has(o.id)) byPack.set(o.id, {});
     byPack.get(o.id)[o.kind] = got;
+    if (o.kind === 'index') Object.assign(byPack.get(o.id), { domain: o.domain, key: o.key });
   }
   for (const [id, got] of byPack) {
     if (!got.index || !got.sig) continue;
     try {
-      verifyMessage(JSON.parse(got.sig.toString('utf8')), got.index, roots, 'packs', DOMAINS.packIndex, now);
+      verifyMessage(JSON.parse(got.sig.toString('utf8')), got.index, roots, 'packs', got.domain ?? DOMAINS.packIndex, now);
     } catch (e) {
-      problems.push(`CDN packs/${id}/index.json: ${e.message}`);
+      problems.push(`CDN ${got.key ?? `packs/${id}/index.json`}: ${e.message}`);
     }
   }
   if (problems.length) throw new R2Error(`the CDN does not serve the branch:\n${problems.join('\n')}`);
