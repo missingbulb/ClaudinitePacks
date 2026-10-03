@@ -151,7 +151,7 @@ test('verify-import still runs on main only, so pushes to vendored trigger nothi
 
 test('verify-import, after the freeze: the fresh import is verified against the recorded commit, the branch only for ancestry', () => {
   const w = workflow('verify-import.yml');
-  assert.deepEqual(Object.keys(w.jobs).filter((j) => j !== 'release-plan'), ['verify']);
+  assert.deepEqual(Object.keys(w.jobs).filter((j) => !['release-plan', 'checks', 'promote-scope'].includes(j)), ['verify']);
   const runs = w.jobs.verify.steps.map((s) => s.run ?? '').join('\n');
   assert.doesNotMatch(runs, /--landed/);
   assert.match(runs, /node tools\/import\/verify\.mjs --source "\$RUNNER_TEMP\/import\/src" --commit "\$\{\{ steps\.source\.outputs\.commit \}\}" --import "\$RUNNER_TEMP\/import\/out"$/m);
@@ -266,4 +266,29 @@ test('promote-packs: the promote job writes in the release environment; upload f
   assert.match(runs(upload), /node tools\/release\/release\.mjs upload --r2 claudinite-packs --roots keys\/dev\/roots --remote origin --summary "\$GITHUB_STEP_SUMMARY"/);
   const secrets = upload.steps.flatMap((s) => Object.entries(s.env ?? {})).filter(([, v]) => String(v).includes('secrets.'));
   assert.deepEqual(secrets.map(([k]) => k).sort(), ['CLOUDFLARE_ACCOUNT_ID', 'CLOUDFLARE_API_TOKEN']);
+});
+
+test('verify-import\'s checks job runs the packs\' Go checks and fixtures against this repository\'s pinned cn', () => {
+  const job = workflow('verify-import.yml').jobs.checks;
+  assert.ok(job, 'verify-import.yml has a checks job');
+  assert.deepEqual(job.permissions, { contents: 'read' });
+  assert.doesNotMatch(JSON.stringify(job), /secrets\./);
+  const runs = job.steps.map((s) => s.run ?? '').join('\n');
+  assert.match(runs, /^sh \.claudinite\/launch version$/m);
+  const test = job.steps.find((s) => /^sh tools\/checks\/test\.sh$/m.test(s.run ?? ''));
+  assert.ok(test, 'a step runs sh tools/checks/test.sh');
+  assert.equal(test.env?.CLAUDINITE_CN, '.claudinite/bin/cn');
+  assert.ok(runs.indexOf('sh .claudinite/launch version') < runs.indexOf('sh tools/checks/test.sh'), 'the engine is fetched before the checks run');
+});
+
+test('verify-import\'s promote-scope job gates only growth-promote\'s branches, with the base history fetched', () => {
+  const job = workflow('verify-import.yml').jobs['promote-scope'];
+  assert.ok(job, 'verify-import.yml has a promote-scope job');
+  assert.match(job.if, /startsWith\(github\.head_ref, 'claudinite\/claudinite-canon-curation\/growth-promote\/'\)/);
+  assert.deepEqual(job.permissions, { contents: 'read' });
+  const checkout = job.steps.find((s) => s.uses?.startsWith('actions/checkout@'));
+  assert.equal(checkout.with['fetch-depth'], 0);
+  const runs = job.steps.map((s) => s.run ?? '').join('\n');
+  assert.match(runs, /^sh \.claudinite\/launch version$/m);
+  assert.match(runs, /^\.claudinite\/bin\/cn growth promote-scope --base origin\/main$/m);
 });

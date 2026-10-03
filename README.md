@@ -8,6 +8,12 @@ store as `packs/<id>/<version>.tar.gz` and mirrored on the `vendored` branch, as
 "Pack serving and publishing" describes. `packs/` began as a verified import of Claudinite's own
 `packs/`, frozen at the commit `docs/import.md` records; it now changes here, and only here.
 
+This repository is also a `cn` member that curates its own shelf: `.claudinite/settings.yaml`
+declares `claudinite-canon-curation` beside the packs it runs, on the `canary` channel, so its
+scheduler opens the curation tasks' pull requests here (`growth-promote` from the fleet's local
+packs, `growth-discover-packs`, the revalidation sweeps, `pack-version-history`). A person merges
+each, and the release publishes what merged.
+
 Check that the recorded commit still reproduces the import, after running `tools/import/import.sh`
 as `docs/import.md` shows:
 

@@ -1,0 +1,23 @@
+engine:
+  version: "61003.1.0"
+  manifest: "sha512-J4iPNnTqIY3/PnIkkKoV9oeqnsiqQsz7EM8OQRmHpYfsZG/+92S9ngQKHmV8gYC35d0+KOQdCdKjPK+ampfYVQ=="
+license:
+  plan: "public"
+packs:
+  channel: "canary"
+  declared:
+    - basics
+    - git-github
+    - claudinite-lifecycle
+    - id: claudinite-tasks
+      config:
+        agenticTaskInvocationEndpoints:
+          # The two routines' URLs come from ClaudinitePacks#31, on the day this merges.
+          default:
+            url: ""
+            tokenSecret: "CCR_ROUTINE_TOKEN"
+          fleet:
+            url: ""
+            tokenSecret: "CCR_FLEET_ROUTINE_TOKEN"
+    - claudinite-growth
+    - claudinite-canon-curation

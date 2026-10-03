@@ -70,3 +70,41 @@ jobs:
         run: node tools/release/release.mjs plan --content --remote origin
       - name: The pack directory is current with the manifests and the catalog
         run: node tools/directory/render.mjs --check --remote origin
+
+  # Every pack's Go checks and test/ fixtures, against the cn this repository pins.
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: "1.24"
+      - name: Fetch the pinned engine
+        run: sh .claudinite/launch version
+      - name: The packs' checks and fixtures
+        env:
+          CLAUDINITE_CN: .claudinite/bin/cn
+        run: sh tools/checks/test.sh
+
+  # growth-promote may write only under the shelf's corpus roots. Nothing in a tree marks a diff
+  # as a promote run, so the gate keys on the branch the task delivers on.
+  promote-scope:
+    if: github.event_name == 'pull_request' && startsWith(github.head_ref, 'claudinite/claudinite-canon-curation/growth-promote/')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Fetch the pinned engine
+        run: sh .claudinite/launch version
+      - name: Promote writes only under the corpus roots
+        run: .claudinite/bin/cn growth promote-scope --base origin/main

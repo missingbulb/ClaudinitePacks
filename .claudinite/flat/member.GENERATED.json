@@ -1,0 +1,56 @@
+{
+  "version": 1,
+  "settings": {
+    "path": ".claudinite/settings.yaml",
+    "format": "yaml"
+  },
+  "engine": {
+    "package": "@claudinite/cli",
+    "version": "61003.1.0",
+    "channel": "stable"
+  },
+  "packs": {
+    "channel": "canary",
+    "declared": [
+      {
+        "id": "basics"
+      },
+      {
+        "id": "git-github"
+      },
+      {
+        "id": "claudinite-lifecycle"
+      },
+      {
+        "id": "claudinite-tasks",
+        "config": {
+          "agenticTaskInvocationEndpoints": {
+            "default": {
+              "tokenSecret": "CCR_ROUTINE_TOKEN",
+              "url": ""
+            },
+            "fleet": {
+              "tokenSecret": "CCR_FLEET_ROUTINE_TOKEN",
+              "url": ""
+            }
+          }
+        }
+      },
+      {
+        "id": "claudinite-growth"
+      },
+      {
+        "id": "claudinite-canon-curation"
+      }
+    ]
+  },
+  "dormant": false,
+  "held": {
+    "basics": "61002.3",
+    "claudinite-canon-curation": "61003.1",
+    "claudinite-growth": "61003.1",
+    "claudinite-lifecycle": "61003.2",
+    "claudinite-tasks": "61003.1",
+    "git-github": "61003.1"
+  }
+}

@@ -49,9 +49,10 @@ promotion moves the catalog after its pull request has merged, so the next pull 
 the regenerated directory.
 
 A pack's Go checks and the fixtures under its `test/` run with `sh tools/checks/test.sh`, which
-takes the `cn` to build against from `CLAUDINITE_CN`. Until ClaudiniteEngine#2 lets this repo pin
-a published `cn`, that run lives in ClaudiniteEngine's CI, against the commit its
-`parity/claudinitepacks.ref` names, rather than in this repo's.
+takes the `cn` to build against from `CLAUDINITE_CN`. The `checks` job in the same workflow runs it
+on every pull request against the `cn` this repository pins (`.claudinite/settings.yaml`), after
+`sh .claudinite/launch version` fetches it; ClaudiniteEngine's CI runs it too, against the commit
+its `parity/claudinitepacks.ref` names, so an engine change that breaks a pack fails there first.
 
 ## The `vendored` branch
 
@@ -217,7 +218,7 @@ The curation tasks of `claudinite-canon-curation` open pull requests against `ma
 publishes, and a person merges each. A `growth-promote` pull request may write only under the
 shelf (and any second corpus root the pack's `write_paths` names): `cn growth promote-scope --base
 origin/main` fails on any other path, and this repository's CI runs it on the promote branches
-once this repository runs `cn`.
+in its `promote-scope` job.
 
 ## Keys
 
