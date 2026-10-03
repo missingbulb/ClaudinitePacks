@@ -1,6 +1,6 @@
 {
   "v": 1,
-  "serial": 86,
+  "serial": 87,
   "packs": [
     {
       "id": "android",
@@ -181,7 +181,7 @@
     },
     {
       "id": "cloudflare-site",
-      "version": "61002.1",
+      "version": "61003.1",
       "channel": "canary",
       "minEngineVersion": "61001.1.0",
       "requires": [
