@@ -9,7 +9,7 @@ coded checks become Go; tasks stay Node against `@claudinite/sdk`; tests are rew
 the pinned `cn`, or dropped when they check only file shapes or doc text. A file that imports
 Claudinite's `engine/` by relative path does not run here until its slice replaces the import.
 
-`minEngineVersion` across the shelf: `60928.1` (1 pack), `61001.1.0` (37 packs).
+`minEngineVersion` across the shelf: `61001.1.0` (37 packs), `61003.1.0` (1 pack).
 A two-part one is a Claudinite Node engine version, which the Engine's `shared/version` (three
 parts, `<day>.<n>.0`) does not read; a ported pack's first version sets `minEngineVersion` to the
 `cn` version it was tested on.
@@ -29,7 +29,7 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 | aws-sam | 61002.1 | 25 | 2 | 1 | 0 | 0 | 3 | 0 | 0 | 0 |
 | basics | 61002.3 | 189 | 2 | 13 | 5 | 2 | 8 | 0 | 0 | 0 |
 | chrome-extension | 61003.1 | 46 | 2 | 4 | 3 | 4 | 8 | 9 | 0 | 0 |
-| claude-code-web-users-support | 60928.1 | 13 | 1 | 4 | 0 | 8 | 7 | 0 | 1 | 8 |
+| claude-code-web-users-support | 61003.1 | 13 | 1 | 2 | 0 | 8 | 6 | 0 | 1 | 3 |
 | claudinite-canon-curation | 61002.2 | 65 | 3 | 6 | 18 | 5 | 10 | 0 | 0 | 13 |
 | claudinite-dashboard | 61003.1 | 16 | 3 | 0 | 4 | 44 | 46 | 1 | 4 | 0 |
 | claudinite-fleet-sheepdog | 61003.3 | 30 | 2 | 0 | 4 | 0 | 1 | 0 | 0 | 0 |
@@ -62,7 +62,7 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 | spec-driven-product | 61003.1 | 31 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | web-scraping | 61003.1 | 35 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | web-speech | 61003.1 | 33 | 3 | 4 | 0 | 0 | 3 | 0 | 0 | 0 |
-| **38 packs** | | 1195 | 72 | 56 | 69 | 114 | 171 | 11 | 5 | 33 |
+| **38 packs** | | 1195 | 72 | 54 | 69 | 114 | 170 | 11 | 5 | 28 |
 
 ## aws-sam
 
@@ -153,12 +153,10 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 
 ## claude-code-web-users-support
 
-### coded-check (4)
+### coded-check (2)
 
-- `worldRules/preferences-provenance.mjs` (imports `engine/`)
-- `worldRules/store-codeowners.mjs` (imports `engine/`)
-- `worldRules/store-configured.mjs` (imports `engine/`)
-- `worldRules/store-file-names.mjs` (imports `engine/`)
+- `checks/checks.go`
+- `checks/store.go`
 
 ### src (8)
 
@@ -171,14 +169,13 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 - `user_pack_address.mjs`
 - `write_store_codeowners.mjs` (imports `engine/`)
 
-### test (7)
+### test (6)
 
-- `test/preferences-provenance.test.mjs`
+- `checks/checks_test.go`
+- `checks/helpers_test.go`
+- `test/declared_test.go`
 - `test/read_github_login.test.mjs`
 - `test/session-start.test.mjs` (imports `engine/`)
-- `test/store-codeowners.test.mjs` (imports `engine/`)
-- `test/store-configured.test.mjs`
-- `test/store-pack-names.test.mjs`
 - `test/user_pack_address.test.mjs`
 
 ### other (1)

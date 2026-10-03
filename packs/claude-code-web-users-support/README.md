@@ -50,8 +50,8 @@ edit in progress is what the session sees. Otherwise the store is reached by a s
 blob-filtered, sparse `git clone` of that person's directories.
 
 Being the store also constrains the tree: the directory name is the whole address, so each one is
-one person's GitHub login in lower case, which [`worldRules/store-file-names.mjs`](worldRules/store-file-names.mjs)
-explains and audits.
+one person's GitHub login in lower case, which the `preferences-store-file-names` check
+([`checks/checks.go`](checks/checks.go)) audits.
 
 **The store is as trusted as this repository.** A person's pack is executable code - checks and
 hooks that run inside every session it is copied into - so write access to a person's directory is

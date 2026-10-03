@@ -1,5 +1,5 @@
 // The store's CODEOWNERS block, derived from its person directories, so the check
-// (worldRules/store-codeowners.mjs) and the writer (write_store_codeowners.mjs) compute the
+// (`preferences-store-codeowners`, in Go) and the writer (write_store_codeowners.mjs) compute the
 // same text. In the order GitHub's last-match-wins rule needs:
 //
 //   /<path>/                  @<admin>              a new directory needs the admin's approval

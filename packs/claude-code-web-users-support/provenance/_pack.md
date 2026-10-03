@@ -126,3 +126,15 @@
 - **Actor:** @missingbulb (owner), asking for pack.json manifests.
 - **Mechanism:** pack.json, which the loader prefers over pack.mjs; a canon pack now needs engine
   60928.1, the first to read it.
+
+## 2026-10-03 · scope-changed · the coded checks run on cn
+- **Reason:** the four checks are rewritten in Go against the SDK, the store address and the
+  CODEOWNERS block beside them, which a test holds equal to the scripts that stay, so a cn member
+  runs them; preferences-provenance reads the rule blocks through the SDK's RuleBlocks. The version
+  also moves the pack off the two-part Node floor; the session step stays a Node script until the
+  engine's own lands.
+- **Actor:** build lead, ClaudinitePacks#30 T2.
+- **Mechanism:** `checks/*.go` against the SDK, `test/` through `cn check --pack
+  claude-code-web-users-support`; `minEngineVersion` `61003.1.0`, since the checks build against
+  the SDK's `RuleBlocks`, which no engine before that day carries. claude-code-web-users-support
+  61003.1.
