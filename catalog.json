@@ -1,0 +1,610 @@
+{
+  "v": 1,
+  "serial": 78,
+  "packs": [
+    {
+      "id": "android",
+      "version": "60928.1",
+      "channel": "canary",
+      "minEngineVersion": "60928.1",
+      "requires": [],
+      "relevanceDetector": {
+        "about": "android/app/src/main/AndroidManifest.xml",
+        "paths": {
+          "source": "android/app/src/main/AndroidManifest\\.xml$",
+          "flags": ""
+        }
+      },
+      "belongs": "gradle/AGP builds, AndroidManifest, permissions, signing configs, product flavors and emulator workflows for an Android app module"
+    },
+    {
+      "id": "app-store-release",
+      "version": "60928.1",
+      "channel": "canary",
+      "minEngineVersion": "60928.1",
+      "requires": [],
+      "relevanceDetector": null,
+      "belongs": "shipping to the Apple App Store: App Store Connect, provisioning, App Attest, TestFlight, review guidelines, release cadence"
+    },
+    {
+      "id": "aws-sam",
+      "version": "61002.1",
+      "channel": "canary",
+      "minEngineVersion": "61001.1.0",
+      "requires": [],
+      "relevanceDetector": {
+        "about": "a SAM template (template.yaml/.yml) at the repo root",
+        "paths": {
+          "source": "^template\\.ya?ml$",
+          "flags": ""
+        }
+      },
+      "belongs": "serverless AWS stacks: SAM template shape, Lambda handler paths, esbuild bundling, API Gateway and CloudFront gotchas"
+    },
+    {
+      "id": "basics",
+      "version": "60928.1",
+      "channel": "stable",
+      "minEngineVersion": "60928.1",
+      "requires": [
+        "claudinite-lifecycle",
+        "git-github"
+      ],
+      "relevanceDetector": null,
+      "belongs": "cross-project working discipline, issue-branch-PR lifecycle, repo hygiene, doc/reference integrity and the general engineering, testing and debugging skills"
+    },
+    {
+      "id": "basics",
+      "version": "61002.3",
+      "channel": "canary",
+      "minEngineVersion": "61001.1.0",
+      "requires": [
+        "claudinite-lifecycle",
+        "git-github"
+      ],
+      "relevanceDetector": null,
+      "belongs": "cross-project working discipline, issue-branch-PR lifecycle, repo hygiene, doc/reference integrity and the general engineering, testing and debugging skills"
+    },
+    {
+      "id": "chrome-extension",
+      "version": "61002.1",
+      "channel": "canary",
+      "minEngineVersion": "61001.1.0",
+      "requires": [],
+      "relevanceDetector": {
+        "about": "an MV3 manifest.json (at the repo root or one directory down) declaring \"manifest_version\": 3",
+        "paths": {
+          "source": "^([^/]+/)?manifest\\.json$",
+          "flags": ""
+        },
+        "text": [
+          {
+            "source": "\"manifest_version\"\\s*:\\s*3\\b",
+            "flags": ""
+          }
+        ],
+        "search": [
+          "manifest_version"
+        ]
+      },
+      "belongs": "writing and shipping a Chrome extension: MV3 service-worker, permission, content-script and auth gotchas, plus Web Store release, versioning and privacy"
+    },
+    {
+      "id": "claude-code-web-users-support",
+      "version": "60928.1",
+      "channel": "canary",
+      "minEngineVersion": "60928.1",
+      "requires": [],
+      "relevanceDetector": null,
+      "belongs": "what a project offers people working from Claude Code on the web, where the session knows who they are",
+      "questions": [
+        {
+          "id": "store",
+          "prompt": "Where do this project's people keep the pack that travels with them - the repository holding one `<login>/` directory per person, named by GitHub login? Give an `owner/name` (a fleet usually has one repo for this), or say \"n/a - none\" if this project has no such store."
+        }
+      ]
+    },
+    {
+      "id": "claudinite-canary-repo",
+      "version": "60928.1",
+      "channel": "canary",
+      "minEngineVersion": "60928.1",
+      "requires": [],
+      "relevanceDetector": null,
+      "belongs": "the inert probe workflow the canon delivers to its canary to prove workflow materialization works end to end"
+    },
+    {
+      "id": "claudinite-canon-curation",
+      "version": "61002.2",
+      "channel": "canary",
+      "minEngineVersion": "61001.1.0",
+      "requires": [],
+      "relevanceDetector": null,
+      "belongs": "curating a canon's packs/ shelf — promoting member lessons, sweeping members for unhomed technologies, authoring and policing its packs"
+    },
+    {
+      "id": "claudinite-dashboard",
+      "version": "61002.1",
+      "channel": "canary",
+      "minEngineVersion": "61001.1.0",
+      "requires": [
+        "claudinite-tasks"
+      ],
+      "relevanceDetector": null,
+      "belongs": "the browser dashboard over Claudinite scheduler state and the site that publishes it",
+      "questions": [
+        {
+          "id": "mode",
+          "prompt": "Is this deployment this repo's OWN dashboard, or the fleet overview across many repos? A fleet deployment also needs to name where its members come from — an \"owner\" whose repos are enumerated in the browser as the viewer (the one to prefer), or an explicit \"repos\" list or roster artifact."
+        }
+      ]
+    },
+    {
+      "id": "claudinite-fleet-sheepdog",
+      "version": "61003.2",
+      "channel": "canary",
+      "minEngineVersion": "61001.1.0",
+      "requires": [
+        "claudinite-tasks"
+      ],
+      "relevanceDetector": null,
+      "belongs": "fleet-enforcer duties for the repo watching every other repo — coverage, freshness, standardized packs"
+    },
+    {
+      "id": "claudinite-growth",
+      "version": "61003.1",
+      "channel": "canary",
+      "minEngineVersion": "61001.1.0",
+      "requires": [
+        "claudinite-lifecycle"
+      ],
+      "relevanceDetector": null,
+      "belongs": "authoring Claudinite content here — lesson extraction, dedup, revalidation, conversation logs, skill-usage folding, the task contract"
+    },
+    {
+      "id": "claudinite-lifecycle",
+      "version": "61003.1",
+      "channel": "canary",
+      "minEngineVersion": "61001.1.0",
+      "requires": [],
+      "relevanceDetector": null,
+      "belongs": "using Claudinite itself — the vendored mount, the pack declaration, bootstrapping, adopting packs, the self-refresh update"
+    },
+    {
+      "id": "claudinite-tasks",
+      "version": "61003.1",
+      "channel": "canary",
+      "minEngineVersion": "61001.1.0",
+      "requires": [],
+      "relevanceDetector": null,
+      "belongs": "scheduled work — the work-item queue, the executor, the task contract and its signals, run records, code-work, delivery"
+    },
+    {
+      "id": "cloudflare-site",
+      "version": "61002.1",
+      "channel": "canary",
+      "minEngineVersion": "61001.1.0",
+      "requires": [
+        "claudinite-tasks"
+      ],
+      "relevanceDetector": {
+        "about": "a near-root wrangler.json/.jsonc declaring assets.directory",
+        "paths": {
+          "source": "^([^/]+/)?wrangler\\.jsonc?$",
+          "flags": ""
+        },
+        "text": [
+          {
+            "source": "\"assets\"\\s*:\\s*\\{[^}]*\"directory\"\\s*:\\s*\"[^\"\\s]",
+            "flags": ""
+          }
+        ],
+        "search": [
+          "assets"
+        ]
+      },
+      "belongs": "serving a static site from Cloudflare: the published tree, custom domains, the nightly release that uploads it"
+    },
+    {
+      "id": "cloudflare-workers",
+      "version": "60928.1",
+      "channel": "canary",
+      "minEngineVersion": "60928.1",
+      "requires": [],
+      "relevanceDetector": {
+        "about": "a wrangler.toml/.json/.jsonc config (at the repo root or one directory down)",
+        "paths": {
+          "source": "^([^/]+/)?wrangler\\.(toml|json|jsonc)$",
+          "flags": ""
+        }
+      },
+      "belongs": "the Cloudflare Workers platform: Wrangler, D1, R2, Vectorize, Workflows, Workers AI and Containers"
+    },
+    {
+      "id": "executable-requirements",
+      "version": "61002.1",
+      "channel": "canary",
+      "minEngineVersion": "61001.1.0",
+      "requires": [],
+      "relevanceDetector": null,
+      "belongs": "running a numbered spec as tests: dev/requirements layout, requirement ids, kinds, coverage and gallery gates, determinism rules",
+      "questions": [
+        {
+          "id": "ui_testing",
+          "prompt": "How are the executable UI requirements exercised — what is the UI-testing mechanism (browser/E2E such as Playwright, DOM-level golden rendering, a headless harness), or is there none yet? Most requirements should be verifiable by a short test that drives to a state and makes a VISUAL assertion (a committed golden the owner checks by sight), so this fixes how a requirement becomes that assertion."
+        },
+        {
+          "id": "requirements_source",
+          "prompt": "Where do the requirements come from — an existing requirements/spec document, the issue tracker, or authored fresh? Name the path or source so the spec is seeded from it rather than reinvented."
+        }
+      ]
+    },
+    {
+      "id": "firebase",
+      "version": "61002.1",
+      "channel": "canary",
+      "minEngineVersion": "61001.1.0",
+      "requires": [],
+      "relevanceDetector": {
+        "about": "firebase.json (at the repo root or one directory down)",
+        "paths": {
+          "source": "^([^/]+/)?firebase\\.json$",
+          "flags": ""
+        }
+      },
+      "belongs": "building on Firebase: Firestore rules, callable Cloud Function patterns, FCM, emulator testing, deploy layout, dev/prod release split"
+    },
+    {
+      "id": "flutter",
+      "version": "60928.1",
+      "channel": "canary",
+      "minEngineVersion": "60928.1",
+      "requires": [],
+      "relevanceDetector": {
+        "about": "pubspec.yaml (at the repo root or one directory down)",
+        "paths": {
+          "source": "^([^/]+/)?pubspec\\.yaml$",
+          "flags": ""
+        }
+      },
+      "belongs": "widget-tree architecture, ports and fakes, widget-test and golden mechanics, pub and analyze toolchain habits for Flutter"
+    },
+    {
+      "id": "git-github",
+      "version": "61003.1",
+      "channel": "canary",
+      "minEngineVersion": "61001.1.0",
+      "requires": [],
+      "relevanceDetector": null,
+      "belongs": "git and GitHub procedure and platform: commit layering, branch and merge mechanics, workflow YAML, triggers, secrets, scheduling"
+    },
+    {
+      "id": "github-pages",
+      "version": "61002.1",
+      "channel": "canary",
+      "minEngineVersion": "61001.1.0",
+      "requires": [
+        "claudinite-tasks"
+      ],
+      "relevanceDetector": {
+        "about": ".github/site.config, or the vendored .github/workflows/github-pages-deploy.yml",
+        "paths": {
+          "source": "^(\\.github/site\\.config|\\.github/workflows/github-pages-deploy\\.yml)$",
+          "flags": ""
+        }
+      },
+      "belongs": "serving a site from GitHub Pages: the nightly release, the vendored deploy workflow, site.config, the serving subpath",
+      "questions": [
+        {
+          "id": "publish_set",
+          "prompt": "Which files and folders make up the published site — the exact list, and the directory it is rooted at? The artifact is built from this list and nothing else, so name the pages, assets and data the site actually serves (not \"everything except the tooling\")."
+        }
+      ]
+    },
+    {
+      "id": "google-identity",
+      "version": "61002.1",
+      "channel": "canary",
+      "minEngineVersion": "61001.1.0",
+      "requires": [],
+      "relevanceDetector": null,
+      "belongs": "server-side Google Sign-In ID token validation: audience pinning, issuer and email_verified checks, JWT authorizer/OIDC verifier config"
+    },
+    {
+      "id": "headless-browser",
+      "version": "60928.1",
+      "channel": "canary",
+      "minEngineVersion": "60928.1",
+      "requires": [],
+      "relevanceDetector": {
+        "about": "a browser-automation driver (playwright, puppeteer, pyppeteer) declared in a near-root package.json, requirements*.txt or pyproject.toml",
+        "paths": {
+          "source": "^([^/]+/)?(package\\.json|requirements[^/]*\\.txt|pyproject\\.toml)$",
+          "flags": ""
+        },
+        "text": [
+          {
+            "source": "(^|[\"'])(@playwright/test|playwright(-core)?|puppeteer(-core)?|pyppeteer)(?=[\"'\\s]*[:=<>~!;\\[]|[\"']|\\s*$)",
+            "flags": "m"
+          }
+        ],
+        "search": [
+          "playwright",
+          "puppeteer",
+          "pyppeteer"
+        ]
+      },
+      "belongs": "driving a real browser from code — resolving and pinning the build, faking the page world, capture mechanics"
+    },
+    {
+      "id": "hello",
+      "version": "1.4",
+      "channel": "canary",
+      "minEngineVersion": "61001.1.0",
+      "requires": [],
+      "relevanceDetector": null,
+      "belongs": "nothing but the pack chassis probe: proving that a declared pack's rules, skills and Go checks reach a member"
+    },
+    {
+      "id": "host-page",
+      "version": "60928.1",
+      "channel": "canary",
+      "minEngineVersion": "60928.1",
+      "requires": [],
+      "relevanceDetector": null,
+      "belongs": "driving a web app you do not own — its DOM, synthetic input, change watching, injected UI"
+    },
+    {
+      "id": "html",
+      "version": "60928.1",
+      "channel": "canary",
+      "minEngineVersion": "60928.1",
+      "requires": [],
+      "relevanceDetector": null,
+      "belongs": "hand-authored HTML markup gotchas — element nesting, injected content placement, live browser verification of a page"
+    },
+    {
+      "id": "ios",
+      "version": "60928.1",
+      "channel": "canary",
+      "minEngineVersion": "60928.1",
+      "requires": [],
+      "relevanceDetector": {
+        "about": "ios/Runner/Info.plist",
+        "paths": {
+          "source": "ios/Runner/Info\\.plist$",
+          "flags": ""
+        }
+      },
+      "belongs": "app-target conventions for iOS — Xcode project, Info.plist usage strings, entitlements, code signing"
+    },
+    {
+      "id": "jwt",
+      "version": "60928.1",
+      "channel": "canary",
+      "minEngineVersion": "60928.1",
+      "requires": [],
+      "relevanceDetector": {
+        "about": "a JWT library (jsonwebtoken, jose, PyJWT and kin) declared in a near-root package.json, requirements*.txt or pyproject.toml",
+        "paths": {
+          "source": "^([^/]+/)?(package\\.json|requirements[^/]*\\.txt|pyproject\\.toml)$",
+          "flags": ""
+        },
+        "text": [
+          {
+            "source": "(^|[\"'])(jsonwebtoken|express-jwt|jwks-rsa|node-jose|jose|python-jose|pyjwt)(?=[\"'\\s]*[:=<>~!;\\[]|[\"']|\\s*$)",
+            "flags": "im"
+          }
+        ],
+        "search": [
+          "jsonwebtoken",
+          "jose",
+          "jwt",
+          "jwks",
+          "pyjwt"
+        ]
+      },
+      "belongs": "minting and validating JSON Web Tokens: algorithm pinning, claim validation, key strength and secrecy, expiry, JWE"
+    },
+    {
+      "id": "leaflet",
+      "version": "60928.1",
+      "channel": "canary",
+      "minEngineVersion": "60928.1",
+      "requires": [],
+      "relevanceDetector": {
+        "about": "a Leaflet reference (CDN asset, or an L.map/L.tileLayer/L.markerClusterGroup call) in HTML/JS source",
+        "paths": {
+          "source": "\\.(html?|mjs|cjs|jsx?|tsx?)$",
+          "flags": ""
+        },
+        "text": [
+          {
+            "source": "\\b[lL][eE][aA][fF][lL][eE][tT](\\.[jJ][sS]|\\.[cC][sS][sS]|@[\\d.]|[-/][dD][iI][sS][tT])|\\bL\\.(map|tileLayer|markerClusterGroup)\\s*\\(",
+            "flags": ""
+          }
+        ],
+        "search": [
+          "leaflet",
+          "tileLayer",
+          "markerClusterGroup"
+        ]
+      },
+      "belongs": "map rendering with the Leaflet library — map init options, tile layers, markers and divIcons, CDN plugin pinning"
+    },
+    {
+      "id": "macos",
+      "version": "60928.1",
+      "channel": "canary",
+      "minEngineVersion": "60928.1",
+      "requires": [],
+      "relevanceDetector": {
+        "about": "Package.swift (at the repo root or one directory down)",
+        "paths": {
+          "source": "^([^/]+/)?Package\\.swift$",
+          "flags": ""
+        }
+      },
+      "belongs": "native macOS apps: app-bundle assembly, TCC usage strings, Hardened Runtime entitlements, Developer ID signing, notarization and DMG distribution"
+    },
+    {
+      "id": "node",
+      "version": "61002.1",
+      "channel": "canary",
+      "minEngineVersion": "61001.1.0",
+      "requires": [],
+      "relevanceDetector": {
+        "about": "package.json (at the repo root or one directory down)",
+        "paths": {
+          "source": "^([^/]+/)?package\\.json$",
+          "flags": ""
+        }
+      },
+      "belongs": "conventions for a Node/npm project — module resolution, ESM vs CJS, dependency justification, jsdom test divergences"
+    },
+    {
+      "id": "numpy-image-processing",
+      "version": "60928.1",
+      "channel": "canary",
+      "minEngineVersion": "60928.1",
+      "requires": [],
+      "relevanceDetector": {
+        "about": "numpy and scipy named together in a near-root Python dependency manifest (requirements*.txt or pyproject.toml)",
+        "paths": {
+          "source": "^([^/]+/)?(requirements[^/]*\\.txt|pyproject\\.toml)$",
+          "flags": ""
+        },
+        "text": [
+          {
+            "source": "\\bnumpy\\b",
+            "flags": "i"
+          },
+          {
+            "source": "\\bscipy\\b",
+            "flags": "i"
+          }
+        ],
+        "search": [
+          "scipy"
+        ]
+      },
+      "belongs": "numeric image analysis in Python — deriving a mask/skeleton/threshold from a NumPy image array with SciPy ndimage and scikit-image"
+    },
+    {
+      "id": "play-store-release",
+      "version": "60928.1",
+      "channel": "canary",
+      "minEngineVersion": "60928.1",
+      "requires": [],
+      "relevanceDetector": null,
+      "belongs": "shipping an Android app to Google Play — Play Console, signing, integrity, staged rollout"
+    },
+    {
+      "id": "product-wiki",
+      "version": "61002.2",
+      "channel": "canary",
+      "minEngineVersion": "61001.1.0",
+      "requires": [],
+      "relevanceDetector": null,
+      "belongs": "agent-maintained market, user and competitor research wikis — cited pages, growth logs, the reviewed product-requirements sink",
+      "questions": [
+        {
+          "id": "product",
+          "prompt": "What is the product — what does it do, and what is the core value it delivers? If the repo already carries a product brief or spec, read it and confirm rather than asking cold."
+        },
+        {
+          "id": "users",
+          "prompt": "Who are the users or customers — the segments whose needs the research must track?"
+        },
+        {
+          "id": "market",
+          "prompt": "What market or category is this in, and who are the main competitors or alternatives? This is what the competitor research is scoped against."
+        }
+      ]
+    },
+    {
+      "id": "public-website",
+      "version": "61002.1",
+      "channel": "canary",
+      "minEngineVersion": "61001.1.0",
+      "requires": [
+        "html"
+      ],
+      "relevanceDetector": null,
+      "belongs": "being a public website whatever serves it: the version scheme and page stamp, client-side caching and data freshness"
+    },
+    {
+      "id": "python",
+      "version": "61002.1",
+      "channel": "canary",
+      "minEngineVersion": "61001.1.0",
+      "requires": [],
+      "relevanceDetector": {
+        "about": "pyproject.toml (at the repo root or one directory down)",
+        "paths": {
+          "source": "^([^/]+/)?pyproject\\.toml$",
+          "flags": ""
+        }
+      },
+      "belongs": "packaging and import conventions for a Python project — pyproject extras, lazy optional heavy deps, stdlib-only core"
+    },
+    {
+      "id": "research-project",
+      "version": "60928.1",
+      "channel": "canary",
+      "minEngineVersion": "60928.1",
+      "requires": [],
+      "relevanceDetector": null,
+      "belongs": "methodology for iterating an algorithm over sample inputs against annotated ground truth — scoring, phases, session continuity"
+    },
+    {
+      "id": "spec-driven-product",
+      "version": "60928.1",
+      "channel": "canary",
+      "minEngineVersion": "60928.1",
+      "requires": [
+        "executable-requirements"
+      ],
+      "relevanceDetector": null,
+      "belongs": "playbook for shipping a small end-user product from an executable spec — leaf claims, owner-owned expecteds, green-main releases"
+    },
+    {
+      "id": "web-scraping",
+      "version": "60928.1",
+      "channel": "canary",
+      "minEngineVersion": "60928.1",
+      "requires": [],
+      "relevanceDetector": null,
+      "belongs": "acquiring data from a site you do not own: finding its data surface, fetching defensively, caching raw payloads"
+    },
+    {
+      "id": "web-speech",
+      "version": "60928.1",
+      "channel": "canary",
+      "minEngineVersion": "60928.1",
+      "requires": [],
+      "relevanceDetector": {
+        "about": "a browser speech API (SpeechRecognition / speechSynthesis / chrome.tts) referenced in JS/TS source",
+        "paths": {
+          "source": "\\.(mjs|cjs|js|jsx|ts|tsx)$",
+          "flags": ""
+        },
+        "text": [
+          {
+            "source": "\\b(webkitSpeechRecognition|SpeechRecognition|SpeechRecognitionPhrase|speechSynthesis|SpeechSynthesisUtterance|chrome\\.tts)\\b",
+            "flags": ""
+          }
+        ],
+        "search": [
+          "SpeechRecognition",
+          "webkitSpeechRecognition",
+          "SpeechRecognitionPhrase",
+          "speechSynthesis",
+          "SpeechSynthesisUtterance",
+          "tts"
+        ]
+      },
+      "belongs": "browser voice I/O gotchas — SpeechRecognition results and errors, speechSynthesis and chrome.tts, mic permission and lifecycle"
+    }
+  ]
+}
