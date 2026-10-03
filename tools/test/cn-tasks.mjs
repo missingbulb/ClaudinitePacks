@@ -1,6 +1,6 @@
-// The task runner's decision cores, asked of a real cn: `cn tasks <kind> --world F`
+// The engine's decision cores, asked of a real cn: `cn tasks <kind> --world F`
 // answers the contract, the precondition evaluator, the merge policy and the work
-// item's grammar over a JSON fixture. A pack's test pins its own declarations and
+// item's grammar over a JSON fixture, and `cn growth decide` the capture's log names. A pack's test pins its own declarations and
 // documents against the engine that runs them through this, never against a copy.
 //
 // CLAUDINITE_CN names the binary; with none, a test passing `needsCn` as its options
@@ -22,6 +22,19 @@ export function cnTasks(kind, world) {
     writeFileSync(file, JSON.stringify(world));
     const r = spawnSync(CN, ['tasks', kind, '--world', file], { encoding: 'utf8' });
     if (r.status !== 0) throw new Error(`cn tasks ${kind} exited ${r.status}: ${r.stderr || r.stdout}`);
+    return JSON.parse(r.stdout);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+}
+
+// One growth core answered by cn (`cn growth decide <core> --world F`): the capture's
+// log names (`logname`, `parsename`) and the rest the parity face asks.
+export function cnGrowth(core, input) {
+  const dir = mkdtempSync(join(tmpdir(), 'acme-cn-growth-'));
+  try {
+    const file = join(dir, 'input.json');
+    writeFileSync(file, JSON.stringify(input));
+    const r = spawnSync(CN, ['growth', 'decide', core, '--world', file], { encoding: 'utf8' });
+    if (r.status !== 0) throw new Error(`cn growth decide ${core} exited ${r.status}: ${r.stderr || r.stdout}`);
     return JSON.parse(r.stdout);
   } finally { rmSync(dir, { recursive: true, force: true }); }
 }

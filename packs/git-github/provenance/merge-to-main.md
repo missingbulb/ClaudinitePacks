@@ -27,3 +27,9 @@
   description the model matches. The phrase stays the preference's.
 - **Actor:** @missingbulb (owner).
 - **Model:** claude-opus-5
+
+## 2026-10-03 · reworded · step 5 is `cn growth capture --pr <pr>`
+- **Reason:** `capture-log.mjs` imported the Node engine; the command is the same in a member and in
+  a canon checkout, so the canon sentence goes.
+- **Actor:** build lead, ClaudiniteEngine#57.
+- **Model:** Claude Opus 5.5 (1M context)

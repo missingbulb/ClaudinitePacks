@@ -205,18 +205,18 @@ that will repeat on every tick until a person clears it. It is the `no-trigger` 
    converged, and run it whichever way step 6 went:
 
    ```bash
-   CLAUDINITE_SESSION_ISSUE=<n> node <engine>/hooks/session-end-command.mjs
+   .claudinite/bin/cn growth capture --issue <n>
    ```
 
-   That runner invokes whatever session-end steps this repo's declared packs
-   contribute; it knows nothing about what any of them do, and a repo that
-   contributes none does nothing. Nobody is sitting in front of this session, so it
+   That pushes this session's transcript, scrubbed, onto the repo's
+   `conversation-logs` branch; skip it where `.claudinite/settings.*` does not
+   declare `claudinite-growth`. Nobody is sitting in front of this session, so it
    ends by having its container reclaimed — precisely the ending that fires no
    `SessionEnd` hook. Left to the hook, every unattended run would leave no record
    of itself anywhere: not of the skills it loaded, not of the checks that caught
    something, not of how the work actually went, and not of the record you just
-   printed. `CLAUDINITE_SESSION_ISSUE` is what files those logs under the item that
-   ran, rather than under nothing.
+   printed. `--issue <n>` is what files the log under the item that ran, rather than
+   under nothing.
 
    It cannot fail your run — the item is already converged and this changes nothing
    on GitHub. If it reports an error, **say so plainly in your final message** and

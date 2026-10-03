@@ -134,3 +134,10 @@
 - **Reason:** pack.json is the preferred manifest; where the text told a reader to list a module in
   pack.mjs, rules are found in worldRules/ and workRules/ and nothing is listed.
 - **Actor:** @missingbulb (owner), asking for pack.json manifests.
+
+## 2026-10-03 · reworded · `cn provenance check|history|append`; brief and apply are the canon's
+- **Reason:** `provenance.mjs` imported the Node engine; `cn` ports the member's four verbs, and
+  `brief`, `apply`, `reduce` and `convert-references` wait on where canon curation lives
+  (ClaudiniteEngine#24), so a run without them reads `history` and appends with `--backfill`.
+- **Actor:** build lead, ClaudiniteEngine#57.
+- **Model:** Claude Opus 5.5 (1M context)

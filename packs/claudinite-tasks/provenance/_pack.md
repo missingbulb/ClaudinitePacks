@@ -144,3 +144,8 @@
 - **Reason:** both workers imported the Node runner's modules this pack had just dropped, so neither ran.
 - **Actor:** build lead, completing ClaudinitePacks #20 so the runner's removal lands with every importer ported.
 - **Mechanism:** usage-fold carries its own copies of the run-record wire, the usage formats and a delivery module, pushing through the SDK's `git` and opening through `github.openPr`; verify-production comments through the SDK and reopens through a REST copy on the job's token; both declarations drop `$schema`. claudinite-tasks 61002.3.
+
+## 2026-10-03 · reworded · the routine session's last step is `cn growth capture --issue <n>`
+- **Reason:** the step ran the Node engine's SessionEnd runner; the capture is engine code, and the command says what it does. Why the hook never fires for an unattended session stands.
+- **Actor:** build lead, ClaudiniteEngine#57.
+- **Model:** Claude Opus 5.5 (1M context)

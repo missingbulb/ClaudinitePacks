@@ -80,3 +80,9 @@
 - **Reason:** pack.json is the preferred manifest; where the text told a reader to list a module in
   pack.mjs, rules are found in worldRules/ and workRules/ and nothing is listed.
 - **Actor:** @missingbulb (owner), asking for pack.json manifests.
+
+## 2026-10-03 · reworded · the provenance tool is `cn provenance`
+- **Reason:** `provenance.mjs` imported the Node engine's helpers, which no `cn` member holds; `cn
+  provenance mark|append|check|history` are the member's verbs over the same convention.
+- **Actor:** build lead, ClaudiniteEngine#57.
+- **Model:** Claude Opus 5.5 (1M context)

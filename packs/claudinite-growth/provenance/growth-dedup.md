@@ -51,3 +51,10 @@
 
 ## 2026-09-30 · reworded · the backstop's description excludes provenance logs from the shrink measure (missingbulb/NoRFinder#211)
 - **Reason:** tracks dedup-prune-integrity's scope change.
+
+## 2026-10-03 · reworded · the declared set comes from the SDK; the skill names `cn provenance append`
+- **Reason:** the worker read the declaration through the Node engine's `loadConfig`, which
+  ClaudinitePacks does not hold; `@claudinite/sdk`'s `packs()` answers the same list from the engine
+  running the task.
+- **Actor:** build lead, ClaudiniteEngine#57.
+- **Model:** Claude Opus 5.5 (1M context)

@@ -22,3 +22,9 @@
 - **Mechanism:** the harness's `disable-model-invocation: true`; the worker reads the SKILL.md by
   path.
 - **Actor:** @missingbulb (owner).
+
+## 2026-10-03 · reworded · the provenance tool is `cn provenance`
+- **Reason:** `provenance.mjs` imported the Node engine's helpers, which no `cn` member holds; `cn
+  provenance mark|append|check|history` are the member's verbs over the same convention.
+- **Actor:** build lead, ClaudiniteEngine#57.
+- **Model:** Claude Opus 5.5 (1M context)

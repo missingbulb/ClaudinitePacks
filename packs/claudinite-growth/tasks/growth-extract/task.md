@@ -26,7 +26,8 @@ too. Do not widen past that window.
 - **The repo's local packs.** The set identified in
   [this pack's README](../../README.md#identifying-a-projects-capture-surface-its-local-packs) — everything
   under `.claudinite/local/packs/`, the repo's own packs; never the read-only mounted canon
-  elsewhere under `.claudinite/`.
+  elsewhere under `.claudinite/`. A repo with none gets one first through `.claudinite/bin/cn pack new
+  <name>`, which scaffolds and declares it.
 
 ## The run — two source skills, then the upgrade pass
 

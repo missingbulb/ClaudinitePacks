@@ -75,3 +75,9 @@
 - **Reason:** a manifest may now be pack.json, and an edit to one is the same edit as to a pack.mjs.
 - **Actor:** @missingbulb (owner), asking for pack.json manifests.
 - **Mechanism:** force-load-on-file-edits-paths gains `**/packs/*/pack.json`.
+
+## 2026-10-03 · reworded · the provenance tool is `cn provenance`
+- **Reason:** `provenance.mjs` imported the Node engine's helpers, which no `cn` member holds; `cn
+  provenance mark|append|check|history` are the member's verbs over the same convention.
+- **Actor:** build lead, ClaudiniteEngine#57.
+- **Model:** Claude Opus 5.5 (1M context)
