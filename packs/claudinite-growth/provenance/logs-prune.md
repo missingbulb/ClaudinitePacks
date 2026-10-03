@@ -23,3 +23,12 @@
 - **Mechanism:** the declaration's `trigger`, with the cadence term dropped beside it and the
   precondition granting the run where no retention reading is present.
 - **Landed:** #2135 · pack version 60920.1.
+
+## 2026-10-03 · moved · retention is `cn growth prune`, the precondition an engine term
+- **Reason:** the worker and its term imported the Node engine's settings reader; the engine writes
+  the branch and owns its filename grammar, so it prunes it too.
+- **Actor:** build lead, ClaudiniteEngine#57.
+- **Model:** Claude Opus 5.5 (1M context)
+- **Mechanism:** `code_work: "cn growth prune"` with the engine-judged `log-past-retention`
+  precondition; the three modules go. Retention resolves as before: absent 10 days, non-positive
+  off, unreadable nothing.

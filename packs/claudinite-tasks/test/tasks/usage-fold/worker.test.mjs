@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { installSdk } from '../../../../../tools/test/sdk-stand-in.mjs';
-import { parseLogFilename, logFilename } from '../../../../claudinite-growth/capture-log.mjs';
+import { cnGrowth, needsCn } from '../../../../../tools/test/cn-tasks.mjs';
 
 installSdk();
 const {
@@ -13,15 +13,14 @@ const {
 // a branch and opens a PR). What IS unit-testable is where it AGREES with something
 // else — and every one of those agreements is a place two files could silently drift.
 
-test('parseLogName agrees with the capture step that writes the name', () => {
-  // The drift guard that matters most here: capture-log.mjs writes these filenames,
-  // this worker parses them, and neither imports the other (the fold must stay
-  // runnable from its own task dir). A format change on either side would otherwise
-  // make the fold silently see zero files and report a fleet-wide zero as fact.
+test('parseLogName agrees with the capture that writes the name', needsCn, () => {
+  // The drift guard that matters most here: `cn growth capture` writes these
+  // filenames and this worker parses them. A format change on either side would
+  // otherwise make the fold silently see zero files and report a fleet-wide zero as fact.
   for (const [ref, session] of [[{ issue: 123 }, 'abc-def'], [{ issue: 0 }, 'sess-1'], [{ pr: 1583 }, 'a-b-c-d-e']]) {
-    const name = logFilename('2026-07-28T09:40:00.000Z', ref, session);
+    const name = cnGrowth('logname', { now: '2026-07-28T09:40:00.000Z', ...ref, session });
     const mine = parseLogName(name);
-    const theirs = parseLogFilename(name);
+    const [theirs] = cnGrowth('parsename', { names: [name] });
     assert.ok(mine, `the fold must parse ${name}`);
     assert.equal(mine.issue, theirs.issue);
     assert.equal(mine.pr, theirs.pr);

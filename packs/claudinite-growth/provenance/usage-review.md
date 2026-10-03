@@ -76,3 +76,8 @@
 - **Reason:** review of ClaudinitePacks #20: the delivery force-pushes to whatever branch it is handed, and the engine's `git` bounds no ref.
 - **Actor:** build lead, reviewing ClaudinitePacks #20.
 - **Mechanism:** `deliver.mjs` throws before any write when `target.branch` is the base; the copy is held to its siblings by `tools/test/pack-copies.test.mjs`.
+
+## 2026-10-03 · reworded · read-live reads on_fail without the Node engine
+- **Reason:** `findings.onFailOf` was the Node engine's and the SDK answers no helper for it; a local two-spelling map reads `on_fail`, then the retired `severity` that `legacy-check-spellings` reports.
+- **Actor:** build lead, ClaudiniteEngine#57.
+- **Model:** Claude Opus 5.5 (1M context)

@@ -9,7 +9,7 @@ coded checks become Go; tasks stay Node against `@claudinite/sdk`; tests are rew
 the pinned `cn`, or dropped when they check only file shapes or doc text. A file that imports
 Claudinite's `engine/` by relative path does not run here until its slice replaces the import.
 
-`minEngineVersion` across the shelf: `60928.1` (19 packs), `61001.1.0` (19 packs).
+`minEngineVersion` across the shelf: `60928.1` (18 packs), `61001.1.0` (20 packs).
 A two-part one is a Claudinite Node engine version, which the Engine's `shared/version` (three
 parts, `<day>.<n>.0`) does not read; a ported pack's first version sets `minEngineVersion` to the
 `cn` version it was tested on.
@@ -33,15 +33,15 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 | claudinite-canon-curation | 61002.2 | 65 | 3 | 6 | 18 | 5 | 10 | 0 | 0 | 13 |
 | claudinite-dashboard | 61002.1 | 16 | 3 | 1 | 4 | 44 | 42 | 1 | 4 | 10 |
 | claudinite-fleet-sheepdog | 61002.2 | 29 | 1 | 1 | 8 | 24 | 23 | 0 | 0 | 9 |
-| claudinite-growth | 61002.4 | 159 | 8 | 0 | 18 | 14 | 16 | 0 | 0 | 10 |
+| claudinite-growth | 61003.1 | 159 | 8 | 0 | 16 | 10 | 13 | 0 | 0 | 0 |
 | claudinite-lifecycle | 61003.1 | 42 | 3 | 0 | 2 | 1 | 5 | 0 | 0 | 2 |
-| claudinite-tasks | 61002.3 | 23 | 3 | 0 | 5 | 26 | 14 | 0 | 0 | 1 |
+| claudinite-tasks | 61003.1 | 23 | 3 | 0 | 5 | 26 | 14 | 0 | 0 | 1 |
 | cloudflare-site | 61002.1 | 16 | 1 | 3 | 3 | 4 | 7 | 0 | 0 | 3 |
 | cloudflare-workers | 60928.1 | 16 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | executable-requirements | 61002.1 | 21 | 1 | 1 | 0 | 0 | 2 | 0 | 0 | 0 |
 | firebase | 61002.1 | 29 | 2 | 1 | 0 | 1 | 3 | 0 | 0 | 0 |
 | flutter | 60928.1 | 26 | 2 | 0 | 0 | 0 | 2 | 0 | 0 | 0 |
-| git-github | 60928.1 | 33 | 3 | 0 | 0 | 1 | 1 | 0 | 0 | 1 |
+| git-github | 61003.1 | 33 | 3 | 0 | 0 | 1 | 1 | 0 | 0 | 1 |
 | github-pages | 61002.1 | 13 | 1 | 2 | 3 | 4 | 3 | 1 | 0 | 4 |
 | google-identity | 61002.1 | 9 | 2 | 1 | 0 | 0 | 3 | 0 | 0 | 0 |
 | headless-browser | 60928.1 | 31 | 2 | 0 | 0 | 0 | 4 | 0 | 0 | 1 |
@@ -62,7 +62,7 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 | spec-driven-product | 60928.1 | 31 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | web-scraping | 60928.1 | 35 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | web-speech | 60928.1 | 33 | 3 | 6 | 0 | 1 | 5 | 0 | 0 | 10 |
-| **38 packs** | | 1194 | 71 | 62 | 75 | 144 | 188 | 11 | 5 | 101 |
+| **38 packs** | | 1194 | 71 | 62 | 73 | 140 | 185 | 11 | 5 | 91 |
 
 ## aws-sam
 
@@ -421,16 +421,14 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 
 ## claudinite-growth
 
-### task (18)
+### task (16)
 
 - `tasks/growth-dedup/task.json`
 - `tasks/growth-dedup/task.md`
-- `tasks/growth-dedup/worker.mjs` (imports `engine/`)
+- `tasks/growth-dedup/worker.mjs`
 - `tasks/growth-extract/task.json`
 - `tasks/growth-extract/task.md`
-- `tasks/logs-prune/preconditions.mjs`
 - `tasks/logs-prune/task.json`
-- `tasks/logs-prune/worker.mjs` (imports `engine/`)
 - `tasks/prose-to-checks-sweep/task.json`
 - `tasks/prose-to-checks-sweep/task.md`
 - `tasks/rule-revalidation/task.json`
@@ -442,41 +440,34 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 - `tasks/usage-triage/task.json`
 - `tasks/usage-triage/task.md`
 
-### src (14)
+### src (10)
 
-- `capture-log.mjs`
 - `migrations/2026-09-21-provenance-marking/migration.mjs`
 - `migrations/2026-09-25-rolling-review-files/migration.mjs`
-- `provenance.mjs` (imports `engine/`)
-- `session-end.mjs`
-- `tasks/logs-prune/prune-logs.mjs`
 - `tasks/usage-review/deliver.mjs`
 - `tasks/usage-review/digests.mjs`
 - `tasks/usage-review/evaluate.mjs`
 - `tasks/usage-review/figures.mjs`
 - `tasks/usage-review/issues.mjs`
-- `tasks/usage-review/read-live.mjs` (imports `engine/`)
+- `tasks/usage-review/read-live.mjs`
 - `tasks/usage-review/read-record.mjs`
 - `tasks/usage-review/report.mjs`
 
-### test (16)
+### test (13)
 
 - `test/check-ships-with-test.test.mjs`
+- `test/declared_test.go`
 - `test/doc-pointers-resolve.test.mjs`
 - `test/growth-dedup-worker.test.mjs`
-- `test/pack.test.mjs` (imports `engine/`)
-- `test/provenance-cli.test.mjs` (imports `engine/`)
 - `test/skills/learning-a-technology/declared-checks.test.mjs`
-- `test/skills/unattended-agents/in-session-github-access.test.mjs` (imports `engine/`)
-- `test/task-phase-discipline.test.mjs` (imports `engine/`)
 - `test/task-policies.test.mjs`
 - `test/tasks.test.mjs`
-- `test/tasks/logs-prune/prune-logs.test.mjs`
 - `test/usage-review/evaluate.test.mjs`
 - `test/usage-review/figures.test.mjs`
-- `test/usage-review/read-live.test.mjs` (imports `engine/`)
+- `test/usage-review/on-fail.test.mjs`
+- `test/usage-review/read-live.test.mjs`
 - `test/usage-review/report.test.mjs`
-- `test/usage-review/triage-twins.test.mjs` (imports `engine/`)
+- `test/usage-review/triage-twins.test.mjs`
 
 ## claudinite-lifecycle
 

@@ -67,3 +67,9 @@
 - **Actor:** @missingbulb (owner), through ClaudiniteEngine chunk 11 (#45).
 - **Model:** Claude Opus 5.5, per the commit trailer.
 - **Mechanism:** a boolean in pack.json, which an engine from chunk 11 on reads.
+
+## 2026-10-03 · scope-changed · capture, retention and the provenance tool are engine commands
+- **Reason:** `capture-log.mjs`, `session-end.mjs`, `provenance.mjs` and the logs-prune modules imported the Node engine, which no `cn` member holds; the pack keeps its tasks, skills and checks and names `cn growth capture`, `cn hook session-end`, `cn growth prune`, `cn provenance` and `cn pack new`.
+- **Actor:** build lead, ClaudiniteEngine#57.
+- **Model:** Claude Opus 5.5 (1M context)
+- **Mechanism:** the pack manifest. claudinite-growth 61003.1.

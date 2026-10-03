@@ -46,3 +46,9 @@
   it.
 - **Mechanism:** the description, as before.
 - **Actor:** @missingbulb (owner).
+
+## 2026-10-03 · reworded · a repo with no local pack starts with `cn pack new`
+- **Reason:** nothing scaffolded a member's first local pack once adoption stopped seeding one
+  (ClaudiniteEngine#55 Q7); `cn pack new` writes and declares it.
+- **Actor:** build lead, ClaudiniteEngine#57.
+- **Model:** Claude Opus 5.5 (1M context)

@@ -7,7 +7,7 @@ import { verdictWithTerms, needsCn } from '../../../tools/test/cn-tasks.mjs';
 const PACK_DIR = new URL('..', import.meta.url).pathname;
 // The cadence term reads the task's own run history at a chosen instant: an empty
 // history holds, and the signal under test decides. The built-in terms are the
-// engine's own (`cn tasks precondition`); a task's local terms are its preconditions.mjs.
+// engine's own (`cn tasks precondition`).
 const AT = '2026-09-05T16:00:00Z';
 const NO_RUNS = { runs: { list: [] } };
 const verdictFor = (task, signals, config = {}, item = null) =>
@@ -38,8 +38,8 @@ test('growth-dedup: a declared pack moving in the mount fires it (and names the 
 });
 
 // --- logs-prune (retention on the conversation-logs branch) ------------------
-// `log-past-retention` is this task's own precondition term (retention math and
-// the opt-out reading live beside its declaration), so its decisions are kept.
+// `log-past-retention` is an engine term over the conversation-logs signal; the
+// task's decisions are pinned against the engine that judges them.
 
 test('logs-prune: fires on age alone, which is what makes it independent of activity', needsCn, async () => {
   // A CLOCK crossing a boundary, and deliberately no repo-movement condition beside

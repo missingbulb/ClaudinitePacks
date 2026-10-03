@@ -154,7 +154,7 @@ this skill adds is how a rule is written so the log can hold it.
   file's and carry none, until one's history diverges and it takes a marker and a file of its
   own; a workflow skill's steps carry none, the skill being the element. (ending-rule)
 - **Adding a rule** - write the brief rule and end it with its marker; create its file with a
-  `born` entry through `provenance.mjs append` (`mark` creates the file where none exists),
+  `born` entry through `cn provenance append` (`mark` creates the file where none exists),
   and put the reason there, never in the rule. A consequence the reader needs under pressure
   earns its clause; rationale the reader doesn't need at act time is the entry's. Write the
   entry so a future review can **reaffirm the rule from it** - `Retire when` is what would
@@ -174,7 +174,7 @@ this skill adds is how a rule is written so the log can hold it.
 The `provenance-integrity` check holds the mechanism together - every carrier names a live
 file, every file parses - and `provenance-change-recorded` holds the change: a carrier that
 changed lands with its entry. A pack not yet on the convention is put there by
-`provenance.mjs mark`, and its history filled by the
+`cn provenance mark`, and its history filled by the
 [backfilling-provenance](../backfilling-provenance/SKILL.md) skill; nothing here is done rule by
 rule.
 

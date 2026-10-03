@@ -46,3 +46,8 @@
   refreshes the mount today.
 - **Actor:** @missingbulb (owner), through ClaudiniteEngine chunk 11 (#45).
 - **Model:** Claude Opus 5.5, per the commit trailer.
+
+## 2026-10-03 · reworded · a repo with no local pack starts with `cn pack new`
+- **Reason:** nothing scaffolded a member's first local pack once adoption stopped seeding one (ClaudiniteEngine#55 Q7); `cn pack new` writes and declares it.
+- **Actor:** build lead, ClaudiniteEngine#57.
+- **Model:** Claude Opus 5.5 (1M context)

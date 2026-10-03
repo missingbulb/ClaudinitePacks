@@ -1,10 +1,12 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, writeFileSync, rmSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { git } from '../../../../engine-tests/helpers.mjs';
-import { removeTree } from '../../../../engine/remove-tree.mjs';
+
+const git = (cwd, ...args) => execFileSync('git', ['-c', 'commit.gpgsign=false', ...args], { cwd, encoding: 'utf8' });
+const removeTree = (dir) => rmSync(dir, { recursive: true, force: true });
 import { packDeclaredAt, adoptionWindow } from '../../tasks/usage-review/read-live.mjs';
 
 // A throwaway repo whose settings file gains a pack at a known commit.

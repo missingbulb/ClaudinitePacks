@@ -1,7 +1,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import {
+import { installSdk } from '../../../tools/test/sdk-stand-in.mjs';
+
+installSdk({ answers: { packs: () => [{ id: 'acme-pack', version: '1.0', kind: 'canon' }, { id: 'mine', version: null, kind: 'local' }] } });
+const {
   MAX_ADDED_LINES_PER_FILE,
   MAX_BRIEF_BYTES,
   canonPackOf,
@@ -10,7 +13,8 @@ import {
   summarizeCanonWindow,
   renderBrief,
   handoffDetail,
-} from '../tasks/growth-dedup/worker.mjs';
+  worker,
+} = await import('../tasks/growth-dedup/worker.mjs');
 
 // The growth-dedup code_work: what the mounted canon ADDED in the window, which is
 // the only thing that can newly cover a local item. Pure functions over the
@@ -206,4 +210,25 @@ test('handoffDetail: names what the window held, including when it held nothing'
   assert.match(handoffDetail(full), /acme-pack/);
   assert.match(handoffDetail(full), /1 new check/);
   assert.match(handoffDetail(summarizeCanonWindow([], ['acme-pack'])), /no canon pack moved/i);
+});
+
+// --- the I/O shell -----------------------------------------------------------
+
+test('the worker takes its yardstick from the packs the engine says are declared', async () => {
+  const patch = '@@ -0,0 +1 @@\n+- **A new canon rule** - said once.';
+  const commits = { 'c1': [{ filename: '.claudinite/shared/packs/acme-pack/RULES.md', patch }, { filename: '.claudinite/shared/packs/undeclared/RULES.md', patch }] };
+  const posted = [];
+  const gh = async (path, opts) => {
+    if (path.includes('/commits?')) return { status: 200, json: Object.keys(commits).map((sha) => ({ sha })) };
+    const sha = /\/commits\/([^/?]+)$/.exec(path)?.[1];
+    if (sha) return { status: 200, json: { commit: { message: 'm' }, files: commits[sha] } };
+    posted.push({ path, body: opts.body.body });
+    return { status: 201, json: {} };
+  };
+  const verdict = await worker({ repo: 'acme/member', defaultBranch: 'main', gh, item: { number: 9 }, log: () => {} });
+  assert.equal(posted.length, 1);
+  assert.equal(posted[0].path, '/repos/acme/member/issues/9/comments');
+  assert.match(posted[0].body, /acme-pack/);
+  assert.doesNotMatch(posted[0].body, /undeclared/);
+  assert.match(verdict.requestAgent.reason.detail, /in acme-pack,/);
 });

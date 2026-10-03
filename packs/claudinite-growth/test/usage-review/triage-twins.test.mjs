@@ -4,10 +4,11 @@ import { readFileSync } from 'node:fs';
 import { lastingFindings, ACTIONABLE, REVIEW_PATH, LEGACY_REVIEW_PATH } from '../../tasks/usage-triage/preconditions.mjs';
 import { lastingFindings as shelfLasting, ACTIONABLE as shelfActionable, REVIEW_PATH as shelfPath }
   from '../../../claudinite-canon-curation/tasks/usage-triage/preconditions.mjs';
-import { mkdtempSync, writeFileSync, mkdirSync } from 'node:fs';
+import { mkdtempSync, writeFileSync, mkdirSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { removeTree } from '../../../../engine/remove-tree.mjs';
+
+const removeTree = (dir) => rmSync(dir, { recursive: true, force: true });
 
 // The two usage-triage tasks ask one question — which findings have lasted long
 // enough, with a cause a diff can argue from — about one file, over two different
