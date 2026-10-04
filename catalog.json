@@ -1,6 +1,6 @@
 {
   "v": 1,
-  "serial": 110,
+  "serial": 111,
   "packs": [
     {
       "id": "android",
@@ -91,9 +91,9 @@
     },
     {
       "id": "claude-code-web-users-support",
-      "version": "61003.1",
+      "version": "1.61004.1",
       "channel": "canary",
-      "minEngineVersion": "61003.1.0",
+      "minEngineVersion": "1.61003.1",
       "requires": [],
       "relevanceDetector": null,
       "belongs": "what a project offers people working from Claude Code on the web, where the session knows who they are",
