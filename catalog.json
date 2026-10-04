@@ -1,6 +1,6 @@
 {
   "v": 1,
-  "serial": 130,
+  "serial": 131,
   "packs": [
     {
       "id": "android",
@@ -380,9 +380,9 @@
     },
     {
       "id": "jwt",
-      "version": "61003.1",
+      "version": "1.61004.1",
       "channel": "canary",
-      "minEngineVersion": "61001.1.0",
+      "minEngineVersion": "1.61001.1",
       "requires": [],
       "relevanceDetector": {
         "about": "a JWT library (jsonwebtoken, jose, PyJWT and kin) declared in a near-root package.json, requirements*.txt or pyproject.toml",
