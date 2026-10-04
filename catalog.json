@@ -1,6 +1,6 @@
 {
   "v": 1,
-  "serial": 121,
+  "serial": 122,
   "packs": [
     {
       "id": "android",
@@ -256,9 +256,9 @@
     },
     {
       "id": "flutter",
-      "version": "61003.1",
+      "version": "1.61004.1",
       "channel": "canary",
-      "minEngineVersion": "61001.1.0",
+      "minEngineVersion": "1.61001.1",
       "requires": [],
       "relevanceDetector": {
         "about": "pubspec.yaml (at the repo root or one directory down)",
