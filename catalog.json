@@ -1,6 +1,6 @@
 {
   "v": 1,
-  "serial": 115,
+  "serial": 116,
   "packs": [
     {
       "id": "android",
@@ -163,9 +163,9 @@
     },
     {
       "id": "claudinite-lifecycle",
-      "version": "61003.2",
+      "version": "1.61004.1",
       "channel": "canary",
-      "minEngineVersion": "61001.1.0",
+      "minEngineVersion": "1.61001.1",
       "requires": [],
       "relevanceDetector": null,
       "belongs": "using Claudinite itself — the vendored mount, the pack declaration, bootstrapping, adopting packs, the self-refresh update"
