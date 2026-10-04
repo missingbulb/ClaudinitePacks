@@ -1,6 +1,6 @@
 {
-  "version": "61003.1",
-  "minEngineVersion": "61001.1.0",
+  "version": "1.61004.1",
+  "minEngineVersion": "1.61001.1",
   "ruleRoutingGuidance": {
     "belongs": "shipping an Android app to Google Play — Play Console, signing, integrity, staged rollout",
     "excludes": "day-to-day Android or iOS coding rules — those are android and ios; Apple shipping is app-store-release"

@@ -81,3 +81,10 @@
 - **Model:** Claude Opus 5.5
 - **Mechanism:** the worker renders the missing rows from the command's JSON and keeps the file's
   own header and every standing row.
+
+## 2026-10-04 · policy-changed · rows order as the release index orders versions
+- **Reason:** a two-part row such as 61002.3 compared above 1.61004.1 part by part; the worker now
+  sorts every version outside the `<major>.<day>.<n>` form below every version in it.
+- **Actor:** @missingbulb (owner), asking that pack versions follow the Engine's scheme.
+- **Model:** Claude Opus 5.5
+- **Mechanism:** the worker's own copy of the index's order, held to it by the shelf's copy guard.

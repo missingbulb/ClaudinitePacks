@@ -9,6 +9,7 @@ import { execFileSync, spawnSync } from 'node:child_process';
 import { join } from 'node:path';
 import { git as engineGit } from '@claudinite/sdk';
 import { deliver, readAt } from './deliver.mjs';
+import { compareVersions } from './order.mjs';
 
 export const TASK_ID = 'claudinite-canon-curation/pack-version-history';
 
@@ -25,16 +26,6 @@ const DEFAULT_HEADER = [
 
 const ROW = /^\|\s*(\d+(?:\.\d+)*)\s*\|/;
 const SEPARATOR = /^\|(\s*-+\s*\|)+\s*$/;
-
-// Dotted versions compared part by part, so 61003.10 sorts above 61003.9.
-function compareVersions(a, b) {
-  const x = a.split('.').map(Number); const y = b.split('.').map(Number);
-  for (let i = 0; i < Math.max(x.length, y.length); i += 1) {
-    const d = (x[i] ?? 0) - (y[i] ?? 0);
-    if (d) return d;
-  }
-  return 0;
-}
 
 // One generated row: the pull requests the version shipped, oldest first, each as its
 // squash subject, which carries the pull request's number.

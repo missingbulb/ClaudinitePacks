@@ -95,3 +95,11 @@
 - **Model:** Claude Opus 5.5, per the commit trailer.
 - **Mechanism:** `read/member.mjs` reads `.claudinite/flat/member.GENERATED.json` (a Node member's settings file where there is none, with the frozen stamp's rules spelled in the page); `read/roster.mjs` reads the deployment's `.claudinite/fleet/roster.GENERATED.json` and `freshnessOf` maps each verdict, *unknown* naming its absence; the repo page's Drift tile goes; `repos`, `rosterFile`, `rosterUrl` and `canonRepo` are refused by `resolveMode` (design record row 111); a new `deploymentRepo` key, written from `GITHUB_REPOSITORY`, says where the roster and the deployment cards are read now that `canonRepo` is gone. Also absorbed from the website fork: `?repo=` survives the sign-in round trip, the hourly chart's peak reads per hour, and a wide table scrolls inside its card. Every test import of the engine or a sibling pack's module is a `cn` command under `needsCn` or gone. dashboard 61003.1.
 - **Rejected:** pricing freshness in the browser against npm packuments and the CDN's signed indexes, for every member on every load; reading a `cn` member's settings file when its member file is absent, since two of its three formats have no parser in the page.
+
+## 2026-10-04 · scope-changed · the version takes the <major>.<day>.<n> form
+- **Reason:** pack versions follow the Engine's `<major>.<day>.<n>` scheme; an index sorts every
+  earlier version below one in that form, so this one outranks what the pack store already holds.
+- **Actor:** @missingbulb (owner), asking that pack versions follow the same scheme.
+- **Model:** Claude Opus 5.5
+- **Mechanism:** the manifest's `version`, which the release now requires in this form for a new
+  version. claudinite-dashboard 1.61004.1.

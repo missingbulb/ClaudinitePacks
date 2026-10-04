@@ -13,7 +13,7 @@ const NOW = new Date('2026-01-31T00:00:00Z');
 const PACKS_KEY = parsePrivateKey(V.subjects.packs.seed);
 
 const release = (version, extra = {}) => ({
-  packJson: { version, minEngineVersion: '60101.1.0', requires: ['acme-dep'], ...extra },
+  packJson: { version, minEngineVersion: '1.60101.1', requires: ['acme-dep'], ...extra },
   sha256: 'a'.repeat(64),
   size: 123,
   publishedAt: '2026-01-02T03:04:05Z',
@@ -22,20 +22,20 @@ const release = (version, extra = {}) => ({
 
 const three = () => {
   let ix = newIndex('acme-pack');
-  for (const v of ['60101.1', '60101.2', '60102.1']) ix = addVersion(ix, release(v));
+  for (const v of ['1.60101.1', '1.60101.2', '1.60102.1']) ix = addVersion(ix, release(v));
   return ix;
 };
 
 test('newIndex is empty at serial 0; the first addVersion writes serial 1 with a full canary entry', () => {
   const ix = newIndex('acme-pack');
   assert.deepEqual(ix, { v: 1, pack: 'acme-pack', serial: 0, versions: [] });
-  const one = addVersion(ix, release('60101.1'));
+  const one = addVersion(ix, release('1.60101.1'));
   assert.equal(one.serial, 1);
   assert.deepEqual(one.versions, [{
-    version: '60101.1',
+    version: '1.60101.1',
     sha256: 'a'.repeat(64),
     size: 123,
-    minEngineVersion: '60101.1.0',
+    minEngineVersion: '1.60101.1',
     requires: ['acme-dep'],
     channel: 'canary',
     revoked: false,
@@ -46,10 +46,10 @@ test('newIndex is empty at serial 0; the first addVersion writes serial 1 with a
 });
 
 test('addVersion keeps ascending numeric order when a lower version arrives later', () => {
-  let ix = addVersion(newIndex('acme-pack'), release('60102.1'));
-  ix = addVersion(ix, release('60101.2'));
-  ix = addVersion(ix, release('60101.10'));
-  assert.deepEqual(ix.versions.map((e) => e.version), ['60101.2', '60101.10', '60102.1']);
+  let ix = addVersion(newIndex('acme-pack'), release('1.60102.1'));
+  ix = addVersion(ix, release('1.60101.2'));
+  ix = addVersion(ix, release('1.60101.10'));
+  assert.deepEqual(ix.versions.map((e) => e.version), ['1.60101.2', '1.60101.10', '1.60102.1']);
   assert.equal(ix.serial, 3);
 });
 
@@ -60,42 +60,77 @@ test('compareVersions compares numeric segments, never as floats', () => {
   assert.equal(compareVersions('60101.1', '60101.1'), 0);
 });
 
+// The published indexes still hold two-part versions such as 61002.3; one must never outrank a
+// <major>.<day>.<n> version when the newest is picked.
+test('compareVersions sorts every old-format version below every <major>.<day>.<n> one', () => {
+  for (const [a, b] of [['61002.3', '1.61004.1'], ['99999.99', '0.60101.1'], ['61002.3.0', '1.60101.1'], ['0.0.0', '0.60101.1'], ['1.61004.0', '1.60101.1'], ['1.61300.1', '1.60101.1']]) {
+    assert.ok(compareVersions(a, b) < 0, `${a} < ${b}`);
+    assert.ok(compareVersions(b, a) > 0, `${b} > ${a}`);
+  }
+  assert.ok(compareVersions('1.61004.2', '1.61004.10') < 0, 'n compares as a number');
+  assert.ok(compareVersions('1.61004.9', '1.61005.1') < 0, 'day before n');
+  assert.ok(compareVersions('1.61231.9', '2.60101.1') < 0, 'major before day');
+  assert.ok(compareVersions('1.0', '1.1') < 0, 'old versions keep their numeric order');
+  assert.equal(compareVersions('1.61004.1', '1.61004.1'), 0);
+  const sorted = ['1.61004.1', '61002.3', '1.61003.2', '61001.10', '61001.9'].sort(compareVersions);
+  assert.deepEqual(sorted, ['61001.9', '61001.10', '61002.3', '1.61003.2', '1.61004.1']);
+});
+
 test('addVersion refuses a duplicate version', () => {
-  assert.throws(() => addVersion(three(), release('60101.2')), /acme-pack 60101\.2 is already published/);
+  assert.throws(() => addVersion(three(), release('1.60101.2')), /acme-pack 1\.60101\.2 is already published/);
 });
 
 test('addVersion refuses a pack.json without a string version or minEngineVersion', () => {
   assert.throws(() => addVersion(newIndex('acme-pack'), release(undefined)), /acme-pack: pack\.json has no string version/);
   assert.throws(() => addVersion(newIndex('acme-pack'), release(60101.1)), /acme-pack: pack\.json has no string version/);
-  assert.throws(() => addVersion(newIndex('acme-pack'), release('60101.1', { minEngineVersion: undefined })), /acme-pack: pack\.json has no string minEngineVersion/);
+  assert.throws(() => addVersion(newIndex('acme-pack'), release('1.60101.1', { minEngineVersion: undefined })), /acme-pack: pack\.json has no string minEngineVersion/);
 });
 
-test('a new version must name its engine as three dot-separated numbers; a published entry is left as it is', () => {
-  for (const bad of ['60101.1', '60101', '60101.1.0.0', 'v60101.1.0', '60101.1.x']) {
-    assert.throws(() => addVersion(newIndex('acme-pack'), release('60101.1', { minEngineVersion: bad })),
-      new RegExp(`acme-pack 60101\\.1: minEngineVersion "${bad.replace(/\./g, '\\.')}" is not three dot-separated numbers`));
+test('a new version must name its engine as <major>.<day>.<n>; a published entry is left as it is', () => {
+  for (const bad of ['60101.1', '60101', '1.60101.1.0', 'v1.60101.1', '1.60101.x', '60101.1.0', '1.60101.0', '1.60100.1', '01.60101.1']) {
+    assert.throws(() => addVersion(newIndex('acme-pack'), release('1.60101.1', { minEngineVersion: bad })),
+      new RegExp(`acme-pack 1\\.60101\\.1: minEngineVersion "${bad.replace(/\./g, '\\.')}" is not <major>\\.<day>\\.<n>`));
+  }
+  for (const good of ['1.60101.1', '0.0.0', '12.111231.40']) {
+    assert.equal(packFields('acme-pack', { version: '1.60101.1', minEngineVersion: good }, { isNew: true }).minEngineVersion, good);
   }
   assert.equal(packFields('acme-pack', { version: '60101.1', minEngineVersion: '60101.1' }).minEngineVersion, '60101.1');
   const published = { ...three(), versions: three().versions.map((e) => ({ ...e, minEngineVersion: '60101.1' })) };
-  const promoted = setRevoked(setChannel(published, '60101.2', 'stable'), '60101.1', true);
+  const promoted = setRevoked(setChannel(published, '1.60101.2', 'stable'), '1.60101.1', true);
   assert.deepEqual(promoted.versions.map((e) => e.minEngineVersion), ['60101.1', '60101.1', '60101.1']);
-  assert.equal(addVersion(published, release('60103.1')).versions.at(-1).minEngineVersion, '60101.1.0');
+  assert.equal(addVersion(published, release('1.60103.1')).versions.at(-1).minEngineVersion, '1.60101.1');
+});
+
+test('a new version must be <major>.<day>.<n> itself; a published entry is left as it is', () => {
+  for (const bad of ['61004.1', '61004', '0.0.0', '1.61004.1.0', '1.61004.0', '1.61000.1', '01.61004.1']) {
+    assert.throws(() => addVersion(newIndex('acme-pack'), release(bad)),
+      new RegExp(`acme-pack: pack\\.json version "${bad.replace(/\./g, '\\.')}" is not <major>\\.<day>\\.<n>`));
+  }
+  for (const good of ['1.61004.1', '0.60101.1', '12.111231.40']) {
+    assert.equal(packFields('acme-pack', { version: good, minEngineVersion: '1.60101.1' }, { isNew: true }).version, good);
+  }
+  assert.equal(packFields('acme-pack', { version: '61002.3', minEngineVersion: '60101.1' }).version, '61002.3');
+  const published = { v: 1, pack: 'acme-pack', serial: 1, versions: [{ ...three().versions[0], version: '61002.3' }] };
+  assert.equal(readIndex(serialize(published)).versions[0].version, '61002.3');
+  const next = addVersion(published, release('1.61004.1'));
+  assert.deepEqual(next.versions.map((e) => e.version), ['61002.3', '1.61004.1']);
+  assert.equal(setChannel(next, '61002.3', 'stable').versions[0].channel, 'stable');
 });
 
 test('addVersion turns absent requires into []', () => {
-  const ix = addVersion(newIndex('acme-pack'), release('60101.1', { requires: undefined }));
+  const ix = addVersion(newIndex('acme-pack'), release('1.60101.1', { requires: undefined }));
   assert.deepEqual(ix.versions[0].requires, []);
 });
 
 test('setChannel and setRevoked bump the serial by one and change nothing else', () => {
   const before = three();
-  const promoted = setChannel(before, '60101.2', 'stable');
+  const promoted = setChannel(before, '1.60101.2', 'stable');
   assert.equal(promoted.serial, before.serial + 1);
   assert.equal(promoted.versions[1].channel, 'stable');
   assert.deepEqual({ ...promoted.versions[1], channel: 'canary' }, before.versions[1]);
   assert.deepEqual([promoted.versions[0], promoted.versions[2]], [before.versions[0], before.versions[2]]);
 
-  const revoked = setRevoked(promoted, '60102.1', true);
+  const revoked = setRevoked(promoted, '1.60102.1', true);
   assert.equal(revoked.serial, promoted.serial + 1);
   assert.equal(revoked.versions[2].revoked, true);
   assert.deepEqual({ ...revoked.versions[2], revoked: false }, promoted.versions[2]);
@@ -103,9 +138,9 @@ test('setChannel and setRevoked bump the serial by one and change nothing else',
 });
 
 test('setChannel refuses a channel other than canary or stable, and an unknown version', () => {
-  assert.throws(() => setChannel(three(), '60101.1', 'beta'), /channel/);
-  assert.throws(() => setChannel(three(), '60199.1', 'stable'), /60199\.1/);
-  assert.throws(() => setRevoked(three(), '60101.1', 'yes'), /boolean/);
+  assert.throws(() => setChannel(three(), '1.60101.1', 'beta'), /channel/);
+  assert.throws(() => setChannel(three(), '1.60199.1', 'stable'), /1\.60199\.1/);
+  assert.throws(() => setRevoked(three(), '1.60101.1', 'yes'), /boolean/);
 });
 
 test('serialize is stable, ends in a newline and writes keys in the format order', () => {
@@ -146,9 +181,9 @@ test('an index signed under a manifest-use certificate fails with a use error', 
 test('assertSerialAdvances refuses an equal or older serial and accepts the first index', () => {
   const ix = three();
   assertSerialAdvances(null, ix);
-  assertSerialAdvances(ix, setChannel(ix, '60101.1', 'stable'));
+  assertSerialAdvances(ix, setChannel(ix, '1.60101.1', 'stable'));
   assert.throws(() => assertSerialAdvances(ix, ix), /serial 3 is not greater than 3/);
-  assert.throws(() => assertSerialAdvances(setChannel(ix, '60101.1', 'stable'), ix), /serial 3 is not greater than 4/);
+  assert.throws(() => assertSerialAdvances(setChannel(ix, '1.60101.1', 'stable'), ix), /serial 3 is not greater than 4/);
 });
 
 test('readIndex parses what serialize wrote and refuses another format version', () => {
@@ -160,7 +195,7 @@ test('readIndex parses what serialize wrote and refuses another format version',
 test('a rewrite keeps unknown top-level and entry fields: known keys first in format order, unknown after in their order', () => {
   const ix = JSON.parse(serialize(three()).toString('utf8'));
   const withUnknown = { x: { nested: true }, ...ix, z: 1, versions: ix.versions.map((e, i) => (i === 1 ? { y: 'kept', ...e, w: [2] } : e)) };
-  const out = JSON.parse(serialize(setChannel(readIndex(Buffer.from(JSON.stringify(withUnknown))), '60101.2', 'stable')).toString('utf8'));
+  const out = JSON.parse(serialize(setChannel(readIndex(Buffer.from(JSON.stringify(withUnknown))), '1.60101.2', 'stable')).toString('utf8'));
   assert.deepEqual(Object.keys(out), [...INDEX_KEYS, 'x', 'z']);
   assert.deepEqual(out.x, { nested: true });
   assert.deepEqual(Object.keys(out.versions[1]), [...ENTRY_KEYS, 'y', 'w']);

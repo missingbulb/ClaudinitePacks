@@ -1,6 +1,6 @@
 {
-  "version": "61003.1",
-  "minEngineVersion": "61001.1.0",
+  "version": "1.61004.1",
+  "minEngineVersion": "1.61001.1",
   "ruleRoutingGuidance": {
     "belongs": "native macOS apps: app-bundle assembly, TCC usage strings, Hardened Runtime entitlements, Developer ID signing, notarization and DMG distribution",
     "excludes": "Mac App Store submission — app-store-release; iPhone app targets — ios; workflow YAML mechanics — git-github"

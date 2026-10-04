@@ -1,6 +1,6 @@
 {
-  "version": "61003.1",
-  "minEngineVersion": "61001.1.0",
+  "version": "1.61004.1",
+  "minEngineVersion": "1.61001.1",
   "ruleRoutingGuidance": {
     "belongs": "minting and validating JSON Web Tokens: algorithm pinning, claim validation, key strength and secrecy, expiry, JWE",
     "excludes": "the Google-issuer validator config — google-identity; OAuth client-side token acquisition — chrome-extension"

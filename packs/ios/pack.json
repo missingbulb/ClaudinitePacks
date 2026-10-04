@@ -1,6 +1,6 @@
 {
-  "version": "61003.1",
-  "minEngineVersion": "61001.1.0",
+  "version": "1.61004.1",
+  "minEngineVersion": "1.61001.1",
   "ruleRoutingGuidance": {
     "belongs": "app-target conventions for iOS — Xcode project, Info.plist usage strings, entitlements, code signing",
     "excludes": "shipping builds to the App Store — that is app-store-release; Android equivalents are android"

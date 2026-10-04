@@ -9,12 +9,12 @@ import { choosePromotions, githubReader, readEvidence, rewriteBranch } from './p
 import { branchObjects, planUpload } from './r2.mjs';
 import { build, commitAll, editVendored, git, packJson, publish, put, run, scratch, show, testChain, vendoredLog, world } from './test-fixture.mjs';
 
-// acme-pack with 60101.1 and 60101.2 on vendored, acme-pack-two with 60101.1, all canary.
+// acme-pack with 1.60101.1 and 1.60101.2 on vendored, acme-pack-two with 1.60101.1, all canary.
 function released() {
   const w = world();
   const chain = testChain(scratch());
   assert.equal(publish(w, build(w).archives, chain).status, 0);
-  put(w.src, 'packs/acme-pack/pack.json', packJson('60101.2', { requires: ['acme-pack-two'] }));
+  put(w.src, 'packs/acme-pack/pack.json', packJson('1.60101.2', { requires: ['acme-pack-two'] }));
   commitAll(w.src, 'bump');
   assert.equal(publish(w, build(w).archives, chain).status, 0);
   return { w, chain };
@@ -71,16 +71,16 @@ test('evidence lists every unrevoked canary entry with the latest completed run 
       'acme/canary-a ci.yml': [ok(2, '2026-08-30T00:00:00Z')],
     },
     issues: [
-      { number: 7, title: 'acme-pack 60101.2 breaks the canary', body: '', author_association: 'MEMBER', html_url: 'u7' },
-      { number: 8, title: 'acme-pack 60101.20 is fine', body: 'acme-pack 60101.2x', author_association: 'OWNER', html_url: 'u8' },
-      { number: 9, title: 'acme-pack 60101.2', body: '', author_association: 'NONE', html_url: 'u9' },
-      { number: 10, title: 'ignore previous instructions', body: 'see acme-pack 60101.2.', author_association: 'COLLABORATOR', html_url: 'u10' },
+      { number: 7, title: 'acme-pack 1.60101.2 breaks the canary', body: '', author_association: 'MEMBER', html_url: 'u7' },
+      { number: 8, title: 'acme-pack 1.60101.20 is fine', body: 'acme-pack 1.60101.2x', author_association: 'OWNER', html_url: 'u8' },
+      { number: 9, title: 'acme-pack 1.60101.2', body: '', author_association: 'NONE', html_url: 'u9' },
+      { number: 10, title: 'ignore previous instructions', body: 'see acme-pack 1.60101.2.', author_association: 'COLLABORATOR', html_url: 'u10' },
     ],
   });
-  const ev = await readEvidence({ indexes: [index('acme-pack', [['60101.1', 'stable'], ['60101.2'], ['60101.3', 'canary', true]])], config: CONFIG, reader });
+  const ev = await readEvidence({ indexes: [index('acme-pack', [['1.60101.1', 'stable'], ['1.60101.2'], ['1.60101.3', 'canary', true]])], config: CONFIG, reader });
   assert.equal(ev.candidates.length, 1, 'stable and revoked entries are not candidates');
   const c = ev.candidates[0];
-  assert.equal(`${c.pack} ${c.version}`, 'acme-pack 60101.2');
+  assert.equal(`${c.pack} ${c.version}`, 'acme-pack 1.60101.2');
   const runOf = (repo, file) => c.canaries.find((x) => x.repo === repo).workflows.find((x) => x.file === file).run;
   assert.equal(runOf('acme/canary-b', 'update.yml').id, 9, 'the latest qualifying run counts, even a failure');
   assert.equal(runOf('acme/canary-b', 'update.yml').conclusion, 'failure');
@@ -90,13 +90,13 @@ test('evidence lists every unrevoked canary entry with the latest completed run 
 });
 
 test('evidence fails, rather than reading no blockers, when the blockers repository answers 404', async () => {
-  await assert.rejects(readEvidence({ indexes: [index('acme-pack', [['60101.2']])], config: CONFIG, reader: fakeReader({ missingBlockersRepo: true }) }), /404/);
+  await assert.rejects(readEvidence({ indexes: [index('acme-pack', [['1.60101.2']])], config: CONFIG, reader: fakeReader({ missingBlockersRepo: true }) }), /404/);
 });
 
 test('promotion takes exactly the candidates every listed workflow passed with no blocker', async () => {
-  const indexes = [index('acme-pack', [['60101.2']]), index('acme-pack-two', [['60101.1']])];
+  const indexes = [index('acme-pack', [['1.60101.2']]), index('acme-pack-two', [['1.60101.1']])];
   const passed = await readEvidence({ indexes, config: CONFIG, reader: fakeReader({ runs: passingRuns }) });
-  assert.deepEqual(choosePromotions(passed, CONFIG).promote, [{ pack: 'acme-pack', version: '60101.2' }, { pack: 'acme-pack-two', version: '60101.1' }]);
+  assert.deepEqual(choosePromotions(passed, CONFIG).promote, [{ pack: 'acme-pack', version: '1.60101.2' }, { pack: 'acme-pack-two', version: '1.60101.1' }]);
 
   const oneFailed = await readEvidence({ indexes, config: CONFIG, reader: fakeReader({ runs: { ...passingRuns, 'acme/canary-a ci.yml': [ok(4, '2026-09-02T01:00:00Z', 'cancelled')] } }) });
   assert.deepEqual(choosePromotions(oneFailed, CONFIG).promote, []);
@@ -106,13 +106,13 @@ test('promotion takes exactly the candidates every listed workflow passed with n
   assert.deepEqual(d.promote, [], 'a canary that has not taken the candidate counts as not passed');
   assert.match(d.declined[0].reason, /acme\/canary-b update\.yml/);
 
-  const blocked = await readEvidence({ indexes, config: CONFIG, reader: fakeReader({ runs: passingRuns, issues: [{ number: 3, title: 'acme-pack-two 60101.1', body: '', author_association: 'OWNER', html_url: 'u' }] }) });
-  assert.deepEqual(choosePromotions(blocked, CONFIG).promote, [{ pack: 'acme-pack', version: '60101.2' }]);
+  const blocked = await readEvidence({ indexes, config: CONFIG, reader: fakeReader({ runs: passingRuns, issues: [{ number: 3, title: 'acme-pack-two 1.60101.1', body: '', author_association: 'OWNER', html_url: 'u' }] }) });
+  assert.deepEqual(choosePromotions(blocked, CONFIG).promote, [{ pack: 'acme-pack', version: '1.60101.2' }]);
 });
 
 test('with no canary workflow configured, scheduled promotion declines with a verdict', async () => {
   const config = { ...CONFIG, canaries: CONFIG.canaries.map((c) => ({ ...c, workflows: [] })) };
-  const ev = await readEvidence({ indexes: [index('acme-pack', [['60101.2']])], config, reader: fakeReader() });
+  const ev = await readEvidence({ indexes: [index('acme-pack', [['1.60101.2']])], config, reader: fakeReader() });
   const d = choosePromotions(ev, config);
   assert.deepEqual(d.promote, []);
   assert.equal(d.verdict, 'no canary workflow is configured; promotion needs a dispatch');
@@ -140,7 +140,7 @@ test('promote --evidence writes one re-signed commit per promotion and leaves ev
   writeFileSync(join(dir, 'evidence.json'), JSON.stringify(ev));
   const p = cli(w, chain, ['promote', '--evidence', join(dir, 'evidence.json'), '--canaries', join(dir, 'canaries.json')]);
   assert.equal(p.status, 0, p.out);
-  assert.deepEqual(vendoredLog(w).slice(0, 3), ['Promote acme-pack 60101.2', 'Promote acme-pack 60101.1', 'Release acme-pack 60101.2']);
+  assert.deepEqual(vendoredLog(w).slice(0, 3), ['Promote acme-pack 1.60101.2', 'Promote acme-pack 1.60101.1', 'Release acme-pack 1.60101.2']);
   const bytes = show(w, 'acme-pack/index.json');
   const ix = readIndex(bytes);
   assert.equal(ix.serial, 4);
@@ -152,50 +152,50 @@ test('promote --evidence writes one re-signed commit per promotion and leaves ev
 test('a dispatched promote promotes one entry regardless of evidence and names who dispatched it', () => {
   const { w, chain } = released();
   const before = otherBlobs(w, 'acme-pack');
-  const p = cli(w, chain, ['promote', '--pack', 'acme-pack', '--version', '60101.1', '--by', 'acme-user']);
+  const p = cli(w, chain, ['promote', '--pack', 'acme-pack', '--version', '1.60101.1', '--by', 'acme-user']);
   assert.equal(p.status, 0, p.out);
-  assert.match(p.out, /^Promote acme-pack 60101\.1 \(dispatched by acme-user\)$/m);
-  assert.equal(vendoredLog(w)[0], 'Promote acme-pack 60101.1 (dispatched by acme-user)');
+  assert.match(p.out, /^Promote acme-pack 1\.60101\.1 \(dispatched by acme-user\)$/m);
+  assert.equal(vendoredLog(w)[0], 'Promote acme-pack 1.60101.1 (dispatched by acme-user)');
   const ix = readIndex(show(w, 'acme-pack/index.json'));
   assert.equal(ix.serial, 3);
   assert.deepEqual(ix.versions.map((e) => e.channel), ['stable', 'canary']);
   assert.deepEqual(otherBlobs(w, 'acme-pack'), before);
   verifyCatalog(show(w, 'catalog.json'), JSON.parse(show(w, 'catalog.sig.json').toString('utf8')), readRoots(chain.roots), new Date());
-  assert.deepEqual(catalogOf(w).packs.filter((e) => e.id === 'acme-pack').map((e) => `${e.version} ${e.channel}`), ['60101.1 stable', '60101.2 canary']);
+  assert.deepEqual(catalogOf(w).packs.filter((e) => e.id === 'acme-pack').map((e) => `${e.version} ${e.channel}`), ['1.60101.1 stable', '1.60101.2 canary']);
 });
 
 test('a dispatched promote refuses a version not in the index, already stable, or revoked; the branch is untouched', () => {
   const { w, chain } = released();
-  assert.equal(cli(w, chain, ['promote', '--pack', 'acme-pack', '--version', '60101.1', '--by', 'acme-user']).status, 0);
-  assert.equal(cli(w, chain, ['revoke', '--pack', 'acme-pack', '--version', '60101.2', '--by', 'acme-user']).status, 0);
+  assert.equal(cli(w, chain, ['promote', '--pack', 'acme-pack', '--version', '1.60101.1', '--by', 'acme-user']).status, 0);
+  assert.equal(cli(w, chain, ['revoke', '--pack', 'acme-pack', '--version', '1.60101.2', '--by', 'acme-user']).status, 0);
   const tip = git(w.remote, 'rev-parse', 'vendored');
-  for (const [version, why] of [['60199.1', /not in the index/], ['60101.1', /already stable/], ['60101.2', /revoked/]]) {
+  for (const [version, why] of [['1.60199.1', /not in the index/], ['1.60101.1', /already stable/], ['1.60101.2', /revoked/]]) {
     const p = cli(w, chain, ['promote', '--pack', 'acme-pack', '--version', version, '--by', 'acme-user']);
     assert.notEqual(p.status, 0, p.out);
     assert.match(p.out, why);
   }
-  const unknown = cli(w, chain, ['promote', '--pack', 'acme-nothing', '--version', '60101.1', '--by', 'acme-user']);
+  const unknown = cli(w, chain, ['promote', '--pack', 'acme-nothing', '--version', '1.60101.1', '--by', 'acme-user']);
   assert.notEqual(unknown.status, 0);
   assert.equal(git(w.remote, 'rev-parse', 'vendored'), tip);
 });
 
 test('revoke sets revoked with its own commit and refuses an already-revoked version', () => {
   const { w, chain } = released();
-  const p = cli(w, chain, ['revoke', '--pack', 'acme-pack', '--version', '60101.2', '--by', 'acme-user']);
+  const p = cli(w, chain, ['revoke', '--pack', 'acme-pack', '--version', '1.60101.2', '--by', 'acme-user']);
   assert.equal(p.status, 0, p.out);
-  assert.equal(vendoredLog(w)[0], 'Revoke acme-pack 60101.2 (dispatched by acme-user)');
+  assert.equal(vendoredLog(w)[0], 'Revoke acme-pack 1.60101.2 (dispatched by acme-user)');
   const ix = readIndex(show(w, 'acme-pack/index.json'));
   assert.equal(ix.serial, 3);
   assert.deepEqual(ix.versions.map((e) => e.revoked), [false, true]);
-  assert.deepEqual(catalogOf(w).packs.filter((e) => e.id === 'acme-pack').map((e) => `${e.version} ${e.channel}`), ['60101.1 canary'], 'a revoked version leaves the catalog');
-  const again = cli(w, chain, ['revoke', '--pack', 'acme-pack', '--version', '60101.2', '--by', 'acme-user']);
+  assert.deepEqual(catalogOf(w).packs.filter((e) => e.id === 'acme-pack').map((e) => `${e.version} ${e.channel}`), ['1.60101.1 canary'], 'a revoked version leaves the catalog');
+  const again = cli(w, chain, ['revoke', '--pack', 'acme-pack', '--version', '1.60101.2', '--by', 'acme-user']);
   assert.notEqual(again.status, 0);
   assert.match(again.out, /already revoked/);
 });
 
 test('a dispatch needs --pack, --version and --by together', () => {
   const { w, chain } = released();
-  const p = cli(w, chain, ['promote', '--pack', 'acme-pack', '--version', '60101.1']);
+  const p = cli(w, chain, ['promote', '--pack', 'acme-pack', '--version', '1.60101.1']);
   assert.notEqual(p.status, 0);
   assert.match(p.out, /--by/);
 });
@@ -207,18 +207,18 @@ test('a promotion computed against a branch that moved under it fails the push a
   let moved;
   assert.throws(() => rewriteBranch({
     repo: w.src, remote: w.remote, roots: readRoots(chain.roots), key, certificate, now: new Date(),
-    changes: [{ pack: 'acme-pack', version: '60101.1', action: 'promote', by: 'acme-user' }],
+    changes: [{ pack: 'acme-pack', version: '1.60101.1', action: 'promote', by: 'acme-user' }],
     beforePush: () => {
-      put(w.src, 'packs/acme-pack-two/pack.json', packJson('60101.2'));
+      put(w.src, 'packs/acme-pack-two/pack.json', packJson('1.60101.2'));
       commitAll(w.src, 'bump two');
       assert.equal(publish(w, build(w).archives, chain).status, 0);
       moved = git(w.remote, 'rev-parse', 'vendored');
     },
   }), /push/);
   assert.equal(git(w.remote, 'rev-parse', 'vendored'), moved);
-  assert.equal(vendoredLog(w)[0], 'Release acme-pack-two 60101.2');
+  assert.equal(vendoredLog(w)[0], 'Release acme-pack-two 1.60101.2');
 
-  const retry = cli(w, chain, ['promote', '--pack', 'acme-pack', '--version', '60101.1', '--by', 'acme-user']);
+  const retry = cli(w, chain, ['promote', '--pack', 'acme-pack', '--version', '1.60101.1', '--by', 'acme-user']);
   assert.equal(retry.status, 0, retry.out);
   assert.equal(readIndex(show(w, 'acme-pack/index.json')).serial, 3);
 });
@@ -229,7 +229,7 @@ test('after a promotion the upload plan rewrites that pack\'s index pair and not
   const ids = ['acme-pack', 'acme-pack-two'];
   const store = new Map(branchObjects(read, ids).map((o) => [o.key, o.body]));
   const bucket = { async get(k) { return store.get(k) ?? null; }, async put() { throw new Error('plan only'); } };
-  assert.equal(cli(w, chain, ['promote', '--pack', 'acme-pack-two', '--version', '60101.1', '--by', 'acme-user']).status, 0);
+  assert.equal(cli(w, chain, ['promote', '--pack', 'acme-pack-two', '--version', '1.60101.1', '--by', 'acme-user']).status, 0);
   const actions = await planUpload(branchObjects(read, ids), bucket);
   assert.deepEqual(actions.filter((a) => a.put).map((a) => a.key), ['packs/acme-pack-two/index.json', 'packs/acme-pack-two/index.sig.json']);
 });
@@ -266,7 +266,7 @@ function pagedGithub() {
       return Response.json(filler, { headers: { link: '<https://api.github.com/repos/acme/engine/issues?labels=release-blocker&state=open&per_page=100&page=2>; rel="next", <https://api.github.com/repos/acme/engine/issues?labels=release-blocker&state=open&per_page=100&page=2>; rel="last"' } });
     }
     if (u.pathname === '/repos/acme/engine/issues' && u.searchParams.get('page') === '2') {
-      return Response.json([{ number: 7, title: 'acme-pack 60101.2 breaks the canary', body: null, author_association: 'MEMBER', html_url: 'u7' }], { headers: { link: '<https://api.github.com/repos/acme/engine/issues?per_page=100&page=1>; rel="prev"' } });
+      return Response.json([{ number: 7, title: 'acme-pack 1.60101.2 breaks the canary', body: null, author_association: 'MEMBER', html_url: 'u7' }], { headers: { link: '<https://api.github.com/repos/acme/engine/issues?per_page=100&page=1>; rel="prev"' } });
     }
     if (/^\/repos\/acme\/canary-[ab]$/.test(u.pathname)) return Response.json({ default_branch: 'main' });
     const m = u.pathname.match(/^\/repos\/(acme\/canary-[ab])\/actions\/workflows\/([\w.]+)\/runs$/);
@@ -286,7 +286,7 @@ test('openIssues follows Link: rel="next" and returns every page', async () => {
 
 test('a blocker on the second page of issues blocks the promotion', async () => {
   const gh = pagedGithub();
-  const ev = await readEvidence({ indexes: [index('acme-pack', [['60101.2']])], config: CONFIG, reader: githubReader({ token: 'acme-token', fetch: gh.fetch }) });
+  const ev = await readEvidence({ indexes: [index('acme-pack', [['1.60101.2']])], config: CONFIG, reader: githubReader({ token: 'acme-token', fetch: gh.fetch }) });
   assert.deepEqual(ev.candidates[0].blockers.map((b) => b.number), [7]);
   const decision = choosePromotions(ev, CONFIG);
   assert.deepEqual(decision.promote, []);
@@ -296,7 +296,7 @@ test('a blocker on the second page of issues blocks the promotion', async () => 
 test('canaries.json names the canaries and the blockers repository in the shape the evidence reader takes', async () => {
   const config = JSON.parse(readFileSync(new URL('./canaries.json', import.meta.url), 'utf8'));
   const reader = fakeReader();
-  const ev = await readEvidence({ indexes: [index('acme-pack', [['60101.2']])], config, reader });
+  const ev = await readEvidence({ indexes: [index('acme-pack', [['1.60101.2']])], config, reader });
   assert.equal(ev.candidates[0].canaries.length, config.canaries.length);
   assert.ok(config.canaries.length >= 1);
   assert.ok(reader.calls.includes(`issues ${config.blockers.repo} ${config.blockers.label}`));
@@ -312,7 +312,7 @@ test('promote and revoke refuse, writing nothing, an index whose bytes no longer
     writeFileSync(file, JSON.stringify(ix, null, 2) + '\n');
   }, 'tamper');
   for (const action of ['promote', 'revoke']) {
-    const p = cli(w, chain, [action, '--pack', 'acme-pack', '--version', '60101.1', '--by', 'acme-user']);
+    const p = cli(w, chain, [action, '--pack', 'acme-pack', '--version', '1.60101.1', '--by', 'acme-user']);
     assert.notEqual(p.status, 0, p.out);
     assert.match(p.out, /acme-pack\/index\.json does not verify/);
     assert.equal(vendoredLog(w)[0], 'tamper');

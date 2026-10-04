@@ -1,6 +1,6 @@
 {
-  "version": "61003.1",
-  "minEngineVersion": "61001.1.0",
+  "version": "1.61004.1",
+  "minEngineVersion": "1.61001.1",
   "ruleRoutingGuidance": {
     "belongs": "serving a site from GitHub Pages: the nightly release, the vendored deploy workflow, site.config, the serving subpath",
     "excludes": "the version scheme and the page stamp — public-website; markup — html"

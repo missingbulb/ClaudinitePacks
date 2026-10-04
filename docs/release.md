@@ -34,10 +34,11 @@ no secrets, so a pull request from a fork runs it too: `release.mjs plan --conte
 vendors each pack whose version is already on `vendored` and compares the files with the branch's
 unpacked set. A differing, missing or extra path fails the job with
 `published <id> <version> CHANGED: differing: <path>` (or `missing:`, `extra:`); bump that pack's
-`pack.json` version. A version to publish whose `pack.json` the publish job would refuse fails
-too, with the same `::error::` line, such as a two-part `minEngineVersion` or a
-`relevanceDetector` the engine's catalog reader would refuse (`<id> <version>: <sentence>`, one line
-per problem). A change only to what
+`pack.json` version to `<major>.<day>.1` for today's `<day>`, or to the next `<n>` when the
+version already names today. A version to publish whose `pack.json` the publish job would refuse
+fails too, with the same `::error::` line, such as a `version` or a `minEngineVersion` that is not
+`<major>.<day>.<n>` or a `relevanceDetector` the engine's catalog reader would refuse
+(`<id> <version>: <sentence>`, one line per problem). A change only to what
 the vendored set drops (`test/`, `docs/`,
 `provenance/` at the pack root, and `checks/*_test.go`) needs no bump. The publish job's own
 refusal is the backstop after the merge.
@@ -83,10 +84,10 @@ plus a newline, keys in this order, and never re-serialized by anything else:
   "serial": 3,
   "versions": [
     {
-      "version": "60928.1",
+      "version": "1.61004.1",
       "sha256": "3f1c0e9b5a7d2c4e6f8091a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e6",
       "size": 12345,
-      "minEngineVersion": "60928.1",
+      "minEngineVersion": "1.61004.1",
       "requires": [
         "claudinite-lifecycle",
         "git-github"
@@ -102,13 +103,18 @@ plus a newline, keys in this order, and never re-serialized by anything else:
 
 - `serial` starts at 1 and every rewrite (a new version, a channel change, a revocation) writes
   serial + 1; the writer refuses a serial not greater than the one already on the branch.
-- `versions` is sorted ascending by version, compared as numeric segments; versions are strings.
-  A version already present is refused.
+- `versions` is sorted ascending by version; versions are strings. A new version is
+  `<major>.<day>.<n>`, the Engine's own form: `<major>` raised by hand, `<day>` the UTC date as
+  (year-2020)*10000 + month*100 + day, `<n>` that day's build from 1, as in `1.61004.1`. An entry
+  in any other dot-separated form, such as the two-part `61002.3` the first releases published,
+  stays readable and sorts below every `<major>.<day>.<n>` version; within either form, versions
+  compare as numeric segments, `<major>` then `<day>` then `<n>`. A version already present is
+  refused.
 - `version`, `minEngineVersion` and `requires` are copied from `packs/<id>/pack.json`; absent
   `requires` becomes `[]`; a pack without a string `version` or `minEngineVersion` fails the run.
   `minEngineVersion` is a minimum, not interpreted here, except that a new version must spell it
-  as three dot-separated numbers (`<day>.<n>.<patch>`, the Engine release it needs); an entry
-  already published is rewritten as it is.
+  as `<major>.<day>.<n>`, the Engine release it needs, as the Engine's version reader takes it;
+  an entry already published is rewritten as it is.
 - `channel` is `canary` or `stable`, and a new version is always `canary`. `revoked` is a boolean.
 - `sha256` and `size` describe `<id>/<version>.tar.gz`; `publishedAt` is the publish job's clock,
   RFC 3339 UTC seconds; `sourceCommit` is the `main` commit the run built.
@@ -145,9 +151,9 @@ forced pack's questions against it, so nothing needs a clone of the shelf.
   "packs": [
     {
       "id": "python",
-      "version": "61001.2",
+      "version": "1.61004.1",
       "channel": "stable",
-      "minEngineVersion": "61001.1.0",
+      "minEngineVersion": "1.61001.1",
       "requires": [],
       "relevanceDetector": {
         "about": "pyproject.toml (at the repo root or one directory down)",

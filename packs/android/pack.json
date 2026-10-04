@@ -1,6 +1,6 @@
 {
-  "version": "61003.1",
-  "minEngineVersion": "61001.1.0",
+  "version": "1.61004.1",
+  "minEngineVersion": "1.61001.1",
   "ruleRoutingGuidance": {
     "belongs": "gradle/AGP builds, AndroidManifest, permissions, signing configs, product flavors and emulator workflows for an Android app module",
     "excludes": "store submission and release cadence — play-store-release; Flutter-side widget or Dart code — flutter"

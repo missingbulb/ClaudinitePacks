@@ -35,3 +35,14 @@ test('every pack\'s deliver.mjs runs the same delivery', () => {
   const differing = rest.filter((p) => code(read(p)) !== code(read(first)));
   assert.deepEqual(differing, [], `differs from ${first} outside comments and the scratch index's name`);
 });
+
+// The pack-version-history task orders VERSIONS.md rows with its own copy of the release index's
+// version order, since a pack imports nothing from tools/; both are run over every pair here.
+test('the version-history task orders pack versions as the release index does', async () => {
+  const { compareVersions: index } = await import('../release/index.mjs');
+  const { compareVersions: history } = await import('../../packs/claudinite-canon-curation/tasks/pack-version-history/order.mjs');
+  const versions = ['61001', '61001.1', '61001.9', '61001.10', '61002.3', '61002.3.0', '0.0.0', '1.0', '0.60101.1', '1.61004.0',
+    '1.61004.1', '1.61004.2', '1.61004.10', '1.61005.1', '2.60101.1', '1.61300.1', '01.61004.1'];
+  const differing = versions.flatMap((a) => versions.map((b) => [a, b])).filter(([a, b]) => Math.sign(index(a, b)) !== Math.sign(history(a, b)));
+  assert.deepEqual(differing, []);
+});

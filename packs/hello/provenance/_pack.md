@@ -5,3 +5,11 @@
 - **Mechanism:** a copy of the engine's `release/testdata/hello` fixture; `minEngineVersion` names
   the rc release that ships the chassis.
 - **Landed:** pending.
+
+## 2026-10-04 · scope-changed · the version takes the <major>.<day>.<n> form
+- **Reason:** pack versions follow the Engine's `<major>.<day>.<n>` scheme; an index sorts every
+  earlier version below one in that form, so this one outranks what the pack store already holds.
+- **Actor:** @missingbulb (owner), asking that pack versions follow the same scheme.
+- **Model:** Claude Opus 5.5
+- **Mechanism:** the manifest's `version`, which the release now requires in this form for a new
+  version. hello 1.61004.1.
