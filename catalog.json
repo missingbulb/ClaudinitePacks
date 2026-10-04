@@ -1,6 +1,6 @@
 {
   "v": 1,
-  "serial": 128,
+  "serial": 129,
   "packs": [
     {
       "id": "android",
@@ -356,9 +356,9 @@
     },
     {
       "id": "html",
-      "version": "61003.1",
+      "version": "1.61004.1",
       "channel": "canary",
-      "minEngineVersion": "61001.1.0",
+      "minEngineVersion": "1.61001.1",
       "requires": [],
       "relevanceDetector": null,
       "belongs": "hand-authored HTML markup gotchas — element nesting, injected content placement, live browser verification of a page"
