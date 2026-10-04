@@ -1,7 +1,7 @@
 {
   "v": 1,
   "pack": "app-store-release",
-  "serial": 2,
+  "serial": 3,
   "versions": [
     {
       "version": "60928.1",
@@ -24,6 +24,17 @@
       "revoked": false,
       "publishedAt": "2026-10-03T14:45:23Z",
       "sourceCommit": "e47e739df11a62929d1a9832ccf3cc7bf618c94a"
+    },
+    {
+      "version": "1.61004.1",
+      "sha256": "ab81367bae8d818013d3ebbb4dc5c0a47d8503e506aa4c94983034d224a6cab4",
+      "size": 1063,
+      "minEngineVersion": "1.61001.1",
+      "requires": [],
+      "channel": "canary",
+      "revoked": false,
+      "publishedAt": "2026-10-04T05:56:12Z",
+      "sourceCommit": "6425ecaa87eeab7e897c64f4ec1d64edfeb60ad0"
     }
   ]
 }
