@@ -1,6 +1,6 @@
 {
   "v": 1,
-  "serial": 135,
+  "serial": 136,
   "packs": [
     {
       "id": "android",
@@ -492,9 +492,9 @@
     },
     {
       "id": "play-store-release",
-      "version": "61003.1",
+      "version": "1.61004.1",
       "channel": "canary",
-      "minEngineVersion": "61001.1.0",
+      "minEngineVersion": "1.61001.1",
       "requires": [],
       "relevanceDetector": null,
       "belongs": "shipping an Android app to Google Play — Play Console, signing, integrity, staged rollout"
