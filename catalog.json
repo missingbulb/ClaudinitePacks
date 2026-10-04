@@ -1,6 +1,6 @@
 {
   "v": 1,
-  "serial": 129,
+  "serial": 130,
   "packs": [
     {
       "id": "android",
@@ -365,9 +365,9 @@
     },
     {
       "id": "ios",
-      "version": "61003.1",
+      "version": "1.61004.1",
       "channel": "canary",
-      "minEngineVersion": "61001.1.0",
+      "minEngineVersion": "1.61001.1",
       "requires": [],
       "relevanceDetector": {
         "about": "ios/Runner/Info.plist",
