@@ -1,6 +1,6 @@
 {
   "v": 1,
-  "serial": 131,
+  "serial": 132,
   "packs": [
     {
       "id": "android",
@@ -408,9 +408,9 @@
     },
     {
       "id": "leaflet",
-      "version": "61003.1",
+      "version": "1.61004.1",
       "channel": "canary",
-      "minEngineVersion": "61001.1.0",
+      "minEngineVersion": "1.61001.1",
       "requires": [],
       "relevanceDetector": {
         "about": "a Leaflet reference (CDN asset, or an L.map/L.tileLayer/L.markerClusterGroup call) in HTML/JS source",
