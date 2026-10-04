@@ -1,12 +1,12 @@
 {
   "v": 1,
-  "serial": 105,
+  "serial": 106,
   "packs": [
     {
       "id": "android",
-      "version": "61003.1",
+      "version": "1.61004.1",
       "channel": "canary",
-      "minEngineVersion": "61001.1.0",
+      "minEngineVersion": "1.61001.1",
       "requires": [],
       "relevanceDetector": {
         "about": "android/app/src/main/AndroidManifest.xml",
