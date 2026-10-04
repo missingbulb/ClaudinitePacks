@@ -1,6 +1,6 @@
 {
   "v": 1,
-  "serial": 138,
+  "serial": 139,
   "packs": [
     {
       "id": "android",
@@ -535,9 +535,9 @@
     },
     {
       "id": "python",
-      "version": "61002.1",
+      "version": "1.61004.1",
       "channel": "canary",
-      "minEngineVersion": "61001.1.0",
+      "minEngineVersion": "1.61001.1",
       "requires": [],
       "relevanceDetector": {
         "about": "pyproject.toml (at the repo root or one directory down)",
