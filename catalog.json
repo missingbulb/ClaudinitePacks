@@ -1,6 +1,6 @@
 {
   "v": 1,
-  "serial": 118,
+  "serial": 119,
   "packs": [
     {
       "id": "android",
@@ -207,9 +207,9 @@
     },
     {
       "id": "cloudflare-workers",
-      "version": "61003.1",
+      "version": "1.61004.1",
       "channel": "canary",
-      "minEngineVersion": "61001.1.0",
+      "minEngineVersion": "1.61001.1",
       "requires": [],
       "relevanceDetector": {
         "about": "a wrangler.toml/.json/.jsonc config (at the repo root or one directory down)",
