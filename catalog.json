@@ -1,6 +1,6 @@
 {
   "v": 1,
-  "serial": 133,
+  "serial": 134,
   "packs": [
     {
       "id": "android",
@@ -449,9 +449,9 @@
     },
     {
       "id": "node",
-      "version": "61002.1",
+      "version": "1.61004.1",
       "channel": "canary",
-      "minEngineVersion": "61001.1.0",
+      "minEngineVersion": "1.61001.1",
       "requires": [],
       "relevanceDetector": {
         "about": "package.json (at the repo root or one directory down)",

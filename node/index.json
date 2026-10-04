@@ -1,7 +1,7 @@
 {
   "v": 1,
   "pack": "node",
-  "serial": 2,
+  "serial": 3,
   "versions": [
     {
       "version": "60928.1",
@@ -24,6 +24,17 @@
       "revoked": false,
       "publishedAt": "2026-10-02T15:05:19Z",
       "sourceCommit": "ae81567128631041f6e7faa2e865a9f7124628af"
+    },
+    {
+      "version": "1.61004.1",
+      "sha256": "19d2b5d04f24e3afd7c86050bbdf0f722016e04b84b631616df5ed9ee61cd6c8",
+      "size": 7433,
+      "minEngineVersion": "1.61001.1",
+      "requires": [],
+      "channel": "canary",
+      "revoked": false,
+      "publishedAt": "2026-10-04T05:56:12Z",
+      "sourceCommit": "6425ecaa87eeab7e897c64f4ec1d64edfeb60ad0"
     }
   ]
 }
