@@ -1,0 +1,20 @@
+---
+name: macos-app-bundle
+description: Assembling a macOS .app bundle from a SwiftPM build. Use when editing Info.plist, Package.swift or the bundle-assembly script.
+metadata:
+  body: guidelines
+  usage:
+    expect: triggered
+  force-load-on-file-edits-paths:
+    - "**/Info.plist"
+    - "**/Package.swift"
+---
+
+# The app bundle is assembled, not built
+
+- **A menu-bar-only app is `LSUIElement: true`** in `Info.plist` — that, not code, is what removes
+  the Dock icon and the main window. (menu-bar-only)
+
+- **Pin `LSMinimumSystemVersion` to the same OS version the package's `platforms:` declares.** They
+  are two independent claims about the same floor, and only one of them is enforced at launch.
+  (pin-lsminimumsystemversion-same)
