@@ -149,3 +149,11 @@
 - **Model:** Claude Opus 5.5
 - **Mechanism:** the engine's growth/userpack step at `cn hook session-start`; the store address and
   the CODEOWNERS block stay in store_codeowners.mjs, held equal to the checks' Go by their test.
+
+## 2026-10-04 · scope-changed · the version takes the <major>.<day>.<n> form
+- **Reason:** pack versions follow the Engine's `<major>.<day>.<n>` scheme; an index sorts every
+  earlier version below one in that form, so this one outranks what the pack store already holds.
+- **Actor:** @missingbulb (owner), asking that pack versions follow the same scheme.
+- **Model:** Claude Opus 5.5
+- **Mechanism:** the manifest's `version`, which the release now requires in this form for a new
+  version. claude-code-web-users-support 1.61004.1.

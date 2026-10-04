@@ -1,5 +1,5 @@
 {
-  "version": "61003.1",
+  "version": "1.61004.1",
   "minEngineVersion": "1.61001.1",
   "ruleRoutingGuidance": {
     "belongs": "map rendering with the Leaflet library — map init options, tile layers, markers and divIcons, CDN plugin pinning",

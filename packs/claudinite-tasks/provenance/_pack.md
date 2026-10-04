@@ -149,3 +149,11 @@
 - **Reason:** the step ran the Node engine's SessionEnd runner; the capture is engine code, and the command says what it does. Why the hook never fires for an unattended session stands.
 - **Actor:** build lead, ClaudiniteEngine#57.
 - **Model:** Claude Opus 5.5 (1M context)
+
+## 2026-10-04 · scope-changed · the version takes the <major>.<day>.<n> form
+- **Reason:** pack versions follow the Engine's `<major>.<day>.<n>` scheme; an index sorts every
+  earlier version below one in that form, so this one outranks what the pack store already holds.
+- **Actor:** @missingbulb (owner), asking that pack versions follow the same scheme.
+- **Model:** Claude Opus 5.5
+- **Mechanism:** the manifest's `version`, which the release now requires in this form for a new
+  version. claudinite-tasks 1.61004.1.

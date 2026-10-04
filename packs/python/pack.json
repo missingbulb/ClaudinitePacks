@@ -1,5 +1,5 @@
 {
-  "version": "61002.1",
+  "version": "1.61004.1",
   "minEngineVersion": "1.61001.1",
   "ruleRoutingGuidance": {
     "belongs": "packaging and import conventions for a Python project — pyproject extras, lazy optional heavy deps, stdlib-only core",

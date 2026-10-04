@@ -86,3 +86,11 @@
 - **Reason:** `60928.1` is a Node engine version, which `cn` reads only as the legacy two-part form any engine satisfies (ClaudiniteEngine#18); a new version must name the `cn` release it needs, and release-packs refused product-wiki 61002.1 for carrying it. `61001.1.0` is the engine floor, below which no `cn` is released, so it holds back no engine the old value admitted.
 - **Actor:** build lead, repairing release-packs on main after ClaudinitePacks #20.
 - **Mechanism:** the manifest's `minEngineVersion`, which the pack update enforces; `release.mjs plan` now refuses a two-part value on a version to publish before the merge. product-wiki 61002.1.
+
+## 2026-10-04 · scope-changed · the version takes the <major>.<day>.<n> form
+- **Reason:** pack versions follow the Engine's `<major>.<day>.<n>` scheme; an index sorts every
+  earlier version below one in that form, so this one outranks what the pack store already holds.
+- **Actor:** @missingbulb (owner), asking that pack versions follow the same scheme.
+- **Model:** Claude Opus 5.5
+- **Mechanism:** the manifest's `version`, which the release now requires in this form for a new
+  version. product-wiki 1.61004.1.

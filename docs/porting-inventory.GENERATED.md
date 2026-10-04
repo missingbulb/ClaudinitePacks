@@ -24,45 +24,45 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 
 | pack | version | content | declared | coded-check | task | src | test | workflow | other | engine/ importers |
 |---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| android | 61003.1 | 4 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| app-store-release | 61003.1 | 4 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| aws-sam | 61002.1 | 25 | 2 | 1 | 0 | 0 | 3 | 0 | 0 | 0 |
-| basics | 61002.3 | 189 | 2 | 13 | 5 | 2 | 8 | 0 | 0 | 0 |
-| chrome-extension | 61003.1 | 46 | 2 | 4 | 3 | 4 | 8 | 9 | 0 | 0 |
-| claude-code-web-users-support | 61003.1 | 13 | 1 | 2 | 0 | 3 | 4 | 0 | 1 | 0 |
-| claudinite-canon-curation | 61003.1 | 64 | 3 | 0 | 16 | 1 | 2 | 0 | 0 | 0 |
-| claudinite-dashboard | 61003.1 | 16 | 3 | 0 | 4 | 44 | 46 | 1 | 4 | 0 |
-| claudinite-fleet-sheepdog | 61003.3 | 30 | 2 | 0 | 4 | 0 | 1 | 0 | 0 | 0 |
-| claudinite-growth | 61003.2 | 159 | 8 | 0 | 16 | 10 | 13 | 0 | 0 | 0 |
-| claudinite-lifecycle | 61003.2 | 42 | 3 | 0 | 2 | 1 | 4 | 0 | 0 | 0 |
-| claudinite-tasks | 61003.1 | 23 | 3 | 0 | 5 | 26 | 14 | 0 | 0 | 0 |
-| cloudflare-site | 61003.1 | 16 | 1 | 2 | 3 | 4 | 7 | 0 | 0 | 0 |
-| cloudflare-workers | 61003.1 | 16 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| executable-requirements | 61002.1 | 21 | 1 | 1 | 0 | 0 | 2 | 0 | 0 | 0 |
-| firebase | 61002.1 | 29 | 2 | 1 | 0 | 1 | 3 | 0 | 0 | 0 |
-| flutter | 61003.1 | 26 | 2 | 0 | 0 | 0 | 2 | 0 | 0 | 0 |
-| git-github | 61003.1 | 33 | 3 | 0 | 0 | 1 | 1 | 0 | 0 | 0 |
-| github-pages | 61003.1 | 13 | 1 | 2 | 3 | 4 | 6 | 1 | 0 | 0 |
-| google-identity | 61002.1 | 9 | 2 | 1 | 0 | 0 | 3 | 0 | 0 | 0 |
-| headless-browser | 61003.1 | 31 | 2 | 0 | 0 | 0 | 3 | 0 | 0 | 0 |
-| hello | 1.5 | 21 | 3 | 4 | 4 | 0 | 0 | 0 | 0 | 0 |
-| host-page | 61003.1 | 19 | 1 | 2 | 0 | 0 | 3 | 0 | 0 | 0 |
-| html | 61003.1 | 9 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| ios | 61003.1 | 7 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| jwt | 61003.1 | 20 | 3 | 0 | 0 | 0 | 1 | 0 | 0 | 0 |
-| leaflet | 61003.1 | 12 | 1 | 2 | 0 | 0 | 3 | 0 | 0 | 0 |
-| macos | 61003.1 | 46 | 2 | 3 | 0 | 0 | 3 | 0 | 0 | 0 |
-| node | 61002.1 | 20 | 2 | 2 | 0 | 0 | 3 | 0 | 0 | 0 |
-| numpy-image-processing | 61003.1 | 14 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| play-store-release | 61003.1 | 4 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| product-wiki | 61002.2 | 34 | 2 | 0 | 2 | 1 | 1 | 0 | 0 | 0 |
-| public-website | 61002.1 | 12 | 1 | 1 | 0 | 3 | 3 | 0 | 0 | 0 |
-| python | 61002.1 | 12 | 1 | 3 | 0 | 0 | 2 | 0 | 0 | 0 |
-| research-project | 61003.1 | 63 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| spec-driven-product | 61003.1 | 31 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| web-scraping | 61003.1 | 35 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| web-speech | 61003.1 | 33 | 3 | 4 | 0 | 0 | 3 | 0 | 0 | 0 |
-| **38 packs** | | 1201 | 72 | 48 | 67 | 105 | 152 | 11 | 5 | 0 |
+| android | 1.61004.1 | 4 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| app-store-release | 1.61004.1 | 4 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| aws-sam | 1.61004.1 | 25 | 2 | 1 | 0 | 0 | 3 | 0 | 0 | 0 |
+| basics | 1.61004.1 | 189 | 2 | 13 | 5 | 2 | 8 | 0 | 0 | 0 |
+| chrome-extension | 1.61004.1 | 46 | 2 | 4 | 3 | 4 | 8 | 9 | 0 | 0 |
+| claude-code-web-users-support | 1.61004.1 | 13 | 1 | 2 | 0 | 3 | 4 | 0 | 1 | 0 |
+| claudinite-canon-curation | 1.61004.1 | 64 | 3 | 0 | 16 | 2 | 2 | 0 | 0 | 0 |
+| claudinite-dashboard | 1.61004.1 | 16 | 3 | 0 | 4 | 44 | 46 | 1 | 4 | 0 |
+| claudinite-fleet-sheepdog | 1.61004.1 | 30 | 2 | 0 | 4 | 0 | 1 | 0 | 0 | 0 |
+| claudinite-growth | 1.61004.1 | 159 | 8 | 0 | 16 | 10 | 13 | 0 | 0 | 0 |
+| claudinite-lifecycle | 1.61004.1 | 42 | 3 | 0 | 2 | 1 | 4 | 0 | 0 | 0 |
+| claudinite-tasks | 1.61004.1 | 23 | 3 | 0 | 5 | 26 | 14 | 0 | 0 | 0 |
+| cloudflare-site | 1.61004.1 | 16 | 1 | 2 | 3 | 4 | 7 | 0 | 0 | 0 |
+| cloudflare-workers | 1.61004.1 | 16 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| executable-requirements | 1.61004.1 | 21 | 1 | 1 | 0 | 0 | 2 | 0 | 0 | 0 |
+| firebase | 1.61004.1 | 29 | 2 | 1 | 0 | 1 | 3 | 0 | 0 | 0 |
+| flutter | 1.61004.1 | 26 | 2 | 0 | 0 | 0 | 2 | 0 | 0 | 0 |
+| git-github | 1.61004.1 | 33 | 3 | 0 | 0 | 1 | 1 | 0 | 0 | 0 |
+| github-pages | 1.61004.1 | 13 | 1 | 2 | 3 | 4 | 6 | 1 | 0 | 0 |
+| google-identity | 1.61004.1 | 9 | 2 | 1 | 0 | 0 | 3 | 0 | 0 | 0 |
+| headless-browser | 1.61004.1 | 31 | 2 | 0 | 0 | 0 | 3 | 0 | 0 | 0 |
+| hello | 1.61004.1 | 21 | 3 | 4 | 4 | 0 | 0 | 0 | 0 | 0 |
+| host-page | 1.61004.1 | 19 | 1 | 2 | 0 | 0 | 3 | 0 | 0 | 0 |
+| html | 1.61004.1 | 9 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| ios | 1.61004.1 | 7 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| jwt | 1.61004.1 | 20 | 3 | 0 | 0 | 0 | 1 | 0 | 0 | 0 |
+| leaflet | 1.61004.1 | 12 | 1 | 2 | 0 | 0 | 3 | 0 | 0 | 0 |
+| macos | 1.61004.1 | 46 | 2 | 3 | 0 | 0 | 3 | 0 | 0 | 0 |
+| node | 1.61004.1 | 20 | 2 | 2 | 0 | 0 | 3 | 0 | 0 | 0 |
+| numpy-image-processing | 1.61004.1 | 14 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| play-store-release | 1.61004.1 | 4 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| product-wiki | 1.61004.1 | 34 | 2 | 0 | 2 | 1 | 1 | 0 | 0 | 0 |
+| public-website | 1.61004.1 | 12 | 1 | 1 | 0 | 3 | 3 | 0 | 0 | 0 |
+| python | 1.61004.1 | 12 | 1 | 3 | 0 | 0 | 2 | 0 | 0 | 0 |
+| research-project | 1.61004.1 | 63 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| spec-driven-product | 1.61004.1 | 31 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| web-scraping | 1.61004.1 | 35 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| web-speech | 1.61004.1 | 33 | 3 | 4 | 0 | 0 | 3 | 0 | 0 | 0 |
+| **38 packs** | | 1201 | 72 | 48 | 67 | 106 | 152 | 11 | 5 | 0 |
 
 ## aws-sam
 
@@ -196,9 +196,10 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 - `tasks/usage-triage/task.json`
 - `tasks/usage-triage/task.md`
 
-### src (1)
+### src (2)
 
 - `tasks/pack-version-history/deliver.mjs`
+- `tasks/pack-version-history/order.mjs`
 
 ### test (2)
 

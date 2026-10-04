@@ -71,3 +71,11 @@
 - **Model:** Claude Opus 5.5
 - **Mechanism:** `"engine": true` in pack.json; the pack carries prose, tasks, skills and declared
   checks.
+
+## 2026-10-04 · scope-changed · the version takes the <major>.<day>.<n> form
+- **Reason:** pack versions follow the Engine's `<major>.<day>.<n>` scheme; an index sorts every
+  earlier version below one in that form, so this one outranks what the pack store already holds.
+- **Actor:** @missingbulb (owner), asking that pack versions follow the same scheme.
+- **Model:** Claude Opus 5.5
+- **Mechanism:** the manifest's `version`, which the release now requires in this form for a new
+  version. claudinite-canon-curation 1.61004.1.

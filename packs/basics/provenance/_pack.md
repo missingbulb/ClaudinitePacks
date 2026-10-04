@@ -114,3 +114,11 @@
 - **Reason:** the `$schema` key pointed at `claudinite-tasks/task.schema.json`, which left with the Node runner; the engine validates a declaration itself (`cn tasks contract`) and publishes no schema file, so the key is dropped as the hello pack's tasks do. The ci-performance worker imported the runner's tracker library and GitHub client.
 - **Actor:** build lead, completing ClaudinitePacks #20 so the runner's removal lands with every importer ported.
 - **Mechanism:** the worker takes its tracker through `@claudinite/sdk` (`github.findOrCreateTracker`/`writeTracker`, granted in pack.json) and its Actions reads through a pack-local REST copy on the job's token; the tests answer through the SDK stand-in and `cn tasks`. basics 61002.2.
+
+## 2026-10-04 · scope-changed · the version takes the <major>.<day>.<n> form
+- **Reason:** pack versions follow the Engine's `<major>.<day>.<n>` scheme; an index sorts every
+  earlier version below one in that form, so this one outranks what the pack store already holds.
+- **Actor:** @missingbulb (owner), asking that pack versions follow the same scheme.
+- **Model:** Claude Opus 5.5
+- **Mechanism:** the manifest's `version`, which the release now requires in this form for a new
+  version. basics 1.61004.1.
