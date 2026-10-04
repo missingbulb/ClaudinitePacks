@@ -1,6 +1,6 @@
 {
   "v": 1,
-  "serial": 136,
+  "serial": 137,
   "packs": [
     {
       "id": "android",
@@ -501,9 +501,9 @@
     },
     {
       "id": "product-wiki",
-      "version": "61002.2",
+      "version": "1.61004.1",
       "channel": "canary",
-      "minEngineVersion": "61001.1.0",
+      "minEngineVersion": "1.61001.1",
       "requires": [],
       "relevanceDetector": null,
       "belongs": "agent-maintained market, user and competitor research wikis — cited pages, growth logs, the reviewed product-requirements sink",
