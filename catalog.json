@@ -1,6 +1,6 @@
 {
   "v": 1,
-  "serial": 126,
+  "serial": 127,
   "packs": [
     {
       "id": "android",
@@ -338,9 +338,9 @@
     },
     {
       "id": "hello",
-      "version": "1.5",
+      "version": "1.61004.1",
       "channel": "canary",
-      "minEngineVersion": "61001.1.0",
+      "minEngineVersion": "1.61001.1",
       "requires": [],
       "relevanceDetector": null,
       "belongs": "nothing but the pack chassis probe: proving that a declared pack's rules, skills and Go checks reach a member"
