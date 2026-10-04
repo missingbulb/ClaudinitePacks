@@ -1,7 +1,7 @@
 {
   "v": 1,
   "pack": "spec-driven-product",
-  "serial": 2,
+  "serial": 3,
   "versions": [
     {
       "version": "60928.1",
@@ -28,6 +28,19 @@
       "revoked": false,
       "publishedAt": "2026-10-03T14:45:23Z",
       "sourceCommit": "e47e739df11a62929d1a9832ccf3cc7bf618c94a"
+    },
+    {
+      "version": "1.61004.1",
+      "sha256": "a13ebf2d5e96f43ba3e64b2f6f3eaeb971bf9ee513632ee06f8112882d47eb16",
+      "size": 5403,
+      "minEngineVersion": "1.61001.1",
+      "requires": [
+        "executable-requirements"
+      ],
+      "channel": "canary",
+      "revoked": false,
+      "publishedAt": "2026-10-04T05:56:12Z",
+      "sourceCommit": "6425ecaa87eeab7e897c64f4ec1d64edfeb60ad0"
     }
   ]
 }
