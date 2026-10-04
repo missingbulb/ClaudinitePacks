@@ -1,6 +1,6 @@
 {
   "v": 1,
-  "serial": 119,
+  "serial": 120,
   "packs": [
     {
       "id": "android",
@@ -222,9 +222,9 @@
     },
     {
       "id": "executable-requirements",
-      "version": "61002.1",
+      "version": "1.61004.1",
       "channel": "canary",
-      "minEngineVersion": "61001.1.0",
+      "minEngineVersion": "1.61001.1",
       "requires": [],
       "relevanceDetector": null,
       "belongs": "running a numbered spec as tests: dev/requirements layout, requirement ids, kinds, coverage and gallery gates, determinism rules",
