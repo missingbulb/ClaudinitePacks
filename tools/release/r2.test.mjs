@@ -52,9 +52,9 @@ test('the S3 bucket client PUTs to <account>.r2.cloudflarestorage.com/<bucket>/<
   const fetch = async (url, init) => { seen.push({ url, init }); return new Response(null, { status: 200 }); };
   const bucket = s3Bucket({ accountId: 'acme0123', bucket: 'claudinite-packs', credentials: VECTORS.credentials, fetch, clock: () => new Date('2013-05-24T00:00:00Z') });
   const body = Buffer.from('acme');
-  await bucket.put('packs/acme-pack/60101.1.tar.gz', body, { contentType: 'application/gzip', cacheControl: 'public, max-age=31536000, immutable', ifNoneMatch: '*' });
+  await bucket.put('packs/acme-pack/1.60101.1.tar.gz', body, { contentType: 'application/gzip', cacheControl: 'public, max-age=31536000, immutable', ifNoneMatch: '*' });
   assert.equal(seen.length, 1);
-  assert.equal(seen[0].url, 'https://acme0123.r2.cloudflarestorage.com/claudinite-packs/packs/acme-pack/60101.1.tar.gz');
+  assert.equal(seen[0].url, 'https://acme0123.r2.cloudflarestorage.com/claudinite-packs/packs/acme-pack/1.60101.1.tar.gz');
   const h = seen[0].init.headers;
   assert.equal(seen[0].init.method, 'PUT');
   assert.equal(h['x-amz-content-sha256'], sha256(body));
@@ -106,11 +106,11 @@ function fakeBucket(initial = {}) {
 const keys = (actions) => actions.filter((a) => a.put).map((a) => a.key);
 
 test('an absent archive is PUT once with the immutable headers, then the index pair in order', async () => {
-  const objects = branch(['60101.1']);
+  const objects = branch(['1.60101.1']);
   const bucket = fakeBucket();
   const actions = await planUpload(objects, bucket);
   await applyUpload(actions, bucket, () => {});
-  assert.deepEqual(bucket.puts.map((p) => p.key), ['packs/acme-pack/60101.1.tar.gz', 'packs/acme-pack/index.json', 'packs/acme-pack/index.sig.json']);
+  assert.deepEqual(bucket.puts.map((p) => p.key), ['packs/acme-pack/1.60101.1.tar.gz', 'packs/acme-pack/index.json', 'packs/acme-pack/index.sig.json']);
   assert.deepEqual(bucket.puts[0].meta, { contentType: 'application/gzip', cacheControl: 'public, max-age=31536000, immutable', ifNoneMatch: '*' });
   assert.deepEqual(bucket.puts[1].meta, { contentType: 'application/json', cacheControl: 'public, max-age=300' });
   assert.deepEqual(bucket.puts[2].meta, { contentType: 'application/json', cacheControl: 'public, max-age=300' });
@@ -121,32 +121,32 @@ test('an absent archive is PUT once with the immutable headers, then the index p
 });
 
 test('a present archive with different bytes fails naming the key and both hashes, and nothing is written', async () => {
-  const objects = branch(['60101.1', '60101.2']);
-  const bucket = fakeBucket({ 'packs/acme-pack/60101.2.tar.gz': 'something else' });
+  const objects = branch(['1.60101.1', '1.60101.2']);
+  const bucket = fakeBucket({ 'packs/acme-pack/1.60101.2.tar.gz': 'something else' });
   await assert.rejects(planUpload(objects, bucket), (e) => {
-    assert.match(e.message, /packs\/acme-pack\/60101\.2\.tar\.gz/);
+    assert.match(e.message, /packs\/acme-pack\/1\.60101\.2\.tar\.gz/);
     assert.ok(e.message.includes(sha256('something else')));
-    assert.ok(e.message.includes(sha256('archive 60101.2')));
+    assert.ok(e.message.includes(sha256('archive 1.60101.2')));
     return true;
   });
   assert.deepEqual(bucket.puts, []);
 });
 
 test('an index differing from the branch is rewritten, index.json before index.sig.json; archives already there are skipped', async () => {
-  const old = branch(['60101.1']);
+  const old = branch(['1.60101.1']);
   const bucket = fakeBucket();
   await applyUpload(await planUpload(old, bucket), bucket, () => {});
   bucket.puts.length = 0;
-  const next = branch(['60101.1', '60101.2']);
+  const next = branch(['1.60101.1', '1.60101.2']);
   await applyUpload(await planUpload(next, bucket), bucket, () => {});
-  assert.deepEqual(bucket.puts.map((p) => p.key), ['packs/acme-pack/60101.2.tar.gz', 'packs/acme-pack/index.json', 'packs/acme-pack/index.sig.json']);
+  assert.deepEqual(bucket.puts.map((p) => p.key), ['packs/acme-pack/1.60101.2.tar.gz', 'packs/acme-pack/index.json', 'packs/acme-pack/index.sig.json']);
 });
 
 test('scope comes from the branch: three versions on it and one in the bucket plan two archive PUTs and the index pair', async () => {
-  const objects = branch(['60101.1', '60101.2', '60102.1']);
-  const bucket = fakeBucket({ 'packs/acme-pack/60101.1.tar.gz': 'archive 60101.1' });
+  const objects = branch(['1.60101.1', '1.60101.2', '1.60102.1']);
+  const bucket = fakeBucket({ 'packs/acme-pack/1.60101.1.tar.gz': 'archive 1.60101.1' });
   const actions = await planUpload(objects, bucket);
-  assert.deepEqual(keys(actions), ['packs/acme-pack/60101.2.tar.gz', 'packs/acme-pack/60102.1.tar.gz', 'packs/acme-pack/index.json', 'packs/acme-pack/index.sig.json']);
+  assert.deepEqual(keys(actions), ['packs/acme-pack/1.60101.2.tar.gz', 'packs/acme-pack/1.60102.1.tar.gz', 'packs/acme-pack/index.json', 'packs/acme-pack/index.sig.json']);
 });
 
 test('head() HEADs the object and returns its ETag, or null when R2 answers 404', async () => {
@@ -156,7 +156,7 @@ test('head() HEADs the object and returns its ETag, or null when R2 answers 404'
     return url.endsWith('/index.json') ? new Response(null, { status: 404 }) : new Response(null, { status: 200, headers: { etag: '"acme-etag"' } });
   };
   const bucket = s3Bucket({ accountId: 'acme0123', bucket: 'claudinite-packs', credentials: VECTORS.credentials, fetch });
-  assert.deepEqual(await bucket.head('packs/acme-pack/60101.1.tar.gz'), { etag: '"acme-etag"' });
+  assert.deepEqual(await bucket.head('packs/acme-pack/1.60101.1.tar.gz'), { etag: '"acme-etag"' });
   assert.equal(await bucket.head('packs/acme-pack/index.json'), null);
   assert.deepEqual(seen, ['HEAD', 'HEAD']);
 });
@@ -185,7 +185,7 @@ function etagBucket(initial = {}, etags = {}) {
 }
 
 test('an object whose ETag is the quoted MD5 of the branch bytes is skipped without a GET', async () => {
-  const objects = branch(['60101.1']);
+  const objects = branch(['1.60101.1']);
   const bucket = etagBucket();
   await applyUpload(await planUpload(objects, bucket), bucket, () => {});
   bucket.gets = 0;
@@ -196,23 +196,23 @@ test('an object whose ETag is the quoted MD5 of the branch bytes is skipped with
 });
 
 test('an ETag that is not the MD5 (a multipart upload, or other bytes) falls back to GET and compares bytes as before', async () => {
-  const objects = branch(['60101.1', '60101.2']);
-  const multipart = etagBucket({ 'packs/acme-pack/60101.1.tar.gz': 'archive 60101.1' }, { 'packs/acme-pack/60101.1.tar.gz': '"0123abcd-2"' });
+  const objects = branch(['1.60101.1', '1.60101.2']);
+  const multipart = etagBucket({ 'packs/acme-pack/1.60101.1.tar.gz': 'archive 1.60101.1' }, { 'packs/acme-pack/1.60101.1.tar.gz': '"0123abcd-2"' });
   const actions = await planUpload(objects, multipart);
   assert.equal(multipart.gets, 1);
   assert.deepEqual(actions.map((a) => [a.key, a.compared, a.put]), [
-    ['packs/acme-pack/60101.1.tar.gz', 'get', false],
-    ['packs/acme-pack/60101.2.tar.gz', 'absent', true],
+    ['packs/acme-pack/1.60101.1.tar.gz', 'get', false],
+    ['packs/acme-pack/1.60101.2.tar.gz', 'absent', true],
     ['packs/acme-pack/index.json', 'absent', true],
     ['packs/acme-pack/index.sig.json', 'absent', true],
   ]);
-  const differing = etagBucket({ 'packs/acme-pack/60101.2.tar.gz': 'something else' });
-  await assert.rejects(planUpload(objects, differing), /refusing to overwrite a published archive:\npacks\/acme-pack\/60101\.2\.tar\.gz/);
+  const differing = etagBucket({ 'packs/acme-pack/1.60101.2.tar.gz': 'something else' });
+  await assert.rejects(planUpload(objects, differing), /refusing to overwrite a published archive:\npacks\/acme-pack\/1\.60101\.2\.tar\.gz/);
   assert.equal(differing.gets, 1);
 });
 
 test('a PUT answered 412 is reported as a race and never retried as an overwrite', async () => {
-  const objects = branch(['60101.1']);
+  const objects = branch(['1.60101.1']);
   let calls = 0;
   const bucket = {
     async get() { return null; },
@@ -225,7 +225,7 @@ test('a PUT answered 412 is reported as a race and never retried as an overwrite
 test('the real S3 client turns a 412 into a race error', async () => {
   const fetch = async () => new Response('<Error><Code>PreconditionFailed</Code></Error>', { status: 412 });
   const bucket = s3Bucket({ accountId: 'acme0123', bucket: 'claudinite-packs', credentials: VECTORS.credentials, fetch });
-  await assert.rejects(bucket.put('packs/acme-pack/60101.1.tar.gz', Buffer.from('x'), { contentType: 'application/gzip', cacheControl: 'x', ifNoneMatch: '*' }), (e) => e.race === true);
+  await assert.rejects(bucket.put('packs/acme-pack/1.60101.1.tar.gz', Buffer.from('x'), { contentType: 'application/gzip', cacheControl: 'x', ifNoneMatch: '*' }), (e) => e.race === true);
 });
 
 function fakeCdn(objects, override = {}) {
@@ -245,13 +245,13 @@ function fakeCdn(objects, override = {}) {
 }
 
 test('verify-cdn reads every archive and the index pair with ?s=<serial>, compares bytes and verifies the signature', async () => {
-  const objects = branch(['60101.1', '60101.2']);
+  const objects = branch(['1.60101.1', '1.60101.2']);
   const cdn = fakeCdn(objects);
   const lines = [];
   await verifyCdn(objects, { fetch: cdn.fetch, roots: ROOTS, now: NOW, log: (l) => lines.push(l) });
   assert.deepEqual(cdn.urls.sort(), [
-    'https://packs.claudinite.com/packs/acme-pack/60101.1.tar.gz',
-    'https://packs.claudinite.com/packs/acme-pack/60101.2.tar.gz',
+    'https://packs.claudinite.com/packs/acme-pack/1.60101.1.tar.gz',
+    'https://packs.claudinite.com/packs/acme-pack/1.60101.2.tar.gz',
     'https://packs.claudinite.com/packs/acme-pack/index.json?s=2',
     'https://packs.claudinite.com/packs/acme-pack/index.sig.json?s=2',
   ]);
@@ -259,12 +259,12 @@ test('verify-cdn reads every archive and the index pair with ?s=<serial>, compar
 });
 
 test('verify-cdn names the object whose CDN bytes differ, and fails a signature that does not verify', async () => {
-  const objects = branch(['60101.1']);
+  const objects = branch(['1.60101.1']);
   const stale = fakeCdn(objects, { 'packs/acme-pack/index.json': 'stale' });
   await assert.rejects(verifyCdn(objects, { fetch: stale.fetch, roots: ROOTS, now: NOW, log: () => {} }), /packs\/acme-pack\/index\.json/);
   const missing = fakeCdn(objects.filter((o) => !o.key.endsWith('.tar.gz')));
-  await assert.rejects(verifyCdn(objects, { fetch: missing.fetch, roots: ROOTS, now: NOW, log: () => {} }), /packs\/acme-pack\/60101\.1\.tar\.gz.*404/);
-  const manifestSigned = branch(['60101.1'], { key: parsePrivateKey(SIGN.subjects.manifest.seed), cert: SIGN.certificates.manifest });
+  await assert.rejects(verifyCdn(objects, { fetch: missing.fetch, roots: ROOTS, now: NOW, log: () => {} }), /packs\/acme-pack\/1\.60101\.1\.tar\.gz.*404/);
+  const manifestSigned = branch(['1.60101.1'], { key: parsePrivateKey(SIGN.subjects.manifest.seed), cert: SIGN.certificates.manifest });
   await assert.rejects(verifyCdn(manifestSigned, { fetch: fakeCdn(manifestSigned).fetch, roots: ROOTS, now: NOW, log: () => {} }), /acme-pack\/index\.json.*use "manifest"/);
 });
 
@@ -338,7 +338,7 @@ test('setup fails with the response body on an unexpected status, a disabled dom
 });
 
 test('a real upload without CLOUDFLARE_API_TOKEN or CLOUDFLARE_ACCOUNT_ID fails before any request', async () => {
-  const objects = branch(['60101.1']);
+  const objects = branch(['1.60101.1']);
   for (const env of [{}, { CLOUDFLARE_API_TOKEN: 'acme-token' }, { CLOUDFLARE_ACCOUNT_ID: 'acme0123' }]) {
     let requests = 0;
     await assert.rejects(runUpload({ objects, target: 'claudinite-packs', env, fetch: async () => { requests++; }, roots: ROOTS, now: NOW, log: () => {} }), /CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID/);
@@ -347,13 +347,13 @@ test('a real upload without CLOUDFLARE_API_TOKEN or CLOUDFLARE_ACCOUNT_ID fails 
 });
 
 test('the dry run lists every object as would PUT and makes no request', async () => {
-  const objects = branch(['60101.1', '60101.2']);
+  const objects = branch(['1.60101.1', '1.60101.2']);
   const lines = [];
   const report = await runUpload({ objects, target: 'dry-run', env: {}, fetch: async () => { throw new Error('no request in a dry run'); }, roots: ROOTS, now: NOW, log: (l) => lines.push(l) });
-  const a1 = Buffer.from('archive 60101.1');
+  const a1 = Buffer.from('archive 1.60101.1');
   assert.deepEqual(lines, [
-    `would PUT packs/acme-pack/60101.1.tar.gz (${a1.length} bytes, sha256 ${sha256(a1)})`,
-    `would PUT packs/acme-pack/60101.2.tar.gz (${a1.length} bytes, sha256 ${sha256('archive 60101.2')})`,
+    `would PUT packs/acme-pack/1.60101.1.tar.gz (${a1.length} bytes, sha256 ${sha256(a1)})`,
+    `would PUT packs/acme-pack/1.60101.2.tar.gz (${a1.length} bytes, sha256 ${sha256('archive 1.60101.2')})`,
     'would PUT packs/acme-pack/index.json',
     'would PUT packs/acme-pack/index.sig.json',
   ]);
@@ -395,12 +395,12 @@ function fakeWorld({ domain = true, cdnFailures = 0 } = {}) {
 }
 
 test('a real upload sets up, writes what the bucket lacks, reads it back through the CDN, and a rerun writes nothing', async () => {
-  const objects = branch(['60101.1', '60101.2']);
+  const objects = branch(['1.60101.1', '1.60101.2']);
   const world = fakeWorld();
   const env = { CLOUDFLARE_API_TOKEN: 'acme-token', CLOUDFLARE_ACCOUNT_ID: 'acme0123' };
   const lines = [];
   const first = await runUpload({ objects, target: 'claudinite-packs', env, fetch: world.fetch, roots: ROOTS, now: NOW, log: (l) => lines.push(l) });
-  assert.deepEqual(first, [{ id: 'acme-pack', put: ['packs/acme-pack/60101.1.tar.gz', 'packs/acme-pack/60101.2.tar.gz', 'packs/acme-pack/index.json', 'packs/acme-pack/index.sig.json'], skipped: [], byEtag: 0 }]);
+  assert.deepEqual(first, [{ id: 'acme-pack', put: ['packs/acme-pack/1.60101.1.tar.gz', 'packs/acme-pack/1.60101.2.tar.gz', 'packs/acme-pack/index.json', 'packs/acme-pack/index.sig.json'], skipped: [], byEtag: 0 }]);
   assert.ok(lines.includes('verify-cdn acme-pack ok'));
   assert.ok(lines.includes('compared 0 object(s) by ETag, 0 by GET; 4 absent'), lines.join('\n'));
   const again = [];
@@ -412,7 +412,7 @@ test('a real upload sets up, writes what the bucket lacks, reads it back through
 });
 
 test('verify-cdn, after a run created the domain, retries a fetch that throws (NXDOMAIN while DNS propagates)', async () => {
-  const objects = branch(['60101.1']);
+  const objects = branch(['1.60101.1']);
   const cdn = fakeCdn(objects);
   let thrown = 0;
   const fetch = async (url) => {
@@ -428,18 +428,18 @@ test('verify-cdn, after a run created the domain, retries a fetch that throws (N
 });
 
 test('verify-cdn gives up on a fetch that keeps throwing once the window has passed, naming the error', async () => {
-  const objects = branch(['60101.1']);
+  const objects = branch(['1.60101.1']);
   const time = fakeTime();
   const fetch = async () => { throw new TypeError('fetch failed', { cause: new Error('getaddrinfo ENOTFOUND packs.claudinite.com') }); };
   await assert.rejects(
     verifyCdn(objects, { fetch, roots: ROOTS, now: NOW, log: () => {}, retry: { windowMs: 300e3, clock: time.clock, sleep: time.sleep } }),
-    /60101\.1\.tar\.gz.*ENOTFOUND.*statement about the clock/,
+    /1\.60101\.1\.tar\.gz.*ENOTFOUND.*statement about the clock/,
   );
   assert.ok(time.clock() <= 300e3, `waited ${time.clock()} ms`);
 });
 
 test('without the retry, a fetch that throws fails at once', async () => {
-  const objects = branch(['60101.1']);
+  const objects = branch(['1.60101.1']);
   const fetch = async () => { throw new TypeError('fetch failed'); };
   await assert.rejects(verifyCdn(objects, { fetch, roots: ROOTS, now: NOW, log: () => {} }), /fetch failed/);
 });
@@ -459,7 +459,7 @@ function provisioningCdn(objects, failures) {
 }
 
 test('verify-cdn, after a run created the domain, retries a 403 or 404 with backoff until the CDN answers', async () => {
-  const objects = branch(['60101.1']);
+  const objects = branch(['1.60101.1']);
   const time = fakeTime();
   const lines = [];
   await verifyCdn(objects, { fetch: provisioningCdn(objects, 4).fetch, roots: ROOTS, now: NOW, log: (l) => lines.push(l), retry: { windowMs: 300e3, clock: time.clock, sleep: time.sleep } });
@@ -470,24 +470,24 @@ test('verify-cdn, after a run created the domain, retries a 403 or 404 with back
 });
 
 test('verify-cdn gives up once the retry window has passed, naming the last answer', async () => {
-  const objects = branch(['60101.1']);
+  const objects = branch(['1.60101.1']);
   const time = fakeTime();
   await assert.rejects(
     verifyCdn(objects, { fetch: provisioningCdn(objects, Infinity).fetch, roots: ROOTS, now: NOW, log: () => {}, retry: { windowMs: 300e3, clock: time.clock, sleep: time.sleep } }),
-    /60101\.1\.tar\.gz: 403.*CNAME Cross-User Banned/,
+    /1\.60101\.1\.tar\.gz: 403.*CNAME Cross-User Banned/,
   );
   assert.ok(time.clock() <= 300e3, `waited ${time.clock()} ms`);
   assert.ok(time.clock() >= 240e3, `gave up early, after ${time.clock()} ms`);
 });
 
 test('without the retry, a 403 from the CDN fails at once', async () => {
-  const objects = branch(['60101.1']);
+  const objects = branch(['1.60101.1']);
   const cdn = provisioningCdn(objects, 1);
   await assert.rejects(verifyCdn(objects, { fetch: cdn.fetch, roots: ROOTS, now: NOW, log: () => {} }), /403/);
 });
 
 test('the upload retries verify-cdn only in the run whose setup attached the domain', async () => {
-  const objects = branch(['60101.1']);
+  const objects = branch(['1.60101.1']);
   const env = { CLOUDFLARE_API_TOKEN: 'acme-token', CLOUDFLARE_ACCOUNT_ID: 'acme0123' };
   const created = fakeTime();
   await runUpload({ objects, target: 'claudinite-packs', env, fetch: fakeWorld({ domain: false, cdnFailures: 3 }).fetch, roots: ROOTS, now: NOW, log: () => {}, clock: created.clock, sleep: created.sleep });

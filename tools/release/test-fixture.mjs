@@ -33,12 +33,12 @@ export function world() {
   const src = join(root, 'src');
   mkdirSync(src);
   git(src, 'init', '-q', '-b', 'main');
-  put(src, 'packs/acme-pack/pack.json', packJson('60101.1', { requires: ['acme-pack-two'] }));
+  put(src, 'packs/acme-pack/pack.json', packJson('1.60101.1', { requires: ['acme-pack-two'] }));
   put(src, 'packs/acme-pack/RULES.md', '# acme rules\n');
   put(src, 'packs/acme-pack/skills/acme-skill/SKILL.md', 'skill\n');
   put(src, 'packs/acme-pack/skills/acme-skill/.gitignore', '*.md\n');
   put(src, 'packs/acme-pack/test/acme.test.mjs', 'dropped\n');
-  put(src, 'packs/acme-pack-two/pack.json', packJson('60101.1'));
+  put(src, 'packs/acme-pack-two/pack.json', packJson('1.60101.1'));
   put(src, 'packs/acme-pack-two/RULES.md', '# two\n');
   put(src, 'packs/README.md', 'not a pack\n');
   git(src, 'add', '-A');

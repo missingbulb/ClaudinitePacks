@@ -47,6 +47,16 @@ test('the catalog offers each pack\'s newest stable and canary version that is n
   assert.equal(two.belongs, undefined);
 });
 
+test('a <major>.<day>.<n> version is newer than every two-part version an index published before it', () => {
+  const t = scratch();
+  put(t, 'acme-pack/index.json', JSON.stringify({ v: 1, pack: 'acme-pack', serial: 4, versions: [
+    entry('61002.3', 'stable'), entry('61009.9', 'canary'), entry('1.61004.1', 'stable'), entry('1.61004.2', 'canary'),
+  ] }));
+  for (const v of ['61002.3', '61009.9', '1.61004.1', '1.61004.2']) put(t, `acme-pack/${v}/pack.json`, JSON.stringify({ version: v, minEngineVersion: '1.61001.1' }));
+  const c = JSON.parse(renderCatalog(t).toString('utf8'));
+  assert.deepEqual(c.packs.map((p) => `${p.version} ${p.channel}`), ['1.61004.1 stable', '1.61004.2 canary']);
+});
+
 test('every fingerprint pattern is written as {source, flags}, and text as a list', () => {
   const [stable, canary] = JSON.parse(renderCatalog(tree()).toString('utf8')).packs;
   assert.deepEqual(stable.relevanceDetector, { about: 'an acme.json', paths: { source: '^acme\\.json$', flags: '' }, text: [{ source: '"acme"\\s*:', flags: 'i' }], search: ['acme'] });
