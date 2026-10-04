@@ -113,6 +113,19 @@ test('pack-version-history: writes the missing rows newest first and leaves a st
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
 
+test('pack-version-history: a <major>.<day>.<n> row sorts above every two-part row', needsCn, () => {
+  const record = 'packs/acme-pack/provenance/VERSIONS.md';
+  const root = shelf([
+    ['acme-pack: born (#1)', { 'packs/acme-pack/pack.json': '{ "version": "61002.3" }\n', 'packs/acme-pack/RULES.md': 'a\n' }],
+    ['acme-pack: the new form (#2)', { 'packs/acme-pack/pack.json': '{ "version": "1.61004.1" }\n', 'packs/acme-pack/RULES.md': 'b\n' }],
+    ['acme-pack: another (#3)', { 'packs/acme-pack/pack.json': '{ "version": "1.61004.2" }\n', 'packs/acme-pack/RULES.md': 'c\n' }],
+  ]);
+  try {
+    const rows = planHistory(root, 'HEAD')[record].split('\n').filter((l) => /^\| \d/.test(l)).map((l) => l.split(' | ')[0].slice(2));
+    assert.deepEqual(rows, ['1.61004.2', '1.61004.1', '61002.3']);
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
 test('pack-version-history: a pack with no record gains one under the default header, and a complete one changes nothing', needsCn, () => {
   const root = shelf([['acme-pack: born (#1)', { 'packs/acme-pack/pack.json': '{ "version": "61001.1" }\n' }]]);
   try {
