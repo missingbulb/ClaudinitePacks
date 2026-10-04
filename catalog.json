@@ -1,6 +1,6 @@
 {
   "v": 1,
-  "serial": 127,
+  "serial": 128,
   "packs": [
     {
       "id": "android",
@@ -347,9 +347,9 @@
     },
     {
       "id": "host-page",
-      "version": "61003.1",
+      "version": "1.61004.1",
       "channel": "canary",
-      "minEngineVersion": "61001.1.0",
+      "minEngineVersion": "1.61001.1",
       "requires": [],
       "relevanceDetector": null,
       "belongs": "driving a web app you do not own — its DOM, synthetic input, change watching, injected UI"
