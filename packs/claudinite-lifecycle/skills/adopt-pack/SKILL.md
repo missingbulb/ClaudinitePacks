@@ -34,7 +34,7 @@ it adds them to `packs.declared` in `.claudinite/settings.*`. A pack already dec
 ## 2. Interview — the part that is easy to skip and must not be
 
 A pack that needs the project's intent before it can provide value declares `questions` on its
-manifest (see [packs/README.md](../../../README.md)); `cn adopt` prints the ones still unanswered
+manifest (see packs/README.md); `cn adopt` prints the ones still unanswered
 as its QUESTIONS block. For **every** newly declared pack that asks questions:
 
 - Where a question says the repo may already hold the answer (a product brief, an existing
