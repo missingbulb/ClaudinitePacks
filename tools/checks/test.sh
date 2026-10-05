@@ -13,6 +13,10 @@ export CLAUDINITE_CN
 root=$(cd "$(dirname "$0")/../.." && pwd)
 tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"; rm -f "$root/go.mod" "$root/go.sum"' EXIT INT TERM
+# Every temporary directory the run makes, the fixture cache included, lands
+# under $tmp and goes with it.
+mkdir "$tmp/run"
+export TMPDIR="$tmp/run"
 
 if [ -e "$root/go.mod" ]; then
   echo "test.sh: $root/go.mod exists; this script writes its own and removes it" >&2

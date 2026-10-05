@@ -3,9 +3,8 @@
 Native macOS app development: assembling the app bundle, the TCC / Hardened Runtime pair, the
 Developer ID → notarization → DMG lane, and the process-lifecycle facts a Mac app cannot get wrong.
 
-Sibling packs on the same axis: `ios` (iPhone targets), `app-store-release` (the Mac/iOS App Store
-lane, which this pack's Developer ID track deliberately is not), `git-github` (workflow YAML
-mechanics for the CI that runs the lane).
+Sibling packs on the same axis: `ios` (iPhone targets) and `git-github` (workflow YAML mechanics
+for the CI that runs the lane). The Mac App Store lane is outside this pack's Developer ID track.
 
 ## Rules (`RULES.md`)
 

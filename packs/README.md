@@ -1,327 +1,73 @@
-# packs/ — the corpus content, active by declaration
+# packs/
 
-Each `packs/<name>/` bundles a pack's **prose** (`RULES.md`, injected at session start when the pack is active), its **checks** (run at every Stop), and its **bundled skills** (`<pack>/skills/`, mounted at session start). **No pack is active by default** - every pack, `basics` included, activates only when declared under `packs.declared` in `.claudinite/settings.*` (`cn init --packs` declares exactly the packs it is given and their `requires`; none is seeded by default). Discovery is structural - any `packs/<name>/` carrying a `pack.json` (or `pack.mjs`) is a pack, and that manifest is the pack's index: what it owns, the checks it runs in each scope, the skills it bundles. A pack's `README.md` is **optional** and carries only what the manifest cannot - provenance, design rationale, an index of its prose. A README that restates the manifest is duplication with a drift risk, and several had already drifted.
+Each `packs/<id>/` is one pack. Members receive a released version of it as a vendored archive;
+the root [README](../README.md) says how a version is built and published. The catalog a member
+session reads when choosing packs is [`directory.GENERATED.md`](directory.GENERATED.md), rendered
+from the manifests by `node tools/directory/render.mjs`.
 
-## Packs
+## What a pack holds
 
-This table is the canon maintainer's view. The catalog **consumers** receive is
-[`directory.GENERATED.md`](directory.GENERATED.md) — rendered from the pack manifests by its drift
-test (`engine-tests/pack-directory.test.mjs`, which regenerates it locally and asserts it in CI) and
-vendored into every mount regardless of declaration, so a member session can see what it could adopt.
-A pack that is not adoptable content — one serving the corpus itself rather than any member —
-declares `hidden: true` and is withheld from that catalog; this table still carries it.
+The Engine's design (ClaudiniteEngine `docs/design.md`, "Packs") defines the contract. In short:
 
-| Pack | Active when | Checks | Prose rules |
-|---|---|---|---|
-| <img src="claudinite-lifecycle/badge.svg" width="18" height="18" alt=""> [claudinite-lifecycle](claudinite-lifecycle/README.md) | declared (seeded by `--init`, mandatory — pulled in via `basics` `requires`) | 10 | 8 (Claudinite's own surface, plus the scheduled-task contract) |
-| <img src="claudinite-tasks/badge.svg" width="18" height="18" alt=""> [claudinite-tasks](claudinite-tasks/README.md) | declared (seeded by `--init`, opt-out by removal — a repo without it runs no scheduled work) | 2 | 0 (the work-item queue, the executor, the task contract, and the delivery lane) |
-| <img src="basics/badge.svg" width="18" height="18" alt=""> [basics](basics/README.md) | declared (seeded by `--init`) | 15 | 58 (working-discipline + task-lifecycle, plus the [folder-access graph](basics/barriers.md) and the weekly comment pass; 2 path-forced skills: writing-repo-scanning-checks, working-with-generated-files) |
-| <img src="git-github/badge.svg" width="18" height="18" alt=""> [git-github](git-github/README.md) | pulled in via `basics` `requires` | 9 | 0 (3 skills: git-github-advanced, github-actions-scheduling, merge-to-main) |
-| <img src="claudinite-growth/badge.svg" width="18" height="18" alt=""> [claudinite-growth](claudinite-growth/README.md) | declared (seeded by `--init`, opt-out by removal) | 1 | 0 — growth member-side tasks (extract over activity + conversations / dedup / pack discovery / prose-to-checks) + in-session merge capture |
-| <img src="claudinite-fleet-sheepdog/badge.svg" width="18" height="18" alt=""> [claudinite-fleet-sheepdog](claudinite-fleet-sheepdog/README.md) | declared (opt-in; the fleet-enforcer repo only) | 1 | 9 (fleet-enforcer marker + config + the agentless `fleet-roster` daily task (coverage + freshness in one walk)) + 1 skill: configuring-the-fleet |
-| <img src="claude-code-web-users-support/badge.svg" width="18" height="18" alt=""> [claude-code-web-users-support](claude-code-web-users-support/README.md) | declared (seeded by `--init`) | 2 | 3 (what a project offers people working from the web — their personal interaction preferences, and the environment Setup script body) |
-| <img src="claudinite-canon-curation/badge.svg" width="18" height="18" alt=""> [claudinite-canon-curation](claudinite-canon-curation/README.md) | declared (opt-in; a canon home repo only, and `hidden` from the consumer catalog) | 2 | 26 (curating a canon — the central promote stage, the weekly fleet pack-discovery sweep, the monthly upstream reconciliation, the pack version cut on the base branch with its derived history, and the shelf's own policing: naming, config, modules, checks and prose; 2 skills: extract-packs-from-a-project, writing-claudinite-skills) |
-| <img src="claudinite-dashboard/badge.svg" width="18" height="18" alt=""> [claudinite-dashboard](claudinite-dashboard/README.md) | declared (opt-in) | 0 | 0 (a browser dashboard over scheduler state, published to Pages; adoption seeds the deploy workflow) |
-| <img src="chrome-extension/badge.svg" width="18" height="18" alt=""> [chrome-extension](chrome-extension/README.md) | manifest_version manifest | 10 | 22 (+ 2 skills: chrome-store-releases, extension-host-permissions) |
-| <img src="node/badge.svg" width="18" height="18" alt=""> [node](node/README.md) | root package.json | 0 | 4 (+ 1 skill: node-test-discovery) |
-| <img src="python/badge.svg" width="18" height="18" alt=""> [python](python/README.md) | pyproject.toml near root | 0 (2 in its skill) | 2 (+ 1 skill: python-optional-deps) |
-| <img src="numpy-image-processing/badge.svg" width="18" height="18" alt=""> [numpy-image-processing](numpy-image-processing/README.md) | numpy + scipy named together in a near-root manifest | 0 | 9 |
-| <img src="web-speech/badge.svg" width="18" height="18" alt=""> [web-speech](web-speech/README.md) | speech API in JS/TS source | 6 (+ 3 in its skill) | 17 |
-| <img src="leaflet/badge.svg" width="18" height="18" alt=""> [leaflet](leaflet/README.md) | Leaflet reference in HTML/JS source | 2 | 4 |
-| <img src="headless-browser/badge.svg" width="18" height="18" alt=""> [headless-browser](headless-browser/README.md) | driver reference in JS/TS source | 3 | 20 |
-| <img src="host-page/badge.svg" width="18" height="18" alt=""> [host-page](host-page/README.md) | declared (opt-in) | 3 | 11 |
-| <img src="aws-sam/badge.svg" width="18" height="18" alt=""> [aws-sam](aws-sam/README.md) | SAM template | 3 | 6 (+ 2 skills: sam-template, sam-build-and-deps) |
-| <img src="google-identity/badge.svg" width="18" height="18" alt=""> [google-identity](google-identity/README.md) | declared | 0 (3 in its skill) | 0 |
-| <img src="jwt/badge.svg" width="18" height="18" alt=""> [jwt](jwt/README.md) | JWT library in JS/TS/Python source | 0 (5 in its skills) | 0 (2 skills; the technology's own movement is watched from the canon, not from here) |
-| <img src="html/badge.svg" width="18" height="18" alt=""> [html](html/README.md) | declared | 0 | 4 |
-| <img src="public-website/badge.svg" width="18" height="18" alt=""> [public-website](public-website/README.md) | declared (opt-in); marker: a page carrying a `title="version …"` stamp | 1 | 5 |
-| <img src="github-pages/badge.svg" width="18" height="18" alt=""> [github-pages](github-pages/README.md) | declared (opt-in); marker: `.github/site.config` | 2 | 2 (+ 1 skill: github-pages-pipeline, + the `site-release` task) |
-| <img src="flutter/badge.svg" width="18" height="18" alt=""> [flutter](flutter/README.md) | pubspec.yaml | 2 | 9 (+ 2 skills: flutter-golden-tests, flutter-pubspec) |
-| <img src="firebase/badge.svg" width="18" height="18" alt=""> [firebase](firebase/README.md) | `firebase.json` | 2 | 5 + 3 skills: firestore-security-rules, firebase-functions, create-release-plan |
-| <img src="cloudflare-workers/badge.svg" width="18" height="18" alt=""> [cloudflare-workers](cloudflare-workers/README.md) | wrangler config near root | 0 | 11 |
-| <img src="cloudflare-site/badge.svg" width="18" height="18" alt=""> [cloudflare-site](cloudflare-site/README.md) | a near-root wrangler config declaring `assets.directory` | 3 | 3 (+ 1 skill: releasing-a-cloudflare-site, + the `site-release` task) |
-| <img src="android/badge.svg" width="18" height="18" alt=""> [android](android/README.md) | `AndroidManifest.xml` | 0 | 0 (stub) |
-| <img src="ios/badge.svg" width="18" height="18" alt=""> [ios](ios/README.md) | `ios/Runner/Info.plist` | 0 | 2 |
-| <img src="macos/badge.svg" width="18" height="18" alt=""> [macos](macos/README.md) | `Package.swift` near root | 4 | 26 (+ 2 skills: macos-app-bundle, macos-entitlements-and-tcc) |
-| <img src="play-store-release/badge.svg" width="18" height="18" alt=""> [play-store-release](play-store-release/README.md) | declared (opt-in) | 0 | 0 (stub) |
-| <img src="app-store-release/badge.svg" width="18" height="18" alt=""> [app-store-release](app-store-release/README.md) | declared (opt-in) | 0 | 0 (stub) |
-| <img src="web-scraping/badge.svg" width="18" height="18" alt=""> [web-scraping](web-scraping/README.md) | declared (opt-in) | 0 | 27 (+ 1 skill: map-a-data-source) |
-| <img src="research-project/badge.svg" width="18" height="18" alt=""> [research-project](research-project/README.md) | declared (class) | 0 | 54 (14 sections) |
-| <img src="product-wiki/badge.svg" width="18" height="18" alt=""> [product-wiki](product-wiki/README.md) | declared (marker: `product-wiki/product-requirements/README.md`) | 7 | 9 (wiki growth discipline + weekly growth daily task) |
-| <img src="spec-driven-product/badge.svg" width="18" height="18" alt=""> [spec-driven-product](spec-driven-product/README.md) | declared (class) | 0 | 25 (8 sections) |
-| <img src="executable-requirements/badge.svg" width="18" height="18" alt=""> [executable-requirements](executable-requirements/README.md) | `dev/requirements/requirements.md` | 0 | 2 (+ 3 skills: write-a-requirement-leaf, write-a-saga, deterministic-expecteds) |
-
-## Local packs — a project's own packs
-
-A consumer keeps its **project-specific** packs in its own tree at
-`.claudinite/local/packs/<name>/` — the same slots (prose `RULES.md`, `rules` checks, `skills`,
-scheduled `tasks/`, `questions`), authored and committed by the project, discovered and run by the
-same engine as these canon packs. `discoverPacks({ localRoot })` ([registry.mjs](../engine/pack_loader/pack-registry.mjs)) scans this repo's
-`packs/` **and** the consumer's `local/packs/`; each pack is stamped with its own `dir` (prose and
-bundled skills resolve off it) and a `local` flag. A local pack:
-
-- is **declared by hand** in `.claudinite/settings.*` like any pack — never fingerprinted or seeded
-  (no `relevanceDetector`), by its **namespaced token `local/<name>`** (the canonical form;
-  the engine's [`packEntryId`](../engine/pack_loader/pack-registry.mjs) resolves it and the bare id
-  alike to the bare pack id, and it keeps resolving both permanently), and its id must
-  be unique (it may not shadow a canon id — the collision is a blocking `config` finding);
-- **bundles its skills** at `<pack>/skills/<skill>/` (mounted from the tracked pack dir — the
-  same one shape canon packs use); a bundled skill may carry `checks.mjs`, run when the pack is
-  active;
-- rides the deployment plumbing every consumer already vendors: the sync hook preserves
-  `.claudinite/local/packs/` across its dir swap and the `.gitignore` re-includes it.
-
-A local pack contributes **every** slot first-class: prose, checks, skills, **and scheduled
-tasks** — `tasks/<name>/task.json`, found by the repo's own scheduler in the same uniform scan that
-finds a canon pack's tasks (the engine's task discovery, ClaudiniteEngine `shared/taskspec`),
-gated by the repo's declaration exactly like a canon pack's tasks. The canon home's own curation
-tasks ride this path.
-
-The canon-vs-local line is the portable-vs-project-specific split ([../extending.md](../extending.md));
-adoption seeds a project's own local pack, and the growth lifecycle treats `.claudinite/local/packs/`
-as the project's capture surface.
-
-## Settings validity
-
-The `"packs"` list and the rest of `.claudinite-settings.json` are validated **when the file loads**, not by a conformance check: [`loadConfig`](../engine/checks/helpers/repo-context.mjs) reports malformed JSON and an unknown top-level property, and the runner adds an unknown *pack name* (it holds the registry). Each becomes a blocking `config` error: a wrong pack name is as much a settings error as invalid JSON. A pack's `relevanceDetector` only **suspects** a pack is wanted; declaring it is the project's call, so a declared pack whose fingerprint is absent (or a fingerprint without its declaration) is **not** flagged.
-
-## Pack dependencies (`requires`)
-
-A pack states the packs it depends on in an optional `requires` field on its manifest - a plain array of pack ids: a project-class pack leans on the framework that implements it (`spec-driven-product` requires `executable-requirements`).
-
-This is **not a check** — a pack can't be imported without its dependencies, so the resolution happens **when the declaration is written**, by `cn init` and `cn adopt`, which pull each declared pack's transitive `requires` closure into `packs.declared` in `.claudinite/settings.*`. The prerequisite is materialized and visible in the file — droppable like every other entry, the same reason `basics` is written explicitly rather than defaulted — rather than resolved implicitly at run time. Declared ids keep their order; each pack's pulled-in dependencies land right after it.
-
-## The manifest spec (`pack.json`)
-
-A pack's manifest is `pack.json`: data, read without running anything. The loader still reads a `pack.mjs` default-exporting the same object, and where a directory carries both the JSON wins ([`pack-manifest.mjs`](../engine/pack_loader/pack-manifest.mjs)). Two things JSON cannot spell have a form of their own:
-
-- **A `relevanceDetector` pattern** is its source string (`"paths": "^([^/]+/)?package\\.json$"`), or `{ "source": …, "flags": "m" }` where it needs a flag; the loader compiles both.
-- **A templated `env` field** is `{ "forEach", "whenUnset", "template" }` (below).
-
-What a manifest may and must carry is declared once, in [`engine/pack_loader/pack-schema.mjs`](../engine/pack_loader/pack-schema.mjs), and [`validateManifest`](../engine/pack_loader/pack-schema.mjs) is the only thing that judges a manifest against it. The **loader** runs it on every pack it imports, canon and local alike, so an incomplete or malformed declaration surfaces as a blocking `config` error at load - the same class as invalid JSON in `.claudinite-settings.json`, and for the same reason: a required manifest field is part of the pack contract, not a conformance opinion about a repo's content. A conformance *check* would have to be declared by a pack, run only when that pack is active, and re-derive the manifest by reading its source text - enforcing the shape of the system from inside one of its members.
-
-Reporting is not fatal: a pack whose declaration is incomplete still loads and still runs its checks. Silently disabling a repo's own rules is a worse failure than the one being reported. The field vocabulary is **closed** — an undeclared key is an error, so a typo (`rule:`, `skill:`) fails loudly instead of being ignored forever.
-
-### What the directory says, and what silence says — so the manifest need not
-
-Most of the manifest's fields had, in every pack ever written, exactly one correct value: either the one the pack's own tree already gave, or the one that means "this pack does not do that". [`engine/pack_loader/pack-conventions.mjs`](../engine/pack_loader/pack-conventions.mjs) resolves them before the spec judges the result, so a manifest states none of them:
-
-| Field | Resolved from |
+| Content | Files |
 |---|---|
-| `id` | the pack's directory name |
-| `prose` | `RULES.md` beside the manifest, where one is present |
-| `badge` | `badge.svg` beside the manifest, where one is present |
-| `skills` | the subdirectories of `<pack>/skills/` |
-| `worldRules` | the modules in `<pack>/worldRules/`, in filename order |
-| `workRules` | the modules in `<pack>/workRules/`, in filename order |
-| `relevanceDetector` | `null`: silence *is* "this pack carries no fingerprint" |
+| Manifest | `pack.json` (or `.yaml`/`.toml`): `version`, `minEngineVersion`, `requires`, `ruleRoutingGuidance` and the rest of what the engine validates |
+| Rules | `RULES.md`, injected into a session where the pack is declared |
+| Skills | `skills/<name>/SKILL.md` |
+| Declared checks | `declared-checks.json`, run natively by `cn` |
+| Coded checks | `checks/*.go`, against the public Go check SDK only |
+| Tasks | `tasks/<name>/task.json`, with an optional `worker.mjs` that imports only `@claudinite/sdk` |
+| Provenance | `provenance/`: why each rule, check, skill and task is what it is |
+| Tests | `test/`: Go fixture tests for the checks, `node --test` tests for the scripts |
 
-A manifest field still **overrides** the resolution where a pack genuinely differs — `prose: null` beside a `RULES.md` that is documentation rather than injected rules, a `skills` subset that withholds a directory from mounting. Only an *absent* field falls through, so an explicitly declared `null` overrides too. Declaring a field that merely restates the tree is what [`engine-tests/pack_loader/pack-conventions.test.mjs`](../engine-tests/pack_loader/pack-conventions.test.mjs) refuses across the corpus.
+`test/`, `docs/`, `provenance/` and `checks/*_test.go` are left out of the vendored archive.
 
-### `## Upstream` — where a pack's technology publishes
+A pack is active in a member only where `.claudinite/settings.*` declares it; `cn init` and
+`cn adopt` also write each declared pack's `requires`.
 
-A pack's `README.md` may carry an **`## Upstream`** section: one line per source naming what to
-watch, where it publishes, and the state the pack's content was last reconciled against. It is read
-by one thing, [claudinite-canon-curation](claudinite-canon-curation/README.md)'s `revalidate-from-source`,
-which reconciles the pack against those sources monthly and advances the anchors. Presence of the
-section is the whole opt-in, and its absence is a legitimate answer: most packs teach something that
-does not move on anyone else's clock.
+## Running the tests
 
-**A pack never schedules its own watcher.** A pack's `tasks/` are work every *member* repo runs, so
-a pack watching its own technology from there charges the fleet for a duty that is the canon's, and
-makes it unrepeatable — one bespoke watcher per pack.
-
-### `<pack>/test/` — the pack's tests, and nothing a member receives
-
-A pack's tests live in one directory named for what it is, mirroring the pack's own layout inside it (`test/skills/<skill>/…`, `test/tasks/<task>/…`). [The vendor set drops that whole directory](../vendoring/compute-vendor-set.mjs) — the **name** is the rule, not the `*.test.mjs` suffix, so a fixture, a helper or a golden file a test needs stops shipping with it rather than riding into every member's mount for being one filename short of the exclusion.
-
-### `ruleRoutingGuidance` — what belongs here, and what does not
-
-```js
-ruleRoutingGuidance: {
-  belongs: 'workflow YAML and Actions runner platform behaviour: triggers, secrets, permissions, scheduling, artifacts, reusable workflows and their pitfalls',
-  excludes: 'git and GitHub command procedure — git-github; release pipeline content for one product — its release pack',
-},
+```
+node --test $(git ls-files '*.test.mjs')
+CLAUDINITE_CN=<path to cn> sh tools/checks/test.sh
 ```
 
-Both sides are required and each is capped at **20 words**. The cap is a readability budget, not a style rule: the whole set is rendered as the two middle columns of [`directory.GENERATED.md`](directory.GENERATED.md), the catalog a session reads when deciding where a rule, doc, skill or check goes. Guess-by-default lands everything in `basics` — that is the failure this field exists to stop. (Until #807 the same rows were also injected into every session as a routing table; that duplicated the catalog on the one channel that charges for it, so the catalog is now the single home.)
+The second runs every pack's Go checks and fixture tests against the check SDK of that `cn`.
 
-Write `excludes` to **name the pack that owns the other side** wherever one exists (`— that is app-store-release`), so the table routes rather than merely refuses. A boundary that is **true of every pack carries no routing information** and wastes the row: "anything portable belongs in the canon" is the local-pack rule restated, not this local pack's edge. State what separates a pack from its **nearest neighbours** — the packs a reader would actually confuse it with. Sibling packs that split a domain (`basics` and `git-github`, a mobile pack and its store-release pack) are where the pair earns its keep, and their two declarations should agree on where the line falls. "No pack fits" is a real answer — it means a new pack, or the project's own `local/packs/` — never the baseline as a fallback.
+## The packs
 
-The catalog covers every canon pack, whether or not a repo declares it — a session weighing what to adopt needs the ones it does *not* hold. It is vendored into every mount for that reason. Local packs declare `ruleRoutingGuidance` on the same terms, and state their boundary in their own prose.
-
-### `worldRules/` / `workRules/` — a rule's scope is its placement
-
-A pack's coded checks live in two directories, and **which directory a rule sits in is what makes it world- or work-scoped**: `<pack>/worldRules/*.mjs` audit repo state ([`check_the_world`](../engine/checks/check_the_world.mjs)), `<pack>/workRules/*.mjs` judge the change and session in front of you ([`check_the_work`](../engine/checks/check_the_work.mjs)). Each module default-exports one rule, and the loader imports them in filename order — discovered structurally, exactly like the `declared-checks.json` beside them, so adding a check is writing its file and nothing else. The loader flattens both scopes into the single `rules` array the runners walk, stamping each rule's scope from the directory it came from — one derivation, nothing downstream re-decides it. A rule module that carries its own `scope` field is a second source for the same fact, free to contradict its own placement, so the spec rejects it.
-
-A manifest may still declare `worldRules`/`workRules` explicitly, which overrides the directory for that scope — the same override every convention has. Nothing in the canon needs it.
-
-A skill's own `checks.mjs` sits outside this partition (it is a skill's content, not a manifest list) and still declares `scope` on the rule itself.
-
-### `skills` — the bundle, declared
-
-A pack's skills live in its own tree — `<pack>/skills/<skill>/SKILL.md`, one owning pack per skill (#385) — and the directory listing **is** the membership: adding a skill is creating its directory, with no manifest line to keep in sync. A manifest that does name `skills` is withholding one, and the spec still refuses a name with no directory behind it: that is a manifest that lies. What each skill covers stays in its own `SKILL.md` frontmatter, the description the harness triggers on — nothing carries a second copy of the summary.
-
-The SessionStart hook [`../engine/pack_loader/mount-skills.mjs`](../engine/pack_loader/mount-skills.mjs) mounts the **union over the active packs' bundles** (same activation as prose/checks/env) as session-generated `.claude/skills/<name>` symlinks — nothing committed, and a self-ignoring `.claude/skills/.gitignore` keeps them out of git status. A skill rides its pack everywhere the pack goes: the vendor set, the mounts, the sweep (its `checks.mjs` runs when the pack is active). The baseline activities every project has (`merge-to-main`, `writing-tests`, `bug-investigation`, …) ride the `basics` pack's bundle; move a skill's directory to a narrower pack when it stops being a baseline activity.
-
-## The rule index a pack README carries
-
-A pack README is optional, but where one exists it **indexes what the pack asks of a project**: one
-row per prose rule in its `RULES.md`, and one row per check it runs. Both tables carry the same two
-judgments — **how bad it is when the rule isn't followed**, and **what kind of cost that is** —
-because a reader deciding whether to adopt a pack, or which finding to fix first, is asking exactly
-that and can otherwise only get it by reading every rule.
-
-The prose index lists **every** rule, in the order `RULES.md` states them:
-
-```markdown
-## Rules (`RULES.md`)
-
-| Rule | Severity | Reason | Enforcement |
-|---|---|---|---|
-| Keep the tile provider's attribution | critical | legal | prose: <100 words + check (`leaflet/tile-attribution`) |
-```
-
-```markdown
-## Checks
-
-| Check | Severity | Reason | Enforcement |
-|---|---|---|---|
-| `leaflet/tile-attribution` | critical | legal | check: blocking |
-```
-
-- **Rule** — a name, under 8 words: enough to find the rule, never a summary of it. **Check** — its id.
-- **Severity** — the consequence of ignoring it: `critical` (ships a defect to users, loses data,
-  breaks the fleet, or violates a licence or platform policy), `high` (the work lands wrong or
-  silently doesn't work and someone must redo it), `medium` (rework or drift caught inside the
-  repo), `low` (friction only).
-- **Reason** — the kind of cost: `correctness`, `performance`, `complexity`, or `legal` (licence,
-  privacy, disclosure, store or platform policy). One per rule, the dominant one.
-- **Enforcement** — the mechanism and its price. `prose:` is what the rule *costs*: every declaring
-  repo pays those words in every session's context. State the size band it falls in — `<20`, `<50`,
-  `<100`, `<200`, `<500` or `500+` words — rather than a count, because no reader spends the digit:
-  the session-start summary counts the prose itself, and a band survives the ordinary edit that a
-  count turns into a red build. The bands are spelled in
-  [`../engine-tests/rule-index.mjs`](../engine-tests/rule-index.mjs), which computes each rule's own.
-  `check: blocking | advisory` is how the engine reports a finding. A rule carried both ways names
-  the check too.
-
-Neither table describes what a rule says — the prose and the check's own failure message do that.
-
-Both indexes are held to the tree by [`../engine-tests/rule-index.test.mjs`](../engine-tests/rule-index.test.mjs):
-the rows must match `RULES.md` one-for-one in the right size bands, every check the pack runs must
-appear, and all three vocabularies are closed. That guard is what makes a second listing of the rules
-safe here — an earlier hand-kept index drifted into claiming a prose rule that never existed (#777) —
-so restate a rule's band in the same change that edits its prose past a boundary, and add a check's
-row in the change
-that declares it.
-
-## Pack badge (`badge`)
-
-Every pack carries a mark — the 32×32 tile beside its name in the table above — so a repo's README
-can show which Claudinite packs it runs. It is `badge.svg` beside the pack's manifest, found by
-convention rather than named by it (above).
-
-**The badge file is the artwork's source of truth.** Its colour and its glyph live in the SVG, not
-in the manifest: they are visible to anyone who opens the file, editable without touching a manifest,
-and reviewable as the image they describe. The glyph is an SVG path on the 32-unit grid, stroked in
-white with a round-capped 2.2 line — so a dot is a zero-length segment (`M16 16h0`) and the whole
-mark is one path. No `<text>` anywhere, so a badge renders identically wherever it is loaded.
-
-[`../dev/tools/badges/render.mjs`](../dev/tools/badges/render.mjs) mints a new one and restyles the
-set. It invents neither colour nor glyph — it *parses* both out of the file it is about to rewrite —
-so a template change (a new corner radius, a different stroke weight, a stats corner later) is one
-edit there and one run:
-
-```sh
-node dev/tools/badges/render.mjs new packs/<pack>/badge.svg '#4f46e5' 'M8 8h16'
-node dev/tools/badges/render.mjs restyle
-```
-
-It lives in `dev/tools/`, not in the engine: nothing at session time reads a badge, and the engine is
-what runs pack content and what every consumer vendors. The badge FILES do ship — a pack's badge
-rides its directory into a consumer's vendor set exactly like its prose and skills, so anything
-showing one points at `.claudinite/shared/packs/<id>/badge.svg` with no network dependency on this
-repo. Nothing writes a badge into a member's own README: a repo's front page is the repo's (#1750).
-
-[`../dev/tools/tests/badges.test.mjs`](../dev/tools/tests/badges.test.mjs) guards the artwork side —
-every pack declares a badge that exists and is tracked, every badge is current with the template and
-titled with the pack whose directory holds it.
-
-## Environment requirements (`env`)
-
-A pack may declare a toolchain (or per-repo deps) a cloud session needs but the Claude Code Web base image doesn't ship - the `flutter` pack needs the Flutter SDK; the `node` pack needs the repo's `npm` modules. Install belongs in the environment **image** (built once, snapshotted, reused), never a per-session hook. A pack declares it in an optional `env` field on its manifest: a `label` naming it in the check's messages, a `setup` that is an idempotent install fragment for the image, and a `probe` that exits 0 iff the requirement is present in the running environment:
-
-```json
-"env": {
-  "label": "Flutter SDK",
-  "setup": "<bash>",
-  "probe": "command -v flutter >/dev/null 2>&1"
-}
-```
-
-`setup` and `probe` may be a **string**, or a **template repeated once per value of one of the project's per-pack params** - a project supplies parameters about its own usage as `config` on the pack's entry in `.claudinite/settings.*`, so one pack fragment fits every repo. `{}` in the `template` stands for the value, `whenUnset` answers for an absent or empty param, and the copies of a `setup` run as lines while the copies of a `probe` must all hold. The `node` pack uses this for where `npm ci` runs:
-
-```json
-"setup": { "forEach": "dirs", "whenUnset": ["."], "template": "( cd \"{}\" && npm ci ) || true" }
-```
-
-and a repo points it elsewhere with `{ "packs": [ { "id": "node", "config": { "dirs": ["firebase/functions"] } } ] }`. A `pack.mjs` may still give either as a function of the params.
-
-`cn` validates the `env` field at load and runs neither half of it yet. The install half is the
-corpus's one generic [`environment-setup-command.sh`](claude-code-web-users-support/environment-setup-command.sh),
-the web pack's, pasted into the environment's Setup script field; it still drives the Node mount,
-and moving it is the member move's step (ClaudiniteEngine#23). The SessionStart probe that would
-halt a session missing a requirement is the engine's session-context work, not adoption's. A pack
-with no `env` field adds nothing; universal git hygiene lives in the generic script, not a pack.
-
-## Adoption interview (`questions`)
-
-A pack that needs to know the project's **intent** before it can provide value (a research wiki
-can't cite anything before learning what the product is; a visual-testing pack can't assert
-anything before learning how this repo should be tested) declares the mandatory questions its
-adoption must ask, in an optional `questions` field on its manifest - stable-id'd entries,
-`distill` saying how the answer becomes the entry's `config`:
-
-```json
-"questions": [{ "id": "ui_testing", "prompt": "How are the executable UI requirements exercised - …?", "distill": "record the mechanism as config.ui_testing …" }]
-```
-
-Only a pack a project **chooses** earns one. A pack that arrives through another's `requires` was
-never adopted, so its question reaches an owner who did not ask for it — which is why the
-folder-access graph, pulled in everywhere basics is declared, asks nothing and simply stays
-inert until a repo writes one (#1681).
-
-The answers live **verbatim** on the pack's entry in `.claudinite/settings.*` (`answers:
-{ "<question-id>": "<answer>" }`), written by `cn settings answer <pack>/<question> <text>`, the
-one writer: the settings file records the project's intent beside the `config` distilled from it
-— provenance for the configuration, versioned and diffable, and re-derivable if the pack's config
-shape later changes. The **gap** — declared question ids minus answered ids, skipping an entry a
-`requires` pulled in that carries neither `config` nor `answers` — drives the asking: at adoption
-every question is pending; when the canon later adds a question to a pack, just that one surfaces
-in every member; a pack with no questions adds nothing. An answered question stays answered —
-"n/a, none wanted" is an answer, distinct from never-asked.
-
-The posture is **strict at adoption, mild everywhere else**. `cn init` and `cn adopt` print the
-pending set as a QUESTIONS block for the session to ask (a human is present by construction), and
-the `adoption-answers-pending` work check blocks the commit on the branch that declared the pack.
-Outside it, pending questions surface only as one SessionStart line telling an interactive
-session to ask at a natural moment and an unattended one to ignore it — **never a world
-finding**, so a nightly update or a new canon question can never block the fleet. The one world
-check is hygiene: `interview-answer-stale` advises on a stored answer whose question the pack no
-longer declares (renamed or removed upstream), and a malformed `questions` declaration keeps the
-pack from loading like any broken manifest.
-
-## Corpus size — checks vs prose
-
-Counted, never quoted: `check_the_world.mjs --list` prints the check catalog a rule at a time (id,
-on_fail, description, doc pointer), and each pack README's rule index carries that pack's prose rules
-with their size bands. Ask those two, in the tree in front of you. A total transcribed into this file
-is a copy of derived data that every pack change falsifies — it drifted to 41 against a real 65 once,
-and the ratio it fed was wrong by a third.
-
-The shape the numbers keep showing: roughly one hardcoded check per four prose rules. Most of the
-remainder is judgment, in-flight process, or runtime knowledge that *should* stay prose. The
-`prose-to-checks` sweep works the convertible part; its adversarial pass rejects candidates whose
-detection would false-positive (the two SAM YAML checks needed a structural parser to stay FP-free),
-so the yield is deliberately small and high-precision.
+- [android](android/README.md)
+- [aws-sam](aws-sam/README.md)
+- [basics](basics/README.md)
+- [chrome-extension](chrome-extension/README.md)
+- [claude-code-web-users-support](claude-code-web-users-support/README.md)
+- [claudinite-canon-curation](claudinite-canon-curation/README.md) (hidden from the catalog)
+- [claudinite-dashboard](claudinite-dashboard/README.md)
+- [claudinite-fleet-sheepdog](claudinite-fleet-sheepdog/README.md)
+- [claudinite-growth](claudinite-growth/README.md)
+- [claudinite-lifecycle](claudinite-lifecycle/README.md)
+- [claudinite-tasks](claudinite-tasks/README.md)
+- [cloudflare-site](cloudflare-site/README.md)
+- [cloudflare-workers](cloudflare-workers/README.md)
+- [executable-requirements](executable-requirements/README.md)
+- [firebase](firebase/README.md)
+- [flutter](flutter/README.md)
+- [git-github](git-github/README.md)
+- [github-pages](github-pages/README.md)
+- [google-identity](google-identity/README.md)
+- [headless-browser](headless-browser/README.md)
+- [host-page](host-page/README.md)
+- [html](html/README.md)
+- [ios](ios/README.md)
+- [jwt](jwt/README.md)
+- [leaflet](leaflet/README.md)
+- [macos](macos/README.md)
+- [node](node/README.md)
+- [numpy-image-processing](numpy-image-processing/README.md)
+- [product-wiki](product-wiki/README.md)
+- [public-website](public-website/README.md)
+- [python](python/README.md)
+- [research-project](research-project/README.md)
+- [spec-driven-product](spec-driven-product/README.md)
+- [web-scraping](web-scraping/README.md)
+- [web-speech](web-speech/README.md)

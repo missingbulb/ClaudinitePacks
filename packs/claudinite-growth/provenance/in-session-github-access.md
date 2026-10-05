@@ -15,3 +15,11 @@
 - **Reason:** owner decision, 2026-09-25: the field names what happens when the check fails, and
   *severity* keeps its impact sense; what this element enforces is unchanged.
 - **Actor:** @missingbulb (owner).
+
+## 2026-10-05 · retired · no migration pass is left to scan
+- **Reason:** the check scanned `migrations/**/*.mjs`, the Node engine's migration passes; cn runs
+  none and ClaudinitePacks deleted the last records, so its scope matched nothing on any tree.
+- **Actor:** @missingbulb (owner), asking that ClaudinitePacks keep only code still needed.
+- **Model:** Claude Opus 5.5
+- **Mechanism:** the declared check and its tests, deleted; the `unattended-agents` skill's prose
+  rule stands. claudinite-growth 1.61005.1.

@@ -228,7 +228,6 @@ and reads the same subtree over the GitHub API.
 | `growth-write-scope` | high | correctness | cn built-in: blocking |
 | `task-worker-restores-main` | high | correctness | cn built-in: blocking |
 | `legacy-check-spellings` | low | complexity | declared: advisory |
-| `in-session-github-access` | high | correctness | declared: blocking |
 | `technology-skill-cites-dated-sources` | high | correctness | declared: blocking |
 | `technology-skill-links-inside-its-folder` | medium | complexity | declared: blocking |
 | `technology-skill-code-imports-inside-its-folder` | medium | complexity | declared: blocking |

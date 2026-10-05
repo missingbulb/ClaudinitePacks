@@ -1,10 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { execFileSync, spawnSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
-import { GIT_ENV } from './test-fixture.mjs';
+import { readFileSync } from 'node:fs';
 
 const WORKFLOWS = new URL('../../.github/workflows/', import.meta.url);
 
@@ -117,7 +113,7 @@ test('the build job reads only and holds no environment; publish holds release a
 });
 
 test('both jobs take Node from .node-version, and every action is pinned to a commit sha', () => {
-  for (const file of ['release-packs.yml', 'verify-import.yml', 'promote-packs.yml']) {
+  for (const file of ['release-packs.yml', 'ci.yml', 'promote-packs.yml']) {
     const w = workflow(file);
     for (const [name, job] of Object.entries(w.jobs)) {
       for (const step of job.steps.filter((s) => s.uses)) {
@@ -133,12 +129,10 @@ test('both jobs take Node from .node-version, and every action is pinned to a co
 test('build runs the release, sign and vendor tests and the build; publish runs only the publish program', () => {
   const { build, publish } = workflow('release-packs.yml').jobs;
   const runs = (job) => job.steps.map((s) => s.run ?? '').join('\n');
-  // The import tests need git-filter-repo, which only verify-import installs.
   assert.match(runs(build), /node --test \$\(git ls-files 'tools\/release\/\*\.test\.mjs' 'tools\/sign\/\*\.test\.mjs' 'tools\/vendor\/\*\.test\.mjs'\)/);
-  assert.doesNotMatch(runs(build), /tools\/import|'tools\/\*\.test\.mjs'/);
   assert.match(runs(build), /node tools\/release\/release\.mjs build --out /);
   assert.doesNotMatch(runs(publish), /node --test|release\.mjs build|vendor\.mjs/);
-  assert.match(runs(publish), /node tools\/release\/release\.mjs publish --archives .* --roots keys\/roots --previous-roots keys\/retired-dev-roots --summary "\$GITHUB_STEP_SUMMARY"/);
+  assert.match(runs(publish), /node tools\/release\/release\.mjs publish --archives .* --roots keys\/roots --summary "\$GITHUB_STEP_SUMMARY"/);
   assert.match(runs(publish), /::error::the release environment must hold both CN_PACKS_KEY and CN_PACKS_CERT/);
   assert.doesNotMatch(runs(publish), /development key/);
   const checkout = publish.steps.find((s) => s.uses?.startsWith('actions/checkout@'));
@@ -146,56 +140,25 @@ test('build runs the release, sign and vendor tests and the build; publish runs 
   assert.equal(checkout.with['persist-credentials'], true);
 });
 
-test('verify-import still runs on main only, so pushes to vendored trigger nothing', () => {
-  assert.deepEqual(workflow('verify-import.yml').on.push.branches, ['main']);
+test('ci runs on main only, so pushes to vendored trigger nothing', () => {
+  assert.deepEqual(workflow('ci.yml').on.push.branches, ['main']);
 });
 
-test('verify-import, after the freeze: the fresh import is verified against the recorded commit, the branch only for ancestry', () => {
-  const w = workflow('verify-import.yml');
-  assert.deepEqual(Object.keys(w.jobs).filter((j) => j !== 'release-plan'), ['verify']);
-  const runs = w.jobs.verify.steps.map((s) => s.run ?? '').join('\n');
-  assert.doesNotMatch(runs, /--landed/);
-  assert.match(runs, /node tools\/import\/verify\.mjs --source "\$RUNNER_TEMP\/import\/src" --commit "\$\{\{ steps\.source\.outputs\.commit \}\}" --import "\$RUNNER_TEMP\/import\/out"$/m);
-  assert.ok(w.jobs.verify.steps.some((s) => s.name === 'This branch carries the import history'));
-});
-
-// Runs the workflow's own ancestry step against a branch that merged a synthetic import and one
-// that did not, so the history guarantee is proven by the text CI executes.
-test('verify-import\'s ancestry step passes a branch carrying the import tip and fails one that does not', () => {
-  const step = workflow('verify-import.yml').jobs.verify.steps.find((s) => s.name === 'This branch carries the import history');
-  const root = mkdtempSync(join(tmpdir(), 'acme-ancestry-'));
-  const g = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], env: { ...process.env, ...GIT_ENV } }).trim();
-  const out = join(root, 'import', 'out');
-  mkdirSync(join(out, 'packs', 'acme-pack'), { recursive: true });
-  g(out, 'init', '-q', '-b', 'import');
-  writeFileSync(join(out, 'packs', 'acme-pack', 'RULES.md'), '# acme\n');
-  g(out, 'add', '-A');
-  g(out, 'commit', '-qm', 'acme import');
-  const branch = (merge) => {
-    const dir = mkdtempSync(join(root, 'branch-'));
-    g(dir, 'init', '-q', '-b', 'main');
-    writeFileSync(join(dir, 'README.md'), 'acme\n');
-    g(dir, 'add', '-A');
-    g(dir, 'commit', '-qm', 'tooling');
-    if (merge) {
-      g(dir, 'fetch', '-q', out, 'import:import');
-      g(dir, 'merge', '-q', '--allow-unrelated-histories', '--no-ff', '-m', 'Merge import', 'import');
-    }
-    return dir;
-  };
-  const exec = (dir) => spawnSync('bash', ['-e', '-c', step.run], { cwd: dir, encoding: 'utf8', env: { ...process.env, ...GIT_ENV, RUNNER_TEMP: root } });
-  const ok = exec(branch(true));
-  assert.equal(ok.status, 0, ok.stdout + ok.stderr);
-  const bad = exec(branch(false));
-  assert.equal(bad.status, 1, bad.stdout + bad.stderr);
-  assert.match(bad.stdout, /::error::the import tip [0-9a-f]{40} is not in this branch's history/);
+test('ci runs every Node test the repo tracks, reading only and holding no secret', () => {
+  const job = workflow('ci.yml').jobs.test;
+  assert.ok(job, 'ci.yml has a test job');
+  assert.deepEqual(job.permissions, { contents: 'read' });
+  assert.doesNotMatch(JSON.stringify(job), /secrets\./);
+  assert.ok(job.steps.some((s) => s.with?.['node-version-file'] === '.node-version'));
+  const runs = job.steps.map((s) => s.run ?? '').join('\n');
+  assert.match(runs, /^node --test \$\(git ls-files '\*\.test\.mjs'\)$/m);
 });
 
 test('release-plan runs on every pull request and on dispatch, reads only, holds no secret and runs plan --content', () => {
-  const w = workflow('verify-import.yml');
+  const w = workflow('ci.yml');
   assert.ok('pull_request' in w.on && 'workflow_dispatch' in w.on);
   const job = w.jobs['release-plan'];
-  assert.ok(job, 'verify-import.yml has a release-plan job');
+  assert.ok(job, 'ci.yml has a release-plan job');
   assert.equal(job.if, "github.event_name != 'push'");
   assert.deepEqual(job.permissions, { contents: 'read' });
   assert.equal(job.environment, undefined);
@@ -259,12 +222,9 @@ test('promote-packs: the promote job writes in the release environment; upload f
   assert.deepEqual(secrets.map(([k]) => k).sort(), ['CLOUDFLARE_ACCOUNT_ID', 'CLOUDFLARE_API_TOKEN']);
 });
 
-test('only publish names keys/retired-dev-roots, and only as --previous-roots', () => {
+test('no workflow trusts a retired root', () => {
   for (const file of ['release-packs.yml', 'promote-packs.yml']) {
     const runs = Object.values(workflow(file).jobs).flatMap((j) => j.steps.map((s) => s.run ?? '')).join('\n');
-    for (const line of runs.split('\n').filter((l) => l.includes('retired-dev-roots') && !l.trim().startsWith('#'))) {
-      assert.match(line, /release\.mjs publish .*--previous-roots keys\/retired-dev-roots /, `${file}: ${line}`);
-      assert.doesNotMatch(line, /--roots keys\/retired-dev-roots/, `${file}: ${line}`);
-    }
+    assert.doesNotMatch(runs, /--previous-roots|retired-dev-roots/, file);
   }
 });

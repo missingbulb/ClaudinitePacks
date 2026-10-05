@@ -37,7 +37,7 @@
     "id": "corpus-count-in-prose",
     "on_fail": "advise",
     "since": "2026-09-06",
-    "failureMessage": "a quoted count of checks or rules is stale at the next change; packs/README.md says how to count them",
+    "failureMessage": "a quoted count of checks or rules is stale at the next change; name what to count instead",
     "scanFiles": "/(^|\\/)packs\\/.*\\.md$/",
     "excludeFiles": "/GENERATED|VERSIONS\\.md$/",
     "scanIgnoringMarkdownFences": true,
