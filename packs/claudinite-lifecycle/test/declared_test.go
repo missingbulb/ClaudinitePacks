@@ -117,6 +117,11 @@ func TestClaudiniteIsolation(t *testing.T) {
 	fixture.Run(t, "claudinite-lifecycle", []fixture.Case{
 		{Name: "a consumer file referencing the mount", Rules: quiet, Member: merge(violating, shared), Expect: []string{id + ":1"}},
 		{Name: "the wiring files and local packs stay open", Rules: quiet, Member: merge(wiring, shared)},
+		{Name: "a consumer file linking the member's own local pack", Rules: quiet, Member: merge(shared, map[string]string{
+			"README.md":                             "See [the rules](.claudinite/local/packs/mine/RULES.md).\n",
+			"docs/guide.md":                         "See [the rules](../.claudinite/local/packs/mine/RULES.md).\n",
+			".claudinite/local/packs/mine/RULES.md": "# mine\n",
+		})},
 		{Name: "an import reaching the mount", Rules: quiet, Member: map[string]string{
 			"src/tool.mjs": "import x from \"../.claudinite/shared/engine/checks/helpers/findings.mjs\";\n",
 			".claudinite/shared/engine/checks/helpers/findings.mjs": "engine\n",
