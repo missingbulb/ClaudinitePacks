@@ -1,10 +1,27 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
-import { cleanup, git, makeRepo } from '../../../engine-tests/helpers.mjs';
+import { execFileSync } from 'node:child_process';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { dirname, join } from 'node:path';
 import { bumpedFiles, nextVersion, stampHtml } from '../public/version.mjs';
 import { bump } from '../bump-version.mjs';
+
+const git = (root, ...args) => execFileSync('git', [
+  '-c', 'user.name=t', '-c', 'user.email=t@example.com', '-c', 'commit.gpgsign=false', ...args,
+], { cwd: root, encoding: 'utf8' });
+
+function makeRepo(files) {
+  const root = mkdtempSync(join(tmpdir(), 'public-website-version-'));
+  for (const [rel, text] of Object.entries(files)) {
+    mkdirSync(dirname(join(root, rel)), { recursive: true });
+    writeFileSync(join(root, rel), text);
+  }
+  git(root, 'init', '-q', '-b', 'main');
+  git(root, 'add', '-A');
+  git(root, 'commit', '-q', '-m', 'base');
+  return root;
+}
 
 // The build is a monotonic counter rather than a per-day one, so two releases either
 // side of midnight cannot land on the same version.
@@ -88,10 +105,10 @@ test('bumpedFiles is null with no version record, and stamp-only rewrites no rec
 // be a release nobody shipped. The CLI reads git's file list, so an untracked page is
 // left alone.
 test('the CLI repairs the tracked pages in place, and only a real bump advances the record', () => {
-  const root = makeRepo({ base: {
+  const root = makeRepo({
     'package.json': '{\n  "version": "1.10910.4"\n}\n',
     'site/index.html': '<b title="version 1.0801.1">x</b>',
-  } });
+  });
   try {
     writeFileSync(join(root, 'site', 'scratch.html'), '<b title="version 1.0801.1">x</b>');
     assert.equal(bump(root, { stampOnly: true }), '1.10910.4');
@@ -103,5 +120,5 @@ test('the CLI repairs the tracked pages in place, and only a real bump advances 
     assert.equal(JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')).version, '1.10911.5');
     assert.match(readFileSync(join(root, 'site', 'index.html'), 'utf8'), /version 1\.10911\.5/);
     assert.match(git(root, 'status', '--short'), /package\.json/);
-  } finally { cleanup(root); }
+  } finally { rmSync(root, { recursive: true, force: true }); }
 });
