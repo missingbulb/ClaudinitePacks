@@ -47,9 +47,10 @@ import { config as packConfigOf, git as engineGit, packs as declaredPacks } from
 import { baseTip, readAt, readRollingAt, deliver as deliverFiles } from './deliver.mjs';
 
 import {
-  countEntries, foldUsage, encodeUsage, decodeUsage, mountedCorpus, DAY_WINDOW_DAYS,
+  countEntries, foldUsage, encodeUsage, decodeUsage, mountedCorpus, DAY_WINDOW_DAYS, isoWeek,
 } from './fold-usage.mjs';
 import { renderUsageFile, withoutStamp } from './usage-format.mjs';
+import { checkBuildReport, renderCheckBuildReport } from './check-build.mjs';
 import { makeReader, readRuns } from './read-runs.mjs';
 import { makeReader as makeQueueReader, readQueueOutcomes } from './read-queue.mjs';
 import { readMergedPrs, prRecordsFrom } from './read-prs.mjs';
@@ -308,7 +309,7 @@ async function foldSessions({ root, repo, token, base, baseSha, declared, now, l
   if (releases === null) log('the releases listing could not be read — the release rows are absent this run');
   else if (releases.truncated) log('more than 100 releases exist — the far end of the release series may be under-counted');
 
-  const text = renderUsageFile(encodeUsage(foldUsage({
+  const folded = foldUsage({
     files,
     prior,
     today: now.slice(0, 10),
@@ -321,7 +322,9 @@ async function foldSessions({ root, repo, token, base, baseSha, declared, now, l
     prRecords: prRecordsFrom({ prs: prs.prs, files }),
     prsFoldedThrough: prs.watermark,
     dayFields: dayFieldsFrom({ commits, releases, ladder }),
-  })));
+  });
+  const text = renderUsageFile(encodeUsage(folded));
+  const report = renderCheckBuildReport(checkBuildReport(folded.weeks, isoWeek(now.slice(0, 10))));
 
   const summary = `${files.length} capture file(s), ${runs.runs.length} run(s), ${queue.records.length} closed item(s) `
     + `and ${prs.prs.length} merged PR(s)`;
@@ -330,9 +333,9 @@ async function foldSessions({ root, repo, token, base, baseSha, declared, now, l
   // that would otherwise make every fold a PR.
   const landed = readAt(root, baseSha, USAGE_PATH);
   if (landed !== null && withoutStamp(landed) === withoutStamp(text)) {
-    return { files: {}, moves: {}, summary: `${summary} - byte-identical` };
+    return { files: {}, moves: {}, summary: `${summary} - byte-identical`, report };
   }
-  return { files: { [USAGE_PATH]: text }, moves: rolling.moves, summary };
+  return { files: { [USAGE_PATH]: text }, moves: rolling.moves, summary, report };
 }
 
 // Runs every half, then lands whatever changed on ONE pull request. A half that
@@ -343,18 +346,20 @@ export async function deliverFolds({ halves, deliver, log }) {
   const moves = {};
   const failures = [];
   const summaries = [];
+  const reports = [];
   for (const [name, fold] of Object.entries(halves)) {
     try {
       const out = await fold();
       Object.assign(files, out.files);
       Object.assign(moves, out.moves);
       summaries.push(`${name}: ${out.summary}`);
+      if (out.report?.length) reports.push('', ...out.report);
     } catch (err) {
       log(`the ${name} half failed - its file is unchanged this run: ${err?.stack ?? err}`);
       failures.push(`${name}: ${err?.message ?? err}`);
     }
   }
-  for (const line of summaries) log(line);
+  for (const line of [...summaries, ...reports]) log(line);
 
   if (Object.keys(files).length) {
     const pr = await deliver({
@@ -384,6 +389,7 @@ export async function deliverFolds({ halves, deliver, log }) {
         'A file whose recompute differs only in its `generated` stamp is left out, and a fold',
         'where neither moved opens no PR at all. Machine-written - never hand-edit either;',
         'each fold starts from the last, so a lost copy is lost history.',
+        ...reports,
       ].join('\n'),
     });
     log(`${pr.reused ? 'updated' : 'opened'} PR ${pr.number !== null ? `#${pr.number}` : `on ${pr.branch}`}`);

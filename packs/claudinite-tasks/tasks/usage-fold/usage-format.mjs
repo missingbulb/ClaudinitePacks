@@ -95,6 +95,15 @@ export const USAGE_FIELDS = Object.freeze({
   // `maxMs` beside the total because a median over days answers "is the sweep
   // slower" and the max answers "is one rule to blame".
   checkTiming: Object.freeze(['runs', 'totalMs', 'maxMs']),
+  // Keyed by SESSION ID - what the checks build cost that session: whether its start
+  // found the binary cached or started a build, the compile it reported (no slot where
+  // it reported none, which is not a zero-second build), and its waits for the binary
+  // summed over the hooks and commands that waited. The sample the report's median is
+  // taken over, for the reason `prs` carries durations rather than percentiles.
+  buildSessions: Object.freeze(['cached', 'started', 'compiledMs', 'compiledOk', 'waits', 'waitMs', 'waitMaxMs']),
+  // Keyed by the EVENT that waited for the checks binary (`stop`, `check`, `world`).
+  // `sessions` is a sum of day-level distinct sessions, a ceiling over a week.
+  buildWaits: Object.freeze(['waits', 'sessions', 'totalMs', 'maxMs', 'timeouts']),
   // Keyed by MODEL ID. The four usage counters are kept apart here where `tokensIn`
   // is their first three summed, so a reader can price a day per model without
   // anything else in the file changing meaning.
@@ -139,7 +148,7 @@ export const WEEK_FROM_DAY = Object.freeze({ sessionDays: 'sessions' });
 // declared for. The sub-maps whose values are bare numbers are BARE_MAPS below.
 export const COUNTER_GROUPS = Object.freeze([
   'checks', 'checkFindings', 'tasks', 'taskExec', 'queue', 'tokensByModel', 'prs', 'taskCost', 'parks',
-  'skillLoadsBy', 'triggerFires', 'guardFires', 'checkTiming',
+  'skillLoadsBy', 'triggerFires', 'guardFires', 'checkTiming', 'buildSessions', 'buildWaits',
 ]);
 
 // The row's sub-maps whose values are BARE NUMBERS — no vocabulary, nothing to expand,
@@ -158,7 +167,13 @@ export const BARE_MAPS = Object.freeze([
 // The counter fields folded by MAX rather than by sum, per group. A peak is not
 // additive: a week's slowest check run is the slowest of its days', never their
 // total, and summing it would report a steady sweep as an ever-worsening one.
-export const MAX_FIELDS = Object.freeze({ checkTiming: Object.freeze(['maxMs']) });
+// A session's build row is one session's facts, so a session filed under two days
+// folds into its week as the larger of each, never their sum.
+export const MAX_FIELDS = Object.freeze({
+  checkTiming: Object.freeze(['maxMs']),
+  buildSessions: USAGE_FIELDS.buildSessions,
+  buildWaits: Object.freeze(['maxMs']),
+});
 
 // The bounds a reader would otherwise have to guess, declared in the file beside
 // `fields` for the same reason: a figure computed under a cap means nothing without

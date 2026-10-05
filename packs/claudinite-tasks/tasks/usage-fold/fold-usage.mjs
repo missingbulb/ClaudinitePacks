@@ -28,6 +28,7 @@ import { TASK_EXEC_STATUSES, parseTaskExecs } from './queue-wire.mjs';
 // functions at the foot of this file.
 import { isUserMessage, commandName, skillToolLoads, entryText } from './capture-entries.mjs';
 import { countCorpusUse, countMoments, countCheckTiming } from './corpus-use.mjs';
+import { readCheckBuild, foldCheckBuild } from './check-build.mjs';
 import {
   USAGE_FIELDS, USAGE_VERSION, CAPTURE_DAY_FIELDS, WEEK_FROM_DAY, QUEUE_OUTCOMES,
   COUNTER_GROUPS, BARE_MAPS, MAX_FIELDS, USAGE_CAPS, hourKey, encodeUsageFile, decodeUsageFile,
@@ -565,6 +566,7 @@ export function countEntries(entries, corpus = {}) {
     ...use,
     moments: countMoments(entries, corpus.declarations ?? [], corpus.hits ?? {}),
     checkTiming: countCheckTiming(entries),
+    checkBuild: readCheckBuild(entries),
     skillCaught: caughtSkills(Object.keys(use.skillLoadsBy), checks.checkFindings, corpus.ownerOf),
   };
 }
@@ -697,6 +699,7 @@ export function foldDays(files) {
     s.userMessages += file.counts.userMessages;
   }
 
+  foldCheckBuild(days, files);
   // Distinct sessions, not capture count: one session can capture more than once
   // (a merge, then the session-end tail).
   for (const [date, set] of Object.entries(sessionsByDay)) days[date].sessions = set.size;

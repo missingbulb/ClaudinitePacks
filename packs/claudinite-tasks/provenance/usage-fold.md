@@ -170,3 +170,10 @@
 - **Reason:** review of ClaudinitePacks #20: the delivery force-pushes to whatever branch it is handed, and the engine's `git` bounds no ref, so a target that named the base would rewrite it; and `queue-wire.mjs` named a drift test that did not exist.
 - **Actor:** build lead, reviewing ClaudinitePacks #20.
 - **Mechanism:** `deliver.mjs` throws before any write when `target.branch` is the base; `test/tasks/usage-fold/queue-wire.test.mjs` runs the copy's decode over one corpus against `cn tasks grammar` and `cn tasks queue`; `tools/test/pack-copies.test.mjs` holds every pack's `deliver.mjs` and `github-api.mjs` copies together.
+
+## 2026-10-05 · extended · count the checks build's cost and waits per session
+- **Reason:** Ariel: "Regarding the checks compilation time - we need to be able to know how long it takes and does it block sessions. This should be written to the session and conversation-logs and read by the usage fold task." The engine now leaves `[cn] build ...` and `[cn] buildwait ...` breadcrumbs (ClaudiniteEngine design record 134); nothing counted them.
+- **Actor:** Ariel (owner).
+- **Model:** Claude, per the commit trailer.
+- **Mechanism:** `check-build.mjs` reads the breadcrumbs per capture; the day and week rows gain `buildSessions` (per session, the compile sample a median is taken over) and `buildWaits` (per waiting event); the pull request body carries the last closed week against the one before, a figure with no sample absent.
+- **Rejected:** a per-day median - a median does not fold into a week, so the rows carry the per-session sample, as `prs` carries durations.
