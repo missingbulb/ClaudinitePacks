@@ -28,8 +28,8 @@ test('an adoption-shaped diff lands: declaration, re-vendored mount (its policy 
     // coversMountPolicySources exists for.
     { file: '.claudinite/shared/packs/acme-pack/tasks/acme-task-b/task.json', before: null, after: '{}\n' },
     { file: '.claudinite/shared/packs/acme-pack-f/merge-rules.json', before: '[]\n', after: '[{"name":"x"}]\n' },
-    { file: '.claudinite/flat/claudinite-rules.GENERATED.md', before: 'old\n', after: 'new\n' },
-    { file: '.claudinite/flat/tasks.GENERATED.json', before: null, after: '{}\n' },
+    { file: '.claudinite/cache/claudinite-rules.GENERATED.md', before: 'old\n', after: 'new\n' },
+    { file: '.claudinite/cache/tasks.GENERATED.json', before: null, after: '{}\n' },
   ]);
   assert.equal(v.mergeable, true, v.why);
 });

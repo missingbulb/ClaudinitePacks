@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { nodeStamp, memberFromNode, memberFromFile, readMember, MEMBER_PATH, NODE_SETTINGS_PATH } from '../src/read/member.mjs';
+import { nodeStamp, memberFromNode, memberFromFile, readMember, MEMBER_PATH, LEGACY_MEMBER_PATH, NODE_SETTINGS_PATH } from '../src/read/member.mjs';
 import { isDormant } from '../src/read/dormancy.mjs';
 
 // --- the Node stamp, by the frozen engine's rules ------------------------------------
@@ -102,6 +102,18 @@ test('the member file is asked first, and a cn member never falls back to its se
   const { member } = await readMember({ repo: 'o/a', sha: 's', token: 't', gh });
   assert.equal(member.shape, 'cn');
   assert.deepEqual(gh.asked, [MEMBER_PATH]);
+});
+
+// A member whose engine moved before its pack update holds the member file at the old
+// directory: it is read there, after the new path and before the Node file.
+test('a member file still at the old directory is read there', async () => {
+  const gh = ghWith({ [LEGACY_MEMBER_PATH]: JSON.stringify(FILE), [NODE_SETTINGS_PATH]: '{"packs":["acme-pack-z"]}' });
+  const { member } = await readMember({ repo: 'o/a', sha: 's', token: 't', gh });
+  assert.equal(member.shape, 'cn');
+  assert.deepEqual(gh.asked, [MEMBER_PATH, LEGACY_MEMBER_PATH]);
+  const listed = ghWith({ [LEGACY_MEMBER_PATH]: JSON.stringify(FILE) });
+  await readMember({ repo: 'o/a', sha: 's', token: 't', gh: listed, paths: [LEGACY_MEMBER_PATH] });
+  assert.deepEqual(listed.asked, [LEGACY_MEMBER_PATH], 'a listing without the new path spends no read on it');
 });
 
 test('a member file that is unreadable is a fault, not a fall back to the Node file', async () => {

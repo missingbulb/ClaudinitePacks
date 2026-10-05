@@ -322,7 +322,7 @@ test('readRepoContributions reports an unreadable member file as an error, not a
   const gh = {
     getRepo: async () => ({ default_branch: 'main', stars: 0 }),
     getHeadSha: async () => 'abc',
-    getTextAtSha: async (_r, _s, path) => (path === '.claudinite/flat/member.GENERATED.json' ? '{"packs":' : null),
+    getTextAtSha: async (_r, _s, path) => (path === '.claudinite/cache/member.GENERATED.json' ? '{"packs":' : null),
     listTreeAtSha: async () => ({ paths: [] }),
   };
   const r = await readRepoContributions({ repo: 'acme/app', token: null, gh });

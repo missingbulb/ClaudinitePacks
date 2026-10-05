@@ -5,7 +5,7 @@
 //   { shape: 'cn' | 'node', settingsPath, declared: [{ id, config }], dormant (null: unstated),
 //     engine: { version } | null, held: { <pack>: <version> }, declaration }
 //
-// A `cn` member states itself in `.claudinite/flat/member.GENERATED.json`, which its
+// A `cn` member states itself in `.claudinite/cache/member.GENERATED.json`, which its
 // own `cn` writes beside the two other flat files from whichever settings file it keeps
 // (YAML, TOML or JSON — none of which this page parses). A `node` member is read at its
 // `.claudinite-settings.json`, with the Node stamp's rules spelled below. A repo with
@@ -24,7 +24,10 @@ import { isDormant } from './dormancy.mjs';
 // Spelled here, not imported: the page renders other repos in the viewer's browser and
 // imports nothing from the engine. `flat-paths-drift.test.mjs` holds the member file's
 // path to `cn tasks flat --paths`.
-export const MEMBER_PATH = '.claudinite/flat/member.GENERATED.json';
+export const MEMBER_PATH = '.claudinite/cache/member.GENERATED.json';
+// Where `cn` wrote it before `.claudinite/cache/`, read only when the new path is absent.
+// @legacy-tolerance advisory:rules-index-current retire:#45
+export const LEGACY_MEMBER_PATH = '.claudinite/flat/member.GENERATED.json';
 export const NODE_SETTINGS_PATH = '.claudinite-settings.json';
 
 const isObject = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
@@ -97,8 +100,9 @@ export function memberFromFile(text) {
 // content read.
 export async function readMember({ repo, sha, token, gh, paths = null }) {
   const listed = (p) => paths === null || paths.includes(p);
-  if (listed(MEMBER_PATH)) {
-    const text = await gh.getTextAtSha(repo, sha, MEMBER_PATH, token);
+  for (const at of [MEMBER_PATH, LEGACY_MEMBER_PATH]) {
+    if (!listed(at)) continue;
+    const text = await gh.getTextAtSha(repo, sha, at, token);
     if (text) {
       const m = memberFromFile(text);
       return m.fault ? { member: null, fault: m.fault } : { member: m };

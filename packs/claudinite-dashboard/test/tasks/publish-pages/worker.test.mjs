@@ -84,7 +84,7 @@ test('the real build on a cn member pushes the pack\'s page and nothing outside 
   t.after(() => rm(dir, { recursive: true, force: true }));
   const { origin: bare, root } = memberRepo(dir, {
     '.claudinite/settings.yaml': 'packs:\n  - id: claudinite-dashboard\n    config: { mode: repo }\n',
-    '.claudinite/flat/member.GENERATED.json': JSON.stringify({
+    '.claudinite/cache/member.GENERATED.json': JSON.stringify({
       version: 1, settings: { path: '.claudinite/settings.yaml', format: 'yaml' }, engine: null,
       packs: { channel: 'stable', declared: [{ id: 'claudinite-dashboard', config: { mode: 'repo' } }] }, dormant: false, held: {},
     }),

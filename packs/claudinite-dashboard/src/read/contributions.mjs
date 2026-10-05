@@ -4,7 +4,7 @@
 // API exactly as task declarations are, because there is no `import` when reading
 // another repo: a DESCRIPTOR shipped with the pack (`packs/<id>/dashboard.json`,
 // found by path convention — nothing registers it, and the member's converge copies
-// every declared pack's into `.claudinite/flat/dashboard.GENERATED.json`) declaring
+// every declared pack's into `.claudinite/cache/dashboard.GENERATED.json`) declaring
 // what the pack has to say, and a VALUES file in the member's own tree
 // (`.claudinite/usage/<pack>-dashboard-values.json`) written by that pack's own
 // machinery. The page executes nothing from either. The fleet view renders repos the
@@ -21,7 +21,7 @@
 // and neither renders as a number.
 import { duration } from '../render/ui.mjs';
 import { readMember } from './member.mjs';
-import { readFlat, entryText, FLAT_DASHBOARD_PATH } from './flat.mjs';
+import { readFlat, entryText, heldFlatPath, FLAT_DASHBOARD_PATH } from './flat.mjs';
 
 // The closed vocabulary. A descriptor naming anything outside it is not guessed at:
 // the widget renders as one saying this dashboard predates its descriptor, which is
@@ -284,7 +284,7 @@ export async function readContributions({ repo, sha, token, declaration, paths, 
   try { flat = await readFlat({ repo, sha, token, paths, gh }, FLAT_DASHBOARD_PATH, 'dashboards'); } catch { flat = null; }
 
   const found = declaredPackIds(declaration)
-    .map((pack) => ({ pack, path: flat ? (flat[pack] ? FLAT_DASHBOARD_PATH : null) : descriptorPathIn(paths, pack) }))
+    .map((pack) => ({ pack, path: flat ? (flat[pack] ? heldFlatPath(paths, FLAT_DASHBOARD_PATH) : null) : descriptorPathIn(paths, pack) }))
     .filter((f) => f.path);
 
   return (await Promise.all(found.map(async ({ pack, path }) => {

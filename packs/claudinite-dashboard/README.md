@@ -49,7 +49,7 @@ Everything else is optional `config` on the declaration:
 declaration carries one fails naming it, since a fleet is `owner` plus `exclude` and
 freshness comes from the fleet-roster (below), not from a canon.
 
-The build reads the declaration out of `.claudinite/flat/member.GENERATED.json`, which
+The build reads the declaration out of `.claudinite/cache/member.GENERATED.json`, which
 the member's own `cn` writes from its settings in whichever format they are kept. A
 repo where that file is missing or does not read is refused, naming the file and
 `cn tasks flat --write`, the command that writes it.
