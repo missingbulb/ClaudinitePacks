@@ -21,7 +21,7 @@ metadata:
 
 - **Scanning for a forbidden token** — strip comments first so it matches code, not prose —
   string-aware, since a `//` inside a URL is not a comment. Reuse `stripComments` from
-  [`engine/checks/helpers/code-scanning.mjs`](../../../../engine/checks/helpers/code-scanning.mjs);
+  `engine/checks/helpers/code-scanning.mjs`;
   if the scan can't import it, inline the same pass and point a comment back at that source.
   Strip in **both** directions — a comment that documents or warns about the banned pattern is
   exactly where a naive check trips over its own reasoning, so a commented-out instance must not

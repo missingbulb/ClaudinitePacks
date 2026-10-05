@@ -116,7 +116,7 @@ project of the class happens to use Node. Rewrite what lands in a canon pack pro
 parameterized, the way research-project does ("read *input* as whatever it means for your project").
 
 Then gate **every** pack-bound rule — canon or local — on the promotion ladder
-([engine/checks/DESIGN.md](../../../../engine/checks/DESIGN.md)): a rule a deterministic **check** could enforce, or a
+(engine/checks/DESIGN.md): a rule a deterministic **check** could enforce, or a
 procedure with a nameable trigger a **skill** could carry, becomes that (in a canon seed it's flagged
 as a check/skill candidate; in a local pack you author the check outright in the pack's `rules`, with
 a red-first fixture) rather than settling as prose. What remains in a `RULES.md` is the always-relevant
@@ -145,8 +145,8 @@ stray (a single rule joins the nearest existing pack, or waits as a handoff note
   rule with the marker that names it: `provenance.mjs mark` creates the files and proposes the
   slugs, `append` writes the entries (the growth pack's changing-pack-elements skill has the
   grammar).
-- **Index entries** — a row in [packs/README.md](../../../../packs/README.md) and, for a new pack kind, the
-  matching line in the corpus map ([README.md](../../../../README.md) — there is no agent-facing corpus index).
+- **Index entries** — a row in packs/README.md and, for a new pack kind, the
+  matching line in the corpus map (README.md — there is no agent-facing corpus index).
 
 The acid test before proposing any pack: **a reader must not be able to tell which project it was
 extracted from.** Any surviving repo path, command line, or product noun marks a rule that belonged in

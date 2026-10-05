@@ -74,7 +74,7 @@ into one skill, so a load carries the whole procedure; **G** stays.
 ## What to look for — the check-the-world test
 
 For each rule that cleared the gate, ask the one question from
-[engine/checks/DESIGN.md](../../../../engine/checks/DESIGN.md): **does it constrain a *static
+engine/checks/DESIGN.md: **does it constrain a *static
 signature in the repo artifact* — something a post-hoc scan could observe?**
 
 - **Yes → a conversion candidate.** A dangling-reference rule, a filename convention, a workflow
