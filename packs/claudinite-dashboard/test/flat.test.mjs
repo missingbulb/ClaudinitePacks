@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFlat, flatTaskRows, FLAT_TASKS_PATH } from '../src/read/flat.mjs';
+import { readFlat, flatTaskRows, heldFlatPath, FLAT_TASKS_PATH, FLAT_DASHBOARD_PATH, LEGACY_FLAT_DIR } from '../src/read/flat.mjs';
 import { declaredPackDirs, parseDeclaration } from '../src/derive/model.mjs';
 import { readRollingText, USAGE_PATH, LEGACY_USAGE_PATH } from '../src/read/usage.mjs';
 
@@ -36,4 +36,19 @@ test('a rolling file is read at its new path, and at the old one only when the n
   const unmoved = [];
   assert.equal(await readRollingText(reader({ [LEGACY_USAGE_PATH]: 'old' }, unmoved), USAGE_PATH, LEGACY_USAGE_PATH), 'old');
   assert.equal(await readRollingText(reader({}, []), USAGE_PATH, LEGACY_USAGE_PATH), null);
+});
+
+// A member whose engine moved before its pack update holds the flat files at their old
+// directory; the page reads them there, and only where the new path is not listed.
+test('a flat file is read at the old directory only where the listing lacks the new path', async () => {
+  const legacy = FLAT_TASKS_PATH.replace('.claudinite/cache/', LEGACY_FLAT_DIR);
+  assert.equal(legacy, '.claudinite/flat/tasks.GENERATED.json');
+  const file = JSON.stringify({ version: 1, tasks: { 'acme-pack/acme-task': { path: 'x', declaration: {} } } });
+  const asked = [];
+  assert.deepEqual(Object.keys(await readFlat(ctx({ [legacy]: file }, asked), FLAT_TASKS_PATH, 'tasks')), ['acme-pack/acme-task']);
+  assert.deepEqual(asked, [legacy]);
+  const both = [];
+  await readFlat(ctx({ [FLAT_TASKS_PATH]: file, [legacy]: '{' }, both), FLAT_TASKS_PATH, 'tasks');
+  assert.deepEqual(both, [FLAT_TASKS_PATH]);
+  assert.equal(heldFlatPath(['README.md'], FLAT_DASHBOARD_PATH), null);
 });

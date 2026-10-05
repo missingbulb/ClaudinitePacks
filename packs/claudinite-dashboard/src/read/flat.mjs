@@ -3,23 +3,38 @@
 // read per task and a read per contributing pack, and like every content read it is
 // cached under the sha, so a warm load spends nothing on it.
 //
-// A member whose converge predates the flat directory has neither file; each reader
+// A member whose converge predates the flat files has neither file; each reader
 // here answers null for it and the caller falls back to reading the sources one by
 // one. Whether the file is there comes from the tree listing the caller already holds,
 // so that answer costs no request.
 //
 // Spelled here, not imported: the page renders other repos in the viewer's browser and
 // imports nothing from the engine. `flat-paths-drift.test.mjs` holds the copies to it.
-export const FLAT_TASKS_PATH = '.claudinite/flat/tasks.GENERATED.json';
-export const FLAT_DASHBOARD_PATH = '.claudinite/flat/dashboard.GENERATED.json';
+export const FLAT_TASKS_PATH = '.claudinite/cache/tasks.GENERATED.json';
+export const FLAT_DASHBOARD_PATH = '.claudinite/cache/dashboard.GENERATED.json';
+
+// The directory `cn` wrote these files into before `.claudinite/cache/`: a member whose
+// engine update has landed but whose next pack update has not still holds them there.
+// @legacy-tolerance advisory:rules-index-current retire:#45
+export const LEGACY_FLAT_DIR = '.claudinite/flat/';
+
+// Where this member's listing holds a generated file: the path itself, else its place
+// under LEGACY_FLAT_DIR, else null.
+export function heldFlatPath(paths, path) {
+  const listed = paths ?? [];
+  if (listed.includes(path)) return path;
+  const legacy = path.replace('.claudinite/cache/', LEGACY_FLAT_DIR);
+  return listed.includes(legacy) ? legacy : null;
+}
 
 // One flat file's entry map - `{ '<pack>/<task>': { path, declaration | text } }` for
 // the tasks, `{ '<pack>': … }` for the descriptors - or null where this member carries
 // no such file, or it could not be read or parsed. A read the budget declined throws,
 // as every content read here does, and the caller decides what that means.
 export async function readFlat({ repo, sha, token, paths, gh }, path, key) {
-  if (!(paths ?? []).includes(path)) return null;
-  const text = await gh.getTextAtSha(repo, sha, path, token);
+  const at = heldFlatPath(paths, path);
+  if (!at) return null;
+  const text = await gh.getTextAtSha(repo, sha, at, token);
   if (!text) return null;
   try {
     const entries = JSON.parse(text)?.[key];

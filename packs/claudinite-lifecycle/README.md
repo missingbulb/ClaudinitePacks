@@ -67,7 +67,7 @@ What goes wrong when one fires:
 - `interview-answer-stale` — an entry stores an answer to a question its pack no longer asks.
 - `seeded-file-stale` — a file some pack seeded at adoption has fallen behind that pack's template, and since a seeded file is never converged nothing else would ever say so: the member goes on running a copy whose pack has moved.
 - `scheduler-workflow-shape` — the scheduler's cron, concurrency or dispatch guard has drifted, or it no longer runs `cn schedule run`: staggering, double-run safety or manual runs break.
-- `flat-declarations-current` - `.claudinite/flat/tasks.GENERATED.json` or `dashboard.GENERATED.json` no longer matches a declared pack's `task.json` or `dashboard.json`, so the dashboard and a session asking what runs here read a roster that is not the repo's. Regenerate with `cn tasks flat --write`; every converge `cn` runs writes them beside the rules index.
+- `flat-declarations-current` - `.claudinite/cache/tasks.GENERATED.json` or `dashboard.GENERATED.json` no longer matches a declared pack's `task.json` or `dashboard.json`, so the dashboard and a session asking what runs here read a roster that is not the repo's. Regenerate with `cn tasks flat --write`; every converge `cn` runs writes them beside the rules index.
 
 The **task contract** and its checks are deliberately NOT here. Those ask whether a task is
 *written* correctly, which is authoring; every check above asks whether Claudinite is *working* in
@@ -82,7 +82,7 @@ the files it must be loaded for under `force-load-on-file-edits-paths` in its SK
 this), the engine's PreToolUse guard holds a file tool aimed there until the session has
 loaded that skill, and this rule catches the edits the guard never saw (a `sed`, a heredoc) by
 asking the diff the same question. A load is a `Skill` tool call or a `Read` of the skill's own
-SKILL.md. Every converge `cn` runs writes `.claudinite/flat/claudinite-skills.GENERATED.md` beside
+SKILL.md. Every converge `cn` runs writes `.claudinite/cache/claudinite-skills.GENERATED.md` beside
 the rules index — every mounted skill with what loads it, the scoped ones first, and no file when
 no declared pack bundles a skill — and `skills-index-current` keeps it naming what the declared
 packs actually bundle.

@@ -103,7 +103,7 @@ func TestClaudiniteIsolation(t *testing.T) {
 		".gitignore":            "/.claudinite/*\n!/.claudinite/shared/\n",
 		".github/workflows/claudinite-checks-ci.yml": "run: node .claudinite/shared/engine/checks/check_the_world.mjs\n",
 		".claudinite/local/packs/mine/check.mjs":     "import { run } from \"../../shared/engine/check_the_world.mjs\";\n",
-		"CLAUDE.md":                                  "@.claudinite/flat/claudinite-rules.GENERATED.md\n",
+		"CLAUDE.md":                                  "@.claudinite/cache/claudinite-rules.GENERATED.md\n",
 	}
 	merge := func(ms ...map[string]string) map[string]string {
 		out := map[string]string{}

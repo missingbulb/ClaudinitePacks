@@ -13,7 +13,8 @@ member's `sessions-and-elements.json` at head sha; ***tasks fold*** is the secon
 beside it, `task-runs-and-costs.json`, written by its own task on its own watermark — a
 member folding one and not the other is ordinary, so nothing reads across the two;
 *declaration* is the task file at head sha; *member* is the member's
-`.claudinite/flat/member.GENERATED.json` at head sha, which its own `cn` writes (a Node
+`.claudinite/cache/member.GENERATED.json` at head sha, which its own `cn` writes (at
+`.claudinite/flat/` for a member whose pack update has not moved it yet, and a Node
 member's `.claudinite-settings.json` where there is none); *roster* is the deployment's
 `.claudinite/fleet/roster.GENERATED.json` at head sha, one engine verdict per member,
 landed by its `fleet-roster` task;

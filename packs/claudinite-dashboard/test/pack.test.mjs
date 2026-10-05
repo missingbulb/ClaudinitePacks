@@ -13,7 +13,7 @@ const run = promisify(execFile);
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
 const PACK_DIR = join(ROOT, 'packs/claudinite-dashboard');
-const MEMBER_FILE = '.claudinite/flat/member.GENERATED.json';
+const MEMBER_FILE = '.claudinite/cache/member.GENERATED.json';
 
 // --- build-site, against a cn member ----------------------------------------------
 
@@ -23,15 +23,15 @@ const MEMBER_FILE = '.claudinite/flat/member.GENERATED.json';
 // engine and no sibling pack beside it — so a build that still reached for either
 // fails here. A pack's tests are dropped on the way, as the published archive drops
 // them.
-async function member(declaration, { memberFile = true } = {}) {
+async function member(declaration, { memberFile = true, memberAt = MEMBER_FILE } = {}) {
   const base = await mkdtemp(join(tmpdir(), 'cd-member-'));
   const dir = join(base, 'repo');
   const pack = join(base, 'packs', 'claudinite-dashboard');
-  await mkdir(join(dir, '.claudinite/flat'), { recursive: true });
+  await mkdir(dirname(join(dir, memberAt)), { recursive: true });
   await cp(PACK_DIR, pack, { recursive: true, filter: (src) => !src.startsWith(join(PACK_DIR, 'test')) });
   await writeFile(join(dir, '.claudinite/settings.yaml'), 'packs:\n  - claudinite-dashboard\n');
   if (memberFile) {
-    await writeFile(join(dir, MEMBER_FILE), JSON.stringify({
+    await writeFile(join(dir, memberAt), JSON.stringify({
       version: 1,
       settings: { path: '.claudinite/settings.yaml', format: 'yaml' },
       engine: { package: '@claudinite/cn', version: '61003.1', channel: 'stable' },
@@ -68,6 +68,15 @@ test('a cn member builds this repo\'s own dashboard, with no engine anywhere', a
   assert.equal(cfg.deploymentRepo, 'o/mine');
   assert.equal(cfg.clientId, null);
   for (const retired of ['rosterUrl', 'repos', 'canonRepo']) assert.equal(Object.hasOwn(cfg, retired), false, `${retired} is not published`);
+});
+
+// A member whose engine moved before its pack update still holds the member file at
+// the old directory, and still publishes.
+test('a member file still at the old directory is read there', async (t) => {
+  const m = await member(REPO, { memberAt: '.claudinite/flat/member.GENERATED.json' });
+  cleanup(t, m);
+  await build(m, { GITHUB_REPOSITORY: 'o/mine' });
+  assert.equal((await readJson(join(m.dir, CONFIG_AT))).mode, 'repo');
 });
 
 test('the staged tree is the pack alone, with the root a redirect', async (t) => {

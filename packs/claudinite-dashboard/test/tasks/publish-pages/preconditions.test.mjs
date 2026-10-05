@@ -20,5 +20,5 @@ test('publish-pages: a Node member\'s settings file fires it too', needsCn, () =
 });
 
 test('publish-pages: a commit touching neither settings file does not', needsCn, () => {
-  assert.equal(verdictFor(['src/app.mjs', '.claudinite/flat/member.GENERATED.json']).run, false);
+  assert.equal(verdictFor(['src/app.mjs', '.claudinite/cache/member.GENERATED.json']).run, false);
 });

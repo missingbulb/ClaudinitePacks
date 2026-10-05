@@ -9,7 +9,7 @@
 // TWO STORES, split by who has to edit them. Everything describing what the dashboard
 // COVERS — its mode, owner, exclusions — is the member's own declaration, where it is
 // reviewable in a diff, and is read here out of the member file its `cn` writes from it
-// (`.claudinite/flat/member.GENERATED.json`), the one JSON statement of a declaration
+// (`.claudinite/cache/member.GENERATED.json`), the one JSON statement of a declaration
 // kept in YAML, TOML or JSON. The sign-in pair are REPOSITORY VARIABLES: they
 // are the two values an owner sets while standing in the GitHub App's settings page,
 // and `exchangeUrl` in particular is minted by a deploy rather than authored, so
@@ -27,7 +27,7 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { SIGN_IN_VARS } from '../src/read/signin-vars.mjs';
-import { MEMBER_PATH, memberFromFile } from '../src/read/member.mjs';
+import { MEMBER_PATH, LEGACY_MEMBER_PATH, memberFromFile } from '../src/read/member.mjs';
 
 export const PACK_ID = 'claudinite-dashboard';
 
@@ -38,6 +38,17 @@ export { SIGN_IN_VARS } from '../src/read/signin-vars.mjs';
 
 const WRITE_IT = 'run `cn tasks flat --write` and commit what it writes';
 
+// The member file's text, at its old path only when the new one is missing; a missing
+// file is reported at the new path, where `cn tasks flat --write` writes it.
+async function readMemberText(repoRoot) {
+  try {
+    return await readFile(join(repoRoot, MEMBER_PATH), 'utf8');
+  } catch (e) {
+    if (e?.code !== 'ENOENT') throw e;
+    try { return await readFile(join(repoRoot, LEGACY_MEMBER_PATH), 'utf8'); } catch { throw e; }
+  }
+}
+
 // This pack's `config` as the member declares it, `{}` where the member file names no
 // config for it, and `fault`: null, or why the member file cannot be read, naming the
 // file and the command that writes it. A file never written and one that does not read
@@ -45,7 +56,7 @@ const WRITE_IT = 'run `cn tasks flat --write` and commit what it writes';
 export async function declaredConfig(repoRoot) {
   let text;
   try {
-    text = await readFile(join(repoRoot, MEMBER_PATH), 'utf8');
+    text = await readMemberText(repoRoot);
   } catch (e) {
     const why = e?.code === 'ENOENT' ? 'is missing' : `could not be read (${e?.code ?? e?.message ?? e})`;
     return { config: {}, fault: `${MEMBER_PATH} ${why}: ${WRITE_IT}` };
