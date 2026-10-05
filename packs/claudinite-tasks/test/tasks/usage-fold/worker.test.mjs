@@ -161,3 +161,12 @@ test('a half that throws costs only its own file: the other still lands, then th
   assert.deepEqual(calls[0].files, { 'b.json': 'B' });
   assert.ok(lines.some((l) => /sessions half failed/.test(l)), lines.join('\n'));
 });
+
+test('a half\'s report rides the pull request body', async () => {
+  const { calls, deliver } = recorder();
+  await deliverFolds({
+    halves: { sessions: async () => ({ files: { 'a.json': 'A' }, moves: {}, summary: 's', report: ['### Check build', '', 'a line'] }) },
+    deliver, log: () => {},
+  });
+  assert.match(calls[0].body, /### Check build\n\na line/);
+});
