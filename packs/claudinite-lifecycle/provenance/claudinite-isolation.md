@@ -40,3 +40,9 @@
 - **Reason:** the Node engine's `.claudinite-settings.json` is not a `cn` member's declaration, which is `.claudinite/settings.{yaml,toml,json}`; the `fix` named the Node file for an acceptance. The Node file stays in `except`: a half-moved member still holds it, and its acceptances name `.claudinite/` paths, so dropping it would break `claudinite-isolation` there. It leaves with the legacy shapes, at missingbulb/ClaudiniteEngine#50, which the `reason` names.
 - **Actor:** build lead, ClaudiniteEngine#49 (a `cn` member declares itself in `.claudinite/settings.*`; `cn settings import` reads the Node file once, on move day), on review.
 - **Mechanism:** the `fix` names `checks.accept` in `.claudinite/settings.yaml`; `except` is unchanged and its `reason` names the retire issue. claudinite-lifecycle 61002.4.
+
+## 2026-10-05 · scope-changed · the member's own local packs are not the mount
+- **Reason:** the barrier bars all of `.claudinite/` to keep consumer files off the vendored mount, but `.claudinite/local/` holds the member's own packs, which its docs rightly link to. Moving GoogleCalendarEventCreator to `cn` showed 29 such links reported as blocking, a crossing the Node rule also reported but no CI there ran.
+- **Mechanism:** `"allow": [".claudinite/local"]` on the `forbidReferences` row, so a reference resolving under it is open; references to `.claudinite/shared/` and the rest of the barred folder still fire.
+- **Actor:** @missingbulb (owner), choosing to fix the rule rather than accept the findings.
+- **Model:** Claude, per the commit trailer.
