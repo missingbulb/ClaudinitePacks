@@ -1,0 +1,14 @@
+{
+  "version": "1.61005.1",
+  "engine": true,
+  "minEngineVersion": "1.61003.1",
+  "githubActions": [
+    "openPr"
+  ],
+  "ruleRoutingGuidance": {
+    "belongs": "curating a canon's packs/ shelf — promoting member lessons, sweeping members for unhomed technologies, authoring and policing its packs",
+    "excludes": "a repo's rules for its own product — its local packs; authoring content — claudinite-growth; housekeeping — basics"
+  },
+  "hidden": true,
+  "seededByDefault": false
+}
