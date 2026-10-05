@@ -81,3 +81,10 @@
 - **Reason:** the rule rested on squash-merge-history, now retired; under squash merging a base
   merge lands the same commit and rewrites no shared branch.
 - **Actor:** @missingbulb (owner).
+
+## 2026-10-05 · strengthened · a conflicted rebase's cleanup drops `#` message lines
+- **Source:** missingbulb/ClaudiniteWebsite#533, from the issue-356 session's capture.
+- **Reason:** reproduced on git 2.43: after a conflict, `rebase --continue` dropped a `#31005`
+  body line, and `commit --amend --cleanup=verbatim -F` restored it.
+- **Actor:** @missingbulb (owner), via an owner-dispatched session.
+- **Model:** claude-opus-5-5
