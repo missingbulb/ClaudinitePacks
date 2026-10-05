@@ -1,6 +1,6 @@
 {
   "v": 1,
-  "serial": 152,
+  "serial": 153,
   "packs": [
     {
       "id": "android",
@@ -241,7 +241,7 @@
     },
     {
       "id": "firebase",
-      "version": "1.61004.1",
+      "version": "1.61005.1",
       "channel": "canary",
       "minEngineVersion": "1.61001.1",
       "requires": [],
