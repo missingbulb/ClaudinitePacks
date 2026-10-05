@@ -32,7 +32,7 @@ it imports); `task` (`tasks/<name>/` `task.json`, `task.md`, `worker.mjs`, `prec
 | claude-code-web-users-support | 1.61004.1 | 13 | 1 | 2 | 0 | 3 | 4 | 0 | 1 | 0 |
 | claudinite-canon-curation | 1.61004.1 | 64 | 3 | 0 | 16 | 2 | 2 | 0 | 0 | 0 |
 | claudinite-dashboard | 1.61004.1 | 16 | 3 | 0 | 4 | 44 | 46 | 1 | 4 | 0 |
-| claudinite-fleet-sheepdog | 1.61004.1 | 30 | 2 | 0 | 4 | 0 | 1 | 0 | 0 | 0 |
+| claudinite-fleet-sheepdog | 1.61005.1 | 30 | 2 | 0 | 4 | 0 | 1 | 0 | 0 | 0 |
 | claudinite-growth | 1.61004.1 | 159 | 8 | 0 | 16 | 10 | 13 | 0 | 0 | 0 |
 | claudinite-lifecycle | 1.61004.1 | 42 | 3 | 0 | 2 | 1 | 4 | 0 | 0 | 0 |
 | claudinite-tasks | 1.61004.1 | 23 | 3 | 0 | 5 | 26 | 14 | 0 | 0 | 0 |

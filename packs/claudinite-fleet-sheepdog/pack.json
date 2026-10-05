@@ -1,5 +1,5 @@
 {
-  "version": "1.61004.1",
+  "version": "1.61005.1",
   "minEngineVersion": "1.61001.1",
   "ruleRoutingGuidance": {
     "belongs": "fleet-enforcer duties for the repo watching every other repo — coverage, freshness, standardized packs",
