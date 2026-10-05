@@ -28,3 +28,10 @@
 - **Reason:** owner decision, 2026-09-25: the field names what happens when the check fails, and
   *severity* keeps its impact sense; what this element enforces is unchanged.
 - **Actor:** @missingbulb (owner).
+
+## 2026-10-05 · scope-changed · the message no longer points at packs/README.md
+- **Reason:** `packs/README.md` was rewritten for the `cn` pack contract and no longer describes how
+  to count checks or rules, so the pointer led nowhere.
+- **Actor:** @missingbulb (owner), asking that ClaudinitePacks keep only what is still true.
+- **Model:** Claude Opus 5.5
+- **Mechanism:** the declared check's `failureMessage`. claudinite-canon-curation 1.61005.1.

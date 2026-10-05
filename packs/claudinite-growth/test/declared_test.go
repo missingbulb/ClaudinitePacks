@@ -1,11 +1,6 @@
 package test
 
 import (
-	"encoding/json"
-	"os"
-	"os/exec"
-	"path/filepath"
-	"regexp"
 	"strconv"
 	"strings"
 	"testing"
@@ -62,70 +57,4 @@ func TestTaskPhaseDiscipline(t *testing.T) {
 		cases[i].Rules = quiet
 	}
 	fixture.Run(t, "claudinite-growth", cases)
-}
-
-const migration = "packs/acme-pack-a/migrations/2026-01-01-demo/migration.mjs"
-
-func TestInSessionGitHubAccess(t *testing.T) {
-	id := func(path string, line int) string {
-		return "finding in-session-github-access " + path + ":" + strconv.Itoa(line)
-	}
-	fixture.Run(t, "claudinite-growth", []fixture.Case{
-		{Name: "injected MCP I/O", Member: map[string]string{migration: "export async function apply(io, r) { return io.commit(r, \"main\", [], \"m\"); }\n"}},
-		{Name: "a GITHUB_TOKEN read in a migration", Member: map[string]string{migration: "const token = process.env.GITHUB_TOKEN;\nexport const t = token;\n"}, Expect: []string{id(migration, 1)}},
-		{Name: "a REST client in a migration", Member: map[string]string{
-			"packs/acme-pack-c/migrations/some-pass.mjs": "import { makeGh } from '../fleet-api.mjs';\nexport const gh = makeGh('t');\n",
-		}, Expect: []string{id("packs/acme-pack-c/migrations/some-pass.mjs", 1), id("packs/acme-pack-c/migrations/some-pass.mjs", 2)}},
-		{Name: "a raw api.github.com fetch in a migration", Member: map[string]string{migration: "const r = await fetch(`https://api.github.com/repos/${x}`);\nexport const y = r;\n"}, Expect: []string{id(migration, 1)}},
-		{Name: "a run_daily path is not an in-session surface", Member: map[string]string{".claudinite/local/packs/x/run_daily/worker.mjs": "const t = process.env.GITHUB_TOKEN;\nexport const y = t;\n"}},
-		{Name: "a task's code-work keeps its REST client", Member: map[string]string{
-			"packs/acme-pack-b/tasks/acme-task-c/worker.mjs": "const t = process.env.GITHUB_TOKEN;\nconst r = await fetch('https://api.github.com/repos/x');\nexport const y = [t, r];\n",
-		}},
-		{Name: "a dispatch-only executor outside migrations", Member: map[string]string{"packs/acme-pack-c/tasks/acme-task-e/check-fleet-roster.mjs": "const token = process.env.FLEET_GITHUB_TOKEN;\nexport const t = token;\n"}},
-		{Name: "a comment naming GITHUB_TOKEN", Member: map[string]string{migration: "// There is no GITHUB_TOKEN here and no fetch to api.github.com.\nexport const ok = true;\n"}},
-	})
-}
-
-// The scope is live only while the tree still holds files it selects, and
-// the real records it selects stay silent.
-func TestInSessionGitHubAccessScopesTheRealRecords(t *testing.T) {
-	scope := scanFiles(t, filepath.Join("..", "skills", "unattended-agents", "declared-checks.json"), "in-session-github-access")
-	out, err := exec.Command("git", "-C", filepath.Join("..", "..", ".."), "ls-files", "packs").Output()
-	if err != nil {
-		t.Fatal(err)
-	}
-	member := map[string]string{}
-	for _, p := range strings.Split(strings.TrimSpace(string(out)), "\n") {
-		if !scope.MatchString(p) || strings.HasSuffix(p, ".test.mjs") {
-			continue
-		}
-		b, err := os.ReadFile(filepath.Join("..", "..", "..", p))
-		if err != nil {
-			t.Fatal(err)
-		}
-		member[p] = string(b)
-	}
-	if len(member) < 20 {
-		t.Fatalf("the migration records are the scope, matched %d", len(member))
-	}
-	fixture.Run(t, "claudinite-growth", []fixture.Case{{Name: "every real migration record", Member: member}})
-}
-
-// scanFiles is the declared check's own scope, read rather than restated.
-func scanFiles(t *testing.T, decl, id string) *regexp.Regexp {
-	raw, err := os.ReadFile(decl)
-	if err != nil {
-		t.Fatal(err)
-	}
-	var all []struct{ ID, ScanFiles string }
-	if err := json.Unmarshal(raw, &all); err != nil {
-		t.Fatal(err)
-	}
-	for _, c := range all {
-		if c.ID == id {
-			return regexp.MustCompile(strings.TrimSuffix(strings.TrimPrefix(c.ScanFiles, "/"), "/"))
-		}
-	}
-	t.Fatalf("%s declares no %s", decl, id)
-	return nil
 }

@@ -1,5 +1,5 @@
 {
-  "version": "1.61004.1",
+  "version": "1.61005.1",
   "minEngineVersion": "1.61001.1",
   "ruleRoutingGuidance": {
     "belongs": "being a public website whatever serves it: the version scheme and page stamp, client-side caching and data freshness",

@@ -115,3 +115,10 @@
 - **Model:** Claude Opus 5.5
 - **Mechanism:** the manifest's `version`, which the release now requires in this form for a new
   version. public-website 1.61004.1.
+
+## 2026-10-05 · retired · the Node engine's migration records leave the pack
+- **Reason:** `migrations/` held records only the Node engine's updater ran; cn reads none of them,
+  and no member of the new engine carries the shapes they converted.
+- **Actor:** @missingbulb (owner), asking that ClaudinitePacks keep only code still needed.
+- **Model:** Claude Opus 5.5
+- **Mechanism:** the `migrations/` directory, deleted. public-website 1.61005.1.

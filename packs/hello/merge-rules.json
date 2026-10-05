@@ -1,8 +1,0 @@
-[
-  {
-    "name": "hello-generated",
-    "pathMatching": "/^HELLO_FOLD\\.json$/",
-    "changeKinds": ["added", "modified"],
-    "editShape": "any"
-  }
-]
