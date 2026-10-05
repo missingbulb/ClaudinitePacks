@@ -1,7 +1,7 @@
 {
   "v": 1,
   "pack": "git-github",
-  "serial": 5,
+  "serial": 6,
   "versions": [
     {
       "version": "60928.1",
@@ -57,6 +57,17 @@
       "revoked": false,
       "publishedAt": "2026-10-05T18:56:22Z",
       "sourceCommit": "ac68025f465b0b8be9483b980995e5cca77aa82e"
+    },
+    {
+      "version": "1.61005.3",
+      "sha256": "142cb67f426d93c4f178c2f1cc975b5c30cd523eaf357f919efef1d502e92a86",
+      "size": 24725,
+      "minEngineVersion": "1.61001.1",
+      "requires": [],
+      "channel": "canary",
+      "revoked": false,
+      "publishedAt": "2026-10-05T21:35:24Z",
+      "sourceCommit": "47170f9266f5770e4e0215d1c0d2a544c3e0ea61"
     }
   ]
 }
