@@ -29,7 +29,7 @@ nothing force-pushes.
 
 ## Before a change merges
 
-The `release-plan` job in `.github/workflows/verify-import.yml` runs on every pull request, with
+The `release-plan` job in `.github/workflows/ci.yml` runs on every pull request, with
 no secrets, so a pull request from a fork runs it too: `release.mjs plan --content --remote origin`
 vendors each pack whose version is already on `vendored` and compares the files with the branch's
 unpacked set. A differing, missing or extra path fails the job with
@@ -244,9 +244,8 @@ an index or the catalog forward, they check its own signature (`tools/release/tr
 - anything else, a missing signature or bytes the signature does not cover included: the run fails
   before it pushes anything.
 
-`--previous-roots` names roots trusted for that re-signing and nothing else. `release-packs.yml`
-passes `keys/retired-dev-roots/`, the development roots that signed `vendored` before
-ClaudiniteEngine#5, until the branch has been re-signed under `keys/roots/`.
+`--previous-roots` names roots trusted for that re-signing and nothing else, for a run after the
+roots change; `release-packs.yml` passes none.
 
 The `packs` certificate lasts 90 days; renew it with key-ceremony's `rotate` mode, which the same
 README describes.

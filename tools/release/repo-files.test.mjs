@@ -22,7 +22,7 @@ function ownersOf(text, path) {
 test('.github/CODEOWNERS makes the owner review every change to packs/, tools/ and .github/', () => {
   assert.ok(existsSync(CODEOWNERS), '.github/CODEOWNERS is missing');
   const text = readFileSync(CODEOWNERS, 'utf8');
-  for (const path of ['packs/basics/RULES.md', 'tools/release/release.mjs', '.github/workflows/verify-import.yml', '.github/CODEOWNERS']) {
+  for (const path of ['packs/basics/RULES.md', 'tools/release/release.mjs', '.github/workflows/ci.yml', '.github/CODEOWNERS']) {
     assert.deepEqual(ownersOf(text, path), ['@missingbulb'], path);
   }
 });
