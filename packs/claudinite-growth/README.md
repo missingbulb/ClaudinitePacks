@@ -223,9 +223,9 @@ and reads the same subtree over the GitHub API.
 
 | Check | Severity | Reason | Enforcement |
 |---|---|---|---|
-| `dedup-prune-integrity` | high | correctness | cn built-in: blocking |
+| `dedup-prune-integrity` | high | correctness | coded: blocking |
 | `doc-pointers-resolve` | high | correctness | declared: blocking |
-| `growth-write-scope` | high | correctness | cn built-in: blocking |
+| `growth-write-scope` | high | correctness | coded: blocking |
 | `task-worker-restores-main` | high | correctness | cn built-in: blocking |
 | `legacy-check-spellings` | low | complexity | declared: advisory |
 | `technology-skill-cites-dated-sources` | high | correctness | declared: blocking |
@@ -248,10 +248,11 @@ Relevance-first: all five are inert until the repo carries a `tasks/<name>/task.
 
 Where each one runs:
 
-- **Inside `cn`.** `dedup-prune-integrity`, `growth-write-scope`, `provenance-integrity`,
-  `provenance-change-recorded` and `routine-structure` are `cn` built-ins tagged with this pack: they
-  run only where the pack is declared and list under it in `cn check list`; the pack carries no code
-  for them.
+- **Inside `cn`.** `provenance-integrity`, `provenance-change-recorded` and `routine-structure`
+  are `cn` built-ins tagged with this pack: they run only where the pack is declared and list under
+  it in `cn check list`; the pack carries no code for them.
+- **Coded.** `growth-write-scope` and `dedup-prune-integrity` police this pack's own runs, and are
+  Go checks in its `checks/`.
 - **Ports with the task runner slice.** `task-declaration-matches-folder`, `task-md-only-when-agentic`
   and `task-worker-restores-main` assert the task contract, which the engine's task runner slice
   writes in Go; they port beside it and do not run until then.

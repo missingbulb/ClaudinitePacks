@@ -27,3 +27,12 @@
 - **Mechanism:** `checks/builtin/growth_write_scope.go` in ClaudiniteEngine, unit-tested there and compared with
   the Node engine by its parity harness.
 - **Landed:** pending.
+
+## 2026-10-05 · moved · Back from a `cn` built-in to this pack's Go checks
+- **Reason:** it polices this pack's own runs, not a declaration the engine reads to run; owner
+  decision in the project thread.
+- **Actor:** @missingbulb (owner).
+- **Model:** Claude Opus 5.5
+- **Mechanism:** `checks/growth_write_scope.go` in this pack, a coded check tagged `work`; id,
+  `on_fail`, `why`, `doc` and finding text kept.
+- **Landed:** pending.
