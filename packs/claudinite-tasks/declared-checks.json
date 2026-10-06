@@ -36,14 +36,22 @@
     "on_fail": "block",
     "since": "2026-09-22",
     "scope": "action",
-    "failureMessage": "every label the queue reads is in the `task:` namespace, so an issue wearing one outside it reaches no run and sits",
+    "failureMessage": "every label the queue reads is in the `task:` namespace, so an issue filed for the queue under a label outside it reaches no run and sits",
     "guardToolCalls": [
       {
         "tool": "mcp__github__issue_write",
         "inputField": "labels",
-        "match": "/[\\[,]\\s*\"(?!task:|claude-task\"|claude-queued\"|claude-in-review\"|needs-human\"|outcome:)(?<invented>[^\"]+)\"/",
-        "what": "an issue labelled `{invented}`, which no queue code reads",
-        "fix": "mark it `task:origin:ad-hoc` (the /do-later skill writes the fields a run reads), or file it with no label at all"
+        "match": "/^(?=[^\\]]*\"task:)[^\\]]*?[\\[,]\\s*\"(?!task:|claude-task\"|claude-queued\"|claude-in-review\"|needs-human\"|outcome:)(?<invented>[^\"]+)\"/",
+        "what": "an issue marked for the queue and also labelled `{invented}`, which no queue code reads",
+        "fix": "keep the `task:` labels the queue reads and drop `{invented}`; the /do-later skill writes the fields a run reads"
+      },
+      {
+        "tool": "mcp__github__issue_write",
+        "inputField": "labels",
+        "match": "/[\\[,]\\s*\"(?!task:|claude-queued\")(?<invented>[^\"]*\\b(?:queued?|backlog|deferred|do-later)\\b[^\"]*)\"/i",
+        "unlessMatches": "/\"task:/",
+        "what": "an issue labelled `{invented}`, a queue's name the queue never reads",
+        "fix": "mark it `task:origin:ad-hoc` (the /do-later skill writes the fields a run reads), or file it without `{invented}`"
       }
     ]
   },

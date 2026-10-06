@@ -16,3 +16,22 @@
 - **Reason:** owner decision, 2026-09-25: the field names what happens when the check fails, and
   *severity* keeps its impact sense; what this element enforces is unchanged.
 - **Actor:** @missingbulb (owner).
+
+## 2026-10-06 · severity-changed · fires on a queue filing, no longer on every non-`task:` label
+- **Source:** GoogleCalendarEventCreator's create-extractor task tells its agent to swap
+  `agent-running` for `needs-human` on an `extractor-request` issue; the hook denied `issue_write`
+  with labels `["extractor-request","needs-human"]` as "a label no queue code reads".
+- **Reason:** the guard's premise held only in a repo where nothing but the queue reads a label -
+  this entry's own retire test. In a member a project's tasks read their own labels, and because
+  `issue_write` replaces the whole list, the guard made a project's own issue unrelabelable.
+- **Actor:** @missingbulb (owner).
+- **Model:** Opus 5.5
+- **Mechanism:** two guards on `mcp__github__issue_write`'s `labels`, still blocking at PreToolUse:
+  a non-`task:` label flags only beside a `task:` label in the same call (a queue filing carrying a
+  stray label), and a label named for a queue (queue, queued, backlog, deferred, do-later) flags in
+  place of the mark (the #2181 `claudinite-queue` shape). Every other label is the project's.
+- **Rejected:** flagging only on `method: create` - a member filing its own `bug` or
+  `extractor-request` issue would still be blocked; removing the check - the #2181 shape is still
+  silent at filing time and still caught here.
+- **Retire when:** the queue reads a label outside the `task:` namespace by name, or a queue-named
+  label turns out to be a project's own.
