@@ -463,14 +463,15 @@ tool hardcodes no queue label outside its vocabulary copy.
 
 ## Checks
 
-One check, `descriptor-usable`, built into the engine and active wherever this pack is
+One check, `descriptor-usable`, in this pack's `checks/` and active wherever the pack is
 declared. It holds another pack's `dashboard.json` to what this page's own reader
 accepts — not a second copy of the schema, which ordinary tooling already validates,
 but the thing a schema cannot check: that the file is usable, and that the ids its
-views select by resolve. The failure is otherwise silent, since a rejected descriptor
-renders as one apologetic line in a viewer's browser and nothing goes red where its
-author is looking. `cn dashboard descriptor FILE…` prints the same verdicts by hand.
+repo view selects by resolve. The failure is otherwise silent, since a rejected
+descriptor renders as one apologetic line in a viewer's browser and nothing goes red
+where its author is looking. `cn check --pack claudinite-single-repo-dashboard` runs it
+by hand.
 
 | Check | Severity | Reason | Enforcement |
 |---|---|---|---|
-| `descriptor-usable` | medium | correctness | check: blocking |
+| `claudinite-single-repo-dashboard/descriptor-usable` | medium | correctness | check: blocking |

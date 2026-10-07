@@ -23,3 +23,11 @@
 - **Actor:** build lead, through ClaudiniteEngine chunk 16b (#65).
 - **Model:** Claude Opus 5.5, per the commit trailer.
 - **Mechanism:** `worldRules/` and its test deleted; `test/descriptor-drift.test.mjs` holds the page's `parseDescriptor` to `cn dashboard descriptor` over every descriptor on the shelf and the edge cases.
+
+## 2026-10-07 · moved · the check is the pack's own Go check again, out of the engine
+- **Reason:** owner decision, 2026-10-07: dashboard code leaves the engine for this pack.
+- **Actor:** @missingbulb (owner).
+- **Mechanism:** `checks/descriptor_usable.go` over the check SDK, same id, on_fail, why and
+  findings; `checks/testdata/descriptor-verdicts.json` holds both it and the page's
+  `parseDescriptor` to one set of verdicts, replacing the comparison through `cn dashboard
+  descriptor`, which the engine drops.
