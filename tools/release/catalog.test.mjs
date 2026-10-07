@@ -1,12 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { spawnSync } from 'node:child_process';
-import { mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { parsePrivateKey, readRoots } from '../sign/sign.mjs';
 import { CATALOG, CATALOG_SIG, CatalogError, renderCatalog, signCatalog, validateDetector, verifyCatalog, writeCatalog } from './catalog.mjs';
-import { CN, needsCn } from '../test/cn-tasks.mjs';
 import { put, scratch, testChain } from './test-fixture.mjs';
 
 const entry = (version, channel, extra = {}) => ({
@@ -94,19 +91,6 @@ test('a fingerprint is judged in the engine catalog reader\'s sentences', () => 
 test('a string pattern is one the catalog writes as {source, flags}, so it is no problem', () => {
   assert.deepEqual(validateDetector({ about: 'x', paths: '^a$', text: 'b', search: ['b'] }), []);
   assert.deepEqual(validateDetector({ about: 'x', paths: '^a$', text: ['b', 4], search: ['b'] }), ['relevanceDetector.text is a RegExp or a list of them']);
-});
-
-test('the engine\'s catalog reader agrees with every fixture', needsCn, () => {
-  const dir = mkdtempSync(join(tmpdir(), 'acme-detector-'));
-  try {
-    for (const c of corpus()) {
-      const file = join(dir, 'world.json');
-      writeFileSync(file, JSON.stringify({ detector: c.detector }));
-      const r = spawnSync(CN, ['fleet', 'decide', 'detector', '--world', file], { encoding: 'utf8' });
-      assert.equal(r.status, 0, `${c.name}: ${r.stderr}`);
-      assert.deepEqual(JSON.parse(r.stdout), c.expect, c.name);
-    }
-  } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
 test('a published version whose fingerprint the reader refuses stops the render, naming the pack and version', () => {

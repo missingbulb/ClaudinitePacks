@@ -22,9 +22,8 @@ const pattern = (p) => (typeof p === 'string' ? { source: p, flags: '' } : { sou
 const isPattern = (p) => typeof p === 'string'
   || (p !== null && typeof p === 'object' && !Array.isArray(p) && typeof p.source === 'string' && (p.flags === undefined || typeof p.flags === 'string'));
 
-// A manifest's relevanceDetector judged as the engine's catalog reader judges it: each problem
-// as the sentence `cn fleet decide detector` prints, none for a well-formed detector or none at
-// all. A string pattern is accepted, since the catalog writes it as {source, flags}.
+// A manifest's relevanceDetector judged as the engine's catalog reader judges it: one sentence
+// per problem, none for a well-formed detector or none at all. A string pattern is accepted, since the catalog writes it as {source, flags}.
 export function validateDetector(d) {
   if (d === undefined || d === null) return [];
   if (typeof d !== 'object' || Array.isArray(d)) return ['relevanceDetector is an object or null'];

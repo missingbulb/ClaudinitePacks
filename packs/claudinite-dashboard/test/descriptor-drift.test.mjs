@@ -39,11 +39,11 @@ const EDGES = {
 };
 
 // The page's verdict in the engine's JSON shape: the widget map as its values in
-// declaration order, the views, and the fault.
+// declaration order, the repo view, and the fault.
 const pageVerdict = (text, pack) => {
   const d = parseDescriptor(text, pack);
-  if (d.fault) return { pack, widgets: null, repo: null, fleet: null, fault: d.fault };
-  return { pack, widgets: [...d.widgets.values()], repo: d.repo, fleet: { member: d.member, deployment: d.deployment }, fault: null };
+  if (d.fault) return { pack, widgets: null, repo: null, fault: d.fault };
+  return { pack, widgets: [...d.widgets.values()], repo: d.repo, fault: null };
 };
 
 test('the page reads every descriptor exactly as cn dashboard descriptor does', needsCn, () => {

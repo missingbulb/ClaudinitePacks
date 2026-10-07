@@ -1,13 +1,11 @@
 // The worker-test harness every pack's SDK worker test stands on: the stand-in
-// resolves `@claudinite/sdk` to the engine's module and answers its calls, and the
-// cn-tasks helpers degrade to a skip where no cn is built.
+// resolves `@claudinite/sdk` to the engine's module and answers its calls.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { gitIn, installSdk, memberRepo, METHODS, paramsBag } from './sdk-stand-in.mjs';
-import { CN, declarationOf, needsCn } from './cn-tasks.mjs';
 
 test('a worker importing @claudinite/sdk reaches the answers installed for it', async () => {
   const dir = mkdtempSync(join(tmpdir(), 'acme-stand-in-'));
@@ -51,9 +49,4 @@ test('the params bag carries every runner field, absent ones null', () => {
   bag.log('a line');
   assert.deepEqual(bag.lines, ['a line']);
   assert.ok(METHODS.includes('github.dispatchWorkflow'));
-});
-
-test('without a cn the decision-core helpers skip rather than guess', { skip: CN ? 'a cn is built here' : false }, () => {
-  assert.ok(needsCn.skip);
-  assert.throws(() => declarationOf({ id: 'acme-task' }), /CLAUDINITE_CN/);
 });

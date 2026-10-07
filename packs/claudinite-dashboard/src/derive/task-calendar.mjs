@@ -2,8 +2,6 @@
 // last opened at or opens next, how long a cadence's period is, and which cadence
 // term a declaration states. THE DASHBOARD'S OWN COPY of the engine's arithmetic:
 // the page renders in a browser, so it carries the arithmetic it renders with.
-// `test/task-calendar-drift.test.mjs` runs it and the engine (`cn tasks`) over the same
-// instants and declarations and fails the moment they disagree.
 //
 // All times are UTC. `now` is always injected, so every answer is deterministic.
 

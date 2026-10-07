@@ -2,8 +2,7 @@
 // labels, an item's title and body fields, the records a run prints into an item's
 // comments and a workflow's log, and where a cadence's current period opened. The
 // queue is the engine's (`cn`), which writes all of it; packs share no code, so the
-// fold carries the decode, and `test/tasks/usage-fold/queue-wire.test.mjs` holds it
-// to the engine's own answers through `cn tasks grammar` and `cn tasks queue`.
+// fold carries the decode.
 
 // --- the canonical vocabulary (PRINCIPLES.md, the migration of #1119) -------------
 // Every label the machinery writes is one of three things — the item's single
