@@ -1,5 +1,5 @@
 {
-  "$schema": "../claudinite-dashboard/dashboard-descriptor.schema.json",
+  "$schema": "../claudinite-single-repo-dashboard/dashboard-descriptor.schema.json",
   "widgets": [
     {
       "id": "usage-findings",
