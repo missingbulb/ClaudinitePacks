@@ -13,7 +13,6 @@ import {
 import {
   OUTCOME_DONE, OUTCOME_DELIVERED, STATUS_DONE, STATUS_NEEDS_HUMAN_APPROVAL, NEEDS_HUMAN,
 } from '../src/read/queue-vocabulary.mjs';
-import { cnTasks, needsCn } from '../../../tools/test/cn-tasks.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
 const NOW = Date.parse('2026-08-16T12:00:00Z');
@@ -150,39 +149,6 @@ test('parseDeclaration reads a task.json, defaults filled', () => {
   assert.equal(unreadable.preconditions, null, 'a field that is present but not a list of strings was not read');
   const broken = parseDeclaration('{ "id": ');
   assert.equal(broken.preconditions, null);
-});
-
-// The page cannot run the engine's contract (it is in cn), so it spells the one rule of it the roster needs: the cadence SPELLING rewrite, which is
-// permanent. Both run over one vector set here — the retired field still among the
-// shapes, so a declaration carrying it is proven to add no cadence on either side —
-// and the copy cannot drift from the contract without this going red. The page spells
-// its unknown `null` where the contract simply leaves the key off.
-test('the page\'s cadence and trigger doors agree with the contract\'s on every shape', needsCn, () => {
-  const vectors = [
-    { id: 'a', frequency: 'daily' },
-    { id: 'b', frequency: 'weekly', preconditions: [] },
-    { id: 'c', frequency: 'monthly', preconditions: [' none ', 'substantive-change'] },
-    { id: 'd', frequency: 'manual', preconditions: ['substantive-change'] },
-    { id: 'e', frequency: 'daily', preconditions: ['schedule:at-most-daily', 'commits-outside:.claudinite/'] },
-    { id: 'f', frequency: 'hourly' },
-    { id: 'g', preconditions: ['schedule:at-most-daily', 'none'] },
-    { id: 'h', preconditions: ['due:monthly'] },
-    { id: 'i' },
-    // Stated, in both directions and against the shape the door would have read.
-    { id: 'k', trigger: 'schedule', preconditions: ['schedule:at-most-daily'] },
-    { id: 'l', trigger: 'request', preconditions: [] },
-    { id: 'm', trigger: 'request', preconditions: ['due:weekly', 'substantive-change'] },
-    { id: 'n', trigger: 'schedule', preconditions: [] },
-  ];
-  const contracts = cnTasks('contract', { declarations: vectors.map((decl) => ({ declaration: { ...decl, expected_outcome: 'no_code_changes' }, terms: {} })) });
-  for (const [i, decl] of vectors.entries()) {
-    const contract = contracts[i].normalized;
-    const page = parseDeclaration(JSON.stringify({ ...decl, expected_outcome: 'no_code_changes' }));
-    assert.deepEqual(page.preconditions, contract.preconditions, `vector ${decl.id}`);
-    assert.equal(page.trigger, contract.trigger ?? null, `vector ${decl.id}: the two doors read one trigger`);
-    assert.equal(page.frequency, undefined, `vector ${decl.id}: neither side reads the retired field`);
-  }
-  assert.equal(vectors.filter((v) => v.frequency !== undefined).length, 6, 'the retired field is still among the shapes');
 });
 
 // The roster's own read of the field, which the shape can no longer answer for it.

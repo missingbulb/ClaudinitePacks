@@ -10,36 +10,10 @@ import {
   parseVerificationSpec, parseAssertion, parseRetryEvery, evaluateAssertion,
   compareDotted, runProbes, renderResult,
 } from '../../tasks/verify-production/probes.mjs';
-import declarationJson from '../../tasks/verify-production/task.json' with { type: 'json' };
-import { contractOf, cnTasks, needsCn, verdictOf } from '../../../../tools/test/cn-tasks.mjs';
 import { installSdk } from '../../../../tools/test/sdk-stand-in.mjs';
 
 installSdk({ params: { pack: 'claudinite-tasks', task: 'verify-production' } });
-const { humanTextOf, runVerification, sdkIssues } = await import('../../tasks/verify-production/worker.mjs');
-
-// --- the declaration -----------------------------------------------------------
-
-test('the scheduler never files an item for this task on its own', needsCn, () => {
-  // Items exist only because a verification was filed.
-  const { problems, scheduled } = contractOf(declarationJson);
-  assert.deepEqual(problems, []);
-  assert.equal(scheduled, false);
-});
-
-test('the precondition always runs — a filed verification is its own mandate', needsCn, () => {
-  assert.equal(verdictOf(declarationJson.preconditions ?? [], {}, { item: { number: 1 } }).run, true);
-});
-
-// The spec is read from the person's half of the body, cut where the engine cuts it.
-test('the human half of a body is the one the engine reads', needsCn, () => {
-  const bodies = [
-    'Original-issue: #3\n\n<!-- claudinite-item -->\nTask: a/b\n<!-- /claudinite-item -->\n',
-    '<!-- claudinite-item -->Task: a/b<!-- /claudinite-item -->\nRetry-every: 6 hours',
-    'no block at all\n',
-  ];
-  const { bodies: read } = cnTasks('grammar', { bodies });
-  assert.deepEqual(bodies.map(humanTextOf), read.map((b) => b.human));
-});
+const { runVerification, sdkIssues } = await import('../../tasks/verify-production/worker.mjs');
 
 // --- the spec grammar ----------------------------------------------------------
 

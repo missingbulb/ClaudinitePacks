@@ -1,7 +1,6 @@
 // A `task.json`'s text as the declaration the page renders, with the defaults the
 // engine's contract fills. THE DASHBOARD'S OWN COPY of those two steps: the page reads
-// a member's declarations in a browser. `test/declaration-text-drift.test.mjs` runs it
-// and the engine (`cn tasks contract`) over the same texts.
+// a member's declarations in a browser.
 import { DEFAULT_AUTOMERGE, DEFAULT_AGENT_MODEL } from '../read/queue-vocabulary.mjs';
 
 // `$schema` is the editor's pointer, not a field of the contract, and leaves here.

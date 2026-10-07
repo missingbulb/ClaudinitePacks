@@ -1,8 +1,6 @@
 // Is a member's SCHEDULER dormant? THE DASHBOARD'S OWN COPY of the scheduler's predicate,
 // read off the member's own declaration: packs share no code, so this pack carries the
-// one test the member's scheduler stops itself with. `test/dormancy-drift.test.mjs`
-// runs it and `cn fleet decide dormancy` over the same declarations and fails the
-// moment they disagree.
+// one test the member's scheduler stops itself with.
 //
 // It reads three shapes: a cn member as `read/member.mjs` answers it, whose `dormant`
 // its own `cn` wrote into the member file; and, for a Node member, a raw parsed

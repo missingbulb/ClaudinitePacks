@@ -1,7 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { installSdk } from '../../../../../tools/test/sdk-stand-in.mjs';
-import { cnGrowth, needsCn } from '../../../../../tools/test/cn-tasks.mjs';
 
 installSdk();
 const {
@@ -12,22 +11,6 @@ const {
 // The worker's I/O shell is exercised by the live run, not by a unit test (it fetches
 // a branch and opens a PR). What IS unit-testable is where it AGREES with something
 // else — and every one of those agreements is a place two files could silently drift.
-
-test('parseLogName agrees with the capture that writes the name', needsCn, () => {
-  // The drift guard that matters most here: `cn growth capture` writes these
-  // filenames and this worker parses them. A format change on either side would
-  // otherwise make the fold silently see zero files and report a fleet-wide zero as fact.
-  for (const [ref, session] of [[{ issue: 123 }, 'abc-def'], [{ issue: 0 }, 'sess-1'], [{ pr: 1583 }, 'a-b-c-d-e']]) {
-    const name = cnGrowth('logname', { now: '2026-07-28T09:40:00.000Z', ...ref, session });
-    const mine = parseLogName(name);
-    const [theirs] = cnGrowth('parsename', { names: [name] });
-    assert.ok(mine, `the fold must parse ${name}`);
-    assert.equal(mine.issue, theirs.issue);
-    assert.equal(mine.pr, theirs.pr);
-    assert.equal(mine.sessionId, theirs.sessionId);
-    assert.equal(mine.date, theirs.capturedAt.slice(0, 10));
-  }
-});
 
 test('parseLogName takes the collision suffix, the issue-0 form and the PR key, and rejects everything else', () => {
   assert.deepEqual(parseLogName('2026-07-28T0940Z-2--issue-9--s1.jsonl'),

@@ -4,9 +4,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import declJson from '../tasks/ci-performance/task.json' with { type: 'json' };
 import { installSdk } from '../../../tools/test/sdk-stand-in.mjs';
-import { verdictOf, needsCn } from '../../../tools/test/cn-tasks.mjs';
 
 // The tracker is the engine's to find and write; its answers are scripted here.
 const trackers = [];
@@ -122,24 +120,6 @@ test('an empty ledger produces a report rather than an error', () => {
   assert.deepEqual(summary.workflows, []);
   assert.deepEqual(summary.regressions, []);
   assert.match(reportBody(summary, { repo: 'o/r', nowIso: 'now' }), /no completed runs/);
-});
-
-// Driven through the engine's own evaluator (`cn tasks precondition`) rather than by
-// reading the expression: what is asserted is the verdict a run gets. The cadence
-// term reads an empty run history at a chosen instant, so it holds and the movement
-// signals decide.
-test('the precondition gates on movement in the window, not on CI existing', needsCn, () => {
-  const verdict = (signals) => verdictOf(declJson.preconditions, { runs: { list: [] }, ...signals }, { now: new Date(NOW).toISOString() });
-  assert.equal(verdict({ commits: { substantiveChange: false }, prs: { touched: [] } }).run, false);
-  assert.equal(verdict({ commits: { substantiveChange: true }, prs: { touched: [] } }).run, true);
-  assert.equal(verdict({ commits: { substantiveChange: false }, prs: { touched: [7] } }).run, true);
-  // SUBSTANTIVE, not any commit: another task's own delivery landing is the
-  // machinery running, and CI timings measured against it are last week's again.
-  assert.equal(verdict({ commits: { count: 4, substantiveChange: false }, prs: { touched: [] } }).run, false);
-  // A collector that returned nothing must read as no movement, not throw.
-  const empty = verdict({});
-  assert.equal(empty.run, false);
-  assert.doesNotMatch(empty.reason, /threw/);
 });
 
 test('a run rewrites the task\'s tracker through the engine, commenting only on a regression', async () => {

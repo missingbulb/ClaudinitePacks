@@ -169,8 +169,8 @@ forced pack's questions against it, so nothing needs a clone of the shelf.
 - `serial` is the sum of every index's serial, so it advances with any index rewrite.
 - `relevanceDetector` is the manifest's, `null` where the pack has none, with every pattern written
   as `{source, flags}` (a manifest may spell one as a bare string) and `text` always a list. It
-  is validated as the engine's catalog reader validates it, in `cn fleet decide detector`'s
-  sentences (`validateDetector`, held to that command by `tools/release/testdata/detectors/`), and
+  is validated as the engine's catalog reader validates it (`validateDetector`, over the cases in
+  `tools/release/testdata/detectors/`), and
   a version whose fingerprint fails stops the render, naming the pack and version, so a bad
   manifest never reaches the branch.
 - `belongs` is `ruleRoutingGuidance.belongs`; `questions` keeps each adoption question's `id` and

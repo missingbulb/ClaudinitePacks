@@ -138,7 +138,7 @@ outage self-heals by looking at the queue rather than by replaying a ledger.
   scheduler run and executor read agent_model/expected_outcome/preconditions from this file — never from the work
   item — so an illegal or missing value means a task never fires, fires wrong,
   or writes past its declared ceiling. The same contract
-  (the engine's, `cn tasks contract`) is re-validated at run time, so the
+  (the engine's) is re-validated at run time, so the
   static and runtime views can't drift. A task declares **no scope**: reach is a
   property of which endpoint the hand-off calls, `invocation_endpoint` below, and
   nothing else in the system has a concept of scope.

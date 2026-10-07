@@ -2,8 +2,7 @@
 // item's state is written in, every legacy spelling folded to today's, the title and
 // body fields, the markers and leases. The queue itself is the engine's (`cn`), whose
 // wire this is; the page reads GitHub's issues in a browser and so carries its own copy
-// of the decode, which `test/queue-vocabulary.test.mjs` holds to the engine's own
-// answers through `cn tasks grammar`.
+// of the decode.
 //
 // Pure, and reaching no Node built-in: the page loads it unbundled.
 
