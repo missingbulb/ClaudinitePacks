@@ -6,7 +6,6 @@ import {
   descriptorPathIn, declaredPackIds, readContributions, liveSourcesNeeded,
   valuesPath, legacyValuesPath, MAX_LIST_ITEMS, MAX_REPO_WIDGETS,
 } from '../src/read/contributions.mjs';
-import { FLAT_DASHBOARD_PATH } from '../src/read/flat.mjs';
 
 const NOW = Date.UTC(2026, 7, 22, 12, 0, 0);
 
@@ -220,23 +219,21 @@ test('a pack that reads a values file gets it parsed', async () => {
   assert.equal(valueOf(c.descriptor.widgets.get('landed'), { values: c.values }).state, 'ok');
 });
 
-// A converged member carries every declared pack's descriptor in one flat file, so
-// the page spends one read on all of them and none per pack.
-test('a member\'s flat descriptor file answers every pack in one read', async () => {
+// Each declared pack's descriptor is read from the tree, one read per contributing
+// pack; a flat descriptor file an older converge left behind is never consulted.
+test('each declared pack\'s descriptor is read from the tree, and nothing else', async () => {
   const asked = [];
-  const flat = JSON.stringify({ version: 1, dashboards: {
-    'acme-tools': { path: 'packs/acme-tools/dashboard.json', declaration: JSON.parse(descriptor()) },
-    'acme-undeclared': { path: 'packs/acme-undeclared/dashboard.json', declaration: JSON.parse(descriptor()) },
-  } });
-  const gh = { getTextAtSha: async (_r, _s, path) => { asked.push(path); return path === FLAT_DASHBOARD_PATH ? flat : null; } };
+  const stale = '.claudinite/cache/dashboard.GENERATED.json';
+  const gh = { getTextAtSha: async (_r, _s, path) => { asked.push(path); return path.endsWith('/dashboard.json') ? descriptor() : null; } };
   const out = await readContributions({
     repo: 'o/r', sha: 's', token: 't', gh,
     declaration: { packs: ['acme-tools', 'acme-pack'] },
-    paths: [FLAT_DASHBOARD_PATH, 'packs/acme-tools/dashboard.json'],
+    paths: [stale, '.claudinite/shared/packs/acme-tools/dashboard.json', 'packs/acme-undeclared/dashboard.json'],
   });
   assert.deepEqual(out.map((c) => c.pack), ['acme-tools']);
   assert.ok(!out[0].descriptor.fault, out[0].descriptor.fault);
-  assert.ok(!asked.some((p) => p.endsWith('/dashboard.json')), asked.join(','));
+  assert.ok(!asked.includes(stale), asked.join(','));
+  assert.deepEqual(asked.filter((p) => p.endsWith('/dashboard.json')), ['.claudinite/shared/packs/acme-tools/dashboard.json']);
 });
 
 // A pack whose writer has not yet moved its values off the old path still shows them.

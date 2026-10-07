@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFlat, flatTaskRows, heldFlatPath, FLAT_TASKS_PATH, FLAT_DASHBOARD_PATH, LEGACY_FLAT_DIR } from '../src/read/flat.mjs';
+import { readFlat, flatTaskRows, heldFlatPath, FLAT_TASKS_PATH, LEGACY_FLAT_DIR } from '../src/read/flat.mjs';
 import { declaredPackDirs, parseDeclaration } from '../src/derive/model.mjs';
 import { readRollingText, USAGE_PATH, LEGACY_USAGE_PATH } from '../src/read/usage.mjs';
 
@@ -50,5 +50,5 @@ test('a flat file is read at the old directory only where the listing lacks the 
   const both = [];
   await readFlat(ctx({ [FLAT_TASKS_PATH]: file, [legacy]: '{' }, both), FLAT_TASKS_PATH, 'tasks');
   assert.deepEqual(both, [FLAT_TASKS_PATH]);
-  assert.equal(heldFlatPath(['README.md'], FLAT_DASHBOARD_PATH), null);
+  assert.equal(heldFlatPath(['README.md'], FLAT_TASKS_PATH), null);
 });

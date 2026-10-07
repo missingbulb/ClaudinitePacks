@@ -1,17 +1,15 @@
-// The member's FLAT declarations: every declared pack's task.json and dashboard.json,
-// written into one file each by the member's converge. One read at a sha replaces a
-// read per task and a read per contributing pack, and like every content read it is
+// The member's FLAT task declarations: every declared pack's task.json, written into
+// one file by the member's converge. One read at a sha replaces a read per task, and
+// like every content read it is
 // cached under the sha, so a warm load spends nothing on it.
 //
-// A member whose converge predates the flat files has neither file; each reader
-// here answers null for it and the caller falls back to reading the sources one by
-// one. Whether the file is there comes from the tree listing the caller already holds,
+// A member whose converge predates the flat file has none; the reader here answers
+// null for it and the caller falls back to reading the sources one by one. Whether the file is there comes from the tree listing the caller already holds,
 // so that answer costs no request.
 //
 // Spelled here, not imported: the page renders other repos in the viewer's browser and
 // imports nothing from the engine. `flat-paths-drift.test.mjs` holds the copies to it.
 export const FLAT_TASKS_PATH = '.claudinite/cache/tasks.GENERATED.json';
-export const FLAT_DASHBOARD_PATH = '.claudinite/cache/dashboard.GENERATED.json';
 
 // The directory `cn` wrote these files into before `.claudinite/cache/`: a member whose
 // engine update has landed but whose next pack update has not still holds them there.
@@ -27,8 +25,7 @@ export function heldFlatPath(paths, path) {
   return listed.includes(legacy) ? legacy : null;
 }
 
-// One flat file's entry map - `{ '<pack>/<task>': { path, declaration | text } }` for
-// the tasks, `{ '<pack>': … }` for the descriptors - or null where this member carries
+// The flat file's entry map - `{ '<pack>/<task>': { path, declaration | text } }` - or null where this member carries
 // no such file, or it could not be read or parsed. A read the budget declined throws,
 // as every content read here does, and the caller decides what that means.
 export async function readFlat({ repo, sha, token, paths, gh }, path, key) {

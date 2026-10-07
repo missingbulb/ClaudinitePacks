@@ -3,9 +3,7 @@
 // A pack contributes DATA, NEVER CODE. Two JSON files, both lifted as text over the
 // API exactly as task declarations are, because there is no `import` when reading
 // another repo: a DESCRIPTOR shipped with the pack (`packs/<id>/dashboard.json`,
-// found by path convention — nothing registers it, and the member's converge copies
-// every declared pack's into `.claudinite/cache/dashboard.GENERATED.json`) declaring
-// what the pack has to say, and a VALUES file in the member's own tree
+// found by path convention — nothing registers it) declaring what the pack has to say, and a VALUES file in the member's own tree
 // (`.claudinite/usage/<pack>-dashboard-values.json`) written by that pack's own
 // machinery. The page executes nothing from either: it renders repos the viewer merely
 // has read access to, so importing a member's modules would run another repo's code in
@@ -19,8 +17,6 @@
 // UNKNOWN IS NOT ZERO here as everywhere on this page. `undefined` means NOT READ (a
 // withheld read, a failure); `null` means read and absent. They render differently
 // and neither renders as a number.
-import { readFlat, entryText, heldFlatPath, FLAT_DASHBOARD_PATH } from './flat.mjs';
-
 // The closed vocabulary. A descriptor naming anything outside it is not guessed at:
 // the widget renders as one saying this dashboard predates its descriptor, which is
 // what lets a member run a pack version newer than the deployed page.
@@ -214,24 +210,13 @@ export function windowDelta(value) {
 export async function readContributions({ repo, sha, token, declaration, paths, gh }) {
   if (!paths || !declaration) return [];
 
-  // The member's flat descriptor file where its converge writes one: every pack's
-  // descriptor in a single read, and the packs it names are exactly the ones that
-  // contribute.
-  let flat = null;
-  try { flat = await readFlat({ repo, sha, token, paths, gh }, FLAT_DASHBOARD_PATH, 'dashboards'); } catch { flat = null; }
-
   const found = declaredPackIds(declaration)
-    .map((pack) => ({ pack, path: flat ? (flat[pack] ? heldFlatPath(paths, FLAT_DASHBOARD_PATH) : null) : descriptorPathIn(paths, pack) }))
+    .map((pack) => ({ pack, path: descriptorPathIn(paths, pack) }))
     .filter((f) => f.path);
 
   return (await Promise.all(found.map(async ({ pack, path }) => {
     let text;
-    if (flat) text = entryText(flat[pack]);
-    else {
-      // A member whose converge predates the flat directory: one read per descriptor.
-      // @legacy-tolerance advisory:legacy-shape-in-use retire:#2323
-      try { text = await gh.getTextAtSha(repo, sha, path, token); } catch { return { pack, withheld: true }; }
-    }
+    try { text = await gh.getTextAtSha(repo, sha, path, token); } catch { return { pack, withheld: true }; }
     // The listing said it was there, so a null here means the tree and the contents
     // API disagree — which is a fault about this pack, not about the page.
     if (text === null) return { pack, fault: 'its dashboard.json is in the tree but could not be fetched' };
