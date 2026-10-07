@@ -2,7 +2,7 @@
 
 Each pack's `VERSIONS.md` answers "what did version N ship?" — and a row naming the pull request
 that cut a version can only be written once that pull request has a number and has landed. This
-task derives it from `cn pack history --json`: for every version a pack's manifest ever declared,
+task derives it from git, walking the history itself (`history.mjs`): for every version a pack's manifest ever declared,
 the first-parent commits between the previous version's bump and this one's that touched a
 shipping file of the pack are the pull requests it shipped, and the row names them by their
 squash-merge subjects, which carry the pull request numbers.
