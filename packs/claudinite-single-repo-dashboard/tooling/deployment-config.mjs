@@ -7,7 +7,7 @@
 // endpoint against another.
 //
 // TWO STORES, split by who has to edit them. Everything describing what the dashboard
-// COVERS — its mode, owner, exclusions — is the member's own declaration, where it is
+// COVERS — its default repo, its rates — is the member's own declaration, where it is
 // reviewable in a diff, and is read here out of the member file its `cn` writes from it
 // (`.claudinite/cache/member.GENERATED.json`), the one JSON statement of a declaration
 // kept in YAML, TOML or JSON. The sign-in pair are REPOSITORY VARIABLES: they

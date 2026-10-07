@@ -10,6 +10,5 @@
       "source": "repo-stars"
     }
   ],
-  "repo": ["stars"],
-  "fleet": { "member": "stars" }
+  "repo": ["stars"]
 }

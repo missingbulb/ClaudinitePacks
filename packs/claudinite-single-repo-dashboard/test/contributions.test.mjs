@@ -2,9 +2,9 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
-  parseDescriptor, parseValues, valueOf, fleetPhrase, phraseText, listItems, windowDelta,
-  descriptorPathIn, declaredPackIds, readContributions, readRepoContributions, liveSourcesNeeded,
-  valuesPath, legacyValuesPath, MAX_LIST_ITEMS, MAX_REPO_WIDGETS, FLEET_KINDS,
+  parseDescriptor, parseValues, valueOf, listItems, windowDelta,
+  descriptorPathIn, declaredPackIds, readContributions, liveSourcesNeeded,
+  valuesPath, legacyValuesPath, MAX_LIST_ITEMS, MAX_REPO_WIDGETS,
 } from '../src/read/contributions.mjs';
 import { FLAT_DASHBOARD_PATH } from '../src/read/flat.mjs';
 
@@ -18,7 +18,6 @@ const descriptor = (over = {}) => JSON.stringify({
     { id: 'recent', kind: 'list', label: 'recently changed' },
   ],
   repo: ['stars', 'landed', 'last', 'recent'],
-  fleet: { member: 'landed' },
   ...over,
 });
 
@@ -51,7 +50,6 @@ test('a descriptor resolves its views by id and reports the sources it needs', (
   const d = parseDescriptor(descriptor(), 'demo');
   assert.equal(d.fault, null);
   assert.deepEqual(d.repo, ['stars', 'landed', 'last', 'recent']);
-  assert.equal(d.member, 'landed');
   assert.deepEqual([...d.sources].sort(), ['generated', 'latest-release', 'repo-stars']);
   assert.equal(d.widgets.get('stars').glyph, '★');
 });
@@ -59,21 +57,8 @@ test('a descriptor resolves its views by id and reports the sources it needs', (
 // A member may run a pack version whose widget list is shorter than the ids a view
 // names, so an unresolvable id is DROPPED rather than rendering an empty slot.
 test('a view id naming no widget is dropped, not rendered', () => {
-  const d = parseDescriptor(descriptor({ repo: ['stars', 'ghost'], fleet: { member: 'ghost' } }), 'demo');
+  const d = parseDescriptor(descriptor({ repo: ['stars', 'ghost'] }), 'demo');
   assert.deepEqual(d.repo, ['stars']);
-  assert.equal(d.member, null);
-});
-
-// `list` is many lines and the subrow gives each pack one.
-test('a list cannot be a member mini-card', () => {
-  const d = parseDescriptor(descriptor({ fleet: { member: 'recent' } }), 'demo');
-  assert.equal(d.member, null);
-  for (const kind of FLEET_KINDS) {
-    const one = parseDescriptor(JSON.stringify({
-      widgets: [{ id: 'w', kind, label: 'w', noun: 'n' }], fleet: { member: 'w' },
-    }), 'demo');
-    assert.equal(one.member, 'w', `${kind} should be able to be a mini-card`);
-  }
 });
 
 test('the repo card is capped, and the cap does not silently reorder', () => {
@@ -147,45 +132,11 @@ test('an unreadable values file is not an empty one', () => {
     { generatedAt: 'x', values: { a: { value: 1 } } });
 });
 
-// --- the composed phrase -----------------------------------------------------------
+// --- a widget's figures -------------------------------------------------------------
 
-test('each kind composes the phrase the fleet card renders', () => {
-  const d = parseDescriptor(descriptor(), 'd');
-  assert.equal(phraseText(fleetPhrase(d.widgets.get('stars'), { value: 18 }, NOW)), '18 stars');
-  assert.equal(
-    phraseText(fleetPhrase(d.widgets.get('landed'), { value: 12, previous: 7, window: '2w' }, NOW)),
-    '12 reqs in last 2w',
-  );
-  assert.equal(
-    phraseText(fleetPhrase(d.widgets.get('last'), { text: 'v1.33.102 live', at: NOW - 5 * 86400e3 }, NOW)),
-    '5d ago · v1.33.102 live',
-  );
-});
-
-// THREE REGISTERS — the whole reason a pack supplies parts rather than a finished
-// string, which would arrive flat and unstyleable.
-test('the parts are typed, with the quantities separated from the grammar', () => {
-  const d = parseDescriptor(descriptor(), 'd');
-  const parts = fleetPhrase(d.widgets.get('landed'), { value: 31, window: '1w' }, NOW);
-  assert.deepEqual(parts.map((p) => p.t), ['q', 'n', 'c', 'q']);
-  assert.deepEqual(parts.filter((p) => p.t === 'q').map((p) => p.text), ['31', '1w']);
-});
-
-// NO DELTA on the grid: there the comparison is the column, across members.
-test('a fleet window card spends no characters on its previous window', () => {
-  const d = parseDescriptor(descriptor(), 'd');
-  const text = phraseText(fleetPhrase(d.widgets.get('landed'), { value: 12, previous: 7, window: '2w' }, NOW));
-  assert.ok(!text.includes('7'), text);
-  // …while the repo card, which has nothing else to compare against, keeps it.
+// The repo card has nothing else to compare a window against, so it keeps the previous.
+test('a window widget carries its change against the previous window', () => {
   assert.deepEqual(windowDelta({ value: 12, previous: 7 }), { dir: 'up', by: 5, previous: 7 });
-});
-
-test('a phrase that cannot be made is null rather than half a sentence', () => {
-  const d = parseDescriptor(descriptor(), 'd');
-  assert.equal(fleetPhrase(d.widgets.get('stars'), { value: 'lots' }, NOW), null);
-  assert.equal(fleetPhrase(d.widgets.get('landed'), {}, NOW), null);
-  assert.equal(fleetPhrase(d.widgets.get('last'), { text: '', at: null }, NOW), null);
-  assert.equal(fleetPhrase(d.widgets.get('recent'), { items: [] }, NOW), null);
 });
 
 // A short list that looks complete is worse than no list.
@@ -258,7 +209,7 @@ test('live sources are collected only from packs that name them', () => {
 
 test('a pack that reads a values file gets it parsed', async () => {
   const gh = fakeGh({
-    'packs/demo/dashboard.json': descriptor({ fleet: { member: 'landed' } }),
+    'packs/demo/dashboard.json': descriptor(),
     [valuesPath('demo')]: JSON.stringify({ generatedAt: '2026-08-22T00:00:00Z', values: { landed: { value: 5, previous: 8, window: '2w' } } }),
   });
   const [c] = await readContributions({
@@ -294,7 +245,7 @@ test('values still at their old path are read there, and only there', async () =
   const values = JSON.stringify({ generatedAt: '2026-08-22T00:00:00Z', values: { landed: { value: 5, previous: 8, window: '2w' } } });
   const gh = { getTextAtSha: async (_r, _s, path) => {
     asked.push(path);
-    if (path === 'packs/demo/dashboard.json') return descriptor({ fleet: { member: 'landed' } });
+    if (path === 'packs/demo/dashboard.json') return descriptor();
     return path === legacyValuesPath('demo') ? values : null;
   } };
   const [c] = await readContributions({
@@ -309,27 +260,9 @@ test('values still at their old path are read there, and only there', async () =
 
 // The first caller, and the one that proves the contract carries its own weight: the
 // star count the dashboard used to draw itself.
-test('git-github contributes stars, and it composes', () => {
+test('git-github contributes stars, and they resolve', () => {
   const d = parseDescriptor(readFileSync(new URL('../../git-github/dashboard.json', import.meta.url), 'utf8'), 'git-github'); // @real-entity the pack that actually ships the descriptor this reads
   assert.equal(d.fault, null);
-  const w = d.widgets.get(d.member);
-  assert.equal(phraseText(fleetPhrase(w, valueOf(w, { live: { stars: 18 } }).value, NOW)), '18 stars');
-});
-
-// A repo whose member file is there but does not read is not a repo with no cards: its
-// contributions are unknown, which the panel shows as such, rather than none.
-test('readRepoContributions reports an unreadable member file as an error, not as no contributions', async () => {
-  const gh = {
-    getRepo: async () => ({ default_branch: 'main', stars: 0 }),
-    getHeadSha: async () => 'abc',
-    getTextAtSha: async (_r, _s, path) => (path === '.claudinite/cache/member.GENERATED.json' ? '{"packs":' : null),
-    listTreeAtSha: async () => ({ paths: [] }),
-  };
-  const r = await readRepoContributions({ repo: 'acme/app', token: null, gh });
-  assert.ok(r.error instanceof Error, 'an error, so the panel reads unknown');
-  assert.match(r.error.message, /member\.GENERATED\.json is not valid JSON/);
-  assert.deepEqual(r.contributions, []);
-
-  const none = await readRepoContributions({ repo: 'acme/app', token: null, gh: { ...gh, getTextAtSha: async () => null } });
-  assert.equal(none.error, undefined, 'a repo that runs no Claudinite has no cards, and no error');
+  const w = d.widgets.get(d.repo[0]);
+  assert.deepEqual(valueOf(w, { live: { stars: 18 } }), { state: 'ok', value: { value: 18 } });
 });

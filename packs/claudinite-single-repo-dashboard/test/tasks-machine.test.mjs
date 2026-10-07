@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 
 import { decodeTasksUsage } from '../src/read/usage.mjs';
 import {
-  tasksMachine, fleetTasksMachine, quantiles, windowDays, change,
+  tasksMachine, quantiles, windowDays, change,
 } from '../src/derive/tasks-machine.mjs';
 
 // The machinery panel's derivation, driven through the REAL decode: the fixture below is
@@ -263,58 +263,4 @@ test('the panel names the numbers the file does not carry', () => {
   assert.equal(m.unrecorded.length, 2);
   assert.ok(m.unrecorded.some((g) => /janitor/i.test(g)));
   assert.ok(m.unrecorded.some((g) => /leash/i.test(g)));
-});
-
-// --- the fleet roll-up -----------------------------------------------------------------
-
-const member = (repo, days, over) => ({ repo, declaration: { packs: [] }, tasksUsage: file(days, over) });
-
-test('the fleet roll-up names the members that fold nothing and counts them in nothing', () => {
-  const reads = [
-    member('o/One', TWO_WINDOWS),
-    member('o/Two', { '2026-09-10': TWO_WINDOWS['2026-09-10'] }),
-    { repo: 'o/Three', declaration: { packs: [] }, tasksUsage: null },
-    { repo: 'o/Broken', error: 'unreadable' },
-  ];
-  const f = fleetTasksMachine(reads, { now: NOW, span: 7 });
-
-  assert.equal(f.readable, 3, 'the unreadable member is not a member that folds nothing');
-  assert.equal(f.folding, 2);
-  assert.deepEqual(f.absent, ['o/Three']);
-  assert.equal(f.members.length, 2, 'one row per FOLDING member — the absent one is a census entry, not a row of zeroes');
-
-  // 16 from One, 10 from Two. The absent member adds nothing, including no zero.
-  assert.equal(f.cost.current.runs, 26);
-  assert.equal(f.reliability.current.outcomes.done, 8 + 5);
-});
-
-test('the fleet latency quantile pools samples rather than averaging medians', () => {
-  const reads = [member('o/One', TWO_WINDOWS), member('o/Two', TWO_WINDOWS)];
-  const f = fleetTasksMachine(reads, { now: NOW, span: 7 });
-  // Each member contributes item→pick samples 30, 40, 50 in the current window; pooled
-  // that is six samples, and the count is what proves they were pooled and not folded
-  // into two medians first.
-  assert.equal(f.latency.current.itemToPickMinutes.n, 6);
-  assert.equal(f.latency.current.itemToPickMinutes.p50, 40);
-});
-
-test('the fleet names its rates rather than averaging them', () => {
-  const reads = [
-    member('o/One', TWO_WINDOWS, { minuteRate: 0.008 }),
-    member('o/Two', TWO_WINDOWS, { minuteRate: 0.016 }),
-    member('o/Three', TWO_WINDOWS),
-  ];
-  const f = fleetTasksMachine(reads, { now: NOW, span: 7 });
-  // Two members priced differently have no one rate, and a mean of two rates is a
-  // number nothing measures.
-  assert.deepEqual(f.rates.sort(), [0.008, 0.016]);
-});
-
-test('an empty fleet answers null throughout rather than zero', () => {
-  const f = fleetTasksMachine([], { now: NOW, span: 7 });
-  assert.equal(f.folding, 0);
-  assert.equal(f.readable, 0);
-  assert.equal(f.cost.current.runs, null);
-  assert.equal(f.reliability.current.outcomes.done, null);
-  assert.deepEqual(f.absent, []);
 });

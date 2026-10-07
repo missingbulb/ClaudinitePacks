@@ -15,6 +15,5 @@
       "glyph": "◎"
     }
   ],
-  "repo": ["usage-findings", "usage-newest"],
-  "fleet": { "member": "usage-findings" }
+  "repo": ["usage-findings", "usage-newest"]
 }

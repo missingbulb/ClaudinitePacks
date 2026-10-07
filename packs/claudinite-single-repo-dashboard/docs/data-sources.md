@@ -15,45 +15,41 @@ member folding one and not the other is ordinary, so nothing reads across the tw
 *declaration* is the task file at head sha; *member* is the member's
 `.claudinite/cache/member.GENERATED.json` at head sha, which its own `cn` writes (at
 `.claudinite/flat/` for a member whose pack update has not moved it yet, and a Node
-member's `.claudinite-settings.json` where there is none); *roster* is the deployment's
-`.claudinite/fleet/roster.GENERATED.json` at head sha, one engine verdict per member,
-landed by its `fleet-roster` task;
+member's `.claudinite-settings.json` where there is none);
 *config* is the deployment's `dashboard.config.json`. A figure with two sources takes the live
 one for the days it reaches and the fold for the rest, as `queueSeries` and `hourSeries` in
 [`usage.mjs`](../src/read/usage.mjs) already do.
 
 | Figure | Page | Source | Reader |
 |---|---|---|---|
-| Start here candidate, minutes, *N more* | both | live issues page, member summaries | `next-work.mjs`, `fleet.mjs` |
-| Scheduler heartbeat (per member / per hour) | both | fold `hours[h].scheduler`; live runs for hours past `runsFoldedThrough` | `hourSeries` |
-| Executor failed / total, 24 h; in flight | both | fold `hours[h].executor`, `failed`; live runs `status` | `hourSeries`, `ciStatus` |
+| Start here candidate, minutes, *N more* | repo | live issues page | `next-work.mjs`, `health.mjs` |
+| Scheduler heartbeat (per hour) | repo | fold `hours[h].scheduler`; live runs for hours past `runsFoldedThrough` | `hourSeries` |
+| Executor failed / total, 24 h; in flight | repo | fold `hours[h].executor`, `failed`; live runs `status` | `hourSeries`, `ciStatus` |
 | CI on main | repo | live runs | `ciStatus` |
-| Fold age, members folding | both | fold `generated` | `readUsage` |
-| Updates; a member's freshness | fleet | roster `members[].freshness` (absent roster → *unknown*) | `readRoster`, `freshnessOf` |
-| Declared packs, dormancy, engine | both | member `packs.declared`, `dormant`, `engine` | `readMember` |
-| Next wake, 24 h strip | both | declaration anchors, `nextAsk.at` per roster row | `buildRoster`; page bucketing (§3) |
-| Merged PRs; nobody in the loop | both | live issues page with merged PRs kept (§3); fold `prs` | `projectPull` (§3) |
-| Caught before merge | both | fold `checks.work` (`failures`, `ciFailures`, `runs`, `errors`) | `growthSeries` |
-| Releases | both | fold `releases` | day rows |
-| Lines, net | both | fold `linesAdded`, `linesRemoved` (§2, lines) | day rows |
+| Fold age | repo | fold `generated` | `readUsage` |
+| Declared packs, dormancy, engine | repo | member `packs.declared`, `dormant`, `engine` | `readMember` |
+| Next wake, 24 h strip | repo | declaration anchors, `nextAsk.at` per task row | `buildRoster`; page bucketing (§3) |
+| Merged PRs; nobody in the loop | repo | live issues page with merged PRs kept (§3); fold `prs` | `projectPull` (§3) |
+| Caught before merge | repo | fold `checks.work` (`failures`, `ciFailures`, `runs`, `errors`) | `growthSeries` |
+| Releases | repo | fold `releases` | day rows |
+| Lines, net | repo | fold `linesAdded`, `linesRemoved` (§2, lines) | day rows |
 | Queue closes by outcome | repo | fold `queue`; today live | `queueSeries` |
-| Tokens in / out; sessions recorded | both | fold `tokensIn`, `tokensOut`, `tokenSessions`, `sessions` | day rows |
-| ≈ Dollars, unpriced share, top-model share | both | fold `tokensByModel` (§2) × config `rates` (§3) | page pricing |
-| Your minutes; your turns | both | fold `humanSeconds` (§2), `userMessages` | day rows |
-| Issue → merged p50 / p90 | both | live PRs `closesIssue` (§3); fold `prs.issueLeadHours` (§2) | page reduction |
-| Session → merged p50 / p90 | both | fold `prs.sessionToMergeHours` (§2) | page reduction |
+| Tokens in / out; sessions recorded | repo | fold `tokensIn`, `tokensOut`, `tokenSessions`, `sessions` | day rows |
+| ≈ Dollars, unpriced share, top-model share | repo | fold `tokensByModel` (§2) × config `rates` (§3) | page pricing |
+| Your minutes; your turns | repo | fold `humanSeconds` (§2), `userMessages` | day rows |
+| Issue → merged p50 / p90 | repo | live PRs `closesIssue` (§3); fold `prs.issueLeadHours` (§2) | page reduction |
+| Session → merged p50 / p90 | repo | fold `prs.sessionToMergeHours` (§2) | page reduction |
 | PR opened → merged | expand | fold `prs.leadHours` (§2) | page reduction |
-| Merged / closes per day; peak; days with none | both | as merged / queue closes | day rows |
-| Stuck 3 d+, parked for you / on the machine | both | live issues page, `idleMs`, `troubles` | `work.mjs` |
-| Cost per merged PR; tokens per merged PR | both | quotients of the above | page |
-| Autonomy; yours : agent minutes | both | quotients; fold `humanSeconds`, `agentSeconds` (§2) | page |
-| Would have shipped broken; top rule | both | fold `checks.work.failures`, `checkFindings` | `growthSeries` |
-| Per-member expand | fleet | the above, per member | `fleet-growth.mjs` |
-| Machinery reliability: closed, parks by kind | both | **tasks fold** `days[d].queue`, `parks` | `tasks-machine.mjs` |
-| Machinery latency p50 / p90 per leg | both | **tasks fold** `days[d].latency` samples, quantiled at the window | `tasks-machine.mjs` |
-| Machinery cost: runs, jobs, billed minutes, spend, API calls | both | **tasks fold** `days[d]` totals and `workflows`; `minuteRate` for `spend` | `tasks-machine.mjs` |
+| Merged / closes per day; peak; days with none | repo | as merged / queue closes | day rows |
+| Stuck 3 d+, parked for you / on the machine | repo | live issues page, `idleMs`, `troubles` | `work.mjs` |
+| Cost per merged PR; tokens per merged PR | repo | quotients of the above | page |
+| Autonomy; yours : agent minutes | repo | quotients; fold `humanSeconds`, `agentSeconds` (§2) | page |
+| Would have shipped broken; top rule | repo | fold `checks.work.failures`, `checkFindings` | `growthSeries` |
+| Machinery reliability: closed, parks by kind | repo | **tasks fold** `days[d].queue`, `parks` | `tasks-machine.mjs` |
+| Machinery latency p50 / p90 per leg | repo | **tasks fold** `days[d].latency` samples, quantiled at the window | `tasks-machine.mjs` |
+| Machinery cost: runs, jobs, billed minutes, spend, API calls | repo | **tasks fold** `days[d]` totals and `workflows`; `minuteRate` for `spend` | `tasks-machine.mjs` |
 | Per-task expand: closed, sessions, tokens, $, exec failed, parked, model | repo | fold `queue`, `taskCost` (§2), `taskExec`, `parks` (§2); declaration `agent_model` | day rows, `parseDeclaration` |
-| Pulse | both | fold `sessions` per day | day rows |
+| Pulse | repo | fold `sessions` per day | day rows |
 | Board: kinds, edges, times, landing, run record | repo | live issues and PRs (labels, body lines, timestamps, comments); declarations | `work.mjs`, `model.mjs` |
 | Board: scheduled cells | repo | closed items since the window opened (`outcomeOf`, `closed_at`); `nextAnchor` | `work.mjs` |
 | Board: cost per run in the task panel | repo | fold `taskCost` | day rows |
@@ -193,7 +189,7 @@ the body **before** it is dropped, by the same rule as the fold's: the parse is 
 dashboard's own copy (`src/read/pr-fields.mjs`), held to the fold's by a drift guard, so the
 two halves of one lead-time series cannot disagree about which issue a PR is for. The body still stores
 nothing. Merged PRs outside the window are dropped as they
-are now, which is what keeps a fleet's history inside the storage quota.
+are now, which is what keeps a repo's history inside the storage quota.
 
 ### Heartbeat from the fold
 
@@ -209,8 +205,8 @@ the live page alone and says so.
 
 ### Next anchors bucketed by hour
 
-`buildRoster` in [`model.mjs`](../src/derive/model.mjs) computes `nextAsk.at` per task for the roster's
-next-anchor column. The wake strip collects those (fleet: across members) and buckets them by
+`buildRoster` in [`model.mjs`](../src/derive/model.mjs) computes `nextAsk.at` per task for the work
+table's next-anchor column. The wake strip collects those and buckets them by
 UTC hour over the next 24 h; a `held` next ask — a failure park on a task whose declaration
 holds its lane with `last-run-not-failed` — is a critical tick at *now*.
 
@@ -231,33 +227,10 @@ cache-creation tokens are priced at the `in` rate unless a `cacheWrite` rate is 
 with no entry is *unpriced (N tok)* and never folded into the sum; with no `rates` key at all,
 every dollar figure reads *unpriced* and names the key.
 
-### The window commit listing — the meaningful series and the sleepy mark
-
-`/repos/{repo}/commits?sha={default}&since={90 days}` — **one page, one request per member**, and
-the only per-member read the fleet page adds beyond the commit statistics it already fetches. It is
-priced with those statistics, as decoration: withheld first under budget pressure, and a withheld
-read renders as *not classified* rather than as a quiet repo.
-
-What it buys is the split between **genuine project work** and **the machinery moving** — the
-second line on each row's commit graph, and the `sleepy` mark on a member with nothing meaningful
-in a fortnight. The classification is the claudinite-tasks pack's own `isSubstantiveCommit`, so a
-member reads quiet here exactly when its own preconditions read it quiet.
-
-**One exclusion is deliberately skipped.** The full test also drops a commit that touched nothing
-outside `.claudinite/`, which needs each commit's file list — a request per commit, per member, which
-this budget does not have. So a corpus-only commit counts as work here unless its message says
-otherwise (the update's own commits do). The gap is stated on the mark's hover rather than implied
-away.
-
-A listing that filled its single page is a **horizon**: the days before its oldest commit are not
-classified, and the second line breaks there instead of dropping to the floor.
-
 ## 4. Request budget
 
-**The viewer makes one new read** — the window commit listing above, priced as decoration. Every
-other figure: Merged PRs and their bodies are in the issues listing the
-page already fetches; the fold and the declarations are content at a sha; the fleet mean and
-the anchor buckets are reductions over reads in hand.
+**The viewer makes no new read.** Merged PRs and their bodies are in the issues listing the
+page already fetches; the fold and the declarations are content at a sha; the anchor buckets are reductions over reads in hand.
 
 **The fold gains:**
 

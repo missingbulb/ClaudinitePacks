@@ -1,6 +1,6 @@
 // The deep dive: one repo's scheduler in full — what is stuck, what is queued, what
-// ran, and what the machinery has been doing for the last month. Reached from the
-// fleet view or by `?repo=` directly.
+// ran, and what the machinery has been doing for the last month. The repo is the
+// deployment's own, or `?repo=`.
 //
 // TWO KINDS OF DATA, AND THEY ARE READ DIFFERENTLY. What is true RIGHT NOW comes from
 // live reads, and they are kept to a handful: the repo, its head commit, one page of
@@ -20,7 +20,7 @@ import {
 } from '../derive/model.mjs';
 import {
   ciStatus, parkMinutes, summariseRuns,
-} from '../derive/fleet.mjs';
+} from '../derive/health.mjs';
 import { workRows, rowsFor, viewCounts, defaultView, VIEWS } from '../derive/work.mjs';
 import { repoCandidates } from '../derive/next-work.mjs';
 import { readUsage, readTasksUsage, growthSeries, queueSeries, hourSeries } from '../read/usage.mjs';
@@ -34,7 +34,7 @@ import {
 } from '../render/ui.mjs';
 import { band, slip, machineCell, beats, wakeTicks, figureRow, pulseChart, detailTable, expander } from '../render/sheet.mjs';
 import { repoLedger, repoMachine } from '../derive/repo-ledger.mjs';
-import { fmtTokens, fmtHours, fmtAge } from '../derive/fleet-ledger.mjs';
+import { fmtTokens, fmtHours, fmtAge } from '../derive/ledger.mjs';
 import { buildBoard } from '../derive/board.mjs';
 import { renderBoard, quietLine } from '../render/board-view.mjs';
 import { buildPanel } from '../derive/explore.mjs';
@@ -54,8 +54,8 @@ const GROWTH_DAYS = 30;
 const OUTCOME_DAYS = 14;
 const RUN_HOURS = 48;
 // The machinery panel's window, and the window before it. A week each, because that is
-// the span the fleet page's own report-card figures use and the two are read side by
-// side; a shorter one turns a quiet weekend into a collapse.
+// the span the ledger's own report-card figures use and the two are read side by side;
+// a shorter one turns a quiet weekend into a collapse.
 const MACHINE_SPAN = 7;
 
 const CI_UI = {
@@ -199,9 +199,8 @@ const EMPTY = {
 
 // --- the ledger sheet, scoped to one member ------------------------------------------
 
-// The same block the fleet page draws, one member deep: same bands, same tracks, same
-// three unknown states. Where the fleet's ledger has four figures per column this has
-// THREE and no tile row — every tile's fact moved into a cell that acts on it, and the
+// The ledger block: bands, tracks and three unknown states. It has THREE figures per
+// column and no tile row — every tile's fact moved into a cell that acts on it, and the
 // height that bought is what lands the Work board above the fold.
 // Exported so the sheet can be driven against a fixture — the layout and the gap
 // sentences are the parts a unit test cannot see.

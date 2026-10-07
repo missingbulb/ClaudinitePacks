@@ -293,55 +293,19 @@ test('a withheld open listing degrades to the history pages rather than failing 
   assert.deepEqual(out.issues.map((i) => i.number), [5]);
 });
 
-// --- commit activity --------------------------------------------------------------
-
-test('commit activity is fetched once and served from the ttl cache after', async () => {
-  const gh = await load();
-  let fetches = 0;
-  globalThis.fetch = async () => { fetches += 1; return res([{ week: 1, days: [1, 0, 0, 0, 0, 0, 0] }], { headers: RATE }); };
-  assert.deepEqual(await gh.commitActivity('o/r', 't'), [{ week: 1, days: [1, 0, 0, 0, 0, 0, 0] }]);
-  await gh.commitActivity('o/r', 't');
-  assert.equal(fetches, 1);
-});
-
-// GitHub computes these statistics lazily. A 202 is "ask again", and caching it would
-// leave a member showing an empty year until the entry aged out.
-test('a 202 is not cached, so the next load asks again instead of showing an empty year', async () => {
-  const gh = await load();
-  let fetches = 0;
-  globalThis.fetch = async () => { fetches += 1; return res(null, { status: 202, headers: RATE }); };
-  assert.equal(await gh.commitActivity('o/r', 't'), null);
-  await gh.commitActivity('o/r', 't');
-  assert.equal(fetches, 2);
-});
-
-// The graph is decoration, and decoration is what a tight budget goes without first.
-// It withholds rather than reading, and says `undefined` — which the row renders as
-// "not read", never as a repo that made no commits.
-test('a policy that forbids extras withholds the read rather than spending on it', async () => {
-  const gh = await load();
-  let fetches = 0;
-  globalThis.fetch = async () => { fetches += 1; return res([], { headers: RATE }); };
-  gh.setPolicy({ extras: false });
-  assert.equal(await gh.commitActivity('o/r', 't'), undefined);
-  assert.equal(fetches, 0);
-  assert.equal(gh.rate.withheld, 1);
-});
-
 // --- one runs URL, not two --------------------------------------------------------
 
 // The cache is keyed by URL, so a caller passing its own page size makes a second
-// entry for the same question: the fleet view asked for 30 and the repo view for 40,
-// and opening a member re-fetched the list the fleet page already held.
-test('both views ask for the same runs URL, so the second is a cache hit', async () => {
+// entry for the same question.
+test('a call with and without the page size asks the same runs URL, so the second is a cache hit', async () => {
   const gh = await load();
   const urls = [];
   globalThis.fetch = async (u) => {
     urls.push(String(u));
     return res({ workflow_runs: [] }, { headers: { ...RATE, etag: 'W/"a"' } });
   };
-  await gh.listRuns('o/r', 't');                     // as the fleet view calls it
-  await gh.listRuns('o/r', 't', gh.RUNS_PER_PAGE);   // as the repo view calls it
+  await gh.listRuns('o/r', 't');
+  await gh.listRuns('o/r', 't', gh.RUNS_PER_PAGE);
   assert.equal(urls[0], urls[1]);
   assert.match(urls[0], new RegExp(`per_page=${gh.RUNS_PER_PAGE}$`));
 });
@@ -353,7 +317,7 @@ test('both views ask for the same runs URL, so the second is a cache hit', async
 test('no caller overrides the shared runs page size', async () => {
   const dir = resolve(dirname(fileURLToPath(import.meta.url)), '..', 'src');
   const sources = (await readdir(dir, { recursive: true })).filter((f) => f.endsWith('.mjs'));
-  assert.ok(sources.some((f) => f.endsWith('view-fleet.mjs')), 'the scan reaches the views');
+  assert.ok(sources.some((f) => f.endsWith('view-repo.mjs')), 'the scan reaches the views');
   const offenders = [];
   for (const f of sources) {
     // Comments may quote a call; only code counts. `://` keeps a URL in a string whole.

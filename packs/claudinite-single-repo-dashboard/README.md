@@ -1,15 +1,9 @@
 <img src="badge.svg" width="24" height="24" alt=""> claudinite-single-repo-dashboard
 
-A read-only view of what a repo's — or a fleet's — Claudinite is doing: what is stuck,
-what is queued, what has run, and what the corpus has been costing and catching.
+A read-only view of what one repo's Claudinite is doing: what is stuck, what is queued,
+what has run, and what the corpus has been costing and catching.
 
-**Two modes, and a deployment states which one it is.** `mode` is `"repo"` — that
-repo's own page — or `"fleet"` — the overview across a roster. It is the one key with
-**no default**: the build refuses to publish a deployment that did not say, and refuses
-a mode that contradicts the rest of the config (`fleet` naming no `owner`, `repo`
-naming one).
-
-The end-state specification of both pages, the fields the fold gains for them and the
+The end-state specification of the page, the fields the fold gains for them and the
 visual identity is [docs/](docs/README.md); this file describes what a reader of the
 pages sees.
 
@@ -20,7 +14,7 @@ because someone declared it. Adopting it wires the GitHub Pages deploy.
 
 ```jsonc
 // .claudinite/settings.json — or the same declaration in YAML or TOML
-{ "packs": [{ "id": "claudinite-single-repo-dashboard", "config": { "mode": "repo" } }] }
+{ "packs": ["claudinite-single-repo-dashboard"] }
 ```
 
 That is the whole of it for a member: the dashboard covers this repo and publishes to
@@ -37,45 +31,33 @@ Everything else is optional `config` on the declaration:
 
 | Key | Default | What it buys |
 |---|---|---|
-| `mode` | **none — required** | `"repo"` or `"fleet"`. The build fails without it, and fails when it disagrees with `owner` |
-| `owner` | — | Whose repos this deployment covers. The page **enumerates them in the browser, as the viewer** — so this is a fleet deployment, and the fleet a person sees is exactly the fleet they can read. The way to build a fleet dashboard |
-| `exclude` | none | Repos under that owner that are not members (either `owner/name` or the bare name). Archived and forked repos leave by their own state |
 | `clientId`, `exchangeUrl` | — | **Legacy.** Both together turn on **Sign in with GitHub**, but they live as the repository variables `CLAUDINITE_DASHBOARD_CLIENT_ID` and `CLAUDINITE_DASHBOARD_EXCHANGE_URL` now; a declaration still carrying them is read as the fallback and the build says so |
 | `redirectUri` | the page's URL | Override when the callback differs |
-| `defaultRepo` | this repo | Which repo a single-repo deployment shows |
+| `defaultRepo` | this repo | Which repo the page shows when the URL names none (`?repo=owner/name` names one) |
 | `rates` | — | USD per **million** tokens, per model, per counter: `{ "claude-opus-5": { "in": 15, "cacheRead": 1.5, "out": 75 } }`. `cacheWrite` is optional and falls back to `in`. Unset is a supported deployment, not a broken one — every dollar figure then reads *unpriced* and names this key, and the token counts stand; a model the table does not name is an unpriced remainder, counted in tokens and never folded into the sum |
 
-`repos`, `rosterFile`, `rosterUrl` and `canonRepo` are **refused**: a build whose
-declaration carries one fails naming it, since a fleet is `owner` plus `exclude` and
-freshness comes from the fleet-roster (below), not from a canon.
+`owner`, `exclude`, `repos`, `rosterFile`, `rosterUrl` and `canonRepo` are **refused**,
+and so is any `mode` but `"repo"`: a build whose declaration carries one fails naming
+it and publishes nothing, since this page shows one repository and builds no fleet
+overview.
 
 The build reads the declaration out of `.claudinite/cache/member.GENERATED.json`, which
 the member's own `cn` writes from its settings in whichever format they are kept. A
 repo where that file is missing or does not read is refused, naming the file and
 `cn tasks flat --write`, the command that writes it.
 
-It has **two views**, and which one you land on is the URL:
-
-- **Fleet** — every member at once, worst first. What a deployment naming an `owner`
-  opens on.
-- **Repo** — one member's scheduler in full. Reached by clicking a member, or
-  `?repo=owner/name` directly.
-
-A deployment with one member (or none) goes straight to the repo view: a one-row
-fleet overview would be nothing but a click in the way.
-
 ## How the code is laid out
 
 ```
 src/index.html        the page; its one module script names ./src/app.mjs
-src/app.mjs           the shell — configure, authenticate, route between the two views
+src/app.mjs           the shell — configure, authenticate, route to the repo view
 src/derive/           pure: facts in, rows and figures out. No DOM, no fetch, no clock
                       it was not handed, so all of it is testable in plain Node
 src/read/             the I/O plane — the credential, the one GitHub client, its cache,
-                      the rate-limit policy and sweep order, the per-file readers
+                      the rate-limit policy, the per-file readers
 src/render/           the shared visual vocabulary and the drawing primitives
-src/views/            the two pages, which fetch through read/, derive through derive/
-                      and draw through render/
+src/views/            the page, which fetches through read/, derive through derive/
+                      and draws through render/
 tooling/              node-only: the dev server, the site build, the deployment-settings
                       reader, and the serverless sign-in source. Never published
 favicon.svg           served beside the page, at the pack root
@@ -99,8 +81,8 @@ served root while staging — a move rather than a copy, so no second, broken en
 left behind at `src/index.html`. A staged tree that skipped either step is caught by
 `the staged tree is the pack alone, with the root a redirect`.
 
-The layering runs one way: a view may reach any layer below it, and anything two views
-both need moves *down* rather than sideways. The one edge that crosses back is
+The layering runs one way: a view may reach any layer below it, and anything shared
+moves *down* rather than sideways. The one edge that crosses back is
 `read/contributions.mjs` reaching `render/ui.mjs` for `duration`, which its own header
 explains — the layout leaves that visible rather than hiding it.
 
@@ -119,7 +101,7 @@ node packs/claudinite-single-repo-dashboard/tooling/serve.mjs missingbulb/Claudi
 
 ## Two kinds of data, read two different ways
 
-Everything on both pages is one of two things, and the difference is the whole reason
+Everything on the page is one of two things, and the difference is the whole reason
 the page can afford what it shows.
 
 **What is true right now** is a live read, and there are few of them: the repo, its
@@ -198,238 +180,25 @@ This matters most where a number is a report card. "No session recorded its toke
 spend" and "the sessions were free" are different facts, and a page that draws them
 identically is worse than one that omits the panel.
 
-## The fleet view
-
-A fleet page answers a different question from the per-repo one. Per repo it is
-"what is this scheduler doing"; across a fleet it is **"where do I need to look"** —
-and a page that answers the first question twelve times over does not answer the
-second. So nothing on it is a total for its own sake.
-
-| Panel | Answers |
-|---|---|
-| **Start here** | The one piece of work most worth doing across every member, named with the issue to open and what it costs you — the worst thing true of the fleet, and a link rather than a count |
-| **What Claudinite did this week** | The work the machinery did that nobody had to do — this week against last, including the check findings caught inside sessions and what the corpus costs each of them |
-| **What the corpus is doing across the fleet** | The detail behind the block above, from each member's usage fold: workload this week against last, the two check scopes side by side, which rules actually fire, which skills load and which are mounted everywhere and never do, and one row per member. A member that does not fold is named and counted in nothing |
-| **Fleet activity** | What the fleet *did* per day — work closed by outcome, runs and their pass rate, **how often the checks ran and caught something**, and which members moved at all |
-| **Rollup tiles** | How many *members* need a human — not how many items exist |
-| **Members** | Every member ranked worst-first, in three column groups asked in the order a reader asks them: **Activity** (90 days of commits, as a weekly curve, with a second line for the commits that were genuine project work), **Waiting on a person** (an estimate in minutes, what it is made of, then issues and pull requests) and **Claudinite** (packs wearing the member's freshness from the fleet-roster, queue, outcomes, scheduler). Stars and CI ride in the member cell — they are how you recognise a row, not findings about it, and so do the state tags below |
-| **Tasks across the fleet** | One task, everywhere it runs — a shared pack's task parked in four members at once is a canon problem no single repo's page reveals |
-| **Pack adoption** | Which packs are in use and how widely — who a change to a pack would reach |
-| **What this deployment's packs report** | The fleet-scope cards, from the packs the deployment repo declares |
-
-Each member's row is followed by a **subrow** of what its own packs report — see
-[below](#what-a-pack-contributes).
-
-### The lead: what to do, before what happened
-
-Both pages open on the same block, because both were otherwise pages that only
-**report** — and a reader who came without a question in hand is asked by a wall of
-accurate panels to do the ranking themselves. [`next-work.mjs`](src/derive/next-work.mjs) does the
-ranking and names **one** piece of work: worst first, an issue ahead of a repo-level
-fault at the same severity because only the issue is something to open, and among equals
-the one that has been wrong longest.
-
-The card carries **what it costs you** beside the reason, because "one item is parked" is
-a fact and "fifteen minutes" is a decision about the next fifteen minutes. The figure is
-one term of the same sum the tiles total — the park's own rate, by what it asks of you
-([`PARK_MINUTES`](src/derive/fleet.mjs)) — so a card and a tile can never price one item
-differently. `next-work.mjs` holds no rates at all: a candidate carries the park's own
-classification and the view prices it. An approval is charged the floor of its rate,
-since no PR's size is read here, and the card says *at least*. Work the estimate does not
-cover — a scheduler fault, a recovery-rule trip — shows **no figure**, never a zero.
-
-It invents no judgement of its own. A candidate is the worst thing another module has
-already decided is wrong — an item's `troubles` (the queue's real recovery rules) or a
-member summary's `reasons` — so the block can never disagree with the row further down
-that says the same thing, and an `info`-level fact (a member one pack behind) is reported
-below and never prodded about. Mid-sweep the fleet's block says it is still reading:
-"nothing is waiting on you" read off four of forty members is a wrong statement rather
-than a partial one.
-
-### The roster is enumerated, not stored
-
-A fleet deployment names an `owner`, and the page lists that owner's repos **as the
-viewer**. So membership is decided at read time by what this person can actually see: a
-repo outside their access is not in their fleet, rather than being in it as a row they
-cannot open. No repo list is baked into any file, which is also why a fleet's numbers
-cannot leak from a shared artifact to someone without access to the repos behind them.
-
-**Every repo the viewer can see is on the page**, and only a fork is not — that is
-someone else's project, and its work is upstream's. An enumeration that could not be read
-is said out loud, never rendered as a fleet that happens to be empty.
-
-Out of the fleet is a **state**, not a filter: an archived repo, and one on the
-deployment's `exclude` list, are drawn greyed with their core GitHub facts and nothing
-else, and counted in no figure above the grid. They are on the page because a repo the
-reader cannot find at all is indistinguishable from one that is gone — and because each
-carries the one action that brings it back.
-
-### What KIND of member a row is — private, dormant, sleepy
-
-Three tags sit beside a member's name, and they are deliberately unalike:
-
-- **private** — GitHub's own flag, carried through untouched. Who can see a member is part
-  of recognising it.
-- **dormant** — the member's own declaration (`dormant` on its `claudinite-tasks` entry).
-  Its scheduler is stopped, so the page measures **neither its freshness nor its scheduler**
-  and no fleet-wide operation runs against it; the row says `dormant` where those two
-  verdicts would have sat, and the machine band's cells leave it out of their denominators
-  and name how many they left out. It is still a member: dormancy is about upkeep.
-- **sleepy** — nothing **meaningful** landed in the last 14 days. The test is the
-  claudinite-tasks pack's own `isSubstantiveCommit` over one page of the commit listing, so
-  a member reads quiet here exactly when its own preconditions read it quiet. It is **not**
-  dormancy: nobody declared it, it can change back tomorrow, and every fleet-wide operation
-  still reaches the repo. Drawn dashed for that reason.
-
-A member whose commit listing was not read (budget) is **unknown**, never sleepy: a repo
-nobody looked at and a repo nobody worked on are not the same fact. The one exclusion the
-cheap test cannot apply — a commit that touched only `.claudinite/` — is named on the tag's
-hover ([data-sources.md](docs/data-sources.md)).
-
-The chips above the grid filter it by those three states. "Which of my repos has nobody
-touched in a fortnight" is a morning question, and scanning a dozen rows for a dashed tag
-is not how it gets answered.
-
-### Three bands, and one thing to do per row
-
-The grid is the **fleet proper** ranked worst-first, then **Dormant** and **Out of the
-fleet**, each a collapsed band carrying its own count. Collapsed because those members are
-not being maintained and should not sit between the reader and the fleet; present because
-a page that hides them answers "where do I need to look" by pretending part of the account
-does not exist. Any filter opens the bands — a question about a state wants the rows, not
-a count.
-
-Every row ends in a **Next** cell, and what it offers follows the member's state, each a
-different kind of act:
-
-| Row | Next |
-|---|---|
-| archived | **Unarchive →**, GitHub's own settings page. Claudinite cannot undo an archive, and a button that pretended otherwise would send the reader somewhere that cannot work |
-| ignored | **Bring back — copy request**: the whole request to paste into a session, naming the repo and the `config.exclude` key. The enforcer's declaration is a file a person edits; this page reads it and must not write it |
-| dormant | **Wake — copy request**, the same shape against the member's own `claudinite-tasks` entry |
-| awake, something parked | **Advance #n →**, the member's own worst item, with the reason on the link |
-| awake, nothing parked | its open pull requests, else its open issues |
-| awake, nothing open | 🙂 — the one cell on this page that asks for nothing |
-
-A dormant row keeps its Claudinite columns and loses the **task-based delays**: no minutes
-estimate, no attention breakdown, and its queue as a plain count rather than a state mix.
-How many items are open there is an ordinary fact about the repo; which of them are
-blocked, ready or parked is the state of a queue that stopped, and colouring a row for
-delays the declaration asked for is exactly the nagging dormancy exists to prevent.
-
-### What only the members' own files can say
-
-Two figures used to be named as *absent* here, because nothing the page read could count
-them: how often each member's checks actually ran, and how much corpus each session is
-paying for. Both are in each member's usage file, which the sweep now reads at the head
-sha it already has — so both are panels rather than apologies.
-
-The same file carries the detail the benefits block only headlines, and the fleet is the
-one place it can be laid side by side: the `work` scope (the Stop hook, per turn) against
-the `world` scope (the full sweep wired into tests), each with its runs, catches, blocking
-and advisory volume and runner errors; the findings per rule, ranked; and the skill loads
-per skill against where each is mounted — the tree listing the sweep already holds says
-which `SKILL.md`s a member's declared packs mount, so a skill mounted in ten members and
-loaded in none is a fact no single repo's page can state. [`fleet-growth.mjs`](src/derive/fleet-growth.mjs)
-derives all of it; no read is added.
-
-A member with **no** usage file is named, never averaged in as a repo where nothing
-happens. That census is the same fact a fleet-wide aggregate would carry as
-`coverage.absent`, derived live from the members instead of stored in one file that
-shows everyone the whole fleet.
-
-Three rules shape it, and they are in [`fleet.mjs`](src/derive/fleet.mjs):
-
-**An estimate is published as an assumption, or not at all.** The Waiting group puts
-a number of minutes on each member, priced per park kind — the four parks are disjoint
-by remedy, and diagnosing a break is not merging a PR. The rates are exported constants
-and the page states the arithmetic in its own note, so the figure can be argued with
-rather than trusted. An approval is priced by the PR's size, which the page does not
-read: it charges the rate's floor and says so, which makes the total a lower bound
-rather than a guess that might be high.
-
-Two things are deliberately outside it, and both are still reported beside it: a broken
-scheduler, which is not a queue of work to get through, and a recovery-rule trip, which
-wears no label at all — it is derived from an item's age against the engine's leashes,
-and what clears it is the janitor or the next scheduler run rather than a person.
-
-**A count of members is not a description of the morning.** Every attention figure
-counts *members*, because "47 open items" is not a list anyone works through. But a
-member surfaces for one of several different reasons, and the rollup itemises which:
-three pull requests to approve and three broken task lanes are the same number and
-not the same day's work. The split comes from `summariseMember`, which already
-separates a failure park from an inbox park from an approval park; the tile reads it
-rather than re-merging it into one word.
-
-**Attention is earned, not counted.** A member surfaces because something is *true*
-of it — an item parked, a leash blown, a scheduler failing, a mount that stopped
-converging — and each arrives as a reason with a severity, never as a number to be
-summed. One parked item outranks forty healthy work items.
-
-**Absence is a state.** A member that does not run Claudinite, one you cannot read,
-and one that is running fine are three different answers and never collapse into
-"0". Not being able to see a repo is a permissions fact reported quietly, not an
-alarm competing with a genuinely broken member.
-
-**One member's failure is one row's problem.** Every member is summarised
-independently, so a private repo or a rate-limit stumble becomes a row that says so
-rather than a blank page.
-
-**A healthy fleet and a dead one look identical to a fault-finder.** Every panel that
-answers "where do I need to look" reads zero after a good week — and after a month of
-nobody touching anything. So two panels answer the other question instead. **Fleet
-activity** plots what happened per day: work closed by outcome, scheduler runs and
-their pass rate, and which members moved at all. Above them, **what Claudinite did
-this week** counts the work nobody had to do — completed items, how many of those
-closed with nobody in the loop, how many did need a person — this week against last.
-
-Two rules keep that block honest, and they are why some obvious figures are missing
-from it. **No vanity total**: every figure is bounded by a window, because a number
-that only grows says nothing about today. **Nothing invented**: no estimated hours
-saved, no score. Checks enforced are not there because no read this page makes can
-count them, and a plausible guess in a tile is worse than a gap.
-
-Every figure in both panels comes from reads the page already makes — the issue page,
-the runs list, and the head commit whose date arrives with the sha the cache is keyed
-by. What that costs is depth rather than requests: one issue page and thirty runs do
-not reach back a fortnight on a busy member, so each series states the day before
-which it is a floor rather than a count.
-
-Two signals are visible *only* here, because no single repo's page has the
-comparison:
-
-- **Freshness** — whether each member holds what its own update would move it to,
-  read off the fleet-roster artifact the deployment's `fleet-roster` task publishes
-  (`.claudinite/fleet/roster.GENERATED.json`, one verdict per member) rather than priced
-  in the browser. *Behind* is routine, the nightly update lands it; *no stamp* and *no
-  scheduler* are warnings, since nothing would ever converge such a member; a Node
-  member is shown as one and not compared. A deployment that runs no fleet-roster has
-  no artifact, and every member's freshness then reads *unknown*, saying why, rather
-  than being guessed.
-- **A scheduler that never ran** — a member that declares tasks and has never
-  produced a work item is not idle, it is unwired. Every per-repo number for it is a
-  perfectly healthy zero.
-
 ## What a pack contributes
 
 Every panel above is this pack's own. These are what a member's **other** packs have to
 say about it — `git-github` the repo's stars, a release pack its last release, a spec
 pack the requirements that moved. The contract in one line: **a pack contributes data,
-never code** — the page executes nothing a pack ships, because the fleet view renders
-repos the viewer merely has read access to, and importing their modules would run every
-member's code in the viewer's browser with the viewer's token in scope.
+never code** — the page executes nothing a pack ships, because it renders a repo the
+viewer may merely have read access to, and importing its modules would run that repo's
+code in the viewer's browser with the viewer's token in scope.
 
 A contributing pack ships one file, `packs/<id>/dashboard.json`, validated by
 [the schema beside this one](dashboard-descriptor.schema.json) and found **by that path**
 — nothing registers it, so adding a descriptor is the whole change. It declares the
-pack's widgets once, and the two views select from that list by id:
+pack's widgets once, and the repo page selects from that list by id:
 
 ```jsonc
 {
   "widgets": [{ "id": "stars", "kind": "stat", "label": "stars", "noun": "stars",
                 "glyph": "★", "source": "repo-stars" }],
-  "repo": ["stars"],
-  "fleet": { "member": "stars" }
+  "repo": ["stars"]
 }
 ```
 
@@ -440,19 +209,11 @@ named things). There is deliberately no shape a growing cumulative total fits.
 Values come from one of three **sources**. `generated` reads the pack's own
 `.claudinite/usage/<pack>-dashboard-values.json`, written by that pack's own task;
 `latest-release` and `repo-stars` are platform facts this page already reads for every
-member, so a pack using one ships a descriptor and no code at all.
+repo, so a pack using one ships a descriptor and no code at all.
 
-**On the fleet grid a card is a phrase, not a chip.** The page composes it from the
-parts the pack supplied — `★ 18 stars`, `5d ago · v1.33.102 live`, `12 reqs in last 2w` —
-and sets the quantity, the noun and the connective in three different registers, which
-is the reason the contract takes values rather than a finished string. Every card a
-member has renders in full: there is no `+n`, and nothing whose only content is that
-some pack has something to say. A `list` is the one kind that cannot be a line.
-
-Two things a pack cannot do. It cannot **colour** its own card — colour on that grid is
-the engine's severity edge, and a pack that could paint itself red would be claiming
-attention it did not earn — and it cannot reach the **ranking**: contributions never
-feed attention, member ordering or the rollup tiles.
+A pack cannot **colour** its own card — colour on the page is the engine's severity
+edge, and a pack that could paint itself red would be claiming attention it did not
+earn — and contributions never feed the work ranking or the at-a-glance tiles.
 
 Costs are the same shape as everything else here: discovery is free (the declaration
 and the tree listing are already in hand), the descriptor and values are content at a
@@ -489,8 +250,8 @@ with it; clearing the cache does not sign you out.
 
 Everything that belongs to the viewer rather than to the view — who they are, the rate
 budget, **Reload**, **Clear cache**, **Sign out** and the note on how this page reads a
-repo — sits behind the avatar in the topbar, so the fleet and repo screens carry no
-account chrome at all.
+repo — sits behind the avatar in the topbar, so the page itself carries no account
+chrome at all.
 
 ### What each credential is worth
 
@@ -503,17 +264,17 @@ The reason sign-in is not a nicety. GitHub's limits, per hour:
 | a GitHub App *installation* token | 5,000 minimum, up to 12,500 by size |
 | an Actions `GITHUB_TOKEN` | 1,000, per repository |
 
-A twelve-member sweep costs around 85 requests cold — so 5,000/hour is not an
-optimisation over the anonymous 60, it is 83×. There is
+A cold repo page costs 14 requests — so the anonymous 60 is four loads an hour, and
+5,000/hour is not an optimisation over it, it is 83×. There is
 no higher tier available to a page that runs as its viewer: an installation token
 would raise the ceiling, but only by putting a shared credential behind a backend,
 which would show every viewer everything that app can see. That is a different
 product, not a bigger limit.
 
-### Who has to register the app — one owner, not one fleet
+### Who has to register the app — one owner
 
-Sign-in belongs to **whoever owns the deployment**, and it is not inheritable. A
-fleet's second, fifth and tenth dashboard reuse one registration: a GitHub App holds
+Sign-in belongs to **whoever owns the deployment**, and it is not inheritable. An
+owner's second, fifth and tenth dashboard reuse one registration: a GitHub App holds
 up to ten redirect URIs, and with wildcard matching a single `https://<user>.github.io/`
 covers every project Pages site on that host, so a new deployment only copies the two
 config keys.
@@ -524,7 +285,7 @@ A **different** owner cannot reuse it, and the reason is not policy but mechanis
   of the organization that owns it can authorize it" — a stranger cannot even sign in;
 - making it public lets anyone authorize it, but a user access token "can only access
   resources that both the user and app can access", so until they install that App on
-  their own account every member row still reads *not visible to you*;
+  their own account every repo still reads *not visible to you*;
 - and if they did install it, their redirect URI would have to live in someone else's
   App and their tokens would be minted by someone else's endpoint. That is a trust
   relationship, not a configuration.
@@ -572,7 +333,7 @@ matching permits the project pages beneath it, and sign-in returns to the dashbo
 URL rather than to the root. The two Cloudflare credentials are the
 [deploy task](tasks/deploy-oauth-exchange/README.md)'s, which says why the API token is
 that narrow. The App is installed per *account*, not per repo — a user token reaches only what
-it is installed on, so an uninstalled account renders every member row as *not visible to
+it is installed on, so a repo under an uninstalled account renders as *not visible to
 you*. Wildcard matching on the `github.io` root covers every project Pages site on that
 host, so one App serves every dashboard you own. The sign-in pair are repository
 variables rather than config or secrets: they are what you set while standing in the
@@ -598,7 +359,7 @@ implementation. It sees one code, returns one token, and never touches repo data
 
 ## Caching
 
-A fleet view is only affordable because most of what it reads does not change.
+A reload is only free because most of what the page reads does not change.
 Three strategies, because the data has three shapes — see
 [`cache.mjs`](src/read/cache.mjs):
 
@@ -608,12 +369,6 @@ Three strategies, because the data has three shapes — see
 | Open items, runs, repo metadata | **ETag** revalidation | a `304` is free — it does not count against the rate limit, so this is fresh data at no cost |
 | Closed-issue history pages | **24h TTL** | settled, but not addressable by a sha |
 | Merged pull requests, 14 days | kept in the projection above | the lead-time series for the days the fold has not reached — they arrive in the issues listing the page already fetches, so the viewer makes no new request, and the body is still dropped once the issue it closes has been read out of it |
-| A member's year of commit activity | **6h TTL**, and skipped entirely below `tight` | the only read here that is decoration; a few hours old is the same answer, and a tight budget goes without it before it goes without a queue |
-
-The **commit curve** is drawn by week, not by day. Ninety daily points across a table
-column is a sawtooth of weekends and Tuesdays, and a sawtooth has no shape to read —
-which is the whole reason the column exists rather than the single date it replaced.
-The daily counts are kept: they are the total, the peak and the hover.
 
 A fourth thing decides how hard those three are leaned on: **the budget policy**
 ([`budget.mjs`](src/read/budget.mjs)), planned before a load starts and re-planned on every
@@ -624,7 +379,7 @@ primary budget but is still a request, and a cold entry has nothing to revalidat
 |---|---|---|
 | 20 loads or more | `live` | everything revalidated — today's behaviour |
 | 6–20 | `tight` | anything read in the last 5m is served with no request |
-| 1–6 | `low` | …in the last 30m, and the commit graphs are not read at all |
+| 1–6 | `low` | …in the last 30m |
 | under 1 | `scarce` | …until the rate limit resets, and the spend stops short of the viewer's last requests |
 | spent | `frozen` | no requests at all; the page serves what it has and says so |
 
@@ -632,38 +387,10 @@ The rung that matters is `scarce`: the staleness floor reaches the **reset**, so
 full page refresh costs nothing until the window rolls. Three supporting pieces make
 that hold up — the free `GET /rate_limit` preflight and a budget carried across page
 loads (so a fresh tab plans before it spends rather than learning the limit by hitting
-it), and a latch on a `403`/`429` with nothing left (so eleven more members do not each
-spend a request discovering the same thing; requests *made* are what the secondary
+it), and a latch on a `403`/`429` with nothing left (so the rest of the load does not
+spend a request per read discovering the same thing; requests *made* are what the secondary
 limit counts). A withheld read is its own state everywhere it surfaces — a row that
 says the page declined to spend, never one that says the repo is broken.
-
-### The sweep reads the fleet sideways
-
-The ladder above decides *how much* a load may spend. What decides where that money
-goes when it runs out is the order the fleet is read in — and that order is
-**horizontal**: every member through one pass before any member starts the next
-([`fleet-sweep.mjs`](src/read/fleet-sweep.mjs)), cheapest and most load-bearing first.
-
-| Pass | What it reads | What it buys |
-|---|---|---|
-| identity | repo, head, the member file (a Node member's settings file where there is none) | what this repo is, and whether it runs Claudinite at all — the only four calls a non-member ever costs |
-| attention | one issues page, one runs page | every fault a row can report: the lead card, the tiles, the ranking |
-| depth | the tree, the member's usage fold | declared tasks, and the month behind each row's figures |
-| packs | each declared pack's descriptor and values | the member's own cards, plus `latest-release` where a pack asks for it |
-| activity | a year of commit activity | the row's graph, and nothing else |
-
-Read a member end to end before starting the next and the budget is spent
-depth-first: the first members get their commit graphs before the last members have
-been looked at at all. A viewer then reads "nothing is on fire" off a fleet the page
-never finished reading, and the members it never reached are the ones it cannot tell
-from healthy. Sideways, the same shortfall costs the graphs on *every* row instead —
-a fleet missing its decoration still answers "where do I need to look".
-
-It is also why the page becomes useful where it does: the moment the attention pass
-clears the roster, every tile counts the whole fleet and every row is ranked, with
-three passes' worth of columns still filling in behind them. The progress line says
-which of the two states it is in, because "40 repos read" over a table still growing
-columns claims a completeness the page does not have yet.
 
 Measured on this repo, cold versus warm: **21 requests → 4**, and the warm load
 spends **zero** rate limit (its four requests are all 304s). The open queue is still
@@ -671,7 +398,7 @@ never stale — only settled history ages.
 
 Stored payloads are compact projections, not API responses: a closed item's body is
 dropped and an open one's truncated past its scheduling fields, because
-`localStorage` gives about 5MB and a fleet's raw issue JSON is far more. A full
+`localStorage` gives about 5MB and a busy repo's raw issue JSON is far more. A full
 quota degrades to "uncached", never to an error. **Clear cache** forces a cold read.
 
 ## How publishing works
@@ -690,8 +417,8 @@ push to, so the workflow is frozen at adoption and nothing in it can need to cha
 - **The staged tree keeps the pack's place**, publishing at
   `/packs/claudinite-single-repo-dashboard/` with the root as a redirect, so a deployment's URL is
   the same whichever build produced it.
-- **The build refuses rather than guessing**: a declaration with no `mode`, a mode
-  that contradicts `owner`, or a retired key fails it, and nothing is published.
+- **The build refuses rather than guessing**: a declaration carrying a fleet key or a
+  `mode` other than `"repo"` fails it, and nothing is published.
 
 The build is inert in one case alone, the pack present without its page: it exits clean
 with no `_site`, and the task publishes nothing rather than replacing a working site
@@ -705,7 +432,7 @@ never talks to GitHub.
 The queue's vocabulary — labels, the title grammar, the leash constants, the body
 fields — is the engine's, which a browser cannot import. The page reads it from its own
 [`queue-vocabulary.mjs`](src/read/queue-vocabulary.mjs), and everything it computes over
-that vocabulary — the anchor arithmetic, the substantive-commit test, dormancy, the
+that vocabulary — the anchor arithmetic, dormancy, the
 declaration text reader, the closing-issue parse — is likewise its own copy under `src/`,
 because packs share no code. Each copy is held to the engine by a drift-guard test that
 runs both over the same inputs through `cn tasks`.
@@ -725,7 +452,7 @@ tool hardcodes no queue label outside its vocabulary copy.
 - **Declaration fields are lifted as text**, because there is nothing to `import`
   when reading another repo over the API. A field it cannot read renders *unknown*
   and is never defaulted — a confident wrong cadence would move a next-anchor the
-  roster is read for.
+  work table is read for.
 - **The past-data half is only as fresh as the repo's last fold**, which the footer
   states separately from this load's own time. A repo that folds nothing has no past
   half at all, and the panels that wanted it say which task writes the file.

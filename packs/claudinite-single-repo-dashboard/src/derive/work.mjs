@@ -28,8 +28,8 @@ import { PARKED } from './model.mjs';
 
 export const VIEWS = Object.freeze(['stuck', 'pending', 'all']);
 
-// The severity ladder, worst first — the same words and the same order the fleet page
-// ranks members by, so a reader moving between the two pages is reading one scale.
+// The severity ladder, worst first — the same words and the same order `next-work.mjs`
+// ranks by, so the block and the table read one scale.
 const LEVELS = ['critical', 'serious', 'warning', 'info', 'ok'];
 const levelRank = (l) => {
   const i = LEVELS.indexOf(l);
@@ -150,9 +150,8 @@ export const defaultView = (counts) => (counts.stuck ? 'stuck' : counts.pending 
 
 // --- what is waiting on a person ----------------------------------------------------
 
-// The park split, in the vocabulary the fleet page's estimate already speaks. Kept here
-// rather than recomputed in the view so the repo page's minutes and the fleet row's
-// minutes are the same arithmetic over the same definitions.
+// The park split, kept here rather than recomputed in the view so every figure counting
+// a person's minutes is the same arithmetic over the same definitions.
 export function attentionOf(open) {
   const parked = open.filter((i) => i.state === PARKED);
   return {

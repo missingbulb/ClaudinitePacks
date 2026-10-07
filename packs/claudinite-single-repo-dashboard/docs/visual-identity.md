@@ -3,9 +3,8 @@
 The product is a scheduler that keeps a ledger against a rulebook, and the page is opened
 once a day by its only reader. So it is drawn as the thing it is: **one ruled sheet**, a stub
 column, entries in a typewriter mono, totals under a double rule, a timetable for the days
-ahead. Cool paper, cool ink; warmth only where a person is addressed. The committed drawings
-are [mocks/fleet.html](mocks/fleet.html) and [mocks/repo.html](mocks/repo.html), and their
-`:root` blocks are the tokens below.
+ahead. Cool paper, cool ink; warmth only where a person is addressed. The committed drawing
+is [mocks/repo.html](mocks/repo.html), and its `:root` block is the tokens below.
 
 ## Palette
 
@@ -61,7 +60,7 @@ The unit sits in the text column, never on the figure's baseline.
 ## Layout
 
 - **One sheet.** The top block is a single ruled surface with a **112 px stub column** naming
-  its bands — START HERE · THE MACHINE · THIS WEEK · PULSE, then MEMBERS or WORK — each stub
+  its bands — START HERE · THE MACHINE · THIS WEEK · PULSE, then WORK — each stub
   with the band's question in small italics beneath. Bands are separated by rules of two
   weights (`--rule` between bands, `--ledger` within), totals sit under a **double rule**
   (`3px double var(--ledger)`), and the board is the same sheet continued: its day columns
@@ -88,7 +87,7 @@ before it reads a word.
 ## The delta-tint rule
 
 A signed delta is set in `--ink-2` unless the figure's own *bad when* rule (stated in
-[fleet-page.md](fleet-page.md) and [repo-page.md](repo-page.md)) fires; then, and only then,
+[repo-page.md](repo-page.md)) fires; then, and only then,
 it takes `--serious-text`. A merely-down week and a merely-up lead time under its bar are
 figures, not verdicts. A good move is never coloured — nothing green needs a person — and the
 critical hue is never spent on a delta, so the one critical square on the sheet (a member
@@ -151,8 +150,8 @@ Distilled from the design reviews; each is a line a change can be held to.
    person. Nothing else on the page is warm unless it is broken.
 3. **Critical is scarce.** It marks *broken* and *never ran*; it never marks a slower week,
    an old PR or an ordinary park.
-4. **One large object per page.** The pulse is the fleet page's one chart at readable size;
-   the board is the repo page's. Nothing else competes for ink.
+4. **One large object per page.** The board is the repo page's. Nothing else competes for
+   ink.
 5. **One sheet, no cards.** A new panel is a band with a stub, not a bordered box; a detail
    is a ruled table under a double rule.
 6. **Figures in mono, words in the text face.** Every number, id, time, delta and command is

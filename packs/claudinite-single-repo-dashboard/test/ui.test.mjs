@@ -19,84 +19,14 @@ class FakeEl {
   }
 }
 
-let leadCard;
 let refNodes;
 let reasonNodes;
 let queueUrl;
-let attentionMark;
 
 before(async () => {
   globalThis.document = { createElement: (tag) => new FakeEl(tag) };
-  ({ leadCard, refNodes, reasonNodes, queueUrl, attentionMark } = await import('../src/render/ui.mjs'));
+  ({ refNodes, reasonNodes, queueUrl } = await import('../src/render/ui.mjs'));
 });
-
-const candidate = (over = {}) => ({
-  kind: 'item',
-  repo: 'an-owner/TicketWatch',
-  level: 'critical',
-  why: 'parked broken — a run to diagnose',
-  more: [],
-  number: 42,
-  title: '[claudinite-work] acme-pack/baselining',
-  key: 'acme-pack/baselining',
-  idleMs: 3 * 86400e3,
-  park: { blocking: true, triage: null },
-  url: 'https://github.com/an-owner/TicketWatch/issues/42',
-  ...over,
-});
-
-test('the card names the work, its repo and the issue to open', () => {
-  const card = leadCard(candidate());
-  assert.match(card.className, /lvl-critical/);
-  assert.match(card.text, /parked broken/);
-  assert.match(card.text, /an-owner\/TicketWatch/);
-  assert.match(card.text, /#42/);
-  assert.equal(card.find('lead-act')[0].href, 'https://github.com/an-owner/TicketWatch/issues/42');
-});
-
-test('how long it has been wrong is said, when the item knows', () => {
-  assert.match(leadCard(candidate()).text, /untouched for 3d/);
-  assert.doesNotMatch(leadCard(candidate({ idleMs: null })).text, /untouched/);
-});
-
-test('a repo-level fault opens the repo, since there is no issue to open', () => {
-  const card = leadCard(candidate({
-    kind: 'repo', number: null, title: null, key: null, idleMs: null,
-    why: 'scheduler last run failed', url: 'https://github.com/an-owner/TicketWatch',
-  }));
-  assert.equal(card.find('lead-act')[0].textContent, 'Open the repo');
-  assert.doesNotMatch(card.text, /#/);
-});
-
-test('what it costs a person is on the card, in its own slot', () => {
-  const card = leadCard(candidate(), { minutes: 15 });
-  assert.equal(card.find('lead-est')[0].text, '15 minof your time');
-});
-
-test('a figure the caller had to disclaim says so on the card', () => {
-  const card = leadCard(candidate(), { minutes: 1, note: 'PR size unread, so a lower bound' });
-  assert.match(card.find('lead-est')[0].text, /at least/);
-});
-
-test('work nothing measures shows no figure rather than a zero', () => {
-  const est = leadCard(candidate()).find('lead-est')[0];
-  assert.match(est.className, /none/);
-  assert.match(est.text, /no time estimate/);
-  assert.doesNotMatch(est.text, /\b0\b/);
-});
-
-test('what is behind the one is a count, never a second block of work', () => {
-  assert.match(leadCard(candidate(), { rest: 4 }).text, /4 more after this one/);
-  assert.doesNotMatch(leadCard(candidate(), { rest: 0 }).text, /more after/);
-});
-
-test('nothing to prod about is its own card, and it is not coloured as a fault', () => {
-  const card = leadCard(null);
-  assert.match(card.className, /lvl-ok/);
-  assert.match(card.text, /Nothing is waiting on you/);
-});
-
-// --- the linkifier -----------------------------------------------------------------
 
 test('every #N in a sentence comes back as an anchor, and the prose between them survives', () => {
   const nodes = refNodes('an-owner/TicketWatch', 'blocked by #12, #13');
@@ -131,7 +61,7 @@ test('a warning that names the items holding a task links each of them', () => {
   ]);
 });
 
-test('the fleet page passes no repo, and a number stays text rather than a link to nowhere', () => {
+test('with no repo, a number stays text rather than a link to nowhere', () => {
   const [span] = reasonNodes([{ level: 'critical', text: '2 items parked broken, #12 the worst' }]);
   assert.match(span.text, /2 items parked broken, #12 the worst/);
   assert.equal(span.children.filter((c) => typeof c !== 'string').length, 0);
@@ -161,46 +91,6 @@ test('a candidate with no number of its own is not in the search, and a queue of
   assert.equal(queueUrl([{ repo: 'an-owner/TicketWatch', number: null }]), null);
   assert.equal(queueUrl([]), null);
   assert.match(queueUrl([{ repo: 'a/b', number: null }, { repo: 'a/b', number: 7 }]), /issues\?q=is%3Aissue\+state%3Aopen\+7$/);
-});
-
-// --- the attention mark -----------------------------------------------------------
-
-// The grid's Waiting cell. Prose here cost the whole table its shape, so the sentences
-// move to the hover and the cell keeps a bar and one line.
-const needs = [
-  { kind: 'broken', level: 'critical', count: 2, short: 'broken', text: '2 tasks broken' },
-  { kind: 'decisions', level: 'serious', count: 4, short: 'decisions', text: '4 items needing a decision' },
-  { kind: 'actions', level: 'serious', count: 9, short: 'actions', text: '9 items needing something changed outside the code' },
-  { kind: 'approvals', level: 'warning', count: 1, short: 'approval', text: '1 item needing approval' },
-];
-
-test('the mark says how much of what on one line, not in a paragraph', () => {
-  const mark = attentionMark(needs);
-  assert.equal(mark.find('sub')[0].textContent, '2 broken · 4 decisions · 9 actions · 1 approval');
-});
-
-// A bar segment per LEVEL, not per kind: two serious kinds drawn as two adjacent
-// segments of the same colour is a boundary that means nothing. The line below names
-// the kinds, which is where that distinction actually survives.
-test('the bar weighs the levels, worst first, and merges the kinds inside one', () => {
-  const bars = attentionMark(needs).find('bar');
-  assert.equal(bars.length, 1);
-  assert.deepEqual(bars[0].children.map((i) => i.title), ['2 critical', '13 serious', '1 warning']);
-});
-
-// The sentences are not deleted, only moved. Losing them would leave the reader with
-// "9 actions" and nowhere to find out what an action is.
-test('the full sentences are on the mark itself, so nothing is lost to the fold', () => {
-  assert.equal(
-    attentionMark(needs).title,
-    '2 tasks broken\n4 items needing a decision\n9 items needing something changed outside the code\n1 item needing approval',
-  );
-});
-
-test('a member with nothing waiting says so, and draws no bar', () => {
-  const mark = attentionMark([]);
-  assert.equal(mark.find('bar').length, 0);
-  assert.match(mark.text, /nothing waiting/);
 });
 
 // --- the column chart's scale ---------------------------------------------------------

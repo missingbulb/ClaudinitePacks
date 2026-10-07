@@ -6,10 +6,10 @@
 // calls api.github.com as that person, so a repo they cannot read stays unreadable
 // and this page grants no access anyone did not already have.
 //
-// Caching is not an optimisation here, it is what makes a fleet view viable: see
+// Caching is not an optimisation here, it is what makes the page viable: see
 // `cache.mjs` for why the three strategies differ. The rate-limit accounting below
 // distinguishes calls that SPENT budget from 304s that did not, because "how much
-// did that cost" is the question a viewer asks when a fleet sweep feels slow.
+// did that cost" is the question a viewer asks when a load feels slow.
 
 import {
   immutable, validated, ageing, rateState, projectIssue, projectPull, projectRun,
@@ -31,8 +31,8 @@ export const rate = {
 export const resetCounters = () => { rate.spent = 0; rate.revalidated = 0; rate.served = 0; rate.withheld = 0; };
 
 // Told whenever GitHub restates the budget, so a display of it can be the LIVE figure
-// rather than the one the load was planned on. A fleet sweep spends over the seconds
-// it runs, and a readout taken before those reads answers "how many calls have I
+// rather than the one the load was planned on. A load spends over the seconds it
+// runs, and a readout taken before those reads answers "how many calls have I
 // left" as of before everything that would change the answer.
 let onRate = null;
 export const onRateChange = (fn) => { onRate = fn; };
@@ -116,8 +116,8 @@ function noteRate(res) {
 
 // The one call GitHub does not charge for: `/rate_limit` reports the budget without
 // spending any of it. Asked once at boot so the FIRST load of a tab is planned on the
-// real number rather than on a guess — which is the whole difference between a fleet
-// sweep that fits in an anonymous 60 and one that dies a third of the way through.
+// real number rather than on a guess — which is the whole difference between a load
+// that fits the budget and one that dies a third of the way through.
 export async function preflightRate(token) {
   try {
     const res = await raw('/rate_limit', { token });
@@ -190,9 +190,8 @@ async function conditional(path, token, { transform = (x) => x } = {}) {
 
 export const getRepo = (repo, token) =>
   conditional(`/repos/${repo}`, token, {
-    // `stargazers_count` rides along in a response the page already makes: what KIND
-    // of repo this is belongs in the fleet row's Status group, and asking separately
-    // for it would be a per-member call the budget does not have.
+    // `stargazers_count` rides along in a response the page already makes: asking
+    // separately for it would be a call the budget does not have.
     transform: (r) => ({
       default_branch: r.default_branch, private: r.private, full_name: r.full_name,
       stars: r.stargazers_count ?? null, archived: Boolean(r.archived),
@@ -203,8 +202,7 @@ export const getRepo = (repo, token) =>
 // off. One cheap call buys the right to skip every content read when nothing landed.
 //
 // Its DATE is kept alongside the sha because the same response already carries it:
-// "when did this repo last move" is a fleet question that would otherwise cost a
-// per-member call, and a read already made is the only kind #995's budget allows.
+// "when did this repo last move" would otherwise cost a call of its own, and a read already made is the only kind #995's budget allows.
 export const getHead = (repo, branch, token) =>
   conditional(`/repos/${repo}/commits/${encodeURIComponent(branch)}`, token, {
     transform: (c) => ({ sha: c.sha, committedAt: c.commit?.committer?.date ?? c.commit?.author?.date ?? null }),
@@ -217,7 +215,7 @@ export const getHeadSha = async (repo, branch, token) => (await getHead(repo, br
 // call each on a cold cache and zero on a warm one.
 //
 // 404 is an ANSWER, not a failure — an unadopted repo has no declaration file — and
-// it is cached as such, so a fleet sweep does not re-ask every member every time.
+// it is cached as such, so a load does not re-ask it every time.
 export async function getTextAtSha(repo, sha, path, token) {
   const hit = immutable.get(repo, sha, path);
   if (hit !== undefined) { rate.served += 1; return hit; }
@@ -260,9 +258,8 @@ export async function listTreeAtSha(repo, sha, token) {
 // is therefore carried alongside the projection, cached and all.
 //
 // The PRs are not thrown away either, and there are now two reasons to keep one: an
-// OPEN pull request is work waiting on a person, which is what the fleet row's Work
-// group reports, and a MERGED one inside the window is the lead-time series for the
-// days the fold has not reached yet. Both arrive in a response the page was making
+// OPEN pull request is work waiting on a person, and a MERGED one inside the window
+// is the lead-time series for the days the fold has not reached yet. Both arrive in a response the page was making
 // anyway, and everything the page reads out of a PR body — the issue it closes — is
 // parsed on the way in, so the body itself is still never stored.
 //
@@ -286,7 +283,7 @@ const projectPage = (body, at = Date.now()) => {
 };
 
 // What is open RIGHT NOW, asked as its own question. Conditional on every page, so a
-// fleet load where nothing moved spends nothing and a load where something did is
+// load where nothing moved spends nothing and a load where something did is
 // correct — which is the trade the history pages cannot make.
 //
 // `complete` is what licenses a caller to read ABSENCE as closed: a listing cut short
@@ -427,11 +424,9 @@ export async function listIssues(repo, token, { pages = 5, perPage = 100, histor
   };
 }
 
-// How many runs a caller asks for. ONE number for both views, because the cache is
+// How many runs a caller asks for. ONE number for every caller, because the cache is
 // keyed by URL: asking for 30 here and 40 there makes two entries for one question,
-// so opening a member from the fleet page re-fetched a list it already held and kept
-// a second near-identical copy in a ~5MB quota. Whatever depth the deeper view needs
-// is what the shallower one asks for too.
+// a second near-identical copy in a ~5MB quota.
 export const RUNS_PER_PAGE = 40;
 
 export const listRuns = (repo, token, perPage = RUNS_PER_PAGE) =>
@@ -439,51 +434,16 @@ export const listRuns = (repo, token, perPage = RUNS_PER_PAGE) =>
     transform: (r) => (r.workflow_runs ?? []).map(projectRun),
   });
 
-// A year of daily commit counts in one response — 52 weeks, each with its 7 days.
-// The fleet row's commit graph is the only reader, and reading it any other way costs
-// a pagination loop over `/commits` per member.
-//
-// Cached on a TTL rather than revalidated, because it is the one read here that is
-// DECORATION: it says how busy a repo has been, and a few hours old is the same
-// answer. Under budget pressure it is not read at all — `withheld` is a state the
-// graph renders as "not read", never as a quiet repo.
-//
-// GitHub computes these statistics lazily and answers `202` with an empty body while
-// it does. That is "ask again later", not "no commits": it is returned as null and
-// NOT cached, so the next load asks again instead of showing an empty year.
-export const COMMIT_ACTIVITY_TTL = 6 * 3600e3;
-
-export async function commitActivity(repo, token) {
-  const ck = `commit-activity:${repo}`;
-  const hit = ageing.get(ck, COMMIT_ACTIVITY_TTL);
-  if (hit !== undefined) { rate.served += 1; return hit; }
-
-  if (frozen() || !budgetLeft() || !policy.extras) { rate.withheld += 1; return undefined; }
-
-  const path = `/repos/${repo}/stats/commit_activity`;
-  const res = await raw(path, { token });
-  rate.spent += 1;
-  if (res.status === 202) return null;               // still being computed — ask again next load
-  if (res.status === 204) { ageing.set(ck, []); return []; }   // a repo with no commits at all
-  if (!res.ok) throw await fail(res, path);
-  const weeks = (await res.json()) ?? [];
-  const out = Array.isArray(weeks)
-    ? weeks.map((w) => ({ week: w.week, days: Array.isArray(w.days) ? w.days : [] }))
-    : [];
-  ageing.set(ck, out);
-  return out;
-}
-
 // The repo's latest release — the one platform fact a release pack wants that no file
 // in its tree carries and no task should have to mirror.
 //
 // TTL-cached rather than ETag-revalidated, and the reason is the NEGATIVE: `conditional`
-// throws on a 404 and caches nothing, so a fleet of repos that have never released
-// would spend one request each, every load, forever. A repo with no releases is an
+// throws on a 404 and caches nothing, so a repo that has never released would
+// spend one request every load, forever. A repo with no releases is an
 // ANSWER (`null`) and is cached as one, exactly as a missing declaration file is.
 //
-// DECORATION by the budget's reckoning, as the commit graphs are: it is the only
-// per-member REQUEST pack contributions add, so it withholds itself before anything
+// DECORATION by the budget's reckoning: it is the only REQUEST pack contributions
+// add, so it withholds itself before anything
 // the queue depends on. A withheld read answers `undefined` — not read — which is
 // never the same as the `null` above.
 export const LATEST_RELEASE_TTL = 6 * 3600e3;
@@ -510,90 +470,11 @@ export async function latestRelease(repo, token) {
   return out;
 }
 
-// The default branch's commits in a window, as the LISTING gives them: sha, date,
-// message and the author's login. That is exactly what the substantive-commit test
-// needs bar one exclusion — the corpus-only one, which reads each commit's file list
-// and would cost a request per commit — so the classification made from this is the
-// cheap one, and `fleet.mjs` states the gap rather than implying the full test ran.
-//
-// One page, so a member that landed more than `per_page` commits in the window is
-// read to a HORIZON rather than completely: `complete` says which, and a caller draws
-// the unreached days as unread rather than as quiet ones.
-//
-// Priced as decoration beside the commit graph it feeds: withheld under budget
-// pressure, and a withheld read is `undefined` — not read — never an empty window.
-export const WINDOW_COMMITS_TTL = 3600e3;
-
-export async function listCommitsSince(repo, branch, sinceIso, token, perPage = 100) {
-  const ck = `window-commits:${repo}:${branch}:${sinceIso}`;
-  const hit = ageing.get(ck, WINDOW_COMMITS_TTL);
-  if (hit !== undefined) { rate.served += 1; return hit; }
-
-  if (frozen() || !budgetLeft() || !policy.extras) { rate.withheld += 1; return undefined; }
-
-  const path = `/repos/${repo}/commits?sha=${encodeURIComponent(branch)}`
-    + `&since=${encodeURIComponent(sinceIso)}&per_page=${perPage}`;
-  const res = await raw(path, { token });
-  rate.spent += 1;
-  // An empty repository answers 409, and a branch the viewer cannot resolve 404:
-  // both are "no commits to read", not a failure of the page.
-  if (res.status === 409 || res.status === 404) {
-    const empty = { since: sinceIso, commits: [], complete: true };
-    ageing.set(ck, empty);
-    return empty;
-  }
-  if (!res.ok) throw await fail(res, path);
-  const list = (await res.json()) ?? [];
-  const out = {
-    since: sinceIso,
-    commits: (Array.isArray(list) ? list : []).map((c) => ({
-      sha: c.sha,
-      at: c.commit?.committer?.date ?? c.commit?.author?.date ?? null,
-      message: c.commit?.message ?? '',
-      author: c.author?.login ?? null,
-    })),
-    // Whether the window was read to its start. A full page means there may be more.
-    complete: (Array.isArray(list) ? list.length : 0) < perPage,
-  };
-  ageing.set(ck, out);
-  return out;
-}
-
 export const listComments = (repo, number, token) =>
   conditional(`/repos/${repo}/issues/${number}/comments?per_page=100`, token);
 
-// Every repo an owner has, as the VIEWER sees them — which is the whole access story
-// of a roster read this way: a repo the viewer cannot see is not in their fleet, and no
-// list stored anywhere can leak one to them.
-//
-// Conditional per page, so a fleet whose membership has not changed revalidates for
-// free. `/users/{owner}/repos` answers for a user and for an organization alike, so
-// there is no account-type probe to get wrong.
-//
-// Pages are capped: a roster this page can sweep is a few dozen members, and an owner
-// with hundreds of repos is not a fleet — the cap is stated by the caller rather than
-// silently truncating into a page that looks complete.
-export async function listOwnerRepos(owner, token, { pages = 3, perPage = 100 } = {}) {
-  const out = [];
-  let complete = false;
-  for (let page = 1; page <= pages; page += 1) {
-    const batch = await conditional(
-      `/users/${encodeURIComponent(owner)}/repos?per_page=${perPage}&sort=pushed&page=${page}`,
-      token,
-      {
-        transform: (list) => (Array.isArray(list) ? list : []).map((r) => ({
-          full_name: r.full_name, archived: Boolean(r.archived), fork: Boolean(r.fork), pushed_at: r.pushed_at ?? null,
-        })),
-      },
-    );
-    out.push(...batch);
-    if (batch.length < perPage) { complete = true; break; }
-  }
-  return { repos: out, complete };
-}
-
 // Who the viewer is. Also the cheapest possible credential check — a bad token fails
-// here rather than three calls into a fleet sweep. Takes no repo: identity is not
+// here rather than three calls into a load. Takes no repo: identity is not
 // scoped to one.
 export const getViewer = (token) =>
   conditional('/user', token, { transform: (u) => ({ login: u.login, avatar_url: u.avatar_url, html_url: u.html_url }) });

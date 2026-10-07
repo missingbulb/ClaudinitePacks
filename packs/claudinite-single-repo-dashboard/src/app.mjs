@@ -1,29 +1,18 @@
-// The shell: configure, authenticate, and route between the two views.
+// The shell: configure, authenticate, and show one repo's page.
 //
-// TWO MODES, DECIDED BY THE DEPLOYMENT'S SHAPE. A config that says where more than one
-// member comes from — an `owner` to enumerate, a roster artifact, an explicit list — is
-// a FLEET deployment and opens on the overview; anything else is one repo's own page
-// and opens straight on it, with no pointless one-row fleet view. Not a mode switch
-// anyone sets: the roster source IS the mode, so there is nothing to keep in step.
-//
-// ROUTING WITHIN A MODE IS THE URL. `?repo=` is the deep dive, its absence the landing
-// view, so every view is a link someone can send and the back button works.
+// THE REPO IS THE URL. `?repo=` names it, its absence the deployment's own repo, so
+// every view is a link someone can send and the back button works.
 
 import * as gh from './read/github.mjs';
 import * as auth from './read/auth.mjs';
-import { loadConfig, resolveRoster, isFleetConfig } from './read/config.mjs';
+import { loadConfig } from './read/config.mjs';
 import { clearAll, stats } from './read/cache.mjs';
 import { planPolicy, credentialAdvice, MINUTE_MS } from './read/budget.mjs';
 import { SIGN_IN_VARS } from './read/signin-vars.mjs';
 import { $, el, resetCountUps } from './render/ui.mjs';
 import { loadRepo } from './views/view-repo.mjs';
-import { loadFleet } from './views/view-fleet.mjs';
 
 let CONFIG = null;
-let ROSTER = [];
-// The roster's own members the fleet does not act on — the deployment's exclude list,
-// resolved to the names it matched. They are drawn, greyed, rather than dropped.
-let IGNORED = [];
 
 const showError = (msg) => $('errors').append(el('div', { className: 'err', textContent: msg }));
 const showNotice = (msg) => $('errors').append(el('div', { className: 'notice', textContent: msg }));
@@ -45,14 +34,14 @@ async function planBudget(token) {
     remaining: gh.rate.remaining,
     limit: gh.rate.limit,
     reset: gh.rate.reset,
-    memberCount: wantsFleet() ? ROSTER.length : 1,
+    memberCount: 1,
   });
   gh.setPolicy(plan);
   return plan;
 }
 
 // The pill is the honest version of "why is this not fresh". A page that quietly
-// serves an hour-old fleet without saying so is worse than one that refuses.
+// serves an hour-old page without saying so is worse than one that refuses.
 //
 // It is LIVE, not a reading taken at the start. The plan is decided before the sweep
 // and the sweep is what spends the budget, so a pill drawn once — as this was — shows
@@ -78,8 +67,8 @@ function renderRatePill(plan = currentPlan) {
   pill.title = `${plan.reason}\nthis load so far: ${gh.rate.spent} spent, ${gh.rate.revalidated} revalidated free, ${gh.rate.served} from cache`;
 }
 
-// A fleet sweep can restate the budget eighty times in a few seconds. Redrawing the
-// pill on each would be eighty layouts for a number the eye reads once, so the
+// A load can restate the budget dozens of times in a few seconds. Redrawing the
+// pill on each would be a layout per request for a number the eye reads once, so the
 // arrivals are coalesced onto the next frame.
 function ratePillLater() {
   if (pillQueued || !currentPlan) return;
@@ -90,20 +79,7 @@ function ratePillLater() {
 }
 
 const repoParam = () => new URL(location.href).searchParams.get('repo');
-// The fleet view is what a fleet DEPLOYMENT opens on, decided by the config's shape
-// rather than by how many members the enumeration happened to return: a fleet whose
-// roster read failed, or one that is momentarily down to a single readable member, is
-// still a fleet page and must say so rather than silently becoming that member's own.
-const wantsFleet = () => !repoParam() && isFleetConfig(CONFIG);
-const currentRepo = () => repoParam() || CONFIG?.defaultRepo || ROSTER[0] || '';
-
-function go(repo) {
-  const url = new URL(location.href);
-  if (repo) url.searchParams.set('repo', repo);
-  else url.searchParams.delete('repo');
-  history.pushState(null, '', url);
-  render();
-}
+const currentRepo = () => repoParam() || CONFIG?.defaultRepo || '';
 
 // --- chrome ---------------------------------------------------------------------
 
@@ -133,7 +109,7 @@ function renderGate() {
 
   if (auth.isOAuthConfigured(CONFIG)) {
     for (const id of ['signin-why', 'signin-hint']) $(id).hidden = false;
-    $('signin-heading').textContent = wantsFleet() ? 'Sign in to read this fleet' : 'Sign in to read this repository';
+    $('signin-heading').textContent = 'Sign in to read this repository';
     $('signin-how').textContent = 'GitHub asks you to authorize this page once. Everything afterwards '
       + 'runs as you, with exactly the repositories your account can already see.';
     box.append(
@@ -161,40 +137,17 @@ function renderAccount(viewer) {
   $('account-login').textContent = viewer.login;
 }
 
-// The breadcrumb is the way back out of a deep dive, and it only exists when there is
-// somewhere to go back to.
-function renderCrumb(repo) {
-  const crumb = $('crumb');
-  crumb.replaceChildren();
-  if (!repo || ROSTER.length <= 1) { crumb.hidden = true; return; }
-  crumb.hidden = false;
-  crumb.append(
-    el('a', { href: '?', textContent: '← Fleet', onclick: (e) => { e.preventDefault(); go(null); } }),
-    el('span', { className: 'sep', textContent: '/' }),
-    el('select', {
-      title: 'Switch repository',
-      onchange: (e) => go(e.target.value),
-    }, [...new Set([repo, ...ROSTER])].sort().map((n) =>
-      el('option', { value: n, textContent: n, selected: n === repo }))),
-  );
-}
-
 // Switching views is not a change in a number, it is a DIFFERENT set of numbers under
 // the same labels — so the counters forget rather than tween from one to the other and
 // draw a movement nothing made.
 const showView = (which, repo = null) => {
-  if ($('fleet-view').hidden !== (which !== 'fleet')) resetCountUps();
-  $('fleet-view').hidden = which !== 'fleet';
+  if ($('repo-view').hidden !== (which !== 'repo')) resetCountUps();
   $('repo-view').hidden = which !== 'repo';
   $('signin-view').hidden = which !== 'signin';
-  if (which === 'signin') $('crumb').hidden = true;
-  // The heading says what you are looking at. A repo-mode deployment titled "Claudinite
-  // Fleet Status" is the page telling its one member it is something else.
-  const title = which === 'fleet' ? 'Claudinite Fleet Status'
-    : (which === 'signin' ? 'Claudinite' : (repo ? repo.split('/')[1] ?? repo : 'Claudinite'));
+  // The heading says what you are looking at: the repo's name once there is one.
+  const title = which === 'signin' ? 'Claudinite' : (repo ? repo.split('/')[1] ?? repo : 'Claudinite');
   $('title').textContent = title;
-  document.title = which === 'fleet' ? 'Claudinite Fleet Status'
-    : (which === 'signin' ? 'Claudinite' : `${title} · Claudinite`);
+  document.title = which === 'signin' ? 'Claudinite' : `${title} · Claudinite`;
 };
 
 function footer(parts) {
@@ -220,12 +173,6 @@ async function render() {
   $('reload').disabled = true;
 
   const token = auth.currentToken();
-  // The roster is resolved inside the load, not at boot: an `owner` deployment
-  // enumerates as the VIEWER, so it needs the credential — and the enumeration is
-  // ETag-revalidated, which makes re-resolving it per load free once warm.
-  const roster = await resolveRoster(CONFIG, token, gh);
-  ROSTER = roster.repos;
-  IGNORED = roster.ignored ?? [];
   const plan = await planBudget(token);
   renderRatePill(plan);
   const advice = credentialAdvice(plan.tier, { hasToken: Boolean(token) });
@@ -234,7 +181,7 @@ async function render() {
 
   // A credential GitHub no longer accepts is not a degraded session to carry on in: it
   // is the same state as never having signed in, so it goes back to the gate rather
-  // than leaving a signed-out page rendering someone's fleet from cache.
+  // than leaving a signed-out page rendering someone's repository from cache.
   let viewer = null;
   try {
     viewer = await gh.getViewer(token);
@@ -249,61 +196,29 @@ async function render() {
   renderAccount(viewer);
 
   try {
-    if (wantsFleet()) {
-      renderCrumb(null);
-      showView('fleet');
-      $('footnote').textContent = `Reading ${ROSTER.length} members…`;
-      if (roster.error) showError('The owner\'s repositories could not be listed — sign in with an account that can see them.');
-      else if (!roster.complete) showNotice('This owner has more repositories than one enumeration reaches; the fleet below is the most recently pushed of them.');
-      const fleet = await loadFleet({
-        repos: ROSTER,
-        ignored: IGNORED,
-        token,
-        config: CONFIG,
-        onOpen: go,
-        onError: showError,
-        // The fleet is read in passes across the whole roster rather than member by
-        // member (`fleet-sweep.mjs`), so the line names the pass as well as its
-        // position in it — otherwise a counter that reaches the roster's length four
-        // times over reads as the page starting again.
-        onProgress: ({ label, done, total, repo }) => {
-          $('footnote').textContent = `${label} — ${done}/${total}${repo ? ` — ${repo}` : ''}…`;
-        },
-      });
-      footer([
-        `${ROSTER.length} members${roster.source === 'owner' ? ` under ${CONFIG.owner}, as you can see them` : ''}`,
-        // The third freshness on this page, beside the load's own and each member's
-        // fold: the Updates verdicts are only as current as the roster that carries them.
-        fleet?.roster
-          ? `freshness from the fleet-roster ${fleet.roster.generated ? `of ${fleet.roster.generated.replace('T', ' ').slice(0, 16)}` : 'at an unstated time'}`
-          : 'no fleet-roster in this deployment — Updates read unknown',
-      ]);
-    } else {
-      const repo = currentRepo();
-      if (!/^[^/\s]+\/[^/\s]+$/.test(repo)) {
-        showError('No repo selected. Add ?repo=owner/name, or configure an owner for a fleet.');
-        $('footnote').textContent = '';
-        return;
-      }
-      renderCrumb(repo);
-      showView('repo', repo);
-      $('footnote').textContent = `Reading ${repo}…`;
-      const r = await loadRepo({ repo, token, config: CONFIG, onError: showError });
-      footer([
-        `${repo} @ ${r.branch} (${r.sha.slice(0, 7)})`,
-        `${r.taskCount} declared tasks`,
-        `${r.itemCount} work items in the ${r.issuePage.complete
-          ? `full issue history (${r.issuePage.scanned} issues)`
-          : `most recent ${r.issuePage.scanned} issues — older history not scanned`}`,
-        // The past-data plane's own freshness, which is NOT this load's: the panels
-        // reaching further back than the live window are only as current as the repo's
-        // last fold, and a page that showed one timestamp for both would be claiming
-        // the older half is as fresh as the newer.
-        r.usage
-          ? `usage folded ${r.generated ? r.generated.replace('T', ' ').slice(0, 16) : 'at an unstated time'}`
-          : 'no usage fold — past-data panels are limited to the live window',
-      ]);
+    const repo = currentRepo();
+    if (!/^[^/\s]+\/[^/\s]+$/.test(repo)) {
+      showError('No repo selected. Add ?repo=owner/name, or set defaultRepo in the config.');
+      $('footnote').textContent = '';
+      return;
     }
+    showView('repo', repo);
+    $('footnote').textContent = `Reading ${repo}…`;
+    const r = await loadRepo({ repo, token, config: CONFIG, onError: showError });
+    footer([
+      `${repo} @ ${r.branch} (${r.sha.slice(0, 7)})`,
+      `${r.taskCount} declared tasks`,
+      `${r.itemCount} work items in the ${r.issuePage.complete
+        ? `full issue history (${r.issuePage.scanned} issues)`
+        : `most recent ${r.issuePage.scanned} issues — older history not scanned`}`,
+      // The past-data plane's own freshness, which is NOT this load's: the panels
+      // reaching further back than the live window are only as current as the repo's
+      // last fold, and a page that showed one timestamp for both would be claiming
+      // the older half is as fresh as the newer.
+      r.usage
+        ? `usage folded ${r.generated ? r.generated.replace('T', ' ').slice(0, 16) : 'at an unstated time'}`
+        : 'no usage fold — past-data panels are limited to the live window',
+    ]);
     $('account').open = false;
   } catch (e) {
     showError(e.message ?? String(e));
@@ -326,7 +241,7 @@ async function render() {
 // was read as that person — a private repo's issues included — and data that outlives
 // the sign-out on a shared machine is not a sign-out.
 function enter() {
-  showView(wantsFleet() ? 'fleet' : 'repo');
+  showView('repo');
   render();
 }
 
@@ -335,7 +250,6 @@ function signOut(why = null) {
   clearAll();
   resetCountUps();
   renderAccount(null);
-  renderCrumb(null);
   $('errors').replaceChildren();
   if (why) showError(why);
   renderGate();
@@ -358,8 +272,8 @@ async function boot() {
   renderAccount(null);
   renderGate();
 
-  // The pill tracks the budget as the sweep spends it, rather than reporting what it
-  // was before the sweep began.
+  // The pill tracks the budget as the load spends it, rather than reporting what it
+  // was before the load began.
   gh.onRateChange(ratePillLater);
 
   $('reload').addEventListener('click', render);
@@ -401,7 +315,7 @@ async function boot() {
     const cur = document.documentElement.dataset.theme || (dark ? 'dark' : 'light');
     document.documentElement.dataset.theme = cur === 'dark' ? 'light' : 'dark';
   });
-  // Back/forward move between the fleet and a deep dive, because the views are URLs.
+  // Back/forward move between repos, because the repo is the URL.
   // Behind the gate they move nothing: there is one screen until there is a credential.
   addEventListener('popstate', () => { if (auth.currentToken()) render(); });
 

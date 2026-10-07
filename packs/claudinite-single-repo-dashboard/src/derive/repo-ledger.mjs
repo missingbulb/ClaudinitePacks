@@ -1,20 +1,16 @@
-// The repo page's top block, as data — the same ledger as the fleet's, scoped to one
-// member ([docs/repo-page.md](../../docs/repo-page.md)).
+// The repo page's top block, as data ([docs/repo-page.md](../../docs/repo-page.md)).
 //
-// WHY IT IS A SEPARATE MODULE and not a parameter on the fleet's. Three of its figures
-// are questions only a repo can ask: the queue's own outcome WORDS (an obsolete share
-// is a fact about one repo's requests), this repo's corpus weight against the fleet
-// mean, and the per-task expand. And its machine asks a different question one level
-// down — not *is every member running* but *did THIS scheduler run when it should have,
-// hour by hour* — which is a different cell, not a smaller one.
+// Its figures include the queue's own outcome WORDS (an obsolete share is a fact about
+// this repo's requests) and the per-task expand, and its machine asks *did THIS
+// scheduler run when it should have, hour by hour*.
 //
-// Everything it shares with the fleet block it IMPORTS rather than re-derives, so the
-// two pages cannot disagree about what a window is or when a figure is unknown.
+// The window arithmetic it IMPORTS from `ledger.mjs` rather than re-derives, so no
+// two figures can disagree about what a window is or when a figure is unknown.
 
 import {
-  fleetDays, windowsOf, mergedPrsIn, stuckItems, closedItems, figure, quantile,
+  foldDays, windowsOf, mergedPrsIn, stuckItems, closedItems, figure, quantile,
   sumKnown, pulseOf, pricingNote, WINDOW_DAYS, LADDER_DAYS, STUCK_DAYS, fmtAge,
-} from './fleet-ledger.mjs';
+} from './ledger.mjs';
 import { priceWindow } from './pricing.mjs';
 
 // The queue's own outcome words, in the order the fold's own vocabulary spells them.
@@ -194,7 +190,7 @@ export function repoMachine({ hourRows, runSummary, ci, usage, strip, declaredTa
 
 export function repoLedger(read, { now, rates = null, windowDays = WINDOW_DAYS, days = LADDER_DAYS } = {}) {
   const folding = read?.usage ? [read] : [];
-  const rows = fleetDays(folding, { now, days }).map((row) => decorate(row, read));
+  const rows = foldDays(folding, { now, days }).map((row) => decorate(row, read));
   const w = windowsOf(rows, { now, windowDays });
   const sum = (slice, field) => sumKnown(slice.map((r) => r[field]));
   const cur = (field) => sum(w.current, field);
@@ -305,8 +301,8 @@ export function repoLedger(read, { now, rates = null, windowDays = WINDOW_DAYS, 
   };
 }
 
-// The per-task sub-maps the fleet's day rows do not carry, because the fleet sums them
-// away: on one repo the task is the axis, so they are kept per key.
+// The per-task sub-maps the shared day rows do not carry: on one repo the task is the
+// axis, so they are kept per key.
 function decorate(row, read) {
   const source = read?.usage?.days?.[row.day] ?? null;
   return {

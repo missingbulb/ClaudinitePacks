@@ -1,13 +1,13 @@
 // The one thing to do next. Pure: no clock of its own, no I/O, no DOM.
 //
-// Every other panel on both pages REPORTS. A reader who opens the page already knowing
+// Every other panel on the page REPORTS. A reader who opens the page already knowing
 // what they came for is served by that; a reader who opens it because it is morning is
 // not, because a wall of accurate panels asks them to do the ranking. This module does
 // the ranking and names ONE piece of work.
 //
 // It invents no judgement of its own. A candidate is the worst thing some other module
 // already decided is wrong — an item's `troubles` (the queue's real recovery rules) or a
-// member summary's `reasons` — so the block at the top of the page can never disagree
+// repo's `reasons` — so the block at the top of the page can never disagree
 // with the row further down that says the same thing.
 //
 // TWO SHAPES, AND THE ITEM ONE WINS TIES. An item candidate names an issue: it is a
@@ -53,8 +53,8 @@ export function itemCandidate(repo, item, row = null) {
     key: item.key ?? null,
     idleMs: item.idleMs ?? null,
     // The item's own park classification, and no price: what a park COSTS is the
-    // attention estimate's arithmetic (`fleet.mjs`), and this module holds no rates.
-    // Null for anything that is not a park, which is what that estimate leaves out.
+    // park rates' arithmetic (`health.mjs`), and this module holds no rates.
+    // Null for anything that is not a park.
     park: item.state === PARKED
       ? { blocking: Boolean(item.blockingPark), triage: item.triage ?? null }
       : null,
@@ -80,8 +80,8 @@ export function reasonCandidate(repo, reasons) {
     title: null,
     key: null,
     idleMs: null,
-    // A broken scheduler is not a park and not a queue of work to get through; the
-    // fleet's own estimate leaves it out and so does this.
+    // A broken scheduler is not a park and not a queue of work to get through, so it
+    // carries no price.
     park: null,
     url: `https://github.com/${repo}`,
   };
@@ -100,16 +100,6 @@ export function rankCandidates(candidates) {
 }
 
 export const pickCandidate = (candidates) => rankCandidates(candidates)[0] ?? null;
-
-// Every candidate a fleet offers: each member's own worst item, plus the faults its
-// items cannot state. Members are `summariseMember`'s output; a member that could not
-// be read contributes nothing, because a repo this viewer cannot see is not work they
-// can pick up.
-export function fleetCandidates(summaries) {
-  return rankCandidates((summaries ?? []).flatMap((s) => (s?.status === 'adopted'
-    ? [s.top ?? null, reasonCandidate(s.repo, s.reasons)]
-    : [])));
-}
 
 // The same question for one repo, from the work table's own rows — so the block at the
 // top of the repo page and the first row of its `stuck` view are the same verdict.

@@ -8,7 +8,7 @@
 //
 // NOTHING DECIDES ANYTHING. Every verdict — which delta is tinted, which square is
 // critical, what a gap's sentence says — arrives already made, from
-// [`fleet-ledger.mjs`](../derive/fleet-ledger.mjs) and [`fleet.mjs`](../derive/fleet.mjs). This file turns
+// [`ledger.mjs`](../derive/ledger.mjs) and [`health.mjs`](../derive/health.mjs). This file turns
 // those into nodes.
 
 import { el, refNodes } from './ui.mjs';
@@ -86,7 +86,7 @@ function stepButton(glyph, label, queue, to) {
 // member — a name is what the reader acts on.
 //
 // `alarm` sets the figure in the critical colour and in bold. It is for a fault the
-// caller has already judged FLEET-WIDE, never for a cell that merely reached its worst
+// caller has already judged as the whole machine's, never for a cell that merely reached its worst
 // verdict: a row where every cell can shout has no top signal left.
 export function machineCell({ level, label, value, unit, note, extra = null, alarm = false }) {
   return el('div', { className: alarm ? 'cell alarm' : 'cell' }, [
@@ -197,13 +197,13 @@ export function sparkline(series, { width = 74, height = 28 } = {}) {
   return svg;
 }
 
-// The block's one chart at readable size: sessions per day across the fleet. Today is a
-// dashed outline because it is not folded yet, and a day no member folded is a blank.
+// The block's one chart at readable size: sessions per day. Today is a dashed
+// outline because it is not folded yet, and a day nothing folded is a blank.
 export function pulseChart(pulse, { height = 30 } = {}) {
   const width = 1000;
   const svg = svgEl('svg', {
     viewBox: `0 0 ${width} ${height}`, preserveAspectRatio: 'none', role: 'img',
-    'aria-label': 'Sessions per day across the fleet, 14 days — last week dimmed, this week in the machine\'s blue',
+    'aria-label': 'Sessions per day, 14 days — last week dimmed, this week in the machine\'s blue',
   });
   svg.append(svgEl('line', { x1: 0, y1: height, x2: width, y2: height, stroke: 'var(--ledger)' }));
   const slot = width / (pulse.days.length || 1);

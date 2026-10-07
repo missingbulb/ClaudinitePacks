@@ -35,28 +35,6 @@ export const packBadge = (pack) => {
   });
 };
 
-// THE MINI-CARD: one member's line from one pack, on the fleet page.
-//
-// It carries no column header and no pack name — the subrow has room for neither — so
-// the phrase has to be a complete statement on its own. The pack is on the hover, and
-// nothing depends on reading it.
-//
-// MONOCHROME, ALWAYS. A contribution never colours itself by severity however urgent
-// its pack believes its number to be: colour on this grid is the engine's severity
-// edge, and a pack that could paint itself red would be claiming attention it did not
-// earn.
-export function miniCard(parts, { title = '', glyph = null } = {}) {
-  return el('div', { className: 'mini', title }, [
-    glyph ? el('span', { className: 'mini-glyph', textContent: glyph, 'aria-hidden': 'true' }) : null,
-    ...parts.flatMap((p, i) => [i ? ' ' : null, el('span', { className: p.t, textContent: p.text })]),
-  ].filter((k) => k !== null));
-}
-
-// A card that could not make a line. Its own state, in words — never an empty box and
-// never a zero.
-export const miniAbsent = (text, title = '') =>
-  el('div', { className: 'mini none', title, textContent: text });
-
 // What each unreadable state SAYS. Four different facts that a lesser page would draw
 // identically: the pack writes no file here, the page declined to spend a request,
 // this figure has no value in a file that exists, and this descriptor is newer than
@@ -134,13 +112,12 @@ const widgetBody = (widget, resolved, now) => {
 // One pack's card on the repo page. A descriptor the page cannot use becomes ONE
 // named line here rather than a missing card, so a pack that ships a broken
 // descriptor is visibly broken instead of invisibly absent.
-export function packCard(contribution, now, { ids = null } = {}) {
+export function packCard(contribution, now) {
   const { pack, descriptor, values, withheld } = contribution;
 
   const head = (note) => el('div', { className: 'pack-head' }, [
     packBadge(pack),
     el('span', { className: 'id', textContent: pack }),
-    contribution.from ? el('span', { className: 'sub from', textContent: contribution.from.split('/')[1] ?? contribution.from }) : null,
     note ? el('span', { className: 'src nw', textContent: note }) : null,
   ]);
 
@@ -153,7 +130,7 @@ export function packCard(contribution, now, { ids = null } = {}) {
       el('p', { className: 'sub', textContent: `This pack contributes nothing here: ${descriptor.fault}.` })]);
   }
 
-  const widgets = (ids ?? descriptor.repo).map((id) => descriptor.widgets.get(id)).filter(Boolean);
+  const widgets = descriptor.repo.map((id) => descriptor.widgets.get(id)).filter(Boolean);
   const source = descriptor.needsGenerated
     ? (values?.generatedAt ? ago(new Date(values.generatedAt).getTime(), now) : (values === undefined ? 'not read' : 'no values yet'))
     : 'live';

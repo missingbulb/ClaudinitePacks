@@ -58,8 +58,7 @@ const server = createServer(async (req, res) => {
   // it and a checkout usually has no config at all — the build writes one. A file that
   // IS there is served as it stands with the token laid over it, so serving a
   // deployment's own declaration locally still shows that deployment's page. With
-  // neither, `mode` goes unstated, which `isFleetConfig` reads as one repo's page and
-  // `?repo=` names which.
+  // neither, `?repo=` names the repo.
   if (path === CONFIG_PATH) {
     res.writeHead(200, { 'Content-Type': TYPES['.json'], 'Cache-Control': 'no-store' });
     res.end(`${JSON.stringify({ ...(await fileConfig()), devToken: devToken || null }, null, 2)}\n`);
@@ -97,7 +96,7 @@ const server = createServer(async (req, res) => {
 
 server.listen(port, '127.0.0.1', () => {
   const repo = process.argv[2] ? `?repo=${encodeURIComponent(process.argv[2])}` : '';
-  process.stdout.write(`Fleet status dashboard → http://127.0.0.1:${port}${HOME}${repo}\n`);
+  process.stdout.write(`Claudinite dashboard → http://127.0.0.1:${port}${HOME}${repo}\n`);
   // Said out loud, because the page's failure without one is a gate saying this
   // deployment is not set up — true of a Pages site, and misleading here.
   process.stdout.write(devToken

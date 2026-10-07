@@ -31,7 +31,7 @@ class FakeEl {
   }
 }
 
-let decodeTasksUsage; let tasksMachine; let fleetTasksMachine; let machinePanel; let fleetMachinePanel;
+let decodeTasksUsage; let tasksMachine; let machinePanel;
 let nodes;
 
 before(async () => {
@@ -47,8 +47,8 @@ before(async () => {
     querySelectorAll: () => [],
   };
   ({ decodeTasksUsage } = await import('../src/read/usage.mjs'));
-  ({ tasksMachine, fleetTasksMachine } = await import('../src/derive/tasks-machine.mjs'));
-  ({ machinePanel, fleetMachinePanel } = await import('../src/render/machine-view.mjs'));
+  ({ tasksMachine } = await import('../src/derive/tasks-machine.mjs'));
+  ({ machinePanel } = await import('../src/render/machine-view.mjs'));
 });
 
 const NOW = Date.parse('2026-09-15T12:00:00Z');
@@ -145,29 +145,6 @@ test('a repo that folds no machinery file says which file and which task writes 
   assert.match(text, /\busage-fold task/);
   // It does not borrow the sessions' file to fill the gap.
   assert.doesNotMatch(text, /acme-task-g task writes[^]*sessions/);
-});
-
-test('the fleet roll-up names the members folding nothing and counts them in nothing', () => {
-  const reads = [
-    { repo: 'o/One', declaration: { packs: [] }, tasksUsage: file() },
-    { repo: 'o/Two', declaration: { packs: [] }, tasksUsage: file() },
-    { repo: 'o/Quiet', declaration: { packs: [] }, tasksUsage: null },
-  ];
-  const text = render(fleetMachinePanel(fleetTasksMachine(reads, { now: NOW, span: 7 })));
-
-  assert.match(text, /2\/3 member\(s\) fold this file/);
-  assert.match(text, /not folding: Quiet/);
-  assert.match(text, /folds no machinery usage file/, 'the absent member is a named row, not a row of zeroes');
-  assert.match(text, /counted in no figure above/);
-  // 10 runs each from the two folding members; the third adds nothing, not even a zero.
-  assert.match(text, /\b20\b/);
-});
-
-test('an all-absent fleet renders the waiting state rather than an empty chart', () => {
-  const reads = [{ repo: 'o/Quiet', declaration: { packs: [] }, tasksUsage: null }];
-  const text = render(fleetMachinePanel(fleetTasksMachine(reads, { now: NOW, span: 7 })));
-  assert.match(text, /no member folds a machinery usage file yet/);
-  assert.match(text, /1 readable member\(s\)/);
 });
 
 test('every chart the panel draws carries a legend', () => {

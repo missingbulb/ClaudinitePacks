@@ -50,7 +50,7 @@ const build = ({ dir, pack }, env = {}) => run('node',
 const cleanup = (t, m) => t.after(() => rm(m.base, { recursive: true, force: true }));
 const readJson = async (p) => JSON.parse(await readFile(p, 'utf8'));
 const CONFIG_AT = '_site/packs/claudinite-single-repo-dashboard/dashboard.config.json';
-const REPO = { packs: [{ id: 'claudinite-single-repo-dashboard', config: { mode: 'repo' } }] };
+const REPO = { packs: ['claudinite-single-repo-dashboard'] };
 
 // The defect this pack carried onto cn: the build looked for the engine beside the pack,
 // found none on a cn member, and exited 0 with "nothing to publish" — so publish-pages
@@ -63,11 +63,9 @@ test('a cn member builds this repo\'s own dashboard, with no engine anywhere', a
   assert.doesNotMatch(stdout, /nothing to publish/i);
   assert.ok(existsSync(join(m.dir, '_site/index.html')), 'a site was built');
   const cfg = await readJson(join(m.dir, CONFIG_AT));
-  assert.equal(cfg.mode, 'repo', 'the page is told which dashboard it is, never left to infer it');
   assert.equal(cfg.defaultRepo, 'o/mine');
-  assert.equal(cfg.deploymentRepo, 'o/mine');
   assert.equal(cfg.clientId, null);
-  for (const retired of ['rosterUrl', 'repos', 'canonRepo']) assert.equal(Object.hasOwn(cfg, retired), false, `${retired} is not published`);
+  for (const gone of ['mode', 'owner', 'exclude', 'deploymentRepo']) assert.equal(Object.hasOwn(cfg, gone), false, `${gone} is not published`);
 });
 
 // A member whose engine moved before its pack update still holds the member file at
@@ -76,7 +74,7 @@ test('a member file still at the old directory is read there', async (t) => {
   const m = await member(REPO, { memberAt: '.claudinite/flat/member.GENERATED.json' });
   cleanup(t, m);
   await build(m, { GITHUB_REPOSITORY: 'o/mine' });
-  assert.equal((await readJson(join(m.dir, CONFIG_AT))).mode, 'repo');
+  assert.equal((await readJson(join(m.dir, CONFIG_AT))).defaultRepo, 'o/mine');
 });
 
 test('the staged tree is the pack alone, with the root a redirect', async (t) => {
@@ -141,35 +139,31 @@ test('local-only and explanatory files are not published', async (t) => {
   }
 });
 
-test('a fleet names an owner, and the deployment repo is where its roster is read', async (t) => {
-  const m = await member({ packs: [{ id: 'claudinite-single-repo-dashboard', config: { mode: 'fleet', owner: 'o', exclude: ['o/skip'] } }] });
-  cleanup(t, m);
-  const { stdout } = await build(m, { GITHUB_REPOSITORY: 'o/manager' });
-
-  const cfg = await readJson(join(m.dir, CONFIG_AT));
-  assert.equal(cfg.mode, 'fleet');
-  assert.equal(cfg.owner, 'o');
-  assert.deepEqual(cfg.exclude, ['o/skip']);
-  assert.equal(cfg.deploymentRepo, 'o/manager');
-  assert.equal(cfg.defaultRepo, null, 'a fleet deployment lands on the overview, not inside one member');
-  assert.match(stdout, /freshness: .*o\/manager/);
-});
-
-// A key nothing reads any more fails the build rather than publishing a page that
-// quietly ignores it.
-test('a retired roster or canon key fails the build naming row 111, and publishes nothing', async (t) => {
-  for (const config of [
-    { mode: 'fleet', owner: 'o', rosterFile: 'fleet.json' },
-    { mode: 'fleet', owner: 'o', repos: ['o/a', 'o/b'] },
-    { mode: 'repo', canonRepo: 'o/canon' },
+// A key nothing reads fails the build rather than publishing a page that quietly
+// ignores it: a deployment carrying a fleet key believes the page covers more than this
+// repo.
+test('a fleet key, or a mode but "repo", fails the build naming it, and publishes nothing', async (t) => {
+  for (const [config, named] of [
+    [{ mode: 'fleet', owner: 'o' }, /"owner"/],
+    [{ exclude: ['o/a'] }, /"exclude"/],
+    [{ rosterFile: 'fleet.json' }, /"rosterFile"/],
+    [{ mode: 'fleet' }, /mode "fleet"/],
   ]) {
     const m = await member({ packs: [{ id: 'claudinite-single-repo-dashboard', config }] });
     cleanup(t, m);
     const res = await build(m).catch((e) => e);
     assert.ok(res instanceof Error, `${JSON.stringify(config)} must fail`);
-    assert.match(String(res.stderr), /row 111/);
+    assert.match(String(res.stderr), named);
     assert.equal(existsSync(join(m.dir, CONFIG_AT)), false, 'and nothing is published');
   }
+});
+
+// The contrast: `mode: "repo"` is what the page is, so it builds.
+test('mode "repo" builds as no mode does', async (t) => {
+  const m = await member({ packs: [{ id: 'claudinite-single-repo-dashboard', config: { mode: 'repo' } }] });
+  cleanup(t, m);
+  await build(m, { GITHUB_REPOSITORY: 'o/mine' });
+  assert.equal((await readJson(join(m.dir, CONFIG_AT))).defaultRepo, 'o/mine');
 });
 
 test('sign-in needs both halves, and the build says which is missing', async (t) => {
@@ -201,7 +195,7 @@ test('the sign-in pair reach the published config from repository variables', as
 // A deployment that configured the pair before the variables existed keeps its button —
 // nothing converges a member's settings file — and is told once where they live now.
 test('a declared pair still builds a signed-in site, and says it is on the old footing', async (t) => {
-  const m = await member({ packs: [{ id: 'claudinite-single-repo-dashboard', config: { mode: 'repo', clientId: 'Iv1.old', exchangeUrl: 'https://old.example' } }] });
+  const m = await member({ packs: [{ id: 'claudinite-single-repo-dashboard', config: { clientId: 'Iv1.old', exchangeUrl: 'https://old.example' } }] });
   cleanup(t, m);
 
   const { stdout } = await build(m);
@@ -222,26 +216,9 @@ test('a pack without its page produces nothing and exits clean', async (t) => {
   assert.equal(existsSync(join(m.dir, '_site')), false);
 });
 
-// --- the mode, which the build refuses to guess ---------------------------------------
-
-// The behaviour this replaces: a declaration that said nothing published as this repo's
-// own page. That is fine when it is what the deployer meant and silently wrong when it
-// is not — a fleet deployment whose roster source was dropped or misspelled published a
-// one-repo dashboard that looked entirely intentional. So the build now refuses, and the
-// deployment says which dashboard it is.
-test('a declaration that states no mode publishes nothing and says why', async (t) => {
-  const m = await member({ packs: ['claudinite-single-repo-dashboard'] });
-  cleanup(t, m);
-
-  const res = await build(m, { GITHUB_REPOSITORY: 'o/x' }).catch((e) => e);
-  assert.ok(res instanceof Error, 'the build must fail, not publish a guess');
-  assert.match(String(res.stderr ?? res.message), /does not say which dashboard it is/);
-  assert.equal(existsSync(join(m.dir, CONFIG_AT)), false, 'and nothing is published');
-});
-
 // The member file is the declaration this build reads. A member whose cn has not
 // written it — or a Node member's settings file standing alone — is told which file
-// is missing and the command that writes it, not that its mode is unset.
+// is missing and the command that writes it.
 test('a repo with no member file is refused naming that file, whatever settings file it keeps', async (t) => {
   const m = await member(REPO, { memberFile: false });
   cleanup(t, m);
@@ -250,19 +227,5 @@ test('a repo with no member file is refused naming that file, whatever settings 
   const res = await build(m, { GITHUB_REPOSITORY: 'o/x' }).catch((e) => e);
   assert.ok(res instanceof Error);
   assert.match(String(res.stderr ?? res.message), /member\.GENERATED\.json is missing.*cn tasks flat --write/);
-  assert.doesNotMatch(String(res.stderr ?? res.message), /does not say which dashboard it is/);
   assert.equal(existsSync(join(m.dir, CONFIG_AT)), false, 'and nothing is published');
 });
-
-test('a mode that contradicts the config is refused too, in both directions', async (t) => {
-  const fleetNoRoster = await member({ packs: [{ id: 'claudinite-single-repo-dashboard', config: { mode: 'fleet' } }] });
-  cleanup(t, fleetNoRoster);
-  const a = await build(fleetNoRoster).catch((e) => e);
-  assert.match(String(a.stderr ?? a.message), /names no roster source/);
-
-  const repoWithOwner = await member({ packs: [{ id: 'claudinite-single-repo-dashboard', config: { mode: 'repo', owner: 'o' } }] });
-  cleanup(t, repoWithOwner);
-  const b = await build(repoWithOwner).catch((e) => e);
-  assert.match(String(b.stderr ?? b.message), /roster source/);
-});
-

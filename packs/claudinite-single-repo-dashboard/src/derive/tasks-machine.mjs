@@ -2,7 +2,7 @@
 // nothing else: the member's own `task-runs-and-costs.json`. Pure, like every
 // derive module here: no clock of its own beyond the one it is handed, no I/O, no DOM.
 //
-// THE SESSIONS' PLANE IS NOT THIS ONE. `growthSeries` and `fleetCorpus` answer what the
+// THE SESSIONS' PLANE IS NOT THIS ONE. `growthSeries` answers what the
 // corpus did to the sessions; this answers what the scheduler and the executor did, and
 // the two files are folded by two tasks on two watermarks. A member folding one and not
 // the other is an ordinary state, so nothing here falls back to the other file — it
@@ -13,7 +13,7 @@
 // the header the file declares, and this module reads the named result. A counter added
 // or retired on the writing side reaches the panel with no change here.
 //
-// THE THREE RULES THE PANEL RENDERS UNDER, enforced at this layer rather than at the
+// THE TWO RULES THE PANEL RENDERS UNDER, enforced at this layer rather than at the
 // render, so no caller can forget one:
 //
 //   A WINDOW AGAINST THE WINDOW BEFORE IT, never a cumulative total. Every figure this
@@ -23,10 +23,6 @@
 //   an opinion and is `null` when none did — which is a different fact from `0`, and the
 //   one the whole positional-tuple format exists to keep. `sum` below is the only place
 //   that rule is implemented.
-//
-//   AN UNFOLDED MEMBER IS NAMED AND COUNTED IN NOTHING. `fleetTasksMachine` splits the
-//   readable members into those that fold this file and those that do not, and the
-//   second list is a census, never a row of zeroes in the first.
 
 const DAY_MS = 86400e3;
 
@@ -96,7 +92,7 @@ export function windowDays(now, span) {
 function foldWindow(rows) {
   const totals = (field) => sum(rows.map(({ row }) => row?.[field]));
 
-  // Per workflow. A workflow the window never saw contributes no row at all, so a fleet
+  // Per workflow. A workflow the window never saw contributes no row at all, so a repo
   // where only the scheduler ran does not report the executor as having run zero times.
   const workflows = {};
   for (const { row } of rows) {
@@ -299,76 +295,6 @@ function workflowRows(current, previous) {
   ])].sort();
   const find = (w, name) => w.workflows.find((x) => x.name === name) ?? null;
   return names.map((name) => ({ name, current: find(current, name), previous: find(previous, name) }));
-}
-
-// --- the fleet roll-up -----------------------------------------------------------------
-
-// The same two windows across every member the sweep could read. One row per member,
-// plus the fleet's own totals, plus the census of who cannot answer.
-//
-// `reads` is the fleet loader's raw per-member reads; each carries `tasksUsage`, which
-// is null for a member that does not fold this file, could not be read, or predates it.
-export function fleetTasksMachine(reads, { now, span = 7 } = {}) {
-  const readable = (reads ?? []).filter((r) => r && !r.error && r.declaration);
-  const folding = readable.filter((r) => r.tasksUsage);
-  const absent = readable.filter((r) => !r.tasksUsage).map((r) => r.repo).sort();
-
-  const members = folding
-    .map((r) => ({ repo: r.repo, machine: tasksMachine(r.tasksUsage, { now, span }) }))
-    .sort((a, b) => (b.machine.cost.current.runs ?? -1) - (a.machine.cost.current.runs ?? -1)
-      || a.repo.localeCompare(b.repo));
-
-  // Fleet totals: summed across the members that had an opinion, and null when none
-  // did. An absent member is in `absent` and in no sum here — that census is what keeps
-  // every figure below honest about its own denominator.
-  const across = (side, field) => sum(members.map((m) => m.machine.cost[side][field]));
-  const outcomes = (side, word) => sum(members.map((m) => m.machine.reliability[side].outcomes[word]));
-  const parks = (side, word) => sum(members.map((m) => m.machine.reliability[side].parks[word]));
-
-  const costSide = (side) => Object.fromEntries(
-    ['runs', 'jobs', 'minutesBilled', 'spend', 'apiCalls'].map((f) => [f, across(side, f)]));
-  const reliabilitySide = (side) => ({
-    outcomes: Object.fromEntries(OUTCOMES.map((o) => [o, outcomes(side, o)])),
-    parks: Object.fromEntries(PARKS.map((p) => [p, parks(side, p)])),
-  });
-
-  // The fleet's latency quantile is taken over every member's SAMPLES pooled, never
-  // over their p50s: an average of medians is not a median, and the samples are in the
-  // file precisely so the quantile can be taken at the window being drawn.
-  const [currentDays, previousDays] = windowDays(now, span);
-  const pooled = (days) => Object.fromEntries(LATENCIES.map(({ key }) => {
-    const xs = [];
-    for (const r of folding) {
-      for (const day of days) {
-        for (const slots of Object.values(r.tasksUsage.days?.[day]?.latency ?? {})) {
-          if (typeof slots?.[key] === 'number') xs.push(slots[key]);
-        }
-      }
-    }
-    return [key, quantiles(xs)];
-  }));
-
-  // The fleet's rates, named rather than averaged: two members priced differently have
-  // no one rate, and a mean of two rates is a number nothing measures.
-  const rates = [...new Set(folding.map((r) => r.tasksUsage.minuteRate).filter((n) => typeof n === 'number'))];
-
-  return {
-    span,
-    from: currentDays[0],
-    to: currentDays[currentDays.length - 1],
-    previousFrom: previousDays[0],
-    previousTo: previousDays[previousDays.length - 1],
-    cost: { current: costSide('current'), previous: costSide('previous') },
-    reliability: { current: reliabilitySide('current'), previous: reliabilitySide('previous') },
-    latency: { current: pooled(currentDays), previous: pooled(previousDays) },
-    members,
-    folding: folding.length,
-    readable: readable.length,
-    // Named, and counted in nothing above.
-    absent,
-    rates,
-    unrecorded: UNRECORDED,
-  };
 }
 
 // --- what the render needs -------------------------------------------------------------

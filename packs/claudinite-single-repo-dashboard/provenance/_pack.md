@@ -113,3 +113,11 @@
   `claudinite-single-repo-dashboard-pages.yml` and the site publishes under
   `packs/claudinite-single-repo-dashboard/`. The browser storage keys keep the old id, since they
   name what viewers already hold.
+
+## 2026-10-07 · scope-changed · the pack shows one repo; fleet mode is gone
+- **Reason:** owner decision, 2026-10-07: a single-repo dashboard. The fleet view, its roster and
+  sweep, the `mode` question and the fleet half of the descriptor go with it.
+- **Actor:** @missingbulb (owner).
+- **Mechanism:** the build refuses a fleet key or a `mode` other than `"repo"` by name and publishes
+  nothing, so a fleet deployment fails loudly rather than rendering one repo.
+- **Rejected:** keeping `mode` as a required one-value question - it asks nothing.

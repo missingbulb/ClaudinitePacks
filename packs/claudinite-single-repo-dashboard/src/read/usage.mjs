@@ -148,7 +148,7 @@ export async function readTasksUsage(repo, sha, token) {
 }
 
 // Read one repo's aggregate at a sha. A 404 is an ANSWER — this repo does not fold —
-// and it is cached as one, so a fleet sweep does not re-ask every member every load.
+// and it is cached as one, so a load does not re-ask it every time.
 export async function readUsage(repo, sha, token) {
   try {
     const text = await textAtEither(repo, sha, token, USAGE_PATH, LEGACY_USAGE_PATH);

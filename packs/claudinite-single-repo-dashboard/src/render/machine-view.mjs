@@ -1,6 +1,4 @@
-// The machinery panel, drawn. One renderer for both pages: the repo page draws it for
-// one member and the fleet page draws the roll-up, and they are the same shapes — which
-// is why this is its own module rather than two copies that drift.
+// The machinery panel, drawn, for the repo page.
 //
 // WHAT IT DRAWS, AND WHAT IT REFUSES TO.
 //
@@ -255,92 +253,5 @@ function gapsCard(m) {
       textContent: `Folded through ${m.foldedThrough ?? 'not stated'}`
         + `${m.generated ? `, last confirmed ${m.generated.slice(0, 16).replace('T', ' ')}Z` : ''}.`,
     }),
-  ]);
-}
-
-// --- the fleet roll-up ------------------------------------------------------------------
-
-// The same two windows across every member the sweep could read, plus the census of who
-// cannot answer. The census is the denominator every figure above it is read against.
-export function fleetMachinePanel(f, onOpen = null) {
-  if (!f.folding) {
-    return [el('div', { className: 'chart-card' }, [
-      el('div', { className: 'k', textContent: 'no member folds a machinery usage file yet' }),
-      el('p', {
-        className: 'sub',
-        textContent: `${f.readable} readable member(s), none of them folding `
-          + '`.claudinite/usage/task-runs-and-costs.json` — everything here waits on the '
-          + 'claudinite-tasks pack\'s usage-fold task.',
-      }),
-    ])];
-  }
-
-  const { current, previous } = f.cost;
-  const rel = f.reliability;
-
-  return [
-    el('div', { className: 'chart-card wide' }, [
-      el('div', { className: 'k', textContent: 'the fleet\'s machinery, this window against the one before' }),
-      el('div', { className: 'tiles' }, [
-        windowFigure(fmt(current.runs), 'workflow runs', change(current.runs, previous.runs),
-          `in ${f.folding} folding member(s)`, 'down'),
-        windowFigure(fmt(current.minutesBilled), 'billed minutes', change(current.minutesBilled, previous.minutesBilled),
-          f.rates.length ? `priced in ${f.rates.length} member(s)` : 'no member declares a minute rate', 'down'),
-        windowFigure(fmt(rel.current.outcomes.done), 'items closed done',
-          change(rel.current.outcomes.done, rel.previous.outcomes.done), null, 'up'),
-        windowFigure(fmt(rel.current.parks.failure), 'failure parks',
-          change(rel.current.parks.failure, rel.previous.parks.failure),
-          'each one holds its task\'s lane', 'down'),
-      ]),
-      el('div', {
-        className: 'sub',
-        textContent: `${windowNote(f)} · ${f.folding}/${f.readable} member(s) fold this file`
-          + `${f.absent.length ? `; not folding: ${f.absent.map((r) => r.split('/')[1] ?? r).join(', ')}` : ''}. `
-          + 'A member that folds nothing is named here and counted in no figure above.',
-      }),
-    ]),
-    latencyCard(f.latency, f.span),
-    fleetMembers(f, onOpen),
-  ];
-}
-
-function fleetMembers(f, onOpen) {
-  const table = el('table', {});
-  const thead = el('thead', {}, [el('tr', {}, [
-    'member', 'runs', 'billed min', 'closed', 'done', 'parked', 'failure parks', 'API calls',
-  ].map((label, i) => el('th', { className: `cap${i ? ' num' : ''}`, textContent: label })))]);
-  const tbody = el('tbody', {});
-  table.append(thead, tbody);
-
-  for (const { repo, machine } of f.members) {
-    const name = el('td', { className: 'name nw', textContent: repo });
-    if (onOpen) {
-      name.replaceChildren(el('a', { href: `?repo=${repo}`, textContent: repo,
-        onclick: (e) => { e.preventDefault(); onOpen(repo); } }));
-    }
-    const num = (v) => el('td', { className: `num${typeof v === 'number' ? '' : ' gap'}`, textContent: fmt(v) });
-    tbody.append(el('tr', {}, [
-      name,
-      num(machine.cost.current.runs),
-      num(machine.cost.current.minutesBilled),
-      num(machine.reliability.current.closed),
-      num(machine.reliability.current.outcomes.done),
-      num(machine.reliability.current.parked),
-      num(machine.reliability.current.parks.failure),
-      num(machine.cost.current.apiCalls),
-    ]));
-  }
-  // The census, as rows that say so rather than rows of zeroes.
-  for (const repo of f.absent) {
-    tbody.append(el('tr', {}, [
-      el('td', { className: 'name nw dim', textContent: repo }),
-      el('td', { className: 'dim', colSpan: 7, textContent: 'folds no machinery usage file' }),
-    ]));
-  }
-  if (!f.members.length && !f.absent.length) tbody.append(emptyRow(8, 'No member could be read.'));
-
-  return el('div', { className: 'chart-card wide' }, [
-    el('div', { className: 'k', textContent: 'per member' }),
-    el('div', { className: 'panel scroll' }, [table]),
   ]);
 }

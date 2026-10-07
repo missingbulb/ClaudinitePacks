@@ -1,8 +1,7 @@
 # The repo page — the top block
 
-The fleet page answers *where do I need to look*; this page answers *what is this scheduler
-doing*. Same reader, one click deeper, so the top block speaks the fleet block's language —
-Start here → The machine → Got / Cost / Speed → Pulse — scoped to **one member**, and then
+This page answers *what is this scheduler doing*. The top block reads Start here → The
+machine → Got / Cost / Speed → Pulse, scoped to **one repo**, and then
 hands the page to the Work board ([work-board.md](work-board.md)), which is the page's core and
 must begin above the fold: **the top block is ≤ 450 px at 1280 × 900**. A gap costs height —
 a *not recorded* sentence is a wrapped line where a figure is one — so a repo whose fold
@@ -11,13 +10,12 @@ round: the budget bends before the gap goes unstated. The committed drawing
 is [mocks/repo.html](mocks/repo.html); the sources of every figure are in
 [data-sources.md](data-sources.md).
 
-Where the fleet ledger has four figures per column, the repo ledger has **three and no tile
-row**: every tile's fact moved into a cell that acts on it, and the height bought is what
+The ledger has **three figures per column and no tile row**: every tile's fact moved into a cell that acts on it, and the height bought is what
 lands the board above the fold.
 
 ## The top bar
 
-Wordmark, breadcrumb, and a **census pill** in mono — `4 PRs · 12 issues · ★ 4 · 17 tasks` —
+Wordmark and a **census pill** in mono — `4 PRs · 12 issues · ★ 4 · 17 tasks` —
 because open PRs, open issues and stars are how a reader recognises the repo, not findings
 about it. Then the rate pill and the reload / clear-cache buttons.
 
@@ -27,7 +25,7 @@ about it. Then the rate pill and the reload / clear-cache buttons.
 
 **Figures.** The worst row of the Work board (`repoCandidates` in
 [`next-work.mjs`](../src/derive/next-work.mjs)): its issue, its park kind and minutes (`parkMinutes`),
-*N more*. The same slip as the fleet's, on warm paper, two lines. **Bad when** anything is at
+*N more*. A slip on warm paper, two lines. **Bad when** anything is at
 serious / critical — the same verdict as the first row of the *stuck* view, by construction.
 Green state is one line: *nothing is waiting on you*.
 
@@ -35,17 +33,16 @@ Green state is one line: *nothing is waiting on you*.
 
 **Question.** Is *this* scheduler running, on cadence, right now — and when does it next act?
 
-Five cells. Where the fleet's heartbeat is one square per member, the repo's is **one square
-per hour**, 6 × 10 px, because the question one level down is *did it run when it should
-have*, hour by hour.
+Five cells. The heartbeat is **one square per hour**, 6 × 10 px, because the question is
+*did it run when it should have*, hour by hour.
 
 | Cell | Figure | Derived | Source | Bad when |
 |---|---|---|---|---|
 | **Scheduler** | 24 squares, one per hour, filled where a scheduler run completed in it; headline `last 12 m ago`, sub `22 of 24 h · 2 h gap at 04:00` | `hours[h].scheduler > 0` for folded hours, topped up from the live runs page for hours past `runsFoldedThrough` (`hourSeries` in [`usage.mjs`](../src/read/usage.mjs)); an hour neither source reached is drawn hollow, not red | fold `hours` + live runs | a gap > 2 h → warning; > 6 h → serious; no run in 24 h on a repo declaring tasks → critical |
 | **Executor** | failed / total in 24 h, and what is in flight now | `hours[*].failed` summed over 24 h; in flight from `runs.status ∈ {queued, in_progress}` | fold `hours` + live runs | ≥ 1 failed → warning; the failed run's task named from the hour's `tasks` list where the fold has it |
-| **CI on main** | one word plus age | `ciStatus(runs, default_branch)` in [`fleet.mjs`](../src/derive/fleet.mjs) | live runs | failing → critical (nothing the queue lands is safe) |
+| **CI on main** | one word plus age | `ciStatus(runs, default_branch)` in [`health.mjs`](../src/derive/health.mjs) | live runs | failing → critical (nothing the queue lands is safe) |
 | **Fold age** | `now − usage.generated` | the stamp | fold | > 6 h on a repo whose head moved → warning; no fold → *no fold*, and every fold-derived figure below reads *not recorded* |
-| **Next wake** | `05:00 · 7 tasks · in 19 h`, then a 24 h tick strip, one tick per task anchor, hover naming the task | the roster's own `nextAsk.at` per row (`buildRoster` in [`model.mjs`](../src/derive/model.mjs)) bucketed by hour | task declarations at head sha | a declaring repo with no anchor inside 24 h → serious (unwired); a task whose next ask is `held` (a failure park on a declaration carrying `last-run-not-failed`) is a critical tick at *now* |
+| **Next wake** | `05:00 · 7 tasks · in 19 h`, then a 24 h tick strip, one tick per task anchor, hover naming the task | the work table's own `nextAsk.at` per task row (`buildRoster` in [`model.mjs`](../src/derive/model.mjs)) bucketed by hour | task declarations at head sha | a declaring repo with no anchor inside 24 h → serious (unwired); a task whose next ask is `held` (a failure park on a declaration carrying `last-run-not-failed`) is a critical tick at *now* |
 
 **Expand →** the 48-hour table: hour, scheduler, executor, sessions, failed, tasks executed
 (from `hours[h].taskExec`).
@@ -53,7 +50,7 @@ have*, hour by hour.
 ## This week, against last — the ledger
 
 Three columns × three figures, each with a signed delta and, where the fold has a daily
-series, a 14-day sparkline. The same delta rule as the fleet's: **ink unless the figure's own
+series, a 14-day sparkline. The delta rule: **ink unless the figure's own
 *bad when* fires**.
 
 ### GOT — what this repo produced
@@ -93,7 +90,7 @@ already carries.
 ### The totals row — three quotients, and the per-task expand
 
 `≈ $ per merged PR · tokens per merged PR` · `autonomy % · yours : agent minutes` · `would
-have shipped broken · top rule ×N`, all inherited exactly as on the fleet page — plus the
+have shipped broken · top rule ×N` — plus the
 **per task ▾** expand, the one expansion only a repo page can offer.
 
 **Expand → per task.** One row per declared task with a queue history or a session in the
@@ -109,8 +106,8 @@ gains a cost column, and where three things only this page can state become rows
 
 - **Obsolete share, per task.** An ad-hoc lane whose closes are mostly `obsolete` and `none`
   while every scheduled task closes `done` reads as *requests are being filed that the queue
-  then retires*, or *the janitor is reclaiming leashes*, and the item links say which. On the
-  fleet page this is one number inside a total; here it is a row.
+  then retires*, or *the janitor is reclaiming leashes*, and the item links say which. Here it is
+  a row rather than one number inside a total.
 - **Cost per task, against what it closed.** The agentless task that closes most costs
   nothing; the task that costs most may close least. A task's `$ per close` is the only figure
   that turns *tokens ▼ 48 %* into *which task to move to a cheaper model* — and the model
@@ -120,7 +117,7 @@ gains a cost column, and where three things only this page can state become rows
 
 ## Pulse
 
-As the fleet's: a 14-day column chart of **sessions per day for this repo**, today dashed
+A 14-day column chart of **sessions per day for this repo**, today dashed
 where not yet folded, blank where not folded at all. **Bad when** flat for seven days on a
 repo that declares tasks while the scheduler squares are filled: it runs, nothing produces
 sessions.
@@ -151,7 +148,7 @@ to repo ([pack-contributions.md](pack-contributions.md)).
 
 - **A tile row.** Minutes waiting and items parked are Start here and SPEED's stuck row; PRs,
   issues and stars are the census pill; CI and runs in flight are the machine. Freshness is not on this page: it is the fleet
-  manager's verdict, published in its fleet-roster, and the fleet page reads it.
+  manager's verdict, not a fact this repo's tree carries.
 - **A per-day stacked chart of queue closes.** The outcome *words* matter (obsolete against
   done), but the day was the wrong axis: nobody asks which day obsolete happened, they ask
   which task. Total and spark on the headline; the split per task in the expand.

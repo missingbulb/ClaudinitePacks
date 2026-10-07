@@ -4,7 +4,7 @@
 // Four steps, each of which has to succeed before the next is worth starting:
 //
 //   1. BUILD. `build-site.mjs` assembles the site into a scratch directory. A
-//      declaration the build refuses (no `mode`, a contradicting roster) fails here,
+//      declaration the build refuses (a key nothing reads) fails here,
 //      in the executor's log. A mount that does not yet carry the page is the build's
 //      own "nothing to publish", and the run ends there as an empty outcome.
 //   2. PUSH. The built tree becomes one root commit force-pushed to `gh-pages`, which

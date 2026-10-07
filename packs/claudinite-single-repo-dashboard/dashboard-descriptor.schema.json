@@ -19,22 +19,6 @@
       "type": "array",
       "maxItems": 6,
       "items": { "type": "string" }
-    },
-    "fleet": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "member": {
-          "description": "The one widget that becomes this pack's mini-card in a fleet member's subrow. Must name a stat, event or window — a list cannot be one line.",
-          "type": "string"
-        },
-        "deployment": {
-          "description": "Widget ids making a deployment-scope card on a fleet page — the fleet questions no single member answers.",
-          "type": "array",
-          "maxItems": 6,
-          "items": { "type": "string" }
-        }
-      }
     }
   },
   "$defs": {
@@ -54,18 +38,18 @@
         },
         "label": { "type": "string", "minLength": 1, "maxLength": 34 },
         "noun": {
-          "description": "What the quantity is of, for the composed fleet phrase — '12 reqs in last 2w'. Required in practice by stat and window, which have nothing else to name.",
+          "description": "What the quantity is of — '12 reqs'. Required in practice by stat and window, which have nothing else to name.",
           "type": "string",
           "maxLength": 16
         },
         "glyph": {
-          "description": "One grapheme rendered ahead of the phrase, for recognition only. It never carries meaning of its own — the phrase must read without it.",
+          "description": "One grapheme rendered ahead of the figure, for recognition only. It never carries meaning of its own — the figure must read without it.",
           "type": "string",
           "minLength": 1,
           "maxLength": 4
         },
         "source": {
-          "description": "generated — from this pack's own .claudinite/usage/<pack>-dashboard-values.json in the member's tree. latest-release and repo-stars are platform facts the page already reads for every member, so a pack asking for one ships no code at all.",
+          "description": "generated — from this pack's own .claudinite/usage/<pack>-dashboard-values.json in the member's tree. latest-release and repo-stars are platform facts the page already reads, so a pack asking for one ships no code at all.",
           "enum": ["generated", "latest-release", "repo-stars"],
           "default": "generated"
         }

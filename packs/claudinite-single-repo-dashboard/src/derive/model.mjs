@@ -472,9 +472,8 @@ function nextAskOf(current, anchor, anchorNote, holdsOnFailure, holdsOnAnyPark) 
 // lands in it. The strip this draws answers a question no single row can: whether the
 // day's scheduled work is spread out or piled into one hour.
 //
-// FLEET OR REPO, the same reduction: the caller hands in whatever roster rows it has,
-// one member's or every member's, and a row carries the repo it came from where that
-// matters.
+// The caller hands in whatever roster rows it has, and a row carries the repo it came
+// from where that matters.
 //
 // A `held` next ask is placed at NOW and marked critical rather than left out. A task
 // whose blocking park stops it being scheduled at all has no future anchor, and

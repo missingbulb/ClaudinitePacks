@@ -21,12 +21,12 @@ class FakeEl {
   }
 }
 
-let miniCard, miniAbsent, packCard, parseDescriptor, fleetPhrase;
+let packCard, parseDescriptor;
 
 before(async () => {
   globalThis.document = { createElement: (tag) => new FakeEl(tag) };
-  ({ miniCard, miniAbsent, packCard } = await import('../src/render/contrib-view.mjs'));
-  ({ parseDescriptor, fleetPhrase } = await import('../src/read/contributions.mjs'));
+  ({ packCard } = await import('../src/render/contrib-view.mjs'));
+  ({ parseDescriptor } = await import('../src/read/contributions.mjs'));
 });
 
 const NOW = Date.UTC(2026, 7, 22, 12, 0, 0);
@@ -39,41 +39,6 @@ const descriptor = (over = {}) => parseDescriptor(JSON.stringify({
   repo: ['stars', 'landed', 'recent'],
   ...over,
 }), 'demo');
-
-// THE THREE REGISTERS, as separate elements. This is the whole payoff of a pack
-// supplying parts rather than a finished string: a string could not be set this way.
-test('a mini-card sets the quantity, noun and connective as their own spans', () => {
-  const w = descriptor().widgets.get('landed');
-  const card = miniCard(fleetPhrase(w, { value: 31, window: '1w' }, NOW), { title: 't' });
-  assert.deepEqual(card.find('q').map((n) => n.textContent), ['31', '1w']);
-  assert.deepEqual(card.find('n').map((n) => n.textContent), ['reqs']);
-  assert.deepEqual(card.find('c').map((n) => n.textContent), ['in last']);
-  // The words still read in order, with the spacing between them.
-  assert.equal(card.text.replace(/\s+/g, ' ').trim(), '31 reqs in last 1w');
-});
-
-test('a glyph rides ahead of the phrase, and the phrase reads without it', () => {
-  const w = descriptor().widgets.get('stars');
-  const card = miniCard(fleetPhrase(w, { value: 18 }, NOW), { title: 't', glyph: w.glyph });
-  assert.deepEqual(card.find('mini-glyph').map((n) => n.textContent), ['★']);
-  assert.equal(card.find('mini-glyph')[0]['aria-hidden'], 'true');
-  const bare = miniCard(fleetPhrase(w, { value: 18 }, NOW), { title: 't' });
-  assert.equal(bare.text.replace(/\s+/g, ' ').trim(), '18 stars');
-});
-
-// MONOCHROME: a contribution never colours itself, so there is nothing on a mini-card
-// for a pack to paint. Colour on that grid is the engine's severity edge.
-test('a mini-card carries no colour of its own', () => {
-  const w = descriptor().widgets.get('landed');
-  const card = miniCard(fleetPhrase(w, { value: 900, window: '1w' }, NOW), { title: 't' });
-  const styled = [card, ...card.find('q'), ...card.find('n')].filter((n) => n.style);
-  assert.deepEqual(styled, []);
-});
-
-test('a card that cannot make a line says which state it is in', () => {
-  assert.equal(miniAbsent('not read', 'p').text, 'not read');
-  assert.equal(miniAbsent('not read', 'p').className, 'mini none');
-});
 
 // A descriptor the page cannot use becomes ONE named line — never a missing card, so a
 // broken pack is visibly broken rather than invisibly absent.
@@ -95,17 +60,6 @@ test('a pack whose values file does not exist names the file', () => {
   assert.match(card.text, /\.claudinite\/usage\/demo-dashboard-values\.json/);
   // …and the widget that did have a live source still renders its number.
   assert.match(card.text, /4/);
-});
-
-test('a deployment card renders the ids the deployment names, not the repo card\'s', () => {
-  const d = descriptor({ fleet: { deployment: ['landed'] } });
-  const card = packCard(
-    { pack: 'demo', descriptor: d, values: { generatedAt: null, values: { landed: { value: 3, previous: 1, window: '30d' } } }, from: 'o/canon' },
-    NOW, { ids: d.deployment },
-  );
-  assert.match(card.text, /3/);
-  assert.ok(!card.text.includes('stars'), card.text);
-  assert.match(card.text, /canon/);
 });
 
 // The previous window is spelled out rather than left as a bare arrow: a change with

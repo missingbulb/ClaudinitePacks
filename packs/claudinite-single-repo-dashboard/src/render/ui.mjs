@@ -1,7 +1,6 @@
-// Shared rendering vocabulary. Both views draw from this so a state, a duration or a
-// severity looks and reads the same whether you are looking at one repo or twelve —
-// a fleet page whose "blocked" chip differs from the repo page's is a page you have
-// to learn twice.
+// Shared rendering vocabulary, so a state, a duration or a severity looks and reads
+// the same in every panel — a "blocked" chip that differs between two panels is a
+// page you have to learn twice.
 
 import {
   STATUS_BLOCKED, STATUS_READY, STATUS_RUNNING_EXECUTOR, STATUS_RUNNING_AGENT,
@@ -80,8 +79,8 @@ export function chip(state) {
 }
 
 // A reason naming an item by number — "blocked on #12, #13" — is drawn on the page of
-// the repo that number belongs to, so it is given one to link against there. The fleet
-// page's reasons count members and name none, and pass no repo.
+// the repo that number belongs to, so it is given one to link against there. A reason
+// with no repo passes none.
 export const reasonNodes = (reasons, repo = null) =>
   reasons.map((r) => el('span', { className: `warn ${r.level}` },
     refNodes(repo, `${LEVEL_GLYPH[r.level] ?? '▲'} ${r.text}`)));
@@ -102,176 +101,6 @@ export function segmentBar(segments, { width = 108, title = (l, n) => `${n} ${l}
   }
   if (!any) bar.append(el('i', { className: 'bar-empty', style: 'flex:1' }));
   return bar;
-}
-
-// --- the member row's compact marks ----------------------------------------------
-
-// A fleet grid is wide, and two of these fold a whole column each back into a mark
-// the row reads at the same glance. (A third did the same for the star count, until
-// stars became `git-github`'s contribution and moved to the member's subrow.)
-
-// CI as a dot with its age under it. The dot is never the whole message — it carries
-// a `title` and an `aria-label` in words, because a colour alone is unreadable to a
-// reader who cannot see the difference between this green and this red.
-//
-// The age is bare: "7h", not "7h ago". In a column of them the word is on every row
-// and carries no information, and the header says what the number is.
-export function ciMark(ui, when) {
-  return el('div', { className: 'ci-mark' }, [
-    el('i', {
-      className: `dot ${ui.cls}`,
-      role: 'img',
-      title: `CI ${ui.label}`,
-      'aria-label': `CI ${ui.label}`,
-    }),
-    el('div', { className: 'sub', textContent: when }),
-  ]);
-}
-
-// What is waiting on a person here, as a bar and one line. THE THIRD FOLD, and the
-// one the grid most needed: the sentences `attentionBreakdown` writes are the only
-// prose in a row of marks, so the column took every pixel the other nine could spare
-// and still wrapped each sentence to one word per line.
-//
-// The bar weighs LEVELS, not kinds. Two serious kinds drawn as two adjacent segments
-// of one colour is a boundary that means nothing, and severity is the one thing the
-// line below cannot show. Its hover names each level in words, because the palette
-// never carries meaning on its own.
-//
-// The kinds survive on that line — "9 actions" is not "9 items needing something
-// changed outside the code", which is why the sentences are on the mark's own hover
-// rather than deleted. A reader who cannot tell what an action is has somewhere to go.
-const ATTENTION_LEVELS = [
-  ['critical', 'var(--critical)'],
-  ['serious', 'var(--serious)'],
-  ['warning', 'var(--warning)'],
-];
-
-export function attentionMark(rows, { width = 92 } = {}) {
-  if (!rows.length) return el('div', {}, [el('span', { className: 'sub', textContent: 'nothing waiting' })]);
-  const weigh = (level) => rows.filter((r) => r.level === level).reduce((n, r) => n + r.count, 0);
-  const sentences = rows.map((r) => r.text).join('\n');
-  return el('div', { className: 'attn', title: sentences, 'aria-label': sentences }, [
-    segmentBar(ATTENTION_LEVELS.map(([level, color]) => [level, weigh(level), color]), { width }),
-    el('div', { className: 'sub', textContent: rows.map((r) => `${r.count} ${r.short}`).join(' \u00b7 ') }),
-  ]);
-}
-
-// The pack count, with the member's freshness worn as a badge on it. Two facts that
-// are read together — how much Claudinite is declared here, and whether what is
-// declared is current — and almost always the badge says the same thing, so it earns a
-// corner rather than a column. The detail is the hover: the roster's own sentence.
-export function packMark(count, freshness) {
-  const badge = FRESHNESS_BADGE[freshness?.state] ?? FRESHNESS_BADGE.unknown;
-  const title = freshness?.detail || badge.title;
-  return el('div', { className: 'pack-mark', title }, [
-    el('div', { className: 'n num', textContent: count == null ? '—' : String(count) }),
-    el('div', { className: `badge ${badge.cls}`, textContent: badge.glyph, role: 'img', 'aria-label': title }),
-  ]);
-}
-
-// `unknown` is not `fresh`: with no roster published there is nothing that judged it,
-// and a tick there would claim a check that never happened.
-const FRESHNESS_BADGE = {
-  fresh: { glyph: '✓', cls: 'ok', title: 'at the published versions' },
-  behind: { glyph: '⏱', cls: 'info', title: 'behind the published versions' },
-  'no-stamp': { glyph: '?', cls: 'warning', title: 'declares packs but has never been vendored' },
-  'no-scheduler': { glyph: '?', cls: 'warning', title: 'no scheduler workflow, so nothing will converge it' },
-  node: { glyph: '·', cls: 'idle', title: 'runs the Node engine, which the roster does not compare' },
-  dormant: { glyph: '·', cls: 'idle', title: 'dormant — not measured' },
-  unknown: { glyph: '·', cls: 'idle', title: 'freshness unknown — this deployment runs no fleet-roster' },
-};
-
-// A member's last 90 days of commits, as a filled area over time.
-//
-// A curve rather than a grid of day-squares: at this size the question a reader is
-// asking is "is this repo being worked on, and was it always" — a shape answers that
-// across the column in one glance, where 90 separate squares have to be counted.
-//
-// Drawn WEEKLY. A quarter at daily resolution is a sawtooth — an ordinary repo's
-// weekend is a trough and its Tuesday a spike — and a sawtooth has no shape to read.
-// The daily counts still supply the total, the peak and the hover.
-//
-// Three empty states, and they are three different facts. A null series is a read
-// that did not happen (withheld for budget, or GitHub still computing); a null DAY is
-// outside the year of statistics the API returns; and zeroes are a repo that was
-// genuinely quiet. The curve breaks over unread days rather than drawing them at the
-// floor, so a gap in the data never renders as a quiet stretch.
-export function commitGraph(series, { width = 108, height = 26, note = null } = {}) {
-  if (!series) return el('div', { className: 'sub', textContent: 'not read' });
-
-  const NS = 'http://www.w3.org/2000/svg';
-  const svgEl = (tag, attrs = {}) => {
-    const n = document.createElementNS(NS, tag);
-    for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, String(v));
-    return n;
-  };
-
-  const { days, buckets, total, peak, unread } = series;
-  const svg = svgEl('svg', {
-    viewBox: `0 0 ${width} ${height}`, preserveAspectRatio: 'none',
-    class: 'commits', role: 'img',
-    'aria-label': `${total} commits over ${days.length} days, busiest day ${peak}`,
-  });
-
-  const step = buckets.length > 1 ? width / (buckets.length - 1) : width;
-  // Scaled to the row's own busiest WEEK. A shared scale across members was the
-  // alternative and it is worse: one member vendoring a tree flattens every other row
-  // to a floor, which is the reading — "nothing happens in these repos" — the column
-  // exists to disprove. The hover carries the numbers, so the scale is never guessed.
-  const top = buckets.reduce((n, b) => Math.max(n, b.count ?? 0), 0);
-  const y = (count) => height - 1 - (top > 0 ? (count / top) * (height - 2) : 0);
-
-  // Contiguous runs of READ weeks. A run of one still draws, so a single week
-  // surrounded by unread ones is visible rather than dropped. `pick` is which series
-  // this pass draws and `cls` how: the total is an area, the meaningful line a plain
-  // stroke over it.
-  const draw = (pick, cls, area) => {
-    let run = [];
-    const flush = () => {
-      if (!run.length) { return; }
-      const line = run.map((p, i) => `${i ? 'L' : 'M'}${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(' ');
-      if (area) {
-        svg.append(svgEl('path', {
-          d: `${line} L${run[run.length - 1].x.toFixed(2)},${height} L${run[0].x.toFixed(2)},${height} Z`,
-          class: 'commit-area',
-        }));
-      }
-      svg.append(svgEl('path', { d: line, class: cls }));
-      run = [];
-    };
-    buckets.forEach((b, i) => {
-      const v = pick(b);
-      if (v == null) { flush(); return; }
-      run.push({ x: i * step, y: y(v) });
-    });
-    flush();
-  };
-  draw((b) => b.count, 'commit-line', true);
-  // The SECOND series: the commits that were genuine project work rather than the
-  // machinery moving. Drawn on the same scale, over the span the commit listing
-  // reached and breaking where it did not — the gap between the two lines is the
-  // machinery's own share, which is the reading the fleet's owner asked for.
-  const meaningful = buckets.reduce((n, b) => n + (b.meaningful ?? 0), 0);
-  const classified = buckets.some((b) => b.meaningful != null);
-  if (classified) draw((b) => b.meaningful, 'commit-line meaningful', false);
-
-  const title = svgEl('title');
-  title.textContent = [
-    `${total} commit${total === 1 ? '' : 's'} over ${days.length} days, by week`,
-    classified ? `${meaningful} meaningful where classified — the lower line` : 'meaningful commits not classified — the listing was not read',
-    peak ? `busiest day ${peak}, busiest week ${top}` : null,
-    unread ? `${unread} day(s) outside the year GitHub reports` : null,
-  ].filter(Boolean).join(' · ');
-  svg.append(title);
-
-  return el('div', { className: 'commit-graph' }, [
-    svg,
-    el('div', {
-      className: 'sub',
-      textContent: [total === 0 && !unread ? 'none' : String(total), note].filter(Boolean).join(' · '),
-    }),
-  ]);
 }
 
 // --- tables ---------------------------------------------------------------------
@@ -302,7 +131,7 @@ export const isRef = (part) => /^#\d+$/.test(part);
 // A sentence that names issues or pull requests by number, as nodes — the prose
 // between the numbers unchanged, each number a link. Callers that would have passed a
 // string to `textContent` pass this as children instead. With no repo to link against
-// — the fleet page, where a number belongs to no one member — it is the sentence.
+// it is the sentence.
 export const refNodes = (repo, text) => (repo
   ? splitRefs(text).map((part) => (isRef(part) ? issueLink(repo, part.slice(1)) : part))
   : [String(text ?? '')]);
@@ -329,94 +158,10 @@ export const queueUrl = (candidates) => {
     : `https://github.com/search?type=issues&q=${q(['is:issue', 'state:open', ...repos.map((r) => `repo:${r}`), ...numbers])}`;
 };
 
-export const repoLink = (repo) =>
-  el('a', { href: `https://github.com/${repo}`, target: '_blank', rel: 'noopener', textContent: repo });
-
-// --- the lead block --------------------------------------------------------------
-
-// The one thing to do, as a card. Both pages render it from the same function so the
-// fleet's prod and a repo's prod are the same object said the same way.
-//
-// It NAMES the work rather than counting it: a count is something to read, and a
-// title with a link is something to open. The severity is the card's left edge rather
-// than its words, so an uncoloured card is legible as "nothing is red" at a glance.
-//
-// `candidate` is `next-work.mjs`'s pick, or null. `rest` is how many candidates sit
-// behind it — one piece of work is a prod, and the queue behind it is context.
-//
-// `minutes` is priced by the CALLER, from the attention estimate's own rates: this
-// module renders a figure and never computes one, so the card cannot publish a number
-// the tiles below would total differently. `note` is whatever that pricing has to
-// disclaim about it.
-export function leadCard(candidate, { rest = 0, onRepo = null, minutes = null, note = null } = {}) {
-  if (!candidate) {
-    return el('div', { className: 'chart-card lead-card lvl-ok' }, [
-      el('div', { className: 'lead-why', textContent: 'Nothing is waiting on you.' }),
-      el('div', { className: 'sub', textContent: 'Nothing read here is parked, failing or behind — the panels below are the picture, not a list to work through.' }),
-    ]);
-  }
-
-  const where = [];
-  if (onRepo) {
-    where.push(el('a', {
-      href: `?repo=${encodeURIComponent(candidate.repo)}`,
-      className: 'name',
-      textContent: candidate.repo,
-      onclick: (e) => { e.preventDefault(); onRepo(candidate.repo); },
-    }));
-  } else {
-    where.push(el('span', { className: 'name', textContent: candidate.repo }));
-  }
-  if (candidate.number != null) {
-    where.push(issueLink(candidate.repo, candidate.number));
-    if (candidate.key) where.push(el('span', { className: 'sub', textContent: candidate.key }));
-  }
-
-  // What it costs a person, beside the reason rather than under it: "one item is
-  // parked" is a fact, "fifteen minutes" is a decision about the next fifteen minutes.
-  // Work the estimate does not cover — a broken scheduler is not a queue to get
-  // through — says so rather than showing a zero.
-  const cost = minutes != null
-    ? el('div', { className: 'lead-est', title: note ?? '' }, [
-      el('span', { className: 'v', textContent: `${minutes} min` }),
-      el('span', { className: 'k', textContent: note ? 'of your time, at least' : 'of your time' }),
-    ])
-    : el('div', { className: 'lead-est none' }, [
-      el('span', { className: 'v', textContent: '—' }),
-      el('span', { className: 'k', textContent: 'no time estimate' }),
-    ]);
-
-  const kids = [
-    el('div', { className: 'lead-top' }, [
-      el('div', { className: 'lead-why', textContent: candidate.why }),
-      cost,
-    ]),
-    el('div', { className: 'lead-where' }, where),
-  ];
-  if (candidate.title) kids.push(el('div', { className: 'sub', textContent: candidate.title }));
-
-  // How long it has been wrong, when the item knows — an idle time is the queue's own
-  // measure and is absent on a repo-level fault, which is a state rather than an event.
-  const detail = [
-    candidate.idleMs != null ? `untouched for ${duration(candidate.idleMs)}` : null,
-    ...candidate.more,
-  ].filter(Boolean);
-  if (detail.length) kids.push(el('div', { className: 'sub', textContent: detail.join(' · ') }));
-
-  kids.push(el('a', {
-    className: 'lead-act', href: candidate.url, target: '_blank', rel: 'noopener',
-    textContent: candidate.number != null ? `Open #${candidate.number}` : 'Open the repo',
-  }));
-  if (rest > 0) {
-    kids.push(el('div', { className: 'sub', textContent: `${rest} more after this one.` }));
-  }
-  return el('div', { className: `chart-card lead-card lvl-${candidate.level}` }, kids);
-}
-
 // --- counting up ----------------------------------------------------------------
 
-// A fleet load repaints on EVERY member's read landing, so a headline number is
-// rebuilt a dozen times in a couple of seconds and each rebuild replaces the digits
+// A load repaints as each read lands, so a headline number is rebuilt several times
+// in a couple of seconds and each rebuild replaces the digits
 // outright. The eye reads that as flicker rather than as arrival: you cannot tell
 // whether 7 became 9 or whether two different numbers were drawn.
 //
@@ -504,41 +249,6 @@ export function tiles(node, rows) {
       : (typeof hint === 'string' ? el('div', { className: 'sub', textContent: hint }) : hint),
   ])));
 }
-
-// --- grouped table heads --------------------------------------------------------
-
-// A header BAND above the column names, so a wide row reads as a few questions rather
-// than as a wall of columns. `groups` is `[title, [col, …]]`; a group whose title is
-// empty spans its columns unlabelled, which is what the identity column at the left
-// edge wants — it belongs to no question.
-//
-// `group-band`, not `band`: the sheet's own band ([`sheet.mjs`](sheet.mjs)) is a grid
-// component, and a `<tr>` that matched it was laid out as a two-column grid — which
-// drops `colSpan` on the floor and stacks the titles on top of each other.
-export const groupedHead = (table, groups) => {
-  table.replaceChildren();
-  table.append(el('thead', {}, [
-    el('tr', { className: 'group-band' }, groups.map(([title, cols]) =>
-      el('th', { colSpan: cols.length, className: title ? 'group' : 'group blank', textContent: title }))),
-    el('tr', {}, groups.flatMap(([, cols], gi) => cols.map((c, ci) =>
-      el('th', { className: ci === 0 && gi > 0 ? 'group-start' : '', textContent: c })))),
-  ]));
-  return table.appendChild(el('tbody'));
-};
-
-export const columnCount = (groups) => groups.reduce((n, [, cols]) => n + cols.length, 0);
-
-// Which cells start a group, so the body can carry the same vertical rule the band
-// draws. Returns the flat column indexes a `groupedHead(groups)` would open a group at.
-export const groupStarts = (groups) => {
-  const out = [];
-  let i = 0;
-  for (const [gi, [, cols]] of groups.entries()) {
-    if (gi > 0) out.push(i);
-    i += cols.length;
-  }
-  return out;
-};
 
 // --- the day chart --------------------------------------------------------------
 
@@ -756,7 +466,7 @@ export function flipRows(body, paint) {
 //
 // Which DIRECTION is good is the caller's to say: more completed work is progress and
 // more items needing a person is not, and a green up-arrow on the second would read as
-// a boast about the fleet needing more hand-holding.
+// a boast about the repo needing more hand-holding.
 export function windowFigure(value, label, change, note, { better = 'up' } = {}) {
   const arrow = change?.dir === 'up' ? '▲' : change?.dir === 'down' ? '▼' : '—';
   const sense = !change || change.dir === 'flat' ? 'flat' : (change.dir === better ? 'good' : 'bad');

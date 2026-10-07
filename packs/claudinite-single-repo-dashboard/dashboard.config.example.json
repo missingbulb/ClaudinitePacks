@@ -3,24 +3,15 @@
     "Example only. The dashboard reads ./dashboard.config.json beside itself, and the",
     "publish-pages build writes that file from the member's own declaration and its",
     "repository variables, so the real config is never committed here. Absent config is",
-    "a valid local run, not a broken one — it means the token-paste fallback and",
-    "whatever repo the URL names.",
-    "`mode` is required and has no default: \"repo\" for this repo's own page,",
-    "\"fleet\" for the overview. A \"fleet\" mode names an `owner`, whose repos the page",
-    "enumerates as the viewer, less `exclude`. `deploymentRepo` is where the site is",
-    "published from: a fleet reads the manager's fleet-roster there, and member freshness",
-    "reads unknown without one. `repos`, `rosterFile`, `rosterUrl` and `canonRepo` are",
-    "refused (design record row 111)."
+    "a valid local run, not a broken one — it means whatever repo the URL names.",
+    "`owner`, `exclude`, `repos`, `rosterFile`, `rosterUrl`, `canonRepo` and any `mode`",
+    "but \"repo\" are refused: this pack shows one repository."
   ],
 
-  "mode": "fleet",
   "clientId": "Iv1.0123456789abcdef",
   "exchangeUrl": "https://claudinite-oauth.example.workers.dev",
-  "redirectUri": "https://missingbulb.github.io/Shepherd/",
+  "redirectUri": "https://acme.github.io/acme-repo/",
   "scope": null,
 
-  "owner": "missingbulb",
-  "exclude": [],
-  "deploymentRepo": "missingbulb/Shepherd",
-  "defaultRepo": null
+  "defaultRepo": "acme/acme-repo"
 }

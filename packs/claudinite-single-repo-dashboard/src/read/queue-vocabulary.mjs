@@ -135,7 +135,7 @@ export const OUTCOME_DELIVERED = 'outcome:delivered';
 
 // @deprecated The pre-2026-08-19 terminal spellings. Kept exported so a fielded
 // pack that imports them still loads, and READ wherever an outcome is decoded:
-// labels are stored data on closed issues fleet-wide, so a decoder that stopped
+// labels are stored data on closed issues in every repo, so a decoder that stopped
 // recognising these would turn every historical run into an un-outcomed one.
 export const OUTCOME_DONE = 'outcome:done';
 

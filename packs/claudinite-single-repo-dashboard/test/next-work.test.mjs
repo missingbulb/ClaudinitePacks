@@ -1,9 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  itemCandidate, reasonCandidate, rankCandidates, pickCandidate, fleetCandidates, repoCandidates,
+  itemCandidate, reasonCandidate, rankCandidates, pickCandidate, repoCandidates,
 } from '../src/derive/next-work.mjs';
-import { estimateMinutes, parkMinutes, parkMinutesNote } from '../src/derive/fleet.mjs';
+import { PARK_MINUTES, APPROVAL_RATE, parkMinutes, parkMinutesNote } from '../src/derive/health.mjs';
 import {
   STATUS_READY, STATUS_NEEDS_HUMAN_ACTION, STATUS_NEEDS_HUMAN_APPROVAL, STATUS_NEEDS_HUMAN_DECISION,
 } from '../src/read/queue-vocabulary.mjs';
@@ -53,12 +53,12 @@ test('the candidate carries the park\'s own classification, and no price', () =>
   assert.equal(reasonCandidate('o/r', [{ kind: 'scheduler', level: 'critical', text: 'scheduler last run failed' }]).park, null);
 });
 
-test("one item's price is one term of the estimate's own sum", () => {
+test("one item's price is its park kind's own rate", () => {
   const priceOf = (over) => parkMinutes(itemCandidate('o/r', parked(over)).park);
-  assert.equal(priceOf({ blockingPark: true }), estimateMinutes({ broken: 1 }));
-  assert.equal(priceOf({ triage: STATUS_NEEDS_HUMAN_ACTION }), estimateMinutes({ actions: 1 }));
-  assert.equal(priceOf({ triage: STATUS_NEEDS_HUMAN_DECISION }), estimateMinutes({ decisions: 1 }));
-  assert.equal(priceOf({ triage: STATUS_NEEDS_HUMAN_APPROVAL }), estimateMinutes({ approvals: 1 }));
+  assert.equal(priceOf({ blockingPark: true }), PARK_MINUTES.broken);
+  assert.equal(priceOf({ triage: STATUS_NEEDS_HUMAN_ACTION }), PARK_MINUTES.actions);
+  assert.equal(priceOf({ triage: STATUS_NEEDS_HUMAN_DECISION }), PARK_MINUTES.decisions);
+  assert.equal(priceOf({ triage: STATUS_NEEDS_HUMAN_APPROVAL }), APPROVAL_RATE.minutes);
   // Nothing to price is null, never a zero.
   assert.equal(parkMinutes(null), null);
 });
@@ -117,19 +117,6 @@ test('at one level an issue outranks a repo, and the longer-stuck issue outranks
 test('nothing wrong anywhere is no candidate, not a made-up one', () => {
   assert.equal(pickCandidate([]), null);
   assert.equal(pickCandidate([null, null]), null);
-});
-
-test('a fleet ranks across its members, and skips the ones it could not read', () => {
-  const summaries = [
-    { repo: 'o/quiet', status: 'adopted', top: null, reasons: [] },
-    { repo: 'o/loud', status: 'adopted', top: itemCandidate('o/loud', parked({ number: 5, blockingPark: true })), reasons: [] },
-    { repo: 'o/hidden', status: 'unreadable', reasons: [{ level: 'info', text: 'not visible to you' }] },
-    { repo: 'o/ci', status: 'adopted', top: null, reasons: [{ kind: 'ci', level: 'warning', text: 'CI failing' }] },
-  ];
-  const all = fleetCandidates(summaries);
-  assert.equal(all[0].repo, 'o/loud');
-  assert.equal(all[0].number, 5);
-  assert.deepEqual(all.map((c) => c.repo), ['o/loud', 'o/ci']);
 });
 
 test('one repo ranks over the work table\'s own rows, so the block and the table agree', () => {

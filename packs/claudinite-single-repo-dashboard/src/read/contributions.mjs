@@ -7,9 +7,9 @@
 // every declared pack's into `.claudinite/cache/dashboard.GENERATED.json`) declaring
 // what the pack has to say, and a VALUES file in the member's own tree
 // (`.claudinite/usage/<pack>-dashboard-values.json`) written by that pack's own
-// machinery. The page executes nothing from either. The fleet view renders repos the
-// viewer merely has read access to, so importing a member's modules would run twelve
-// strangers' code in the viewer's browser with the viewer's token in scope.
+// machinery. The page executes nothing from either: it renders repos the viewer merely
+// has read access to, so importing a member's modules would run another repo's code in
+// the viewer's browser with the viewer's token in scope.
 //
 // WHAT THIS MODULE DOES NOT DO: touch the DOM. It parses, validates, resolves a
 // widget to its value and composes the PARTS of a phrase; `ui.mjs` renders them.
@@ -19,8 +19,6 @@
 // UNKNOWN IS NOT ZERO here as everywhere on this page. `undefined` means NOT READ (a
 // withheld read, a failure); `null` means read and absent. They render differently
 // and neither renders as a number.
-import { duration } from '../render/ui.mjs';
-import { readMember } from './member.mjs';
 import { readFlat, entryText, heldFlatPath, FLAT_DASHBOARD_PATH } from './flat.mjs';
 
 // The closed vocabulary. A descriptor naming anything outside it is not guessed at:
@@ -28,10 +26,6 @@ import { readFlat, entryText, heldFlatPath, FLAT_DASHBOARD_PATH } from './flat.m
 // what lets a member run a pack version newer than the deployed page.
 export const KINDS = Object.freeze(['stat', 'event', 'window', 'list']);
 export const SOURCES = Object.freeze(['generated', 'latest-release', 'repo-stars']);
-
-// `list` is the one kind a fleet mini-card cannot take: it is many lines and the
-// subrow gives each pack one.
-export const FLEET_KINDS = Object.freeze(['stat', 'event', 'window']);
 
 // Renderer-owned budgets. A pack cannot spend more of a shared surface than this by
 // writing a longer string — everything past the cap is clipped with the elision
@@ -126,18 +120,12 @@ export function parseDescriptor(text, pack) {
   // into describing one figure differently. An id naming no widget is dropped: the
   // widget it pointed at may simply not exist in this version of the pack.
   const pick = (ids) => (Array.isArray(ids) ? ids : []).filter((id) => widgets.has(id));
-  const member = typeof doc.fleet?.member === 'string' ? doc.fleet.member : null;
-  const memberWidget = member && widgets.get(member);
 
   return {
     pack,
     fault: null,
     widgets,
     repo: pick(doc.repo).slice(0, MAX_REPO_WIDGETS),
-    // A member mini-card must fit one line. A pack naming a `list` there gets no
-    // mini-card rather than a truncated one — and its repo card is unaffected.
-    member: memberWidget && (FLEET_KINDS.includes(memberWidget.kind) || !memberWidget.known) ? member : null,
-    deployment: pick(doc.fleet?.deployment),
     // Which live sources this descriptor actually needs, so a caller reads none it
     // has no use for.
     needsGenerated: [...widgets.values()].some((w) => w.source === 'generated'),
@@ -182,60 +170,9 @@ export function valueOf(widget, { values, live = {} } = {}) {
   return isObj(v) ? { state: 'ok', value: v } : { state: 'absent' };
 }
 
-// --- composing the phrase ----------------------------------------------------------
-
-// THREE REGISTERS, and they are why a pack supplies values rather than a string. The
-// quantity reads first and is what differs between members; the noun says what of;
-// the connective is present for grammar and gets out of the way.
-const q = (text) => ({ t: 'q', text: String(text) });
-const n = (text) => ({ t: 'n', text: String(text) });
-const c = (text) => ({ t: 'c', text: String(text) });
+// --- a widget's figures ------------------------------------------------------------
 
 const num = (v) => (typeof v === 'number' && Number.isFinite(v) ? String(v) : null);
-
-// One member's mini-card, as parts. Returns null when the widget cannot make a line —
-// the caller then renders the state it is in, never a half-phrase.
-export function fleetPhrase(widget, value, now) {
-  if (!value) return null;
-  switch (widget.kind) {
-    case 'stat': {
-      const v = num(value.value);
-      return v === null ? null : [q(v), n(widget.noun || widget.label)].filter((p) => p.text);
-    }
-    case 'event': {
-      const at = ms(value.at);
-      const text = clip(value.text, MAX_TEXT);
-      if (at === null && !text) return null;
-      // The AGE leads, because on a grid the question a released-thing answers is how
-      // stale it is; the tag itself follows as what was released.
-      return [
-        at === null ? null : q(duration(now - at)),
-        at === null ? null : c('ago ·'),
-        text ? n(text) : null,
-      ].filter(Boolean);
-    }
-    case 'window': {
-      const v = num(value.value);
-      if (v === null) return null;
-      // NO DELTA. On a repo card the previous window is the only comparison there is;
-      // on the grid the comparison is the column itself, across members, so the card
-      // spends its characters on the span it covers instead.
-      const span = clip(value.window ?? '', 8);
-      return [
-        q(v),
-        widget.noun ? n(widget.noun) : null,
-        span ? c('in last') : null,
-        span ? q(span) : null,
-      ].filter(Boolean);
-    }
-    default:
-      return null;
-  }
-}
-
-// The plain-text form of the same parts — the mini-card's `title`, and what a test
-// asserts against.
-export const phraseText = (parts) => (parts ?? []).map((p) => p.text).join(' ');
 
 // A list widget's items, capped, with the overflow COUNTED rather than dropped: a
 // reader must never be shown a short list that looks complete.
@@ -318,49 +255,9 @@ async function readValuesText({ repo, sha, token, paths, gh }, pack) {
 }
 
 // Which live sources a repo's contributions need at all, so a view reads none it has
-// no use for — a fleet with no release pack anywhere never asks for a release.
+// no use for — a repo with no release pack never asks for a release.
 export const liveSourcesNeeded = (contributions) => {
   const out = new Set();
   for (const c of contributions ?? []) for (const s of c.descriptor?.sources ?? []) if (s !== 'generated') out.add(s);
   return out;
 };
-
-// A repo's contributions read from scratch — its own metadata, head, declaration and
-// tree — for a repo the caller has not already swept. The fleet page uses it for the
-// DEPLOYMENT's own cards, which come from repos that may or may not be members.
-//
-// Everything it touches is either conditional or keyed by a sha, and on a fleet page
-// the deployment repo is usually a member already read this load, so in practice this
-// is served from cache rather than spent.
-export async function readRepoContributions({ repo, token, gh }) {
-  try {
-    const meta = await gh.getRepo(repo, token);
-    const sha = await gh.getHeadSha(repo, meta.default_branch, token);
-    const { member, fault } = await readMember({ repo, sha, token, gh });
-    if (fault) return { repo, contributions: [], error: new Error(fault) };
-    if (!member) return { repo, contributions: [] };
-    const declaration = member.declaration;
-    const tree = await gh.listTreeAtSha(repo, sha, token);
-    const contributions = await readContributions({ repo, sha, token, declaration, paths: tree?.paths ?? null, gh });
-    const needed = liveSourcesNeeded(contributions);
-    const live = {
-      stars: meta.stars,
-      release: needed.has('latest-release') ? await gh.latestRelease(repo, token).catch(() => undefined) : undefined,
-    };
-    for (const c of contributions) c.live = live;
-    return { repo, contributions };
-  } catch (error) {
-    return { repo, contributions: [], error };
-  }
-}
-
-// The deployment-scope cards: every contribution, from the repo the deployment is
-// published from (and the repo a single-repo page shows, where that is another one),
-// that declares a `fleet.deployment` list. A repo named twice is read once.
-export async function readDeploymentContributions({ config, token, gh }) {
-  const repos = [...new Set([config?.defaultRepo, config?.deploymentRepo].filter(Boolean))];
-  const reads = await Promise.all(repos.map((repo) => readRepoContributions({ repo, token, gh })));
-  return reads.flatMap((r) => r.contributions
-    .filter((c) => c.descriptor?.deployment?.length)
-    .map((c) => ({ ...c, from: r.repo })));
-}

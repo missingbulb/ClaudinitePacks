@@ -52,8 +52,7 @@ export const modelTokens = (counters) =>
     .reduce((n, f) => n + (typeof counters?.[f] === 'number' ? counters[f] : 0), 0);
 
 // Sum a window's `tokensByModel` rows into one `{ model: counters }` map. `rows` is
-// whatever the caller's window selected — day rows, week rows, one member's or a
-// fleet's. A row with no `tokensByModel` key contributes nothing rather than a zero,
+// whatever the caller's window selected — day rows or week rows. A row with no `tokensByModel` key contributes nothing rather than a zero,
 // which is what keeps `recorded` honest.
 export function tokensByModelOver(rows) {
   const out = {};

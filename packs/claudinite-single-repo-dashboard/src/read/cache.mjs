@@ -1,5 +1,5 @@
-// The client-side cache. Browser-only, and the reason a fleet-wide dashboard is
-// affordable at all: without it, one page load across a dozen members spends
+// The client-side cache. Browser-only, and the reason the dashboard is affordable at
+// all: without it, a repo with a long history spends
 // several hundred API calls of a 5,000/hour budget, and a second look a minute
 // later spends them again.
 //
@@ -18,7 +18,7 @@
 //                Plain TTL, 24h by default.
 //
 // Storage is `localStorage`, holding COMPACT PROJECTIONS rather than API payloads:
-// a fleet's raw issue JSON is tens of megabytes and the quota is ~5, so what goes
+// a repo's raw issue JSON can be tens of megabytes and the quota is ~5, so what goes
 // in is only the fields the model reads back out.
 
 // The projection below has to find a PR's closing issue by the same rule the fold
@@ -179,7 +179,7 @@ export const rateState = {
 // of that for a CLOSED item, and for an open one it needs only the body's two
 // scheduling fields — which are near the top, so a truncated body still parses.
 //
-// Dropping and truncating the body is why a fleet's history fits in the quota at all.
+// Dropping and truncating the body is why a long history fits in the quota at all.
 const BODY_KEEP = 600;
 
 export const projectIssue = (i) => ({
@@ -198,7 +198,7 @@ export const projectIssue = (i) => ({
 // How far back a MERGED pull request is worth keeping. The open ones are kept because
 // they are work waiting on a person; the merged ones because they are the lead-time
 // series for the days the fold has not reached yet, and that series is drawn over two
-// weeks. Past this they are dropped as they always were, which is what keeps a fleet's
+// weeks. Past this they are dropped as they always were, which is what keeps the
 // history inside the storage quota.
 export const MERGED_PR_WINDOW_DAYS = 14;
 

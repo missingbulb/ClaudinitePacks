@@ -1,6 +1,5 @@
-// WHAT A MEMBER SAYS ABOUT ITSELF, read from the page. One reader, because the page
-// asks it from three places (the repo view, the fleet view, the contributions panel),
-// and one shape out of it whichever engine the member runs:
+// WHAT A MEMBER SAYS ABOUT ITSELF, read from the page: one shape out of it whichever
+// engine the member runs:
 //
 //   { shape: 'cn' | 'node', settingsPath, declared: [{ id, config }], dormant (null: unstated),
 //     engine: { version } | null, held: { <pack>: <version> }, declaration }

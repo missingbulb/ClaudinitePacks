@@ -8,10 +8,8 @@
 //   unauthenticated   60 requests/hour, per IP address
 //   a user token   5,000 requests/hour, per user (shared across every app they use)
 //
-// A fleet sweep costs roughly seven requests per member on a cold cache. Twelve
-// members is ~84 — over the anonymous budget for the whole hour on the FIRST load, and the
-// page then spends the rest of that hour rendering "unreadable" rows for repos that
-// are perfectly fine. Caching alone does not save it, because the existing strategies
+// A load costs several requests on a cold cache, and a few loads exhaust the anonymous
+// budget for the hour. Caching alone does not save it, because the existing strategies
 // all still make a request: an ETag revalidation is free of the PRIMARY limit but it
 // is still a request, and a cold entry has nothing to revalidate.
 //
@@ -23,18 +21,17 @@
 //
 // The ladder is driven by HEADROOM — the remaining budget measured in whole page
 // loads, not in requests — because "1,400 left" means something different to a
-// one-repo page than to a forty-member fleet.
+// page that costs ten than to one that costs a hundred.
 
 // Requests one member costs on a cold cache: repo metadata, head sha, the member file,
-// the tree, the live open listing, one history page of issues, one runs page, and a
-// year of commit activity for the row's graph. A warm member costs fewer, a Node member
+// the tree, the live open listing, one history page of issues, one runs page and its
+// usage fold. A warm member costs fewer, a Node member
 // one more (the settings file its missing member file sends the read on to) and a
 // not-adopted one four. The thresholds below are tuned against this figure, so it
 // stays the cn member's cost rather than following the rarer shape up.
 export const COST_PER_MEMBER = 8;
 
-// The page's own fixed overhead: the viewer, plus the deployment's fleet-roster, read
-// once at its head sha and free on a warm load.
+// The page's own fixed overhead: the viewer, and what a load reads once.
 export const COST_FIXED = 3;
 
 export const MINUTE_MS = 60e3;
@@ -138,7 +135,7 @@ export function credentialAdvice(tier, { hasToken = false } = {}) {
   if (tier === 'anonymous' || (tier === 'unknown' && !hasToken)) {
     return {
       level: 'serious',
-      text: 'Not signed in to this page — GitHub allows 60 requests per hour per IP address, which one fleet sweep exceeds. '
+      text: 'Not signed in to this page — GitHub allows 60 requests per hour per IP address, which a few loads exceed. '
         + 'Sign in for 5,000/hour. Being logged in to github.com in this browser does not count: the API never '
         + 'receives that session.',
     };
