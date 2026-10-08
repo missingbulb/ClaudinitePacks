@@ -21,7 +21,7 @@ Un-declaring the pack freezes canon absorption without touching the members' sid
 
 ## Configuration
 
-The pack entry takes one optional key, read by the engine (`cn growth promote-scope`):
+The pack entry takes one optional key, read by the pack's `promote-scope` check:
 
 ```json
 { "id": "claudinite-canon-curation", "config": { "write_paths": ["packs", "skills"] } }
@@ -92,18 +92,20 @@ What a canon session follows when it names, configures, writes or polices a pack
 
 | Check | Severity | Reason | Enforcement |
 |---|---|---|---|
-| `pack-no-enforcement-narration` | medium | complexity | engine built-in: blocking |
-| `pack-version-log-ordered` | high | correctness | engine built-in: blocking |
-| `skill-no-enforcement-narration` | medium | complexity | engine built-in: blocking |
-| `skill-usage-declared` | high | correctness | engine built-in: blocking |
+| `pack-version-log-ordered` | high | correctness | coded: blocking |
+| `promote-scope` | high | correctness | coded: blocking |
 | `pack-independence` | high | correctness | declared check: blocking |
 | `pack-directory-kebab-case` | high | correctness | declared check: blocking |
 | `corpus-count-in-prose` | low | complexity | declared check: advisory |
 | `home-only-path-in-canon-prose` | high | correctness | declared check: blocking |
 | `named-import-of-new-engine-export` | critical | correctness | declared check: blocking |
 
-The four engine built-ins are `cn`'s own, active wherever this pack is declared; the pack carries
-their prose and nothing of their code. `pack-discovery-entry-await` is retired: `cn` loads no
+The coded checks are Go checks in [checks/](checks/), active wherever this pack is declared.
+`promote-scope` is the write-surface gate on promote's runs: on a branch whose name carries
+`growth-promote`, every path the change touches since its merge base must lie under the corpus
+roots above, and a branch with no merge base is refused rather than certified. Nothing in a tree
+marks a diff as a promote run, so the branch name is what it keys on; it is a work check, so it
+runs at the promote session's Stop. `pack-discovery-entry-await` is retired: `cn` loads no
 `pack.mjs`, so a top-level `await` in one strands no member's mount.
 
 `pack-independence` is barrier **data**, not code: `forbidReferences`
@@ -146,14 +148,11 @@ scanning. The [barrier guide](../basics/barriers.md) documents the edge vocabula
 
 - **[tasks/pack-version-history/](tasks/pack-version-history/README.md)** — the weekly derivation
   of each pack's `VERSIONS.md` from git: which pull requests landed between one version and the
-  next, as `cn pack history --json` answers it. Rows already written stand; only the versions with
+  next, as the task's own git walk answers it. Rows already written stand; only the versions with
   no row gain one.
 - **[item-routing.md](item-routing.md)** — the shared worthiness + routing method promote (and an
   owner-requested retrospective pass) defers to, so every decision about admitting and placing an
   item is made the same way.
-- **`cn growth promote-scope --base <ref>`** — the write-surface gate on promote's PRs: promote may
-  write only under the corpus roots above. The canon's own CI runs it, keyed on the promote branch
-  prefix; nothing in a tree marks a diff as a promote run, so the gate cannot self-gate.
 - **[skills/extract-packs-from-a-project/](skills/extract-packs-from-a-project/SKILL.md)** — the
   pack-writing method both tasks above apply: decompose a project into its facets, sort its rules to
   the one owner each, author the packs those facets earn. Whether a project's insight becomes a pack

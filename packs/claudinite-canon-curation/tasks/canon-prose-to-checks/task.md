@@ -8,7 +8,7 @@ it on every turn, whether or not it ever applies. Converting one to a check move
 moment the rule is actually broken.
 
 **The corpus is the roots this repo curates** — the `packs/` shelf, plus any root this pack's
-`write_paths` config names (`cn growth promote-scope` resolves them). Work the
+`write_paths` config names (the `promote-scope` check resolves them). Work the
 *backlog*: prose a promotion run just wrote is that run's own upgrade pass, not this sweep's.
 
 ## The method lives in the skill
