@@ -60,3 +60,8 @@
 - **Actor:** build lead, ClaudiniteEngine#65.
 - **Model:** Claude Opus 5.5 (1M context)
 - **Mechanism:** `cn fleet add-packs` reading the catalog per member; its count line names both channels.
+
+## 2026-10-08 · reworded · the work-list issue is unlabelled
+- **Reason:** the owner dropped `add-packs` from the approved labels; the converged titles already key the work lists.
+- **Actor:** @missingbulb (owner), approving a closed list of labels canon packs may write.
+- **Model:** Claude Opus 5.5 (1M context)

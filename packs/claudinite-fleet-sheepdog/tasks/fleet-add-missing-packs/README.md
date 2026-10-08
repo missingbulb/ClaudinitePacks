@@ -17,7 +17,7 @@ A force **refuses itself entirely** — before any issue is written — on a rep
 
 Both stages end the same way, per member with work (the protocol `cn fleet protocol` prints, which the member's half holds its own copy to):
 
-1. **Converge one work-list issue in that member** under the `add-packs` label — `Add packs: requested for this repo` (a decision, carrying the exact declaration entries as JSON, config and answers included) or `Add packs: suspected from this repo’s shape` (a suspicion, carrying the evidence and the fingerprints the REST sweep could not decide).
+1. **Converge one work-list issue in that member**, unlabelled and keyed by its title — `Add packs: requested for this repo` (a decision, carrying the exact declaration entries as JSON, config and answers included) or `Add packs: suspected from this repo’s shape` (a suspicion, carrying the evidence and the fingerprints the REST sweep could not decide).
 2. **Mark it** `task:origin:ad-hoc`, with `Task: claudinite-lifecycle/adopt-requested-packs` in the body. The issue then *is* that member's work item: its own scheduler run adopts it, its own executor picks it up. A second work list in the same member names the first in `Blocked-by:`, so the two run one after the other rather than putting two sessions on one declaration.
 3. **Nudge it** by dispatching that member's scheduler — an ordinary run, no `wake`. This is latency only: a member that refuses the dispatch adopts the mark on its own next hour.
 

@@ -62,3 +62,8 @@
 - **Reason:** owner decision, 2026-09-25: the field names what happens when the check fails, and
   *severity* keeps its impact sense; what this element enforces is unchanged.
 - **Actor:** @missingbulb (owner).
+
+## 2026-10-08 · reworded · the fix names a failure issue, not a label
+- **Reason:** the owner dropped `workflow-failure` from the approved labels.
+- **Actor:** @missingbulb (owner), approving a closed list of labels canon packs may write.
+- **Model:** Claude Opus 5.5 (1M context)

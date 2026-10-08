@@ -20,8 +20,6 @@ export const APPROVED_LABELS = new Set([
   'task:status:needs-human-approval',
   'task:status:needs-human-failure',
   'task:urgent',
-  'add-packs',
-  'workflow-failure',
 ]);
 
 const root = new URL('../../', import.meta.url);

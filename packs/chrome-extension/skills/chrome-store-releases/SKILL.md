@@ -122,7 +122,7 @@ called by the publish reusable — a repo never dispatches it directly.
   variables → Actions → Variables). Store secrets travel via `secrets: inherit`.
 - Every unattended workflow (all of the above; not PR CI) reports failures through the
   `report-failure` composite action baked into the reusable workflows — a red run must reach a
-  human, never sit unseen in the Actions list. Each failure opens a **fresh** `workflow-failure`
+  human, never sit unseen in the Actions list. Each failure opens a **fresh** failure
   issue, and any earlier open failure issues for the **same** workflow are closed as duplicates of
   it, so the newest failure is always the single open bug to triage. Repos no longer carry a
   `report-failure.yml`; a repo's own non-standard unattended workflows use the vendored action
@@ -390,7 +390,7 @@ Any PR that changes the manifest's `permissions`, `host_permissions`, or `option
    for the manual dashboard step — the Privacy-practices tab must carry a written justification
    for the new permission, and the store blocks publishing the new version until it does, so the
    next store publish (daily or manual) stalls on it. (If the daily pipeline hits it first, the
-   failed publish lands on its `workflow-failure` tracking issue; the proactive issue beats the
+   failed publish lands on its failure tracking issue; the proactive issue beats the
    reactive one.) After updating the dashboard, re-run the publish.
 2. Expect deeper store review than a plain code update — permission changes re-open scrutiny.
 3. A new **required** permission that carries an install-time warning disables the extension

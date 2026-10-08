@@ -58,3 +58,8 @@
   it.
 - **Mechanism:** the description, as before.
 - **Actor:** @missingbulb (owner).
+
+## 2026-10-08 · reworded · the failure issue carries no label
+- **Reason:** the owner dropped `workflow-failure` from the approved labels.
+- **Actor:** @missingbulb (owner), approving a closed list of labels canon packs may write.
+- **Model:** Claude Opus 5.5 (1M context)
