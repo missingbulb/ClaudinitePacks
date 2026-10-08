@@ -9,6 +9,7 @@ import { execFileSync } from 'node:child_process';
 export const APPROVED_LABELS = new Set([
   'task:origin:planned',
   'task:origin:ad-hoc',
+  'task:origin:manual',
   'task:status:waiting-for-executor',
   'task:status:running-executor',
   'task:status:running-agent',
