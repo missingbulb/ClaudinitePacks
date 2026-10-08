@@ -1,6 +1,6 @@
 {
   "v": 1,
-  "serial": 181,
+  "serial": 182,
   "packs": [
     {
       "id": "android",
@@ -282,7 +282,7 @@
     },
     {
       "id": "git-github",
-      "version": "1.61005.3",
+      "version": "1.61007.1",
       "channel": "canary",
       "minEngineVersion": "1.61001.1",
       "requires": [],
