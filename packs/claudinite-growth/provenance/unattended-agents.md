@@ -27,3 +27,8 @@
 - **Mechanism:** the `agenticBestPractices.md` and `agent-architecture.md` corpus docs become
   `skills/unattended-agents/SKILL.md`, reached by its description.
 - **Landed:** #128 (Closes #127, Closes #131).
+
+## 2026-10-08 · reworded · delivery points at the procedure `cn work validate` prints
+- **Reason:** `claudinite-tasks/public/deliver-pr.md` moved into the engine.
+- **Actor:** @missingbulb (owner), deciding the restructure.
+- **Model:** Claude Opus 5.5 (1M context)

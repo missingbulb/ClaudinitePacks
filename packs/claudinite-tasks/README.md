@@ -13,23 +13,23 @@ Go test that proves it; authoring a task is the `writing-tasks` skill's subject.
 
 The task runner itself — the task contract and its validation, the precondition and merge-policy
 grammars, the work-item queue on GitHub issues, the scheduler run, the executor, the landing lane,
-repair and continuation, the built-in `implement-request` task and the two workflow files — is
-the engine's: `cn schedule …`, `cn execute …`, `cn work …` and `cn tasks …`. This pack is what a
+repair and continuation, the routine and delivery procedures a session follows, the declared
+checks below and the two workflow files — is the engine's: `cn schedule …`, `cn execute …`,
+`cn work …` and `cn tasks …`. `cn work instructions` prints the routine procedure, and
+`cn work validate` prints the delivery procedure for an item whose outcome delivers a pull request.
+The request lane's own task, `implement-request`, is the task-flow pack's. This pack is what a
 repo declares to turn it on, and what the engine reads from it:
 
 | Path | What it holds |
 |---|---|
-| `public/` | the documents a routine session reads from the member's mount: `instructions.md` (a repo's work-item routine, as a stored prompt in its console settings), `implement-request.md` (named by the machine block of every issue adopted into the queue), `deliver-pr.md` (the landing procedure every PR-delivering task's agent is pointed at) |
+| `public/instructions.md` | a one-line pointer to `cn work instructions`, for a routine whose stored prompt still names this file |
 | `merge-rules.json` | the pack's declared merge rules, which a task's `automerge` may name |
-| `declared-checks.json` | the declared checks below |
-| `tasks/` | this pack's own tasks: `usage-fold` (what the repo's sessions did, and what the machinery itself cost - runs, billed minutes, API calls, outcomes, parks, latencies) and `verify-production` (coded production validations - URL probes judged as code-work), each a `@claudinite/sdk` worker carrying its own copy of the queue vocabulary it reads |
-| `github-api.mjs` | the REST calls `verify-production` makes on the job's token that the SDK names no action for |
-| `migrations/` | the path and shape migrations the Node engine's members ran |
-| `test/tasks/` | the two tasks' unit tests, run against the SDK stand-in in `tools/test/` |
+| `tasks/` | this pack's own task, `usage-fold` (what the repo's sessions did, and what the machinery itself cost - runs, billed minutes, API calls, outcomes, parks, latencies), a `@claudinite/sdk` worker carrying its own copy of the queue vocabulary it reads |
+| `test/tasks/` | the task's unit tests, run against the SDK stand-in in `tools/test/` |
 | `docs/PRINCIPLES.md` | the mechanism's design record; its claims, each with its test, are the engine's `tasks/doc.go` |
 
-A name in `public/` does not move: a member's routine reads it from its mount by path. The pack
-publishes no modules; a worker reaches the queue, git and GitHub through `@claudinite/sdk`.
+`public/instructions.md` does not move: a member's routine reads it from its mount by path. The
+pack publishes no modules; a worker reaches the queue, git and GitHub through `@claudinite/sdk`.
 
 ## Adoption
 
@@ -46,10 +46,10 @@ copies to its engine version's.
 | `task-code-work-env` | high | correctness | cn built-in: blocking |
 | `automerge-policy-scope` | high | correctness | cn built-in: blocking |
 | `executor-workflow-secrets` | high | correctness | cn built-in: advisory |
-| `tasks-pack-read-through-its-surface` | high | correctness | declared: blocking |
-| `repo-variables-through-the-bag` | high | correctness | declared: blocking |
-| `issue-label-outside-the-queue-vocabulary` | high | correctness | declared: blocking |
-| `queue-mark-named-literally` | high | correctness | declared: blocking |
+| `tasks-pack-read-through-its-surface` | high | correctness | cn built-in (declared): blocking |
+| `repo-variables-through-the-bag` | high | correctness | cn built-in (declared): blocking |
+| `issue-label-outside-the-queue-vocabulary` | high | correctness | cn built-in (declared): blocking |
+| `queue-mark-named-literally` | high | correctness | cn built-in (declared): blocking |
 
 `tasks-pack-read-through-its-surface` is this pack's, not the canon's, because the consumers that
 can get it wrong are members: it scans a repo's own `packs/` **and** its `.claudinite/local/packs/`,

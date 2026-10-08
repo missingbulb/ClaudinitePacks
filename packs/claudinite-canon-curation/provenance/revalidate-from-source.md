@@ -24,3 +24,8 @@
   `supersede_existing_pr`. Every live reference follows the name; the version rows and the dashboard
   mock keep the old one, being records of what happened.
 - **Landed:** #2045 (Closes #2042) · pack version 60915.2.
+
+## 2026-10-08 · reworded · delivery points at the procedure `cn work validate` prints
+- **Reason:** `claudinite-tasks/public/deliver-pr.md` moved into the engine.
+- **Actor:** @missingbulb (owner), deciding the restructure.
+- **Model:** Claude Opus 5.5 (1M context)

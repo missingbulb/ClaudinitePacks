@@ -58,3 +58,8 @@
 - **Reason:** pack.json is the preferred manifest; where the text told a reader to list a module in
   pack.mjs, rules are found in worldRules/ and workRules/ and nothing is listed.
 - **Actor:** @missingbulb (owner), asking for pack.json manifests.
+
+## 2026-10-08 · reworded · delivery points at the procedure `cn work validate` prints
+- **Reason:** `claudinite-tasks/public/deliver-pr.md` moved into the engine.
+- **Actor:** @missingbulb (owner), deciding the restructure.
+- **Model:** Claude Opus 5.5 (1M context)

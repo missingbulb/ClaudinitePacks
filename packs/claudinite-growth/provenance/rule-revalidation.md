@@ -54,3 +54,8 @@
 - **Reason:** owner decision: the mechanism that re-vendors a mount is called update; "converge"
   stays only for a work item reaching its end state.
 - **Actor:** @missingbulb (owner).
+
+## 2026-10-08 · reworded · delivery points at the procedure `cn work validate` prints
+- **Reason:** `claudinite-tasks/public/deliver-pr.md` moved into the engine.
+- **Actor:** @missingbulb (owner), deciding the restructure.
+- **Model:** Claude Opus 5.5 (1M context)

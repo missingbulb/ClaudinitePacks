@@ -35,3 +35,12 @@
   silent at filing time and still caught here.
 - **Retire when:** the queue reads a label outside the `task:` namespace by name, or a queue-named
   label turns out to be a project's own.
+
+## 2026-10-08 · ported · a `cn` built-in declared check tagged with this pack
+- **Reason:** the queue vocabulary and the task surface it guards are the engine's, so the check
+  ships with them rather than in the pack: same id, on_fail, finding and fix text, run wherever this
+  pack is declared.
+- **Actor:** @missingbulb (owner), deciding the restructure.
+- **Model:** Claude Opus 5.5 (1M context)
+- **Mechanism:** a declared check registered by `cn` under claudinite-tasks; the pack's
+  `declared-checks.json` is deleted.

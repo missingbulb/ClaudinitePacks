@@ -148,3 +148,8 @@
 - **Reason:** the Node engine's `.claudinite-settings.json` is not a `cn` member's declaration, which is `.claudinite/settings.{yaml,toml,json}`; `cn` reads `disabledTasks` and `agenticTaskInvocationEndpoints` from the `claudinite-tasks` entry's `config`, never a top-level `taskScheduler`.
 - **Actor:** build lead, ClaudiniteEngine#49 (a `cn` member declares itself in `.claudinite/settings.*`; `cn settings import` reads the Node file once, on move day).
 - **Mechanism:** the skill names `config.disabledTasks` and `config.agenticTaskInvocationEndpoints` on that entry. claudinite-growth 61002.4.
+
+## 2026-10-08 · reworded · delivery points at the procedure `cn work validate` prints
+- **Reason:** `claudinite-tasks/public/deliver-pr.md` moved into the engine.
+- **Actor:** @missingbulb (owner), deciding the restructure.
+- **Model:** Claude Opus 5.5 (1M context)
