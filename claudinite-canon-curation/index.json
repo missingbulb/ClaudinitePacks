@@ -1,7 +1,7 @@
 {
   "v": 1,
   "pack": "claudinite-canon-curation",
-  "serial": 9,
+  "serial": 10,
   "versions": [
     {
       "version": "60928.1",
@@ -101,6 +101,17 @@
       "revoked": false,
       "publishedAt": "2026-10-08T13:26:25Z",
       "sourceCommit": "40abd85bab8707c7a4ed37dcc0ba9e51ad7d752a"
+    },
+    {
+      "version": "1.61008.2",
+      "sha256": "5b973e7ff01349092e330b5032ed71c7fdec579a7676af3a93ec28cffc042967",
+      "size": 47670,
+      "minEngineVersion": "1.61003.1",
+      "requires": [],
+      "channel": "canary",
+      "revoked": false,
+      "publishedAt": "2026-10-08T13:31:03Z",
+      "sourceCommit": "fa62da2053a9fc8074948c2f8083d8f0e43d5b21"
     }
   ]
 }
