@@ -13,3 +13,8 @@
 - **Reason:** it follows the review file, falling back to the old path until that file has moved.
 - **Mechanism:** unchanged, a task-local precondition term.
 - **Landed:** #2322
+
+## 2026-10-08 · reworded · a finding is named by rule and subject, not an issue
+- **Reason:** the usage review no longer files finding issues; an unsettled cause goes in the run's summary.
+- **Actor:** @missingbulb (owner).
+- **Model:** Claude Opus 5.5 (1M context)
