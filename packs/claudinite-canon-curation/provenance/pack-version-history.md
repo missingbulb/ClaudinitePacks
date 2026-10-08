@@ -88,3 +88,11 @@
 - **Actor:** @missingbulb (owner), asking that pack versions follow the Engine's scheme.
 - **Model:** Claude Opus 5.5
 - **Mechanism:** the worker's own copy of the index's order, held to it by the shelf's copy guard.
+
+## 2026-10-07 · moved · the version walk moves from `cn pack history` into the task
+- **Reason:** owner decision, 2026-10-07: canon curation is a pack, so the walk only this task reads
+  leaves the engine and lives beside its one caller.
+- **Actor:** @missingbulb (owner).
+- **Mechanism:** `history.mjs` beside the worker walks the first-parent history itself and answers
+  in the shape `cn pack history --json` did, refusing a shallow clone as it did; the worker no
+  longer needs a `cn` binary.

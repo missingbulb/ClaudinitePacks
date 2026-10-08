@@ -1,14 +1,14 @@
 // The pack-version-history entry point: write the rows each pack's `VERSIONS.md` is
 // missing and deliver the records that changed on a pull request that lands itself.
 //
-// Which commits each version shipped is `cn pack history --json`'s to answer; this
-// file renders the rows and hands the changed records to `deliver.mjs`. A recompute
+// Which commits each version shipped is `history.mjs`'s to answer; this file renders
+// the rows and hands the changed records to `deliver.mjs`. A recompute
 // that changes no record opens nothing.
 
-import { execFileSync, spawnSync } from 'node:child_process';
-import { join } from 'node:path';
+import { execFileSync } from 'node:child_process';
 import { git as engineGit } from '@claudinite/sdk';
 import { deliver, readAt } from './deliver.mjs';
+import { readHistory } from './history.mjs';
 import { compareVersions } from './order.mjs';
 
 export const TASK_ID = 'claudinite-canon-curation/pack-version-history';
@@ -52,15 +52,6 @@ export function renderHistory(existingText, pack) {
   }
   rows.sort((a, b) => compareVersions(b.version, a.version));
   return `${[...header, ...rows.map((r) => r.line)].join('\n')}\n`;
-}
-
-// The shelf's history at `ref`, as cn answers it: CLAUDINITE_CN, else the pinned binary.
-export function readHistory(root, ref) {
-  const cn = process.env.CLAUDINITE_CN || join(root, '.claudinite', 'bin', 'cn');
-  const r = spawnSync(cn, ['pack', 'history', '--ref', ref, '--json', '--repo', root], { encoding: 'utf8', maxBuffer: 256 * 1024 * 1024 });
-  if (r.error) throw new Error(`could not run ${cn}: ${r.error.message}`);
-  if (r.status !== 0) throw new Error((r.stderr || `cn pack history exited ${r.status}`).trim());
-  return JSON.parse(r.stdout);
 }
 
 // Which records would change at `ref`, as `{ path: text }`.

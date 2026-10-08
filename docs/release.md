@@ -221,9 +221,8 @@ passed over the real shelf.
 
 The curation tasks of `claudinite-canon-curation` open pull requests against `main`; none
 publishes, and a person merges each. A `growth-promote` pull request may write only under the
-shelf (and any second corpus root the pack's `write_paths` names): `cn growth promote-scope --base
-origin/main` fails on any other path, and this repository's CI runs it on the promote branches
-once this repository runs `cn`.
+shelf (and any second corpus root the pack's `write_paths` names): the pack's `promote-scope` work
+check fails on any other path when the branch is a promote branch, at the promote session's Stop.
 
 ## Keys
 

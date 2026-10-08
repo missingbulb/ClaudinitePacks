@@ -9,7 +9,7 @@ it cannot fix it: they receive the rule and no evidence behind it. A stale canon
 paid for once per session per member until it is re-probed here.
 
 **The corpus is the roots this repo curates** — the `packs/` shelf, plus any root this pack's
-`write_paths` config names (`cn growth promote-scope` resolves them).
+`write_paths` config names (the `promote-scope` check resolves them).
 
 ## The method lives in the skill
 
