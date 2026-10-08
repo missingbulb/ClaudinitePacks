@@ -1,6 +1,6 @@
 {
   "v": 1,
-  "serial": 180,
+  "serial": 181,
   "packs": [
     {
       "id": "android",
@@ -183,7 +183,7 @@
     },
     {
       "id": "claudinite-tasks",
-      "version": "1.61007.1",
+      "version": "1.61007.2",
       "channel": "canary",
       "minEngineVersion": "1.61001.1",
       "requires": [],

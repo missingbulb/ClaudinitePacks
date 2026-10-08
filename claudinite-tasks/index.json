@@ -1,7 +1,7 @@
 {
   "v": 1,
   "pack": "claudinite-tasks",
-  "serial": 9,
+  "serial": 10,
   "versions": [
     {
       "version": "60928.2",
@@ -101,6 +101,17 @@
       "revoked": false,
       "publishedAt": "2026-10-07T15:53:53Z",
       "sourceCommit": "4473f5fe0f1edccf35120b0c4d7967498171cdc3"
+    },
+    {
+      "version": "1.61007.2",
+      "sha256": "a33864f5cf99add06dd4c3f0ce2a78f47780e67ba0bc0dc4ee392524a0a32c18",
+      "size": 103616,
+      "minEngineVersion": "1.61001.1",
+      "requires": [],
+      "channel": "canary",
+      "revoked": false,
+      "publishedAt": "2026-10-08T13:26:25Z",
+      "sourceCommit": "40abd85bab8707c7a4ed37dcc0ba9e51ad7d752a"
     }
   ]
 }
