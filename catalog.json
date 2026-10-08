@@ -1,6 +1,6 @@
 {
   "v": 1,
-  "serial": 179,
+  "serial": 180,
   "packs": [
     {
       "id": "android",
@@ -169,6 +169,17 @@
       "requires": [],
       "relevanceDetector": null,
       "belongs": "using Claudinite itself — the vendored mount, the pack declaration, bootstrapping, adopting packs, the self-refresh update"
+    },
+    {
+      "id": "claudinite-single-repo-dashboard",
+      "version": "1.61007.2",
+      "channel": "canary",
+      "minEngineVersion": "1.61001.1",
+      "requires": [
+        "claudinite-tasks"
+      ],
+      "relevanceDetector": null,
+      "belongs": "the browser dashboard over one repo's Claudinite scheduler state and the site that publishes it"
     },
     {
       "id": "claudinite-tasks",
