@@ -30,3 +30,17 @@
 - **Actor:** Claude, ClaudinitePacks#30 T3.
 - **Model:** Claude Opus 5.5
 - **Mechanism:** cn's built-in, active where this pack is declared.
+
+## 2026-10-07 · moved · the check is a Go check in the pack again
+- **Reason:** owner decision, 2026-10-07: canon curation is a pack, so its functionality lives in
+  the pack; a check that polices only a canon's shelf is the pack's, and `cn` keeps only checks of
+  what the engine itself runs.
+- **Actor:** @missingbulb (owner).
+- **Mechanism:** a world-scoped Go check in the pack's `checks/`, same id, `on_fail` and finding
+  text, active where the pack is declared; the small engine readers it borrowed are re-implemented
+  beside it.
+
+## 2026-10-08 · retired · dropped with the move out of the engine
+- **Reason:** owner decision, 2026-10-08, on review of the move: the only reader of `metadata.usage` is the usage review, which does not run under `cn`, so the check enforced a declaration nothing consumes.
+- **Actor:** @missingbulb (owner).
+- **Mechanism:** none; the Go check and its tests are deleted.
