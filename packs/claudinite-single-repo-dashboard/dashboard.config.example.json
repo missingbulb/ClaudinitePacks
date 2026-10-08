@@ -1,0 +1,17 @@
+{
+  "_comment": [
+    "Example only. The dashboard reads ./dashboard.config.json beside itself, and the",
+    "publish-pages build writes that file from the member's own declaration and its",
+    "repository variables, so the real config is never committed here. Absent config is",
+    "a valid local run, not a broken one — it means whatever repo the URL names.",
+    "`owner`, `exclude`, `repos`, `rosterFile`, `rosterUrl`, `canonRepo` and any `mode`",
+    "but \"repo\" are refused: this pack shows one repository."
+  ],
+
+  "clientId": "Iv1.0123456789abcdef",
+  "exchangeUrl": "https://claudinite-oauth.example.workers.dev",
+  "redirectUri": "https://acme.github.io/acme-repo/",
+  "scope": null,
+
+  "defaultRepo": "acme/acme-repo"
+}

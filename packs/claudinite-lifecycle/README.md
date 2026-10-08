@@ -67,7 +67,7 @@ What goes wrong when one fires:
 - `interview-answer-stale` — an entry stores an answer to a question its pack no longer asks.
 - `seeded-file-stale` — a file some pack seeded at adoption has fallen behind that pack's template, and since a seeded file is never converged nothing else would ever say so: the member goes on running a copy whose pack has moved.
 - `scheduler-workflow-shape` — the scheduler's cron, concurrency or dispatch guard has drifted, or it no longer runs `cn schedule run`: staggering, double-run safety or manual runs break.
-- `flat-declarations-current` - `.claudinite/cache/tasks.GENERATED.json` or `dashboard.GENERATED.json` no longer matches a declared pack's `task.json` or `dashboard.json`, so the dashboard and a session asking what runs here read a roster that is not the repo's. Regenerate with `cn tasks flat --write`; every converge `cn` runs writes them beside the rules index.
+- `flat-declarations-current` - `.claudinite/cache/tasks.GENERATED.json` no longer matches a declared pack's `task.json`, so the dashboard and a session asking what runs here read a roster that is not the repo's. Regenerate with `cn tasks flat --write`; every converge `cn` runs writes it beside the rules index.
 
 The **task contract** and its checks are deliberately NOT here. Those ask whether a task is
 *written* correctly, which is authoring; every check above asks whether Claudinite is *working* in
