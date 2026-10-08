@@ -129,3 +129,15 @@
 - **Actor:** @missingbulb (owner), asking that ClaudinitePacks keep only code still needed.
 - **Model:** Claude Opus 5.5
 - **Mechanism:** the `migrations/` directory, deleted. basics 1.61005.1.
+
+## 2026-10-08 · scope-changed · the queue workflow's rules and skills move to task-flow
+- **Reason:** filing, deferring, sequencing and proving work through the queue became its own
+  pack; basics keeps the lifecycle of work done now.
+- **Actor:** @missingbulb (owner), deciding the restructure.
+- **Model:** Claude Opus 5.5 (1M context)
+- **Mechanism:** the rules `planning-migration`, `filing-issues-multi`, `adding-legacy-tolerance`,
+  `verifying-now-genuinely`, `spotting-change-should`, `filing-anything-ad` and
+  `finding-queue-cannot`, and the skills `do-later`, `writing-migration-plans` and
+  `verify-in-production`, leave for task-flow with their provenance; `production-retrospective`
+  stays and names them without linking, since basics cannot require a pack that requires it.
+  basics 1.61008.1.

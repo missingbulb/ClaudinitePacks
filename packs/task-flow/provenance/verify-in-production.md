@@ -46,3 +46,11 @@
   it.
 - **Mechanism:** the description, as before.
 - **Actor:** @missingbulb (owner).
+
+## 2026-10-08 · moved · from basics into task-flow
+- **Reason:** the skill files work for the queue, which is task-flow's subject; its coded form now
+  names `Task: task-flow/verify-production`, the task's new id.
+- **Actor:** @missingbulb (owner), deciding the restructure.
+- **Model:** Claude Opus 5.5 (1M context)
+- **Mechanism:** the skill folder and its test, unchanged triggers; links to basics' skills now
+  cross into that pack, which task-flow requires.

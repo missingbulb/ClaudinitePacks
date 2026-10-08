@@ -33,3 +33,9 @@
   a canon checkout, so the canon sentence goes.
 - **Actor:** build lead, ClaudiniteEngine#57.
 - **Model:** Claude Opus 5.5 (1M context)
+
+## 2026-10-08 · reworded · step 6 names task-flow's `verify-in-production` without linking it
+- **Reason:** the skill moved from basics to task-flow, which git-github does not require, so a link
+  would dangle in a member that declares git-github alone.
+- **Actor:** @missingbulb (owner), deciding the restructure.
+- **Model:** Claude Opus 5.5 (1M context)

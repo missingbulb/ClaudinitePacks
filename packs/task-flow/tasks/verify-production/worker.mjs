@@ -16,7 +16,7 @@
 
 import { github } from '@claudinite/sdk';
 import { parseVerificationSpec, runProbes, renderResult } from './probes.mjs';
-import { makeGh } from '../../github-api.mjs';
+import { makeGh } from './github-api.mjs';
 
 const FETCH_TIMEOUT_MS = 30_000;
 const BODY_CAP = 2 * 1024 * 1024;
