@@ -57,3 +57,8 @@
 - **Mechanism:** a world-scoped Go check in the pack's `checks/`, same id, `on_fail` and finding
   text, active where the pack is declared; the small engine readers it borrowed are re-implemented
   beside it.
+
+## 2026-10-08 · retired · dropped with the move out of the engine
+- **Reason:** owner decision, 2026-10-08, on review of the move: it fired only on a rare authoring slip and guarded nothing live, so it was dropped with its pack-prose sibling.
+- **Actor:** @missingbulb (owner).
+- **Mechanism:** none; the Go check and its tests are deleted.

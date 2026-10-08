@@ -92,10 +92,7 @@ What a canon session follows when it names, configures, writes or polices a pack
 
 | Check | Severity | Reason | Enforcement |
 |---|---|---|---|
-| `pack-no-enforcement-narration` | medium | complexity | coded: blocking |
 | `pack-version-log-ordered` | high | correctness | coded: blocking |
-| `skill-no-enforcement-narration` | medium | complexity | coded: blocking |
-| `skill-usage-declared` | high | correctness | coded: blocking |
 | `promote-scope` | high | correctness | coded: blocking |
 | `pack-independence` | high | correctness | declared check: blocking |
 | `pack-directory-kebab-case` | high | correctness | declared check: blocking |

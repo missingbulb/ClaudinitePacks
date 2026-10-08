@@ -34,3 +34,8 @@
 - **Mechanism:** a world-scoped Go check in the pack's `checks/`, same id, `on_fail` and finding
   text, active where the pack is declared; the small engine readers it borrowed are re-implemented
   beside it.
+
+## 2026-10-08 · retired · dropped with the move out of the engine
+- **Reason:** owner decision, 2026-10-08, on review of the move: it guarded nothing live, since no `pack.json` names a prose file the way it reads one, so it could not fire on the shelf.
+- **Actor:** @missingbulb (owner).
+- **Mechanism:** none; the Go check and its tests are deleted.

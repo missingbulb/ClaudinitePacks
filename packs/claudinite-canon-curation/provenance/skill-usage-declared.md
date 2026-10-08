@@ -39,3 +39,8 @@
 - **Mechanism:** a world-scoped Go check in the pack's `checks/`, same id, `on_fail` and finding
   text, active where the pack is declared; the small engine readers it borrowed are re-implemented
   beside it.
+
+## 2026-10-08 · retired · dropped with the move out of the engine
+- **Reason:** owner decision, 2026-10-08, on review of the move: the only reader of `metadata.usage` is the usage review, which does not run under `cn`, so the check enforced a declaration nothing consumes.
+- **Actor:** @missingbulb (owner).
+- **Mechanism:** none; the Go check and its tests are deleted.
