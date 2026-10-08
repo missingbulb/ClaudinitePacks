@@ -88,3 +88,8 @@
   body line, and `commit --amend --cleanup=verbatim -F` restored it.
 - **Actor:** @missingbulb (owner), via an owner-dispatched session.
 - **Model:** claude-opus-5-5
+
+## 2026-10-08 · reworded · the failure issue example carries no label
+- **Reason:** the owner dropped `workflow-failure` from the approved labels.
+- **Actor:** @missingbulb (owner), approving a closed list of labels canon packs may write.
+- **Model:** Claude Opus 5.5 (1M context)

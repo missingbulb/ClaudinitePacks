@@ -50,3 +50,9 @@
   the SDK's fake engine, run through `cn check --pack chrome-extension` by `test/`, and compared
   with the Node engine by ClaudiniteEngine's parity harness.
 - **Landed:** pending.
+
+## 2026-10-08 · policy-changed · report-failure opens its issue unlabelled
+- **Reason:** the owner dropped `workflow-failure` from the approved labels; earlier failure issues are found by their title prefix alone.
+- **Actor:** @missingbulb (owner), approving a closed list of labels canon packs may write.
+- **Model:** Claude Opus 5.5 (1M context)
+- **Mechanism:** the stub's `gh` calls; `tools/test/labels.test.mjs` holds packs to the list.

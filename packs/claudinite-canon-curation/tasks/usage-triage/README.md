@@ -30,4 +30,4 @@ all, which is what bounds the cost of the one agentic stage in the loop.
 The edit, and the element's provenance entry for it in the same diff - so the log
 entry merges only if the change does, and a declined proposal leaves the element's
 log untouched. That entry's `Source` names the usage rule by id and the finding's
-issue by number, with the figures it was read from.
+subject, with the figures it was read from.

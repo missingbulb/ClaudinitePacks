@@ -22,3 +22,8 @@
 - **Mechanism:** the harness's `disable-model-invocation: true`; the worker reads the SKILL.md by
   path.
 - **Actor:** @missingbulb (owner).
+
+## 2026-10-08 · reworded · a finding is named by rule and subject, not an issue
+- **Reason:** the usage review no longer files finding issues; an unsettled cause goes in the run's summary.
+- **Actor:** @missingbulb (owner).
+- **Model:** Claude Opus 5.5 (1M context)

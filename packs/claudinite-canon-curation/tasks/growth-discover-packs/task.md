@@ -66,7 +66,7 @@ The body carries what the member cannot re-derive: **the evidence** (that repo's
 
 Two things it is not:
 
-- **Not the `add-packs` protocol.** Don't use that label or either of its converged titles — those issues are a member's `adopt-requested-packs` task's input, and pointing it at a pack no member's mount can carry yet is exactly the blocking error above. This is a plain issue for a human.
+- **Not the `add-packs` protocol.** Don't use either of its converged titles — those issues are a member's `adopt-requested-packs` task's input, and pointing it at a pack no member's mount can carry yet is exactly the blocking error above. This is a plain issue for a human.
 - **Not a substitute for the fingerprint sweep.** `fleet-add-missing-packs` will suspect the pack in a member once it is in canon and its `detect` fingerprint matches. This issue is the immediate signal, carrying the evidence that sweep never had — and the only signal at all for a pack whose fingerprint is `detect: null`.
 
 A member the fleet view shows only at `vestigial` prominence gets no issue: it did not evidence the pack.

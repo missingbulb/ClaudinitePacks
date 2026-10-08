@@ -81,3 +81,9 @@
 - **Reason:** `findings.onFailOf` was the Node engine's and the SDK answers no helper for it; a local two-spelling map reads `on_fail`, then the retired `severity` that `legacy-check-spellings` reports.
 - **Actor:** build lead, ClaudiniteEngine#57.
 - **Model:** Claude Opus 5.5 (1M context)
+
+## 2026-10-08 · policy-changed · the review files no issues
+- **Reason:** it filed a `usage-finding` issue per lasting finding, a dozen at once in MissingBulbWebsite; the owner ruled that no task files issues nobody asked for, nor labels outside the approved list.
+- **Actor:** @missingbulb (owner).
+- **Model:** Claude Opus 5.5 (1M context)
+- **Mechanism:** the file, the dashboard and the review's pull request carry every finding; `tools/test/task-issues.test.mjs` fails on any pack task that opens an issue.
