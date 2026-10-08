@@ -345,9 +345,9 @@ function publish(opts) {
   }
 }
 
-// Makes R2 hold what the branch holds: every version's archive, each pack's index pair and the
-// catalog pair, then
-// reads them back through the CDN. The scope is the branch, so a run that died after a publish
+// Makes R2 hold what the branch holds, in that order: every version's archive, each pack's index
+// pair, and the catalog pair last, since readers go to R2 first; then reads them back through the
+// CDN. The scope is the branch, so a run that died after a publish
 // pushed is healed by the next.
 async function upload(opts) {
   if (!opts.r2 || !opts.roots) throw new ReleaseError('upload needs --r2 <bucket|dry-run> and --roots <dir>');
