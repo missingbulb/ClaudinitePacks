@@ -6,4 +6,4 @@
 - **Model:** Claude Opus 5.5 (1M context)
 - **Mechanism:** `tasks/implement-request/task.json`, the engine's declaration unchanged but for its
   description, and the worker text that was `claudinite-tasks/public/implement-request.md`, now
-  pointing at the delivery procedure `cn work validate` prints instead of `deliver-pr.md`.
+  saying to deliver the pull request as the routine instructions say, instead of linking `deliver-pr.md`.

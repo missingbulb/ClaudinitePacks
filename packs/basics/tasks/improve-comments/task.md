@@ -42,7 +42,7 @@ pending, so a reviewer who has not got to last week's work reads one PR, not thr
 open the pull request on that branch under that title. Never search for an open pull request or pick a
 branch of your own. Either way the commit references the tracking issue.
 
-Then hand it to the delivery procedure `cn work validate` printed for this item.
+Then deliver it as your instructions say for a pull request.
 That procedure, never this file, owns
 whether and how the PR lands.
 

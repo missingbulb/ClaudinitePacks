@@ -149,7 +149,7 @@
 - **Actor:** build lead, ClaudiniteEngine#49 (a `cn` member declares itself in `.claudinite/settings.*`; `cn settings import` reads the Node file once, on move day).
 - **Mechanism:** the skill names `config.disabledTasks` and `config.agenticTaskInvocationEndpoints` on that entry. claudinite-growth 61002.4.
 
-## 2026-10-08 · reworded · delivery points at the procedure `cn work validate` prints
-- **Reason:** `claudinite-tasks/public/deliver-pr.md` moved into the engine.
+## 2026-10-08 · reworded · delivery follows the routine instructions
+- **Reason:** `claudinite-tasks/public/deliver-pr.md` folded into the routine instructions the engine writes at session start.
 - **Actor:** @missingbulb (owner), deciding the restructure.
 - **Model:** Claude Opus 5.5 (1M context)

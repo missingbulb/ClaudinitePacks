@@ -59,7 +59,7 @@ upgrade pass produced — through a **single PR**: one commit for the whole run 
 (`Target-branch:`), not one per lesson and not one per half. Push it onto `Target-pr:` where one is named —
 the run then joins the review already pending — and otherwise open the PR on that branch (title
 `Claudinite growth: extract lessons`, its commit referencing the tracking issue); never search for an
-open pull request or pick a branch of your own. Then **deliver it by the delivery procedure `cn work validate` printed for this item** — that procedure, never this
+open pull request or pick a branch of your own. Then **deliver it as your instructions say to deliver a pull request** — that procedure, never this
 file, owns whether and how the PR lands. This writes only the repo's *own* local
 packs (not the shared canon). A run that finds nothing and opens nothing is fine — and common.
 

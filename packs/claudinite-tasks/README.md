@@ -15,21 +15,20 @@ The task runner itself — the task contract and its validation, the preconditio
 grammars, the work-item queue on GitHub issues, the scheduler run, the executor, the landing lane,
 repair and continuation, the routine and delivery procedures a session follows, the declared
 checks below and the two workflow files — is the engine's: `cn schedule …`, `cn execute …`,
-`cn work …` and `cn tasks …`. `cn work instructions` prints the routine procedure, and
-`cn work validate` prints the delivery procedure for an item whose outcome delivers a pull request.
+`cn work …` and `cn tasks …`. `cn hook session-start` writes the routine procedure, the pull-request
+delivery included, to `.claudinite/cache/instructions.md` wherever this pack is declared.
 The request lane's own task, `implement-request`, is the task-flow pack's. This pack is what a
 repo declares to turn it on, and what the engine reads from it:
 
 | Path | What it holds |
 |---|---|
-| `public/instructions.md` | a one-line pointer to `cn work instructions`, for a routine whose stored prompt still names this file |
+| `public/instructions.md` | a one-line pointer to `.claudinite/cache/instructions.md`, for a routine whose stored prompt still names this file |
 | `merge-rules.json` | the pack's declared merge rules, which a task's `automerge` may name |
 | `tasks/` | this pack's own task, `usage-fold` (what the repo's sessions did, and what the machinery itself cost - runs, billed minutes, API calls, outcomes, parks, latencies), a `@claudinite/sdk` worker carrying its own copy of the queue vocabulary it reads |
 | `test/tasks/` | the task's unit tests, run against the SDK stand-in in `tools/test/` |
 | `docs/PRINCIPLES.md` | the mechanism's design record; its claims, each with its test, are the engine's `tasks/doc.go` |
 
-`public/instructions.md` does not move: a member's routine reads it from its mount by path. The
-pack publishes no modules; a worker reaches the queue, git and GitHub through `@claudinite/sdk`.
+The pack publishes no modules; a worker reaches the queue, git and GitHub through `@claudinite/sdk`.
 
 ## Adoption
 

@@ -58,7 +58,7 @@ and judged in this run — never for one you skipped, and never past what you ac
 
 ## 5. Open the PR
 
-One PR, titled for the run, delivered the way the delivery procedure `cn work validate` printed for this item
+One PR, titled for the run, delivered the way your instructions say to deliver a pull request
 says. Give the body one section per pack that had something to say:
 
 - the source, and what published since its anchor;

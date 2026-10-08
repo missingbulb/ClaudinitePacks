@@ -26,7 +26,7 @@ don't re-derive it here. This worker frames the unattended run around it and nam
 2. **Convert per the skill** - author the check in its owning pack - a `declared-checks.json`
    entry, or a Go check under `checks/` on the check SDK - and add the fixture test that fires on a violating input and stays quiet on a clean
    one. Then apply the skill's **deletion test** to the prose the check now stands beside.
-3. **Deliver by the delivery procedure `cn work validate` printed for this item**, under the title
+3. **Deliver as your instructions say to deliver a pull request**, under the title
    `Claudinite canon: prose to checks`. The commit references the tracking issue so the
    `task-lifecycle` gate passes, and the whole suite is green before you push.
 4. **Say what converted in the PR body** — the prose converted and the check id it became, per

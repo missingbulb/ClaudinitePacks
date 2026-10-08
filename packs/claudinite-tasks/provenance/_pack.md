@@ -167,12 +167,12 @@
 
 ## 2026-10-08 · scope-changed · the routine's documents, the declared checks and verify-production leave the pack
 - **Reason:** the routine and delivery procedures and the four declared checks are the engine's
-  to print and run; the request task and verify-production are the workflow over the queue,
+  to write and run; the request task and verify-production are the workflow over the queue,
   task-flow's.
 - **Actor:** @missingbulb (owner), deciding the restructure.
 - **Model:** Claude Opus 5.5 (1M context)
 - **Mechanism:** `public/deliver-pr.md`, `public/implement-request.md`, `declared-checks.json`,
   `tasks/verify-production/` and `github-api.mjs` leave; `public/instructions.md` stays as a
-  one-line pointer to `cn work instructions` for a routine whose stored prompt names it; the
+  one-line pointer to `.claudinite/cache/instructions.md`, which the engine writes at session start, for a routine whose stored prompt names it; the
   manifest drops the `createComment` and `listIssues` actions only verify-production used.
   claudinite-tasks 1.61008.1.

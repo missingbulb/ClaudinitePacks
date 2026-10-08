@@ -286,8 +286,7 @@ where the mechanics belong: `agent_model`, `schedule_after`, `expected_outcome` 
 **What happens to the run's pull request is never in `task.md`** — not whether it
 merges itself, not what it authorizes to land unreviewed, not what becomes of an
 earlier run's still-open one. Say what this run must do (open a PR, never merge
-it, what its body must carry), point at the delivery procedure
-(the one `cn work validate` prints for the item) where the run must
+it, what its body must carry), say to deliver it as the routine instructions say where the run must
 invoke one, and stop. Watch for the spelled-out form, which names no field and so
 reads as ordinary instruction: "an earlier round's pull request closes as
 superseded once yours exists" *is* `expected_outcome`. (2)

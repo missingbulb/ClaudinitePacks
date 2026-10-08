@@ -23,6 +23,6 @@ its possible causes and its issue number.
 Never merge what you open. Where you settle no cause, comment that finding's issue
 with what you read and what would settle it, and open nothing for it.
 
-Deliver the pull request through the delivery procedure `cn work validate` printed for this item.
+Deliver the pull request as your instructions say to deliver a pull request.
 Its body names the cause you settled on and what settled it, the provenance fields
 you read, the window the finding was written from, and the finding's issue number.
