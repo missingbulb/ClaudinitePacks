@@ -1,6 +1,6 @@
 {
   "version": "1.61008.1",
-  "minEngineVersion": "1.61001.1",
+  "minEngineVersion": "1.61008.3",
   "githubActions": [
     "createComment",
     "listIssues"
