@@ -1,7 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { reviewFile, dashboardValues, prBody, findingKey, daysBetween, LASTING_DAYS } from '../../tasks/usage-review/report.mjs';
-import { filingsFor, closuresFor, issueTitle, issueBody, parseTitle } from '../../tasks/usage-review/issues.mjs';
 import { buildWindow, windowDates, decodeRow, dayBefore } from '../../tasks/usage-review/read-record.mjs';
 
 const finding = (over) => ({
@@ -36,45 +35,6 @@ test('a finding lasts once it has stood two weeks, counted from the review it fi
   assert.equal(onIt.findings[0].lasting, true);
   const dayShort = build([finding({ since: dayBefore('2026-09-21', LASTING_DAYS - 1) })]);
   assert.equal(dayShort.findings[0].lasting, false);
-});
-
-test('an issue is filed only for a lasting finding whose cause is worth reading', () => {
-  const file = build([
-    finding({ subject: 'a', since: '2026-09-01', cause: 'known' }),
-    finding({ subject: 'b', since: '2026-09-01', cause: 'probable' }),
-    finding({ subject: 'c', since: '2026-09-01', cause: 'unknown' }),
-    finding({ subject: 'd', since: '2026-09-20', cause: 'known' }),
-  ]);
-  assert.deepEqual(filingsFor(file).map((f) => f.subject), ['a', 'b'],
-    'an unknown cause is evidence, and a young finding is weather');
-});
-
-test('an issue that no longer has a finding is closed, and an unrelated issue is left alone', () => {
-  const file = build([finding({ subject: 'still-here' })]);
-  // Built through the renderer, not spelled out: the title is a wire format between
-  // this run and the issues an earlier one filed, so a test that spells it a second
-  // way can agree with itself while the two halves drift apart.
-  const gone = issueTitle({ rule: 'check-never-fires', subject: 'gone-check' });
-  const open = [issueTitle(finding({ subject: 'still-here' })), gone, 'Something else entirely'];
-  assert.deepEqual(closuresFor(file, open).map((c) => c.subject), ['gone-check']);
-  assert.deepEqual(parseTitle(gone), { rule: 'check-never-fires', subject: 'gone-check' });
-});
-
-test('the issue body carries the figures, the causes and what it is not', () => {
-  const file = build([finding()]);
-  const body = issueBody(file.findings[0], file);
-  assert.match(body, /skillBlocks`: 11/);
-  assert.match(body, /closed by the mechanism/, 'a closed cause list says so, rather than inviting a fourth');
-  assert.match(body, /changes nothing/);
-  assert.match(body, /20 days/, 'the age is derived, so a stale issue reads as stale');
-  // A figure the record did not carry says so rather than reading as a zero.
-  const unknown = build([finding({ figures: { skillBlocks: null } })]);
-  assert.match(issueBody(unknown.findings[0], unknown), /skillBlocks`: \*not recorded\*/);
-});
-
-test('an open cause list invites a cause outside it; a closed one does not', () => {
-  const file = build([finding({ open: true, causes: ['the pattern is too broad'] })]);
-  assert.match(issueBody(file.findings[0], file), /only what its authors thought of/);
 });
 
 test('the dashboard reports this window against the one before, never a running total', () => {

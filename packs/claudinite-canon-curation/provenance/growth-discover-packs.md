@@ -59,6 +59,11 @@
   pack.mjs, rules are found in worldRules/ and workRules/ and nothing is listed.
 - **Actor:** @missingbulb (owner), asking for pack.json manifests.
 
+## 2026-10-08 · reworded · the add-packs protocol has no label
+- **Reason:** the owner dropped `add-packs` from the approved labels; the converged titles already key the work lists.
+- **Actor:** @missingbulb (owner), approving a closed list of labels canon packs may write.
+- **Model:** Claude Opus 5.5 (1M context)
+
 ## 2026-10-08 · reworded · delivery follows the routine instructions
 - **Reason:** `claudinite-tasks/public/deliver-pr.md` folded into the routine instructions the engine writes at session start.
 - **Actor:** @missingbulb (owner), deciding the restructure.

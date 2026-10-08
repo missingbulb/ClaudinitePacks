@@ -13,7 +13,7 @@ Daily, when the repo moved: fetch this repo's orphan `conversation-logs` branch 
 
 ### Why daily, and what stops it being daily noise
 
-This file is the **past-data plane the dashboard renders from** ([claudinite-dashboard](../../../claudinite-dashboard/README.md)): every panel reaching further back than one page of live reads comes from here, so the file's freshness *is* the page's. The cadence is affordable because the sources are — the capture files are local git, and the REST side is a handful of listings, all watermarked, plus one narrow read per item this fold is seeing settle for the first time.
+This file is the **past-data plane the dashboard renders from** ([claudinite-single-repo-dashboard](../../../claudinite-single-repo-dashboard/README.md)): every panel reaching further back than one page of live reads comes from here, so the file's freshness *is* the page's. The cadence is affordable because the sources are — the capture files are local git, and the REST side is a handful of listings, all watermarked, plus one narrow read per item this fold is seeing settle for the first time.
 
 What keeps a quiet repo quiet is the **precondition**, which runs the fold only when something moved since the last fold: a commit on the default branch, a conversation log stamped inside the window, or machinery that ran and is not yet folded - the machinery file's own `runsFoldedThrough` still standing before the day's anchor ([`preconditions.mjs`](preconditions.mjs)'s `runs-since-fold`). That last term reads the mark's own movement rather than standing state: it goes false the moment a fold catches up, and costs no API call. Declining loses nothing - the run and queue reads sit past their watermarks until the next fold that does have something to do, and the dashboard tops up the freshest hours from the live run listing it already fetches.
 
@@ -158,7 +158,7 @@ came to, and what landed in git. That half exists in a repo whose sessions are a
 unattended and captured nothing at all.
 
 WHY DAILY. The file is the whole past-data plane the dashboard renders from
-(claudinite-dashboard) — every panel that reaches further back than one page of live reads
+(claudinite-single-repo-dashboard) — every panel that reaches further back than one page of live reads
 comes from here. A cadence finer than the scheduler's cron cannot be honoured, since the
 anchor is only ever seen when a tick comes. Hour rows are recomputed from source across a
 three-day window, so only the newest rows' freshness depends on the cadence, and the

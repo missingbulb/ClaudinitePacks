@@ -14,6 +14,11 @@
 - **Mechanism:** unchanged, a task-local precondition term.
 - **Landed:** #2322
 
+## 2026-10-08 · reworded · a finding is named by rule and subject, not an issue
+- **Reason:** the usage review no longer files finding issues; an unsettled cause goes in the run's summary.
+- **Actor:** @missingbulb (owner).
+- **Model:** Claude Opus 5.5 (1M context)
+
 ## 2026-10-08 · reworded · delivery follows the routine instructions
 - **Reason:** `claudinite-tasks/public/deliver-pr.md` folded into the routine instructions the engine writes at session start.
 - **Actor:** @missingbulb (owner), deciding the restructure.

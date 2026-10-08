@@ -1,9 +1,9 @@
 // The usage review's I/O shell: read the record, read the tree, evaluate the rules,
-// write the file, move the dashboard and the issues. Every decision is in a
+// write the file and move the dashboard. Every decision is in a
 // declaration or in a tested pure function - this file only moves data between them.
 //
 // It changes NOTHING it reviews. Not a pack element, not a provenance log, not a
-// check's on_fail. The file it writes and the issues it files are an analysis with a
+// check's on_fail, and it files no issue. The file it writes is an analysis with a
 // recommendation attached; the one stage that edits anything is `usage-triage`, and
 // the owner merges that or declines it.
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
@@ -21,9 +21,7 @@ const here = dirname(fileURLToPath(import.meta.url));
 // The run's own coordinates. Module-level because the helpers below close over them,
 // and set once from the bag when the run starts.
 let root = null;
-let repo = null;
 let base = 'main';
-let token = null;
 const log = (m) => console.log(`usage-review: ${m}`);
 
 const engine = (mod) => join(root, '.claudinite', 'shared', 'engine', mod);
@@ -35,12 +33,8 @@ const engineOrLocal = async (mod) => {
 // that asks whether a skill should have loaded in a window where it did not.
 const WANTS_DIGESTS = new Set(['skill-adoption-not-reached']);
 
-export async function worker({ root: runRoot, repo: runRepo, defaultBranch, target }) {
+export async function worker({ root: runRoot, defaultBranch, target }) {
   root = runRoot;
-  repo = runRepo;
-  // The issue sync below has no engine action, so it reads the job's own token, which
-  // the executor leaves in every work step's environment.
-  token = process.env.GITHUB_TOKEN ?? null;
   base = defaultBranch ?? 'main';
   const config = JSON.parse(readFileSync(join(root, '.claudinite-settings.json'), 'utf8'));
   const { loadPacks, isActive } = await engineOrLocal('pack_loader/pack-registry.mjs');
@@ -129,45 +123,4 @@ export async function worker({ root: runRoot, repo: runRepo, defaultBranch, targ
     subject: `Usage review for the 28 days to ${record.window.to}`,
   });
   log(`${pr.reused ? 'updated' : 'opened'} PR #${pr.number}`);
-
-  if (token) await syncIssues(file);
-  else log('no GITHUB_TOKEN - the finding issues are not synced this run');
-}
-
-// One issue per (rule, subject) whose finding has lasted two weeks with a cause
-// worth reading, updated in place while it persists and closed the day it clears.
-// A finding with an `unknown` cause never files: it stays in the file and on the
-// dashboard, which is where evidence belongs until it is more than evidence.
-async function syncIssues(file) {
-  const { filingsFor, closuresFor, issueTitle, issueBody, closingComment } = await import('./issues.mjs');
-  const api = async (path, init) => {
-    const res = await fetch(`https://api.github.com${path}`, {
-      ...init,
-      headers: { authorization: `Bearer ${token}`, accept: 'application/vnd.github+json', 'content-type': 'application/json' },
-      body: init?.body ? JSON.stringify(init.body) : undefined,
-    });
-    return { status: res.status, json: await res.json().catch(() => null) };
-  };
-  const { json: open } = await api(`/repos/${repo}/issues?state=open&labels=usage-finding&per_page=100`);
-  const byTitle = new Map((Array.isArray(open) ? open : []).map((i) => [i.title, i]));
-
-  for (const finding of filingsFor(file)) {
-    const title = issueTitle(finding);
-    const existing = byTitle.get(title);
-    const body = issueBody(finding, file);
-    if (existing) {
-      await api(`/repos/${repo}/issues/${existing.number}`, { method: 'PATCH', body: { body } });
-      log(`updated #${existing.number} - ${title}`);
-    } else {
-      const { json } = await api(`/repos/${repo}/issues`, { method: 'POST', body: { title, body, labels: ['usage-finding'] } });
-      log(`filed #${json?.number ?? '?'} - ${title}`);
-    }
-  }
-  for (const stale of closuresFor(file, [...byTitle.keys()])) {
-    const issue = byTitle.get(stale.title);
-    if (!issue) continue;
-    await api(`/repos/${repo}/issues/${issue.number}/comments`, { method: 'POST', body: { body: closingComment(stale, file) } });
-    await api(`/repos/${repo}/issues/${issue.number}`, { method: 'PATCH', body: { state: 'closed', state_reason: 'completed' } });
-    log(`closed #${issue.number} - the finding cleared`);
-  }
 }

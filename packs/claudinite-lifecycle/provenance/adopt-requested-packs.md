@@ -57,3 +57,8 @@
 - **Actor:** build lead, ClaudiniteEngine#61.
 - **Model:** Claude Opus 5.5 (1M context)
 - **Mechanism:** the task's protocol test, which runs `cn fleet protocol --json`; the task.md line on undecided fingerprints. claudinite-lifecycle 61003.2.
+
+## 2026-10-08 · reworded · work lists are named by title, not label
+- **Reason:** the owner dropped `add-packs` from the approved labels; the converged titles already key the work lists.
+- **Actor:** @missingbulb (owner), approving a closed list of labels canon packs may write.
+- **Model:** Claude Opus 5.5 (1M context)

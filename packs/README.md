@@ -42,7 +42,7 @@ The second runs every pack's Go checks and fixture tests against the check SDK o
 - [chrome-extension](chrome-extension/README.md)
 - [claude-code-web-users-support](claude-code-web-users-support/README.md)
 - [claudinite-canon-curation](claudinite-canon-curation/README.md) (hidden from the catalog)
-- [claudinite-dashboard](claudinite-dashboard/README.md)
+- [claudinite-single-repo-dashboard](claudinite-single-repo-dashboard/README.md)
 - [claudinite-fleet-sheepdog](claudinite-fleet-sheepdog/README.md)
 - [claudinite-growth](claudinite-growth/README.md)
 - [claudinite-lifecycle](claudinite-lifecycle/README.md)

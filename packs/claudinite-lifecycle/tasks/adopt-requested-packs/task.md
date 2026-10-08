@@ -11,7 +11,7 @@ The issue you are on ([`protocol.mjs`](protocol.mjs) is the contract). There are
 | `Add packs: requested for this repo` | a **decision** — the fleet owner named the packs, and the issue's JSON block is the exact declaration entries to write, `config` and `answers` included (the answers are the owner's interview answers, already given) | adopt it verbatim (§2) — never re-litigate whether it was wanted |
 | `Add packs: suspected from this repo’s shape` | a **suspicion** — the weekly fleet scan fingerprinted file shapes against packs this repo does not declare | confirm each pack first (§1), adopt what survives, decline the rest with a reason |
 
-If your item is a `[claudinite-work]` issue rather than a work list itself, it was filed before this fold: the work lists are then this repo's open `add-packs` issues, all of them, in one PR. Everything below reads the same either way.
+If your item is a `[claudinite-work]` issue rather than a work list itself, it was filed before this fold: the work lists are then this repo's open issues titled `Add packs: …`, all of them, in one PR. Everything below reads the same either way.
 
 An empty work list never reaches you: an item exists only because an issue was marked. A repo with **both** kinds open gets **two runs**, one per issue, and the second waits on the first (the enforcer names it in `Blocked-by:`) — so adopt what your own issue asks for and leave the other list to its own run.
 

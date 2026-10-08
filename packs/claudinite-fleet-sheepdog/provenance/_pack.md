@@ -148,3 +148,9 @@
 - **Model:** Claude Opus 5.5
 - **Mechanism:** the manifest's `version`, which the release now requires in this form for a new
   version. claudinite-fleet-sheepdog 1.61004.1.
+
+## 2026-10-07 · scope-changed · the routing excludes no longer send the fleet brief to the dashboard pack
+- **Reason:** the dashboard pack lost its fleet mode and is now claudinite-single-repo-dashboard, so
+  no pack renders a fleet brief.
+- **Actor:** @missingbulb (owner).
+- **Mechanism:** the manifest's `ruleRoutingGuidance.excludes`.

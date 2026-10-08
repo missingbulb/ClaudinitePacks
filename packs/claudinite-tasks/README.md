@@ -22,7 +22,6 @@ repo declares to turn it on, and what the engine reads from it:
 
 | Path | What it holds |
 |---|---|
-| `public/instructions.md` | a one-line pointer to `.claudinite/cache/instructions.md`, for a routine whose stored prompt still names this file |
 | `merge-rules.json` | the pack's declared merge rules, which a task's `automerge` may name |
 | `tasks/` | this pack's own task, `usage-fold` (what the repo's sessions did, and what the machinery itself cost - runs, billed minutes, API calls, outcomes, parks, latencies), a `@claudinite/sdk` worker carrying its own copy of the queue vocabulary it reads |
 | `test/tasks/` | the task's unit tests, run against the SDK stand-in in `tools/test/` |
