@@ -1,5 +1,13 @@
 # task-flow — filing, deferring, sequencing and proving work through the queue
 
+## Sizing a change
+
+- **Starting a change** — state its expected size up front, in files, where the change is
+  tracked. An expectedly tiny change that reaches more than 10 files is a signal that the design
+  structure or the complexity it assumed was misjudged, not a reason to push on: stop, re-examine
+  that structure and say what you found where the change is tracked before going further.
+  (stating-expected-size)
+
 ## Plans and migrations
 
 - **Planning a migration** — prefer the design that converges in one forced pass to the one that

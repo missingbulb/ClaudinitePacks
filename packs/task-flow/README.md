@@ -28,6 +28,7 @@ the SDK names no action for, the reopen.
 
 | Rule | Severity | Reason | Enforcement |
 |---|---|---|---|
+| Starting a change: its expected size | medium | complexity | prose: <100 words |
 | Planning a migration | medium | complexity | prose: <100 words + skill (`writing-migration-plans`) |
 | Filing a plan's issues | high | correctness | prose: <100 words + skill (`writing-migration-plans`) |
 | Adding a legacy tolerance | high | complexity | prose: <100 words |

@@ -18,3 +18,10 @@
 - **Actor:** @missingbulb (owner), folding claudinite-tasks into the engine.
 - **Model:** Claude Opus 5.5
 - **Mechanism:** the manifest's `requires`. task-flow 1.61009.1.
+
+## 2026-10-09 · scope-changed · belongs widens to sizing a change
+- **Reason:** the owner placed the expected-size rule (`stating-expected-size`) here; the routing
+  guidance names it so the next lesson about sizing a change routes here too.
+- **Actor:** @missingbulb (owner).
+- **Model:** Claude Opus 5.5 (1M context)
+- **Mechanism:** the manifest's `ruleRoutingGuidance.belongs`. task-flow 1.61009.2.
