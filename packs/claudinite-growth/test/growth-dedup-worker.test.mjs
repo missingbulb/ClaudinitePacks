@@ -1,7 +1,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
-import { installSdk } from '../../../tools/test/sdk-stand-in.mjs';
+import { execFileSync } from 'node:child_process';
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { dirname, join } from 'node:path';
+import { gitIn, installSdk } from '../../../tools/test/sdk-stand-in.mjs';
 
 installSdk({ answers: { packs: () => [{ id: 'acme-pack', version: '1.0', kind: 'canon' }, { id: 'mine', version: null, kind: 'local' }] } });
 const {
@@ -13,6 +16,7 @@ const {
   summarizeCanonWindow,
   renderBrief,
   handoffDetail,
+  filesOfDiff,
   worker,
 } = await import('../tasks/growth-dedup/worker.mjs');
 
@@ -214,21 +218,77 @@ test('handoffDetail: names what the window held, including when it held nothing'
 
 // --- the I/O shell -----------------------------------------------------------
 
-test('the worker takes its yardstick from the packs the engine says are declared', async () => {
-  const patch = '@@ -0,0 +1 @@\n+- **A new canon rule** - said once.';
-  const commits = { 'c1': [{ filename: '.claudinite/shared/packs/acme-pack/RULES.md', patch }, { filename: '.claudinite/shared/packs/undeclared/RULES.md', patch }] };
-  const posted = [];
-  const gh = async (path, opts) => {
-    if (path.includes('/commits?')) return { status: 200, json: Object.keys(commits).map((sha) => ({ sha })) };
-    const sha = /\/commits\/([^/?]+)$/.exec(path)?.[1];
-    if (sha) return { status: 200, json: { commit: { message: 'm' }, files: commits[sha] } };
-    posted.push({ path, body: opts.body.body });
-    return { status: 201, json: {} };
+test('filesOfDiff: one record per file, the post-image path, no patch for a binary', () => {
+  const diff = [
+    'diff --git a/packs/acme-pack/RULES.md b/packs/acme-pack/RULES.md',
+    'index 1..2 100644', '--- a/packs/acme-pack/RULES.md', '+++ b/packs/acme-pack/RULES.md', '@@ -1 +1,2 @@', ' old', '+new',
+    'diff --git a/packs/acme-pack/icon.png b/packs/acme-pack/icon.png',
+    'index 3..4 100644', 'Binary files a/packs/acme-pack/icon.png and b/packs/acme-pack/icon.png differ', '',
+  ].join('\n');
+  const files = filesOfDiff(diff);
+  assert.deepEqual(files.map((f) => f.filename), ['packs/acme-pack/RULES.md', 'packs/acme-pack/icon.png']);
+  assert.deepEqual(addedLines(files[0].patch), ['new']);
+  assert.equal(files[1].patch, undefined);
+});
+
+test('the worker reads the window from a shallow checkout through the SDK and posts the brief on its item', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'growth-dedup-'));
+  const quiet = { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] };
+  const origin = `${dir}/origin`;
+  const at = (daysAgo) => new Date(Date.now() - daysAgo * 86400000).toISOString();
+  const land = (daysAgo, path, content) => {
+    mkdirSync(dirname(`${origin}/${path}`), { recursive: true });
+    writeFileSync(`${origin}/${path}`, content);
+    execFileSync('git', ['-C', origin, 'add', '-A'], quiet);
+    const env = { ...process.env, GIT_AUTHOR_DATE: at(daysAgo), GIT_COMMITTER_DATE: at(daysAgo) };
+    execFileSync('git', ['-C', origin, '-c', 'user.name=acme', '-c', 'user.email=a@x', '-c', 'commit.gpgsign=false', 'commit', '-q', '-m', path], { ...quiet, env });
   };
-  const verdict = await worker({ repo: 'acme/member', defaultBranch: 'main', gh, item: { number: 9 }, log: () => {} });
+  execFileSync('git', ['init', '-q', '-b', 'main', origin], quiet);
+  const rules = '.claudinite/shared/packs/acme-pack/RULES.md';
+  land(30, rules, '- **An old canon rule** - before the window.\n');
+  land(2, rules, '- **An old canon rule** - before the window.\n- **A new canon rule** - said once.\n');
+  land(1, '.claudinite/shared/packs/undeclared/RULES.md', '- **Not a yardstick** - undeclared.\n');
+  const root = `${dir}/member`;
+  execFileSync('git', ['clone', '-q', '--depth', '1', `file://${origin}`, root], quiet);
+
+  const posted = [];
+  const sdk = installSdk({
+    params: { root, defaultBranch: 'main', item: { number: 9 } },
+    answers: {
+      git: gitIn(root),
+      packs: () => [{ id: 'acme-pack', version: '1.0', kind: 'canon' }],
+      'github.createComment': (args) => { posted.push(args); return { id: 1 }; },
+    },
+  });
+  const verdict = await worker(sdk.params);
   assert.equal(posted.length, 1);
-  assert.equal(posted[0].path, '/repos/acme/member/issues/9/comments');
-  assert.match(posted[0].body, /acme-pack/);
-  assert.doesNotMatch(posted[0].body, /undeclared/);
-  assert.match(verdict.requestAgent.reason.detail, /in acme-pack,/);
+  assert.equal(posted[0].issue, 9);
+  assert.match(posted[0].body, /A new canon rule/);
+  assert.doesNotMatch(posted[0].body, /undeclared|Not a yardstick/);
+  assert.doesNotMatch(posted[0].body, /^An old canon rule/m, 'a line from before the window is not an addition');
+  assert.match(verdict.requestAgent.reason.detail, /1 added line\(s\) across 1 file\(s\) in acme-pack,/);
+});
+
+test('a shallow checkout whose window holds no commit posts the brief that says so', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'growth-dedup-'));
+  const quiet = { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] };
+  const origin = `${dir}/origin`;
+  execFileSync('git', ['init', '-q', '-b', 'main', origin], quiet);
+  for (const days of [40, 30]) {
+    writeFileSync(`${origin}/f`, String(days));
+    execFileSync('git', ['-C', origin, 'add', '-A'], quiet);
+    const when = new Date(Date.now() - days * 86400000).toISOString();
+    execFileSync('git', ['-C', origin, '-c', 'user.name=acme', '-c', 'user.email=a@x', '-c', 'commit.gpgsign=false', 'commit', '-q', '-m', `c${days}`],
+      { ...quiet, env: { ...process.env, GIT_AUTHOR_DATE: when, GIT_COMMITTER_DATE: when } });
+  }
+  const root = `${dir}/member`;
+  execFileSync('git', ['clone', '-q', '--depth', '1', `file://${origin}`, root], quiet);
+  const posted = [];
+  const sdk = installSdk({
+    params: { root, defaultBranch: 'main', item: { number: 9 } },
+    answers: { git: gitIn(root), packs: () => [{ id: 'acme-pack', version: '1.0', kind: 'canon' }], 'github.createComment': (args) => { posted.push(args); return { id: 1 }; } },
+  });
+  const verdict = await worker(sdk.params);
+  assert.match(posted[0].body, /No declared canon pack moved/);
+  assert.match(verdict.requestAgent.reason.detail, /no canon pack moved/);
 });
