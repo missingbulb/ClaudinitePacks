@@ -96,7 +96,7 @@ step ([`tooling/build-site.mjs`](tooling/build-site.mjs)).
 ## Running it locally
 
 ```sh
-node packs/claudinite-single-repo-dashboard/tooling/serve.mjs missingbulb/Claudinite
+node packs/claudinite-single-repo-dashboard/tooling/serve.mjs <owner>/<repo>
 ```
 
 ## Two kinds of data, read two different ways

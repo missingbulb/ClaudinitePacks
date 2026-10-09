@@ -17,7 +17,7 @@ a version is missing and leaves every row that already stands.
 | 60913.2 | 2026-09-13 | State a rule's prose size as a band, not an exact word count (#2009) |
 | 60913.1 | 2026-09-13 | Wrap RULES.md prose at 100 columns and separate every pack's rules (#1998) |
 | 60906.2 | 2026-09-06 | Promote the validated survivors of four growth-promote PRs (#1828) |
-| 60906.1 | 2026-09-06 | Claudinite: pack version history (#1730); Promote the reviewed survivors of nine growth-promote PRs (#1671) |
+| 60906.1 | 2026-09-06 | Pack version history (#1730); Promote the reviewed survivors of nine growth-promote PRs (#1671) |
 | 60903.1 | 2026-09-03 | The `node --test` discovery rule moves out of `RULES.md` into the `node-test-discovery` skill, forced for `.github/workflows/**` and `package.json`; the prose keeps the always-on module-resolution and jsdom rules (#1662). |
 | 60902.1 | 2026-09-02 | `RULES.md` drops the descriptive framing the pack README already carries — the file carries rules only. |
 | 60901.1 | 2026-09-01 | Recovers the rationale #467 cut from two rules into a new `references.md`; both jsdom claims are verified empirically against jsdom 30.0.1, including that `body.innerText` is `undefined` rather than `null` (#1571). |

@@ -37,7 +37,7 @@
   Both stopped being true when the derivation was retired, and this is the page an author reads
   while writing the declaration, so the stale reading would have produced a task file that does not
   load at all. The `frequency` half stands on its own window (#1732) and is left as it was.
-- **Actor:** the `engine/implement-request` run on work item missingbulb/Claudinite#1789.
+- **Actor:** an `engine/implement-request` run.
 - **Model:** claude-opus-5
 - **Landed:** #1789
 

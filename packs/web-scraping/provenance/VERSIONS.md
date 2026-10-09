@@ -13,7 +13,7 @@ a version is missing and leaves every row that already stands.
 | 60921.1 | 2026-09-21 | Provenance: backfill web-scraping (#2205) |
 | 60920.1 | 2026-09-20 | Provenance: the marking pass, every rule marked and every references.md converted (#2178) |
 | 60918.1 | 2026-09-18 | Split the website packs by ownership: public-website, github-pages, cloudflare-site (#2101) |
-| 60913.1 | 2026-09-13 | Claudinite: pack version history (#1730); State a rule's prose size as a band, not an exact word count (#2009) |
+| 60913.1 | 2026-09-13 | Pack version history (#1730); State a rule's prose size as a band, not an exact word count (#2009) |
 | 60903.2 | 2026-09-03 | The cache-vs-raw-record rationale moves from `RULES.md` to the README; the rule keeps its directive (#1662). |
 | 60903.1 | 2026-09-03 | A skill's `SKILL.md` opens on what to do, not on what the skill is: the self-describing framing and the pointers to prose the reader already holds are gone. |
 | 60902.1 | 2026-09-02 | `RULES.md` drops the descriptive framing the pack README already carries - the file carries rules only. |

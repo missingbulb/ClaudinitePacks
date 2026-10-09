@@ -10,8 +10,8 @@ a version is missing and leaves every row that already stands.
 | 60925.1 | 2026-09-25 | Rename a check's severity to on_fail: block \| advise; retire the baseline/converge vocabulary (#2318) |
 | 60921.1 | 2026-09-21 | Provenance: backfill public-website, github-pages, cloudflare-site, cloudflare-workers (#2218) |
 | 60920.1 | 2026-09-20 | Provenance: the marking pass, every rule marked and every references.md converted (#2178) |
-| 60915.2 | 2026-09-15 | Merge pull request #2056 from missingbulb/claudinite/claudinite-canon-curation/revalidate-from-source/2026-09-15-o65l6z |
+| 60915.2 | 2026-09-15 | Merge pull request #2056 |
 | 60915.1 | 2026-09-15 | Five canon tasks change what they do to their pull requests (#2045) |
 | 60913.2 | 2026-09-13 | State a rule's prose size as a band, not an exact word count (#2009) |
 | 60913.1 | 2026-09-13 | Add the cloudflare-site pack: serving a static site from Cloudflare (#1982) |
-| 60906.1 | 2026-09-06 | Merge pull request #1780 from missingbulb/claudinite/claudinite-canon-curation/growth-discover-packs/2026-09-06-q6qkjw |
+| 60906.1 | 2026-09-06 | Merge pull request #1780 |

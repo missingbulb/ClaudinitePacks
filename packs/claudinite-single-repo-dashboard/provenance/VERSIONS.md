@@ -24,7 +24,7 @@ a version is missing and leaves every row that already stands.
 | 60915.6 | 2026-09-15 | Dashboard: size the account menu to its rows (#2080) |
 | 60915.5 | 2026-09-15 | Dashboard: sign-in as the only way in, a GitHub-shaped account menu, and a signal for stale seeded files (#2075) |
 | 60915.4 | 2026-09-15 | Give the tasks pack one public surface, and make it enforceable in members (#2068) |
-| 60915.3 | 2026-09-15 | Merge pull request #2046 from missingbulb/claudinite/engine/implement-request/2026-09-15-5xop3r |
+| 60915.3 | 2026-09-15 | Merge pull request #2046 |
 | 60915.2 | 2026-09-15 | Five canon tasks change what they do to their pull requests (#2045) |
 | 60915.1 | 2026-09-15 | Track a change worked on now by its PR, not an issue (#2016) |
 | 60914.1 | 2026-09-14 | claudinite-tasks: roles as folders — src/<role>/, typed world ports, queue/ frozen as ABI (#1890) |
