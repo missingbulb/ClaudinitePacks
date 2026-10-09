@@ -81,3 +81,9 @@
   provenance mark|append|check|history` are the member's verbs over the same convention.
 - **Actor:** build lead, ClaudiniteEngine#57.
 - **Model:** Claude Opus 5.5 (1M context)
+
+## 2026-10-09 · strengthened · an entry names no repository, project or thread
+- **Reason:** the canon's first home is going private, taking its links with it; a name in the record
+  dangles once renamed, made private or archived.
+- **Actor:** @missingbulb (owner).
+- **Model:** Claude Opus 5.5 (1M context)
