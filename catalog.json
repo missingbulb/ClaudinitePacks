@@ -1,6 +1,6 @@
 {
   "v": 1,
-  "serial": 199,
+  "serial": 200,
   "packs": [
     {
       "id": "android",
@@ -285,12 +285,10 @@
     },
     {
       "id": "github-pages",
-      "version": "1.61005.1",
+      "version": "1.61009.1",
       "channel": "canary",
       "minEngineVersion": "1.61001.1",
-      "requires": [
-        "claudinite-tasks"
-      ],
+      "requires": [],
       "relevanceDetector": {
         "about": ".github/site.config, or the vendored .github/workflows/github-pages-deploy.yml",
         "paths": {
