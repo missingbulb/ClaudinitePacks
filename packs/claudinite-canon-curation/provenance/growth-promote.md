@@ -65,3 +65,8 @@
 - **Actor:** Claude, ClaudinitePacks#30 T3.
 - **Model:** Claude Opus 5.5
 - **Mechanism:** the task's instructions.
+
+## 2026-10-09 · reworded · the reduce step names `cn provenance reduce`
+- **Reason:** the task named the Node engine's `provenance.mjs reduce`, which a `cn` member does not carry; `cn provenance reduce <file> [--public]` is the same verb.
+- **Actor:** @missingbulb (owner), asking for the docs errors in the cn command review fixed.
+- **Mechanism:** the task's provenance step, as before.

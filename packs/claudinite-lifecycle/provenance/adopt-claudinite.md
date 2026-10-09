@@ -30,3 +30,8 @@
 - **Actor:** build lead, ClaudiniteEngine#55.
 - **Model:** Claude Opus 5.5 (1M context)
 - **Mechanism:** the description names `cn init` and the handover issue; re-vendoring left the triggers, since the engine's update task refreshes a member. claudinite-lifecycle 61003.1.
+
+## 2026-10-09 · reworded · a Node engine member is moved, not adopted with a flag
+- **Reason:** the skill named `cn init --from-node`, which no engine ever shipped; moving a member off the Node engine is ClaudiniteEngine's move-member-off-node skill (its design record 151).
+- **Actor:** @missingbulb (owner), asking for the docs errors in the cn command review fixed.
+- **Mechanism:** the step's sentence, as before.

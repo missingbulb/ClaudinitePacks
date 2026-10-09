@@ -22,7 +22,7 @@ blocks it prints: QUESTIONS, HANDOVER and NEXT. Never re-create by hand what it 
    ```
 
    A repo still running the Node engine (it holds `.claudinite-settings.json`) is not adopted
-   this way: `cn init --from-node` moves it, and its NEXT line starts with removing that file.
+   this way: it is moved, in a session following ClaudiniteEngine's move-member-off-node skill.
 
 2. **Ask every QUESTIONS line in one batched `AskUserQuestion` pass** (up to four per call),
    folding in the instruction-conversion offers below, and record each answer verbatim with
