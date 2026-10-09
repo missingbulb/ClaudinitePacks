@@ -1,7 +1,7 @@
 {
   "v": 1,
   "pack": "claude-code-web-users-support",
-  "serial": 4,
+  "serial": 5,
   "versions": [
     {
       "version": "60928.1",
@@ -46,6 +46,17 @@
       "revoked": false,
       "publishedAt": "2026-10-05T14:14:02Z",
       "sourceCommit": "201260890b1ba31c520a0d993cb333f4b79b6680"
+    },
+    {
+      "version": "1.61009.1",
+      "sha256": "8ce712f0269f5f56ea0bfc1480682fddfdbd2a06da1effdcf4d4b33792fa6e51",
+      "size": 10325,
+      "minEngineVersion": "1.61003.1",
+      "requires": [],
+      "channel": "canary",
+      "revoked": false,
+      "publishedAt": "2026-10-09T11:57:43Z",
+      "sourceCommit": "e896a8d17c315892800447835848886772fda876"
     }
   ]
 }
