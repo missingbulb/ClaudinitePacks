@@ -1,6 +1,6 @@
 {
   "v": 1,
-  "serial": 197,
+  "serial": 198,
   "packs": [
     {
       "id": "android",
@@ -170,12 +170,10 @@
     },
     {
       "id": "claudinite-single-repo-dashboard",
-      "version": "1.61007.2",
+      "version": "1.61009.1",
       "channel": "canary",
       "minEngineVersion": "1.61001.1",
-      "requires": [
-        "claudinite-tasks"
-      ],
+      "requires": [],
       "relevanceDetector": null,
       "belongs": "the browser dashboard over one repo's Claudinite scheduler state and the site that publishes it"
     },
