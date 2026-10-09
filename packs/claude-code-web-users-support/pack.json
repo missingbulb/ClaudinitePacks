@@ -1,11 +1,11 @@
 {
-  "version": "1.61005.1",
+  "version": "1.61009.1",
   "minEngineVersion": "1.61003.1",
   "ruleRoutingGuidance": {
     "belongs": "what a project offers people working from Claude Code on the web, where the session knows who they are",
     "excludes": "project conventions and process — those are the packs that own each subject"
   },
-  "pitch": "Makes Claude Code on the web fit the person using it. Each contributor can keep a personal pack of rules, skills and checks in a store repository, and it is copied into every web session they open on this repo, so their preferences travel with them without being committed here. It also supplies one generic setup script for the web environment that installs every toolchain the repo's packs need. A few rules and a few checks keep the store's directories correctly named and protected.",
+  "pitch": "Makes Claude Code on the web fit the person using it. Each contributor can keep a personal pack of rules, skills and checks in a store repository, and it is copied into every web session they open on this repo, so their preferences travel with them without being committed here. It also supplies one generic setup script for the web environment that pre-installs the engine the repo pins. A few rules and a few checks keep the store's directories correctly named and protected.",
   "seededByDefault": true,
   "questions": [
     {
@@ -17,8 +17,8 @@
   "adoptionHandover": [
     {
       "step": "Paste the body of this pack's environment-setup-command.sh, whole and unedited, into the web environment's Setup script field, then rebuild. Quote that body inline here in a fenced block: the reader of this step is the person about to paste it, and sending them to find a file in the mount is the hop this exists to remove.",
-      "breaks": "a Claude Code web session on this repo has none of the toolchains the active packs need, and the session-start env check halt-gates it before any work",
-      "done": "a web session on this repo starts with no missing-requirement halt-gate"
+      "breaks": "every fresh Claude Code web session on this repo downloads the engine at SessionStart before its first response",
+      "done": "a fresh web session on this repo starts with the pinned engine already cached"
     }
   ]
 }
