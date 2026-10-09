@@ -75,10 +75,7 @@ The fields, each written only where there is something behind it: `Source`, `Rea
 email), `Model`, `Mechanism` (the carrier and its trigger, and why - required on `born`,
 `converted`, `moved`, `trigger-changed`, `policy-changed`, `severity-changed`), `Rejected`,
 `Retire when`, `Landed`. An entry never restates the rule: the carrier is the description,
-the entry is the decision. It names no repository, Claude project or thread either: a pull
-request or issue is its bare number, a person is their handle, and anything else is said by
-what it is (the owner's thread, the frozen Node engine) - a name renamed, made private or
-archived leaves the record pointing nowhere. A candidate turned down goes on `_declined.md` the same way, kind
+the entry is the decision. A candidate turned down goes on `_declined.md` the same way, kind
 `declined`, with `Source`, `Reason` and `Actor`.
 
 **Size the entry to the decision, never to the work.** Most are three to five lines. Each

@@ -40,7 +40,7 @@ a version is missing and leaves every row that already stands.
 | 60915.9 | 2026-09-15 | Give the tasks pack one public surface, and make it enforceable in members (#2068) |
 | 60915.8 | 2026-09-15 | Delete the simulator's model: every scenario drives the real queue (H2 of #1869) (#2060) |
 | 60915.7 | 2026-09-15 | Claudinite canon: rule revalidation (#2058) |
-| 60915.6 | 2026-09-15 | Merge pull request #2046 |
+| 60915.6 | 2026-09-15 | Merge pull request #2046 from missingbulb/claudinite/engine/implement-request/2026-09-15-5xop3r |
 | 60915.5 | 2026-09-15 | Restore the two mount paths member prose runs, and scan for the class (#2051) |
 | 60915.4 | 2026-09-15 | Five canon tasks change what they do to their pull requests (#2045) |
 | 60915.3 | 2026-09-15 | Track a change worked on now by its PR, not an issue (#2016) |
@@ -62,14 +62,14 @@ a version is missing and leaves every row that already stands.
 | 60906.15 | 2026-09-06 | Retire the task.mjs module form of a task declaration (#1795) |
 | 60906.14 | 2026-09-06 | Hold the executor to its tasks' secrets, not the repo's endpoint tokens (#1832) |
 | 60906.13 | 2026-09-06 | Delete the top-level updates/ shim tree — the claudinite-tasks migration's last link (#1819) |
-| 60906.12 | 2026-09-06 | Merge pull request #1818 |
+| 60906.12 | 2026-09-06 | Merge pull request #1818 from missingbulb/claudinite/engine/implement-request/2026-09-06-7diqmz |
 | 60906.11 | 2026-09-06 | Retire the per-project-scheduling MIGRATION.md into its tracking issue (#1811) |
 | 60906.10 | 2026-09-06 | Move task design docs into packs/claudinite-tasks/docs/, carved out of the vendor set (#1813) |
 | 60906.9 | 2026-09-06 | Scheduling is the task's own precondition; the scheduler keeps no state (#1733) |
 | 60906.8 | 2026-09-06 | Check that the executor workflow passes every declared secret (#1798) |
 | 60906.7 | 2026-09-06 | Say the hold's unreadable variable once, and keep verifications inside this repo (#1793) |
 | 60906.6 | 2026-09-06 | Janitor rule I: close a failure park nobody has answered in ten days (#1786) |
-| 60906.5 | 2026-09-06 | Pack version history (#1776); Claudinite tidy: improve comments (#1778) |
+| 60906.5 | 2026-09-06 | Claudinite: pack version history (#1776); Claudinite tidy: improve comments (#1778) |
 | 60906.4 | 2026-09-06 | Keep Claudinite's own bookkeeping inside .claudinite/: mount attributes, no README row (#1754) |
 | 60906.3 | 2026-09-06 | Group the tidy sweeps' fan-out, and keep the run bound covering it (#1740) |
 | 60906.2 | 2026-09-06 | Judge a beating agent on its progress, not its punctuality (#1756) |

@@ -49,7 +49,7 @@ a version is missing and leaves every row that already stands.
 | 60906.7 | 2026-09-06 | Rule revalidation: re-probe five harness claims at their live addresses (#1782) |
 | 60906.6 | 2026-09-06 | Delete the top-level updates/ shim tree — the claudinite-tasks migration's last link (#1819) |
 | 60906.5 | 2026-09-06 | Scheduling is the task's own precondition; the scheduler keeps no state (#1733) |
-| 60906.4 | 2026-09-06 | Pack version history (#1776); Promote the reviewed survivors of nine growth-promote PRs (#1671) |
+| 60906.4 | 2026-09-06 | Claudinite: pack version history (#1776); Promote the reviewed survivors of nine growth-promote PRs (#1671) |
 | 60906.3 | 2026-09-06 | Read the whole session's transcripts when a skill load gates an edit (#1757) |
 | 60906.2 | 2026-09-06 | Keep Claudinite's own bookkeeping inside .claudinite/: mount attributes, no README row (#1754) |
 | 60906.1 | 2026-09-06 | Declared checks at every moment: schema rung, work and action scopes, skill triggers, and the creation path (#1711) |
