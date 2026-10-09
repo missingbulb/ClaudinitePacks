@@ -1,6 +1,6 @@
 {
   "v": 1,
-  "serial": 196,
+  "serial": 197,
   "packs": [
     {
       "id": "android",
@@ -150,7 +150,7 @@
     },
     {
       "id": "claudinite-growth",
-      "version": "1.61008.2",
+      "version": "1.61009.1",
       "channel": "canary",
       "minEngineVersion": "1.61001.1",
       "requires": [
