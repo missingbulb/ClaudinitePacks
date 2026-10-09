@@ -1,0 +1,21 @@
+{
+  "v": 1,
+  "pack": "task-flow",
+  "serial": 1,
+  "versions": [
+    {
+      "version": "1.61008.1",
+      "sha256": "a98ba5e5de13f02408d0dcca2cdddc3a3092a62671beb6c92077eb825f2e4508",
+      "size": 28696,
+      "minEngineVersion": "1.61008.2",
+      "requires": [
+        "basics",
+        "claudinite-tasks"
+      ],
+      "channel": "canary",
+      "revoked": false,
+      "publishedAt": "2026-10-09T05:25:42Z",
+      "sourceCommit": "7cf6c0b1ebb793f9aa4fc57d21e4cc9c80313993"
+    }
+  ]
+}
