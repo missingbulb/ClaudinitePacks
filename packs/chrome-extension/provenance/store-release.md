@@ -59,3 +59,12 @@
   same work runs, exits the same way and prints the same markers.
 - **Actor:** @missingbulb (owner), who asked why every task re-implements one runner's job.
 - **Model:** Opus 5
+
+## 2026-10-09 · ported · the worker reaches GitHub through its own REST copy
+- **Reason:** the worker took a `gh` client from the runner's parameters bag, which the cn runner
+  never hands in, so every run failed `gh is not a function` (CrosswordChat #662, its first run on
+  cn).
+- **Actor:** Claude, moving CrosswordChat onto cn for @missingbulb (owner).
+- **Model:** Claude Opus 5.5
+- **Mechanism:** the pack-local `github-api.mjs` copy the other packs' workers carry, on the
+  job's token; the pack-copies drift guard holds it byte-identical. chrome-extension 1.61009.1.
