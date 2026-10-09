@@ -111,18 +111,20 @@ export function s3Bucket({ accountId, bucket, credentials, fetch = globalThis.fe
   };
 }
 
-// Every object the branch says R2 must hold, per pack: each version's archive, then index.json and
-// index.sig.json. read(path) returns a branch file's bytes.
+// Every object the branch says R2 must hold: every pack's archives, then each pack's index.json
+// and index.sig.json, so no index names an archive R2 does not hold yet. read(path) returns a
+// branch file's bytes.
 export function branchObjects(read, ids) {
-  const objects = [];
+  const archives = [];
+  const indexes = [];
   for (const id of ids) {
     const indexBytes = read(`${id}/index.json`);
     const ix = readIndex(indexBytes);
-    for (const e of ix.versions) objects.push({ id, kind: 'archive', key: `packs/${id}/${e.version}.tar.gz`, version: e.version, body: read(`${id}/${e.version}.tar.gz`) });
-    objects.push({ id, kind: 'index', key: `packs/${id}/index.json`, serial: ix.serial, body: indexBytes });
-    objects.push({ id, kind: 'sig', key: `packs/${id}/index.sig.json`, serial: ix.serial, body: read(`${id}/index.sig.json`) });
+    for (const e of ix.versions) archives.push({ id, kind: 'archive', key: `packs/${id}/${e.version}.tar.gz`, version: e.version, body: read(`${id}/${e.version}.tar.gz`) });
+    indexes.push({ id, kind: 'index', key: `packs/${id}/index.json`, serial: ix.serial, body: indexBytes });
+    indexes.push({ id, kind: 'sig', key: `packs/${id}/index.sig.json`, serial: ix.serial, body: read(`${id}/index.sig.json`) });
   }
-  return objects;
+  return [...archives, ...indexes];
 }
 
 // Compares every object with the bucket. An archive is written once: present with other bytes

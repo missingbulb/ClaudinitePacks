@@ -279,7 +279,9 @@ packs/catalog.sig.json         application/json   public, max-age=300           
    way compared. An archive absent from the bucket is PUT with `If-None-Match: *`; one present with
    equal bytes is skipped; one present with other bytes fails the run naming the key and both
    SHA-256s before anything is written. An index pair differing from the branch is rewritten,
-   `index.json` then `index.sig.json`. A `412` on an archive is a race with another writer, which
+   `index.json` then `index.sig.json`. Writes go in that order across the whole upload: every
+   archive, then every pack's index pair, then the catalog pair last, so nothing on R2 names a
+   version R2 does not hold yet. A `412` on an archive is a race with another writer, which
    the concurrency group rules out, so it fails rather than being retried as an overwrite.
 4. Reads every object back through the CDN, the index pair with `?s=<serial>`, compares bytes
    with the branch and verifies each signature against `--roots`, the catalog's under its own
@@ -294,7 +296,8 @@ By default Cloudflare's edge caches the archives on the custom domain but not JS
 `max-age=300` governs only a client's cache and the edge answers an index read with the bucket's
 current bytes. `?s=<serial>` stays so the read-back keeps working if a Cache Everything rule is
 added later. The CDN is never purged: archives never change. A reader needing the newest index
-sooner than its own cache allows reads `vendored`.
+sooner than its own cache allows waits for it: `cn` reads the CDN first and `vendored` only while
+the CDN does not answer (engine design record row 155).
 
 The S3 credentials derive from the one token: the access key id is the token's id and the secret
 the SHA-256 of its value. The token is a user token, whose id `GET /user/tokens/verify` returns;

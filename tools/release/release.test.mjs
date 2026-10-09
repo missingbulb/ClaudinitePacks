@@ -287,6 +287,18 @@ test('publish no longer lists R2 objects; upload --r2 dry-run lists every object
   assert.match(readFileSync(summary, 'utf8'), /8 object\(s\) would be PUT/);
 });
 
+test('upload writes every archive, then every index pair, then the catalog pair last', () => {
+  const w = world();
+  const chain = testChain(scratch());
+  assert.equal(publish(w, build(w).archives, chain).status, 0);
+  const u = run(['upload', '--r2', 'dry-run', '--repo', w.src, '--remote', w.remote, '--roots', chain.roots]);
+  assert.equal(u.status, 0, u.out);
+  const order = u.out.match(/^would PUT \S+/gm).map((l) => l.slice('would PUT '.length));
+  const kind = (k) => (k.endsWith('.tar.gz') ? 'archive' : k.startsWith('packs/catalog') ? 'catalog' : 'index');
+  assert.deepEqual(order.map(kind), ['archive', 'archive', 'index', 'index', 'index', 'index', 'catalog', 'catalog'], order.join('\n'));
+  assert.deepEqual(order.slice(-2), ['packs/catalog.json', 'packs/catalog.sig.json']);
+});
+
 test('upload to a bucket without CLOUDFLARE_API_TOKEN or CLOUDFLARE_ACCOUNT_ID fails with an error annotation', () => {
   const w = world();
   const chain = testChain(scratch());
