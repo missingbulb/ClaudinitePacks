@@ -175,3 +175,11 @@
 - **Model:** Claude Opus 5.5
 - **Mechanism:** environment-setup-command.sh, quoted by the adoptionHandover step.
   claude-code-web-users-support 1.61009.1.
+
+## 2026-10-09 · retired · the setup-script handover moves into the engine
+- **Reason:** `cn init` and the move now ask for the setup script line themselves, in every
+  repo, so this pack's handover row asked for the same paste a second time in the same issue.
+- **Actor:** @missingbulb (owner), asking that engine adoption request the setup script.
+- **Model:** Claude Opus 5.5
+- **Mechanism:** the `adoptionHandover` entry, deleted; environment-setup-command.sh stays as the
+  paste body the web-session-halt rule points at. Engine counterpart: ClaudiniteEngine #165.

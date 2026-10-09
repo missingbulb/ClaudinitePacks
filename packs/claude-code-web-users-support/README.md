@@ -10,8 +10,8 @@ into its web environment's **Setup script** field so the image already holds the
 pins, and SessionStart downloads nothing. The setup script starts in the checkout's parent
 directory, so the body looks for the checkout holding `.claudinite/launch` and runs
 `sh .claudinite/launch env install` there, and it never fails. The body is the same for every
-project. Nobody has to go looking for it: the pack's `adoptionHandover` step has the filing
-session quote it inline, so the issue asking for the paste carries the block to copy.
+project, and it is the same line `cn init` and the move quote in their HANDOVER block, so the
+issue asking for the paste carries it whether or not the repo declares this pack.
 
 Declared, and seeded by `--init`. The pack holds an **address**, not the content: `config.repo` (and
 an optional `config.path`, default `preferences`) name the store that holds one `<login>/` directory
