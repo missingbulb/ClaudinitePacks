@@ -297,7 +297,7 @@ By default Cloudflare's edge caches the archives on the custom domain but not JS
 current bytes. `?s=<serial>` stays so the read-back keeps working if a Cache Everything rule is
 added later. The CDN is never purged: archives never change. A reader needing the newest index
 sooner than its own cache allows waits for it: `cn` reads the CDN first and `vendored` only while
-the CDN does not answer (engine design record row 155).
+the CDN does not answer (engine design record row 158).
 
 The S3 credentials derive from the one token: the access key id is the token's id and the secret
 the SHA-256 of its value. The token is a user token, whose id `GET /user/tokens/verify` returns;
