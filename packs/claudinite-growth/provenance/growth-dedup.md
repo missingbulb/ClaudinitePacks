@@ -63,3 +63,14 @@
 - **Reason:** `claudinite-tasks/public/deliver-pr.md` folded into the routine instructions the engine writes at session start.
 - **Actor:** @missingbulb (owner), deciding the restructure.
 - **Model:** Claude Opus 5.5 (1M context)
+
+## 2026-10-09 · policy-changed · the worker reaches the repository through the SDK
+- **Reason:** the worker took a `gh` client from the runner's parameters bag, which cn's runner
+  never hands in, so every run crashed `gh is not a function` (LaughCounter #471, executor run
+  37894057542).
+- **Actor:** Claude, for @missingbulb (owner).
+- **Model:** Claude Opus 5.5 (1M context)
+- **Mechanism:** the window's commits come from `git` through `@claudinite/sdk`, fetched back to the
+  window and one commit past it on a shallow checkout, and the brief is posted with the SDK's
+  `github.createComment`; a binary file, which carries no text patch, is the one the brief tells the
+  run to read whole.
