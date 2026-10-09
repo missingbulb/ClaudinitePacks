@@ -1,7 +1,7 @@
 {
   "v": 1,
   "pack": "chrome-extension",
-  "serial": 6,
+  "serial": 7,
   "versions": [
     {
       "version": "60928.1",
@@ -68,6 +68,17 @@
       "revoked": false,
       "publishedAt": "2026-10-08T13:31:03Z",
       "sourceCommit": "fa62da2053a9fc8074948c2f8083d8f0e43d5b21"
+    },
+    {
+      "version": "1.61009.1",
+      "sha256": "5feb64a1a15882bfcf700e8505c2c9f1d5747be31c569ef6c1562d38d750753f",
+      "size": 43973,
+      "minEngineVersion": "1.61001.1",
+      "requires": [],
+      "channel": "canary",
+      "revoked": false,
+      "publishedAt": "2026-10-09T06:38:49Z",
+      "sourceCommit": "77f3a25fd5b0d5b74eccf7db9608b68faea453d6"
     }
   ]
 }
