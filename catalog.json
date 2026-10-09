@@ -1,6 +1,6 @@
 {
   "v": 1,
-  "serial": 198,
+  "serial": 199,
   "packs": [
     {
       "id": "android",
@@ -188,12 +188,10 @@
     },
     {
       "id": "cloudflare-site",
-      "version": "1.61005.1",
+      "version": "1.61009.1",
       "channel": "canary",
       "minEngineVersion": "1.61001.1",
-      "requires": [
-        "claudinite-tasks"
-      ],
+      "requires": [],
       "relevanceDetector": {
         "about": "a near-root wrangler.json/.jsonc declaring assets.directory",
         "paths": {
