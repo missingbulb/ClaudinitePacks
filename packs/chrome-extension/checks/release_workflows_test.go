@@ -105,9 +105,9 @@ func TestReleaseWorkflows(t *testing.T) {
 	expect(t, "the scheduler present and the orchestrator dispatch-only", run(t, releaseWorkflows, decron, nil), "")
 
 	legacy := strings.NewReplacer(
-		"./.github/workflows/chrome-extension-create-package.yml", "missingbulb/Claudinite/.github/workflows/chrome-extension-release.yml@main",
-		"./.github/workflows/chrome-extension-publish-store.yml", "missingbulb/Claudinite/.github/workflows/chrome-extension-publish-store.yml@main",
-		"./.github/workflows/chrome-extension-daily-release.yml", "missingbulb/Claudinite/.github/workflows/chrome-extension-daily-release.yml@main",
+		"./.github/workflows/chrome-extension-create-package.yml", "acme/shared-workflows/.github/workflows/chrome-extension-release.yml@main",
+		"./.github/workflows/chrome-extension-publish-store.yml", "acme/shared-workflows/.github/workflows/chrome-extension-publish-store.yml@main",
+		"./.github/workflows/chrome-extension-daily-release.yml", "acme/shared-workflows/.github/workflows/chrome-extension-daily-release.yml@main",
 	).Replace(orchestrator)
 	files := map[string]string{orchestratorPath: legacy, ".github/release.config": conformant()[".github/release.config"]}
 	fs = run(t, releaseWorkflows, files, nil)

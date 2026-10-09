@@ -237,7 +237,7 @@ jobs:
 func TestNoScheduledFleetExecutor(t *testing.T) {
 	const executor = `jobs:
   release:
-    uses: missingbulb/Claudinite/.github/workflows/chrome-extension-release.yml@main
+    uses: acme/shared-workflows/.github/workflows/chrome-extension-release.yml@main
 `
 	const own = `jobs:
   build:
