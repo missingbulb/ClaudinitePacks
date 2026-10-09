@@ -1,5 +1,5 @@
 {
-  "version": "1.61005.1",
+  "version": "1.61009.1",
   "minEngineVersion": "1.61001.1",
   "ruleRoutingGuidance": {
     "belongs": "serving a static site from Cloudflare: the published tree, custom domains, the nightly release that uploads it",
@@ -14,9 +14,6 @@
       "assets"
     ]
   },
-  "requires": [
-    "claudinite-tasks"
-  ],
   "adoptionHandover": [
     {
       "step": "Add the site's domain as a zone on the Cloudflare account, and point the registrar's nameservers at the two Cloudflare shows at the end of that flow — https://dash.cloudflare.com/?to=/:account/add-site",

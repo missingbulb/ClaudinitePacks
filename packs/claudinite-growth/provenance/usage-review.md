@@ -87,3 +87,10 @@
 - **Actor:** @missingbulb (owner).
 - **Model:** Claude Opus 5.5 (1M context)
 - **Mechanism:** the file, the dashboard and the review's pull request carry every finding; `tools/test/task-issues.test.mjs` fails on any pack task that opens an issue.
+
+## 2026-10-09 · policy-changed · waits on the engine's usage fold too
+- **Reason:** the fold moved to the engine's built-in engine/usage-fold (ClaudiniteEngine#146); the
+  pack's id stays until claudinite-tasks is deleted.
+- **Actor:** @missingbulb (owner), folding claudinite-tasks into the engine.
+- **Model:** Claude Opus 5.5
+- **Mechanism:** `schedule_after`. claudinite-growth 1.61009.1.

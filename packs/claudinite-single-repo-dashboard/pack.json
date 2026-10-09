@@ -1,5 +1,5 @@
 {
-  "version": "1.61007.2",
+  "version": "1.61009.1",
   "minEngineVersion": "1.61001.1",
   "githubActions": [
     "dispatchWorkflow"
@@ -10,9 +10,6 @@
   },
   "pitch": "Gives the repo a read-only web page showing what its automated Claude work is doing: what is stuck, what is queued, what has already run, and what the rules and checks have been costing and catching. Two scheduled tasks keep it live, one republishing the page to GitHub Pages whenever its sources change and one deploying the sign-in endpoint, and neither reports success until the deployed result actually answers.",
   "seededByDefault": false,
-  "requires": [
-    "claudinite-tasks"
-  ],
   "adoptionHandover": [
     {
       "step": "Enable GitHub Pages with source \"GitHub Actions\" — this repo's /settings/pages",
