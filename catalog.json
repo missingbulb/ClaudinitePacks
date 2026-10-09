@@ -1,6 +1,6 @@
 {
   "v": 1,
-  "serial": 205,
+  "serial": 206,
   "packs": [
     {
       "id": "android",
@@ -91,7 +91,7 @@
     },
     {
       "id": "claude-code-web-users-support",
-      "version": "1.61009.1",
+      "version": "1.61009.2",
       "channel": "canary",
       "minEngineVersion": "1.61003.1",
       "requires": [],
