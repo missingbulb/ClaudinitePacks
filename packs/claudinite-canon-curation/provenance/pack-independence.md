@@ -46,3 +46,9 @@
 - **Reason:** the Node engine's `.claudinite-settings.json` is not a `cn` member's declaration, which is `.claudinite/settings.{yaml,toml,json}`.
 - **Actor:** build lead, ClaudiniteEngine#49 (a `cn` member declares itself in `.claudinite/settings.*`; `cn settings import` reads the Node file once, on move day).
 - **Mechanism:** the `fix` names `checks.accept` in `.claudinite/settings.yaml`. claudinite-canon-curation 61002.2.
+
+## 2026-10-08 · scope-changed · no exception for claudinite-tasks' public/
+- **Reason:** claudinite-tasks no longer has a `public/` directory; its procedures are the engine's.
+- **Actor:** @missingbulb (owner), deciding the restructure.
+- **Model:** Claude Opus 5.5 (1M context)
+- **Mechanism:** the `packs/claudinite-tasks/public` allow entry leaves `forbidReferences`.

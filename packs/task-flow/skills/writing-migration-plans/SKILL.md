@@ -61,7 +61,7 @@ step that reads the secret and stops until someone is available.
 Front-load all of it into phase zero, before the first line of code. Write it as its own issue
 with a checkbox per step (basics' *Handing over a human-only step*), stating for each what stays
 broken while it is off, and written per
-[writing-handover-issues](../writing-handover-issues/SKILL.md). And before writing it down, confirm you genuinely cannot do it yourself —
+[writing-handover-issues](../../../basics/skills/writing-handover-issues/SKILL.md). And before writing it down, confirm you genuinely cannot do it yourself —
 a step handed to a human that you could have taken is the most expensive kind of block there is.
 
 The exception is the genuinely destructive step — deleting the old store, revoking the old
@@ -186,7 +186,7 @@ The chain's **last link is the plan's retrospective**, filed in the same pass wi
 written now, while the design's expectations are still in front of you, `Blocked-by:` the final
 execution step — so once the migration has lived in production for a while, something comes back
 to read whether the design survived contact.
-[production-retrospective](../production-retrospective/SKILL.md) owns what that brief answers and
+[production-retrospective](../../../basics/skills/production-retrospective/SKILL.md) owns what that brief answers and
 its horizon.
 
 Each link is a **sub-issue of the tracking issue** ([RULES.md](../../RULES.md)' *Filing an issue
@@ -288,7 +288,7 @@ not land as predicted; write each link's brief so the chain holds through all of
   `main`". A condition only somebody else's repo could answer is not observable from here. A phase whose end is a judgment
   call is a phase that stays open.
 - **Nothing closes on a human's memory.** A step you cannot verify now gets a mechanism that comes
-  to you — a link in the chain, a scheduled task, an issue something converges (basics' *When
+  to you — a link in the chain, a scheduled task, an issue something converges (this pack's *When
   verifying now is genuinely impossible*). A phase whose closing condition is "check next week" is
   not a phase.
 - **Every execution phase names its link.** The checkbox says which issue runs it, so the plan and

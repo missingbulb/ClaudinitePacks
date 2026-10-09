@@ -12,14 +12,14 @@ import {
 } from '../../tasks/verify-production/probes.mjs';
 import { installSdk } from '../../../../tools/test/sdk-stand-in.mjs';
 
-installSdk({ params: { pack: 'claudinite-tasks', task: 'verify-production' } });
+installSdk({ params: { pack: 'task-flow', task: 'verify-production' } });
 const { runVerification, sdkIssues } = await import('../../tasks/verify-production/worker.mjs');
 
 // --- the spec grammar ----------------------------------------------------------
 
 const SPEC = [
   'Original-issue: #1286',
-  'Task: claudinite-tasks/verify-production',
+  'Task: task-flow/verify-production',
   'Live-probe: https://x.github.io/r/stamp.json :: json claudinite.packVersions.claudinite-single-repo-dashboard >= 60821.3',
   'Verify-probe: https://x.github.io/r/config.json :: json mode == "fleet"',
   'Verify-probe: https://x.github.io/r/settings-read.mjs :: not matches /node:/',
@@ -158,7 +158,7 @@ test('a rendered result carries verdict, URL, assertion and observation', () => 
 function fakeIssues(issues) {
   const find = (n) => issues.find((i) => i.number === n);
   const sdk = installSdk({
-    params: { pack: 'claudinite-tasks', task: 'verify-production' },
+    params: { pack: 'task-flow', task: 'verify-production' },
     answers: {
       'github.listIssues': ({ state }) => issues.filter((i) => i.state === state)
         .map(({ number, title = '', state: s, body }) => ({ number, title, state: s, labels: [], body })),

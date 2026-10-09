@@ -11,3 +11,8 @@
   shelf whether or not this repo was touched. It declares `amend_existing_or_create_new_pr`, per the
   rule that a run recomputing the whole answer accumulates one pull request.
 - **Landed:** #2047 (Closes #2044) · pack version 60915.3.
+
+## 2026-10-08 · reworded · delivery follows the routine instructions
+- **Reason:** `claudinite-tasks/public/deliver-pr.md` folded into the routine instructions the engine writes at session start.
+- **Actor:** @missingbulb (owner), deciding the restructure.
+- **Model:** Claude Opus 5.5 (1M context)

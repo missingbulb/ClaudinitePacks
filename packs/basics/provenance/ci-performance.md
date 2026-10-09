@@ -17,3 +17,8 @@
 - **Reason:** the worker's tracker and Actions reads went through the removed runner's library.
 - **Actor:** build lead, completing ClaudinitePacks #20 so the runner's removal lands with every importer ported.
 - **Mechanism:** the tracker through the SDK's tracker actions, the Actions runs and jobs through a pack-local REST copy on the job's token.
+
+## 2026-10-08 · reworded · delivery follows the routine instructions
+- **Reason:** `claudinite-tasks/public/deliver-pr.md` folded into the routine instructions the engine writes at session start.
+- **Actor:** @missingbulb (owner), deciding the restructure.
+- **Model:** Claude Opus 5.5 (1M context)

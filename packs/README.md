@@ -69,5 +69,6 @@ The second runs every pack's Go checks and fixture tests against the check SDK o
 - [python](python/README.md)
 - [research-project](research-project/README.md)
 - [spec-driven-product](spec-driven-product/README.md)
+- [task-flow](task-flow/README.md)
 - [web-scraping](web-scraping/README.md)
 - [web-speech](web-speech/README.md)

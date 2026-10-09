@@ -85,3 +85,8 @@
   non-doc file inside the wiki both park the round. On a member whose mount predates the vocabulary
   the policy reads as invalid, which is also a park, never a wider merge.
 - **Landed:** #1474 (Closes #1473) · pack version 60830.3.
+
+## 2026-10-08 · reworded · delivery follows the routine instructions
+- **Reason:** `claudinite-tasks/public/deliver-pr.md` folded into the routine instructions the engine writes at session start.
+- **Actor:** @missingbulb (owner), deciding the restructure.
+- **Model:** Claude Opus 5.5 (1M context)

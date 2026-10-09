@@ -51,7 +51,7 @@ Commits touching only `product-wiki/**` minus `product-requirements/`, on the br
 (`Target-branch:`), pushed onto `Target-pr:` where one is named — the round then joins the review already
 pending — and otherwise one **PR opened on that branch — never a push to the default branch directly**.
 Never search for an open pull request or pick a branch of your own.
-Then hand it to the one delivery procedure (`deliver-pr.md`) and do what it says. PR body: the question(s)
+Then deliver it as your instructions say for a pull request. PR body: the question(s)
 researched, what changed where, the citations added, and the open questions left for the next run.
 
 ## Tracking

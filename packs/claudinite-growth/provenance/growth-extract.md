@@ -51,3 +51,8 @@
 - **Reason:** nothing scaffolded a member's first local pack once adoption stopped seeding one (ClaudiniteEngine#55 Q7); `cn pack new` writes and declares it.
 - **Actor:** build lead, ClaudiniteEngine#57.
 - **Model:** Claude Opus 5.5 (1M context)
+
+## 2026-10-08 · reworded · delivery follows the routine instructions
+- **Reason:** `claudinite-tasks/public/deliver-pr.md` folded into the routine instructions the engine writes at session start.
+- **Actor:** @missingbulb (owner), deciding the restructure.
+- **Model:** Claude Opus 5.5 (1M context)

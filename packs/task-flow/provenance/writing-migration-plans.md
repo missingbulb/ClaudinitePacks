@@ -47,3 +47,9 @@
   it.
 - **Mechanism:** the description, as before.
 - **Actor:** @missingbulb (owner).
+
+## 2026-10-08 · moved · from basics into task-flow
+- **Reason:** its subject is putting work on the queue in order, task-flow's.
+- **Actor:** @missingbulb (owner), deciding the restructure.
+- **Model:** Claude Opus 5.5 (1M context)
+- **Mechanism:** the skill folder, unchanged triggers.

@@ -21,3 +21,12 @@
 ## 2026-10-02 · reworded · the fix names `CLAUDINITE_VARS` rather than the Node module that unpacked it
 - **Reason:** `src/world/vars-bag.mjs` left with the task runner (missingbulb/ClaudiniteEngine#43).
 - **Actor:** @missingbulb (owner).
+
+## 2026-10-08 · ported · a `cn` built-in declared check tagged with this pack
+- **Reason:** the queue vocabulary and the task surface it guards are the engine's, so the check
+  ships with them rather than in the pack: same id, on_fail, finding and fix text, run wherever this
+  pack is declared.
+- **Actor:** @missingbulb (owner), deciding the restructure.
+- **Model:** Claude Opus 5.5 (1M context)
+- **Mechanism:** a declared check registered by `cn` under claudinite-tasks; the pack's
+  `declared-checks.json` is deleted.

@@ -6,9 +6,9 @@ session, which has no egress. This task is the runner for those: the verificatio
 issue carries declarative probes, and the worker fetches and judges them as
 code-work, Action-side, where egress exists.
 
-The filing form — when to file one at all, and the brief's fields — is the basics
-pack's [verify-in-production](../../../basics/skills/verify-in-production/SKILL.md)
-skill. An issue routes here by naming `Task: claudinite-tasks/verify-production`
+The filing form — when to file one at all, and the brief's fields — is this
+pack's [verify-in-production](../../skills/verify-in-production/SKILL.md)
+skill. An issue routes here by naming `Task: task-flow/verify-production`
 beside its mark.
 
 ## The spec the worker reads
@@ -18,7 +18,7 @@ is also where the assertion grammar is defined and documented:
 
 ```
 Original-issue: #<n>
-Task: claudinite-tasks/verify-production
+Task: task-flow/verify-production
 Live-probe: <url> :: <assertion>
 Verify-probe: <url> :: <assertion>
 Retry-every: <count> <minutes|hours|days|weeks>

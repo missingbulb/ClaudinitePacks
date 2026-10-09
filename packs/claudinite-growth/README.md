@@ -38,7 +38,7 @@ engine's own, under the license.
    whether any of it upgrades to a check before the PR opens.
 
 Everything lands in **one** PR, delivered to land where the repo's delivery settings allow
-(`packs/claudinite-tasks/public/deliver-pr.md`). The lesson bar and the promotion ladder both
+(the pull-request delivery in the routine instructions). The lesson bar and the promotion ladder both
 halves share are [extracting-lessons.md](extracting-lessons.md). Because fresh prose is offered a
 conversion the night it is written, the standing `prose-to-checks-sweep` is weekly: what it sees is
 a backlog.

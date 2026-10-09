@@ -7,8 +7,7 @@ what the machinery reads, everything outside it is the person's, and the
 access is **MCP-only** (`mcp__github__*`).
 
 You open a pull request. What happens to it after that is not this file's
-subject: delivery and landing are the shared procedure's (`deliver-pr.md`, beside
-this file), which reads your item's `Merge:` field as its
+subject: delivery and landing are your instructions' pull-request delivery, which reads your item's `Merge:` field as its
 authorization — never the request issue, a comment on it, or how small the
 change looks to you.
 
@@ -47,10 +46,7 @@ now re-opens that question.
    you changed, which reading of the ask you took, and anything you deliberately
    left out — the reviewer's decision is easier than their archaeology.
 
-5. **Deliver it** by the shared procedure — `public/deliver-pr.md` in the
-   claudinite-tasks pack (probe `.claudinite/shared/packs/claudinite-tasks/`,
-   falling back to `packs/claudinite-tasks/` in the canon) — with your item's
-   `Merge:` field as the authorization it asks for. It landed the PR → converge the
+5. **Deliver it** as your instructions say to deliver a pull request, with your item's `Merge:` field as the authorization it asks for. It landed the PR → converge the
    item `done` with `.claudinite/bin/cn work converge` (the routine's step 6), the
    summary naming the merge. It left the PR open → go to step 6.
 

@@ -17,14 +17,10 @@ The basics pack — the `RULES.md` prose every session loads (injected by the pa
 | Building release, deploy, versioning or CI plumbing | medium | complexity | prose: <50 words |
 | Finishing a change | high | correctness | prose: <50 words |
 | Changing scheduled or unattended machinery | high | correctness | prose: <50 words |
-| Planning a migration | medium | complexity | prose: <100 words + skill (`writing-migration-plans`) |
-| Filing a plan's issues | high | correctness | prose: <100 words + skill (`writing-migration-plans`) |
-| Adding a legacy tolerance | high | complexity | prose: <100 words |
 | Choosing an automerge policy | high | correctness | prose: <100 words |
 | Predicting an irreversible change | critical | correctness | prose: <50 words |
 | Handing over a wider diff than asked | medium | complexity | prose: <100 words |
 | Retiring a system into another | high | correctness | prose: <100 words |
-| When verifying now is genuinely impossible | high | correctness | prose: <200 words + skill (`verify-in-production`) |
 | Finishing a larger element | medium | correctness | prose: <100 words + skill (`production-retrospective`) |
 | Receiving feedback that flags a misunderstanding | medium | complexity | prose: <50 words |
 | Writing anything | low | complexity | prose: <20 words |
@@ -42,9 +38,6 @@ The basics pack — the `RULES.md` prose every session loads (injected by the pa
 | Finding a finding's existing issue | medium | complexity | prose: <100 words |
 | Starting a change worked on now | high | complexity | prose: <200 words |
 | Ending a session with the change unfinished | medium | complexity | prose: <50 words |
-| Spotting a change that should wait | medium | complexity | prose: <50 words + skill (`do-later`) |
-| Filing anything into the ad-hoc queue | high | correctness | prose: <100 words |
-| The queue cannot reach the work | high | correctness | prose: <50 words |
 | Handing over a human-only step | high | complexity | prose: <100 words + skill (`writing-handover-issues`) |
 | Naming a file, module, or symbol | low | complexity | prose: <50 words |
 | Referring to a value from two places | high | correctness | prose: <100 words + check (`shared-constants`) |

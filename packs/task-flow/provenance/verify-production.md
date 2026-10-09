@@ -40,3 +40,11 @@
 - **Reason:** its worker imported the removed runner's GitHub client.
 - **Actor:** build lead, completing ClaudinitePacks #20 so the runner's removal lands with every importer ported.
 - **Mechanism:** comments through `github.createComment`, the reopen through a REST copy on the job's token.
+
+## 2026-10-08 · moved · from claudinite-tasks into task-flow
+- **Reason:** filing and proving a production verification is the workflow over the queue, and its
+  filing skill moved here with it.
+- **Actor:** @missingbulb (owner), deciding the restructure.
+- **Model:** Claude Opus 5.5 (1M context)
+- **Mechanism:** the task folder, its tests, and its own copy of `github-api.mjs` beside the worker,
+  the shelf's per-task copy; an issue routes here by `Task: task-flow/verify-production`.

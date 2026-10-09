@@ -59,7 +59,7 @@ The bar is *could not be watched now*, not *would be nice to double-check*. A ve
 filed for a change already covered by a test is a wasted run re-proving what the suite proved.
 And the test above only files point assertions: when the merge completes a **larger element** —
 one that earned a design doc or a phased tracking issue — the ~week-later review of how the
-whole design fared is [production-retrospective](../production-retrospective/SKILL.md)'s
+whole design fared is [production-retrospective](../../../basics/skills/production-retrospective/SKILL.md)'s
 separate call, made beside this one.
 
 ## Second: which runner can read it? If neither, file nothing
@@ -69,7 +69,7 @@ gets — never preference:
 
 - **A public URL** — a Pages site, a deployed config, a published module, a live
   `/version.json` — files the **coded form**: declarative probes an agentless queue
-  task (`claudinite-tasks/verify-production`) fetches and judges Action-side, where
+  task (`task-flow/verify-production`) fetches and judges Action-side, where
   egress exists. No session ever runs, so there is no egress wall to hit — this is
   the lane for exactly the class that used to park.
 - **A GitHub read** — an issue's state, a file at HEAD, a workflow run's conclusion —
@@ -101,7 +101,7 @@ person today to have them look. If you would not, the change goes unverified and
 so. When it does clear that bar, file an ordinary issue — never a queue item: title it
 the same `Verify in production: …`, carry `Original-issue:` and attach it as that
 issue's sub-issue, and write the body per
-[writing-handover-issues](../writing-handover-issues/SKILL.md) — somebody else runs it,
+[writing-handover-issues](../../../basics/skills/writing-handover-issues/SKILL.md) — somebody else runs it,
 so the checklist is the artifact. **No mark, no
 `Not-before:`, no `Retry-every:`, no `Model:`**: nothing in it is the queue's, and a mark
 would buy only a session that parks. Assign it to whoever owns the release, and say in
@@ -121,7 +121,7 @@ rewrite `Not-before:`. Then say what changed and why it could not be watched now
 
 ```
 Original-issue: #<the change's issue>
-Task: claudinite-tasks/verify-production
+Task: task-flow/verify-production
 Live-probe: <url> :: <assertion that becomes true when the release lands>
 Verify-probe: <url> :: <the assertion being verified>
 Retry-every: <how often to re-probe while not yet live, e.g. 6 hours>
@@ -132,7 +132,7 @@ no session, no `Model:`. `Live-probe:` is `In-production-when:` made executable 
 `Verify-probe:` is `Verify:`; both classes are required, repeat either line for more
 probes, and the assertion grammar (`status`, `contains`, `matches`, the `json` value
 ops) is documented at its one home,
-[`probes.mjs`](../../../claudinite-tasks/tasks/verify-production/probes.mjs). A
+[`probes.mjs`](../../tasks/verify-production/probes.mjs). A
 liveness probe failing re-arms the item by `Retry-every:`; a verify probe failing
 against a live release reopens `Original-issue:` with what was asserted and what was
 read; all passing closes the item with that evidence. No `Not-before:` is needed: a

@@ -10,8 +10,8 @@ it runs the extract-from-activity skill over the window's commits/PRs/issues
 and the extract-from-conversations skill over the captured conversation logs,
 then runs prose-to-checks over what it just wrote to see whether any of it
 upgrades to a check — and lands the whole run through a single PR delivered
-per the repo's delivery settings (task.md → the shared deliver-pr.md
-procedure). Worker: task.md.
+per the repo's delivery settings (task.md → the routine
+instructions' pull-request delivery). Worker: task.md.
 
 The two halves were separate tasks (growth-extract + conversation-extract)
 firing at the same daily anchor, each opening its own PR against the same local
