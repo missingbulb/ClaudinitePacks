@@ -1,7 +1,7 @@
 {
   "v": 1,
   "pack": "claudinite-single-repo-dashboard",
-  "serial": 2,
+  "serial": 3,
   "versions": [
     {
       "version": "1.61007.2",
@@ -26,6 +26,17 @@
       "revoked": false,
       "publishedAt": "2026-10-09T06:00:10Z",
       "sourceCommit": "a9ec10c9fbaf9704d320da317de550bdffe2de53"
+    },
+    {
+      "version": "1.61009.2",
+      "sha256": "b827936368a17ce21f5b951174faddf8d8ada6b26ffad7517a6ff95d80957ab6",
+      "size": 188929,
+      "minEngineVersion": "1.61001.1",
+      "requires": [],
+      "channel": "canary",
+      "revoked": false,
+      "publishedAt": "2026-10-09T18:16:13Z",
+      "sourceCommit": "54f5962f4d674c23cb3d63256e767649e31e1113"
     }
   ]
 }
