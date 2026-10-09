@@ -183,3 +183,4 @@
 - **Model:** Claude Opus 5.5
 - **Mechanism:** the `adoptionHandover` entry, deleted; environment-setup-command.sh stays as the
   paste body the web-session-halt rule points at. Engine counterpart: ClaudiniteEngine #165.
+  claude-code-web-users-support 1.61009.2.
