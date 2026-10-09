@@ -164,3 +164,14 @@
 - **Actor:** @missingbulb (owner), asking that ClaudinitePacks keep only code still needed.
 - **Model:** Claude Opus 5.5
 - **Mechanism:** the `migrations/` directory, deleted. claude-code-web-users-support 1.61005.1.
+
+## 2026-10-09 · scope-changed · the setup script pre-warms the cn engine
+- **Reason:** the body still found `.claudinite-settings.json` and ran the Node engine's
+  `env-requirements.mjs`, neither of which a cn member holds; and a bare
+  `sh .claudinite/launch env install` fails because the setup script starts in the checkout's
+  parent. The body now runs the launcher's `env install` in whichever checkout holds one and never
+  fails.
+- **Actor:** @missingbulb (owner), via the project coordinator.
+- **Model:** Claude Opus 5.5
+- **Mechanism:** environment-setup-command.sh, quoted by the adoptionHandover step.
+  claude-code-web-users-support 1.61009.1.
