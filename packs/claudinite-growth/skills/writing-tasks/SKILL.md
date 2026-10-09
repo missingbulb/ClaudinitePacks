@@ -92,8 +92,8 @@ outage self-heals by looking at the queue rather than by replaying a ledger.
   `task-declaration-shape` bounds the length; the rest is yours.
 
 - **Every task declaration carries the full contract.** A `tasks/<name>/task.json`
-  (one JSON object with no `"$schema"` key — the engine validates it, `cn tasks
-  contract`, and publishes no schema file to point at; keys grouped as identity, scheduling, outcome, then the
+  (one JSON object with no `"$schema"` key — the engine validates it, the
+  `task-declaration-shape` check, and publishes no schema file to point at; keys grouped as identity, scheduling, outcome, then the
   `code_*` fields, then the `agent_*` fields) declares `id` (matching its directory), `description`
   (below), `trigger` (`schedule | request` — who mints an occurrence, below),
   `preconditions` (what must then hold — optional, and absent means nothing does; its
