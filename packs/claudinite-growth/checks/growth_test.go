@@ -54,7 +54,7 @@ func TestGrowthWriteScope(t *testing.T) {
 			ChangedFiles: []string{"README.md", ".claudinite/local/packs/mypack/RULES.md"}, Deleted: []string{"docs/old.md"}}
 	}
 	expect(t, "a run writing outside the local packs", run(t, growthWriteScope, head, outside("Claudinite growth: extract lessons from the week")),
-		want{path: "README.md", what: `^a growth run touched README\.md, outside \.claudinite/local/packs/$`, fix: "claudinite-canon-curation"},
+		want{path: "README.md", what: `^a growth run touched README\.md, outside \.claudinite/local/packs/$`, fix: "engine fleet task"},
 		want{path: "docs/old.md", what: `touched docs/old\.md`})
 	inside := &checksdk.Fake{MergeBase: "base", Messages: []string{"Claudinite growth: dedup local packs"}, ChangedFiles: []string{".claudinite/local/packs/mypack/RULES.md"}}
 	expect(t, "a run inside the local packs", run(t, growthWriteScope, head, inside))

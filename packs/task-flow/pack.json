@@ -1,5 +1,5 @@
 {
-  "version": "1.61009.1",
+  "version": "1.61009.2",
   "minEngineVersion": "1.61008.2",
   "githubActions": [
     "createComment",
@@ -7,7 +7,7 @@
   ],
   "ruleRoutingGuidance": {
     "belongs": "the workflow of filing, deferring, sequencing and proving work through the queue — deferred changes, marked requests and their implementer, migration plans and their chains, legacy tolerances, production verifications",
-    "excludes": "the queue and executor machinery itself — claudinite-tasks; authoring a task — claudinite-growth; the issue-branch-PR lifecycle of work done now — basics; the post-launch retrospective — basics"
+    "excludes": "the queue and executor machinery itself — the engine; authoring a task — claudinite-growth; the issue-branch-PR lifecycle of work done now — basics; the post-launch retrospective — basics"
   },
   "pitch": "Work that cannot be done now ends up parked in somebody's memory: a change that should wait for the one in flight, a release only provable once it is live, a migration's later phases. This pack files that work as issues the repo's own queue runs unattended. Its skills defer a change behind what it waits on, chain each phase of a migration to the proof of the one before, and decide when a merged change needs checking in production. A person can mark an ordinary issue for a task to implement as a pull request, and another task probes live URLs until production proves the change or reopens its issue.",
   "seededByDefault": true,

@@ -158,3 +158,10 @@
 - **Reason:** the skill named `cn tasks contract`, which `cn` does not have; the engine validates a declaration through the `task-declaration-shape` check.
 - **Actor:** @missingbulb (owner), asking for the docs errors in the cn command review fixed.
 - **Mechanism:** the contract paragraph, as before.
+
+## 2026-10-09 · reworded · the queue's settings are the top-level tasks block
+- **Reason:** the claudinite-tasks entry's config is gone; `invocation_endpoint`, disabled tasks and
+  dormancy now name `tasks.routines`, `tasks.disabled` and `tasks.dormant`, and the block's five
+  keys are listed once.
+- **Actor:** @missingbulb (owner), collapsing claudinite-tasks, claudinite-canon-curation,
+  claudinite-fleet-sheepdog and claudinite-single-repo-dashboard into the engine.

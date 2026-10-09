@@ -18,3 +18,8 @@
 - **Actor:** @missingbulb (owner), folding claudinite-tasks into the engine.
 - **Model:** Claude Opus 5.5
 - **Mechanism:** the manifest's `requires`. task-flow 1.61009.1.
+
+## 2026-10-09 · reworded · excludes names the engine for the queue machinery
+- **Reason:** claudinite-tasks is deleted.
+- **Actor:** @missingbulb (owner), collapsing claudinite-tasks, claudinite-canon-curation,
+  claudinite-fleet-sheepdog and claudinite-single-repo-dashboard into the engine.

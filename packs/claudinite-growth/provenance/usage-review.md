@@ -94,3 +94,10 @@
 - **Actor:** @missingbulb (owner), folding claudinite-tasks into the engine.
 - **Model:** Claude Opus 5.5
 - **Mechanism:** `schedule_after`. claudinite-growth 1.61009.1.
+
+## 2026-10-09 · policy-changed · schedule_after drops the claudinite-tasks/usage-fold id
+- **Reason:** claudinite-tasks is deleted, and the engine already skips that pack's fold for its
+  own.
+- **Actor:** @missingbulb (owner), collapsing claudinite-tasks, claudinite-canon-curation,
+  claudinite-fleet-sheepdog and claudinite-single-repo-dashboard into the engine.
+- **Mechanism:** `schedule_after`, now `engine/usage-fold` alone.

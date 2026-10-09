@@ -1,8 +1,0 @@
-[
-  {
-    "name": "pack-version-history",
-    "pathMatching": "/^packs\\/[^/]+\\/provenance\\/VERSIONS\\.md$/",
-    "changeKinds": ["added", "modified"],
-    "editShape": "any"
-  }
-]

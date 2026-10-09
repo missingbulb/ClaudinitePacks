@@ -10,3 +10,8 @@
 - **Rejected:** the `pack_paths` config, removed from the prose-to-checks skill in the same change.
 - **Retire when:** a member ever gains a writable canon.
 - **Landed:** #2047 (Closes #2044) · pack version 60915.3.
+
+## 2026-10-09 · reworded · the shelf twin is an engine fleet task
+- **Reason:** claudinite-canon-curation is deleted; its tasks are the engine's fleet pack's.
+- **Actor:** @missingbulb (owner), collapsing claudinite-tasks, claudinite-canon-curation,
+  claudinite-fleet-sheepdog and claudinite-single-repo-dashboard into the engine.

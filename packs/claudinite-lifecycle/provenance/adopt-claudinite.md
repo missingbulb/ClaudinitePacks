@@ -35,3 +35,9 @@
 - **Reason:** the skill named `cn init --from-node`, which no engine ever shipped; moving a member off the Node engine is ClaudiniteEngine's move-member-off-node skill (its design record 151).
 - **Actor:** @missingbulb (owner), asking for the docs errors in the cn command review fixed.
 - **Mechanism:** the step's sentence, as before.
+
+## 2026-10-09 · reworded · the routine endpoint goes under tasks.routines
+- **Reason:** the claudinite-tasks entry's config is gone; the queue runs in every member and reads
+  the top-level tasks block.
+- **Actor:** @missingbulb (owner), collapsing claudinite-tasks, claudinite-canon-curation,
+  claudinite-fleet-sheepdog and claudinite-single-repo-dashboard into the engine.

@@ -2,7 +2,7 @@
 // delayed-execution mechanism, so the skill's whole contract is prose. What is
 // tested is that the two templates it prescribes are ones the queue's own parsers
 // read back; the Not-before adoption carry it leans on is engine behaviour, tested
-// in packs/claudinite-tasks/test/queue/request-mode.test.mjs.
+// in the engine's own queue.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';

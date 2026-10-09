@@ -219,10 +219,10 @@ passed over the real shelf.
 
 ## What a canon task may write
 
-The curation tasks of `claudinite-canon-curation` open pull requests against `main`; none
-publishes, and a person merges each. A `growth-promote` pull request may write only under the
-shelf (and any second corpus root the pack's `write_paths` names): the pack's `promote-scope` work
-check fails on any other path when the branch is a promote branch, at the promote session's Stop.
+The canon-curation tasks, which the engine's fleet pack runs from the fleet manager, open pull
+requests against `main`; none publishes, and a person merges each. A `growth-promote` pull request
+may write only under the shelf (and any second corpus root the fleet block's `writePaths` names):
+`cn fleet promote-scope` fails on any other path the promote branch touches.
 
 ## Keys
 
