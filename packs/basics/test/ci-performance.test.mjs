@@ -141,3 +141,22 @@ test('an unreadable run ledger fails the run before the tracker is touched', asy
   await assert.rejects(worker({ repo: 'o/r' }, async () => ({ status: 403, json: null })), /run ledger unreadable/);
   assert.deepEqual(sdk.calls, []);
 });
+
+test('the ledger is read across both windows, page by page, not one repo-wide page', async () => {
+  const paths = [];
+  // Page 1 is a busy workflow's last day; the slow workflow's history only shows up on page 2.
+  const pages = [runs('Test', 60, 0.5, 100), [...runs('Executor', 30, 10, 3), ...runs('Executor', 30, 2, 3)]];
+  const gh = async (path) => {
+    paths.push(path);
+    if (path.includes('/jobs')) return { status: 200, json: { jobs: [] } };
+    const page = Number(new URL(path, 'https://x').searchParams.get('page'));
+    return { status: 200, json: { workflow_runs: pages[page - 1] ?? [] } };
+  };
+  sdk.calls.length = 0;
+  await worker({ repo: 'o/r' }, gh, Date.parse('2026-08-15T12:00:00Z'));
+  const ledger = paths.filter((p) => !p.includes('/jobs'));
+  assert.equal(ledger.length, 2, 'stops at the first short page');
+  assert.match(decodeURIComponent(ledger[0]), /created=>=2026-08-01/);
+  const body = sdk.calls.find((c) => c.method === 'github.writeTracker').args.body;
+  assert.match(body, /Executor/);
+});

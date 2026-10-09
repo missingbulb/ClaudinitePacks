@@ -22,3 +22,9 @@
 - **Reason:** `claudinite-tasks/public/deliver-pr.md` folded into the routine instructions the engine writes at session start.
 - **Actor:** @missingbulb (owner), deciding the restructure.
 - **Model:** Claude Opus 5.5 (1M context)
+
+## 2026-10-09 · fixed · the run ledger covers both windows
+- **Reason:** one repo-wide page of 100 runs reached back only hours on a busy repo, so a quiet workflow's previous window was a handful of runs from whatever that page held (CrosswordChat #421).
+- **Actor:** @missingbulb (owner), asking for that repo's open issues to be implemented or closed.
+- **Model:** Claude, per the commit trailer.
+- **Mechanism:** the worker pages the ledger filtered to runs created since the start of the previous window.
