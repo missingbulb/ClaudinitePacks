@@ -153,3 +153,8 @@
 - **Reason:** `claudinite-tasks/public/deliver-pr.md` folded into the routine instructions the engine writes at session start.
 - **Actor:** @missingbulb (owner), deciding the restructure.
 - **Model:** Claude Opus 5.5 (1M context)
+
+## 2026-10-09 · reworded · the declaration is validated by its check, not a `cn tasks contract` command
+- **Reason:** the skill named `cn tasks contract`, which `cn` does not have; the engine validates a declaration through the `task-declaration-shape` check.
+- **Actor:** @missingbulb (owner), asking for the docs errors in the cn command review fixed.
+- **Mechanism:** the contract paragraph, as before.
