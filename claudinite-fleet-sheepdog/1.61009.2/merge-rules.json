@@ -1,0 +1,8 @@
+[
+  {
+    "name": "fleet-roster-artifact",
+    "pathMatching": "/^\\.claudinite\\/fleet\\/roster\\.GENERATED\\.json$/",
+    "changeKinds": ["added", "modified"],
+    "editShape": "any"
+  }
+]
