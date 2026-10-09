@@ -36,3 +36,8 @@
 - **Mechanism:** `checks/growth_write_scope.go` in this pack, a coded check tagged `work`; id,
   `on_fail`, `why`, `doc` and finding text kept.
 - **Landed:** pending.
+
+## 2026-10-09 · reworded · the fix names an engine fleet task for the shelf
+- **Reason:** claudinite-canon-curation is deleted; its tasks are the engine's fleet pack's.
+- **Actor:** @missingbulb (owner), collapsing claudinite-tasks, claudinite-canon-curation,
+  claudinite-fleet-sheepdog and claudinite-single-repo-dashboard into the engine.

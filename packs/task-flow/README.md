@@ -3,8 +3,8 @@
 The workflow side of the work-item queue: how a session files work that should not or cannot be
 done now so that it comes back on its own, how a plan's phases are chained so nothing stalls
 mid-run, and how a merged change gets proven in production. The queue, the executor and the task
-contract are the claudinite-tasks pack's; this pack requires it, and `basics` for the lifecycle of
-the work done now.
+contract are the engine's own; this pack requires `basics` for the lifecycle of the work done
+now.
 
 ## Tasks
 

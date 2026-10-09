@@ -20,7 +20,7 @@ const { runVerification, sdkIssues } = await import('../../tasks/verify-producti
 const SPEC = [
   'Original-issue: #1286',
   'Task: task-flow/verify-production',
-  'Live-probe: https://x.github.io/r/stamp.json :: json claudinite.packVersions.claudinite-single-repo-dashboard >= 60821.3',
+  'Live-probe: https://x.github.io/r/stamp.json :: json claudinite.packVersions.acme-pack >= 60821.3',
   'Verify-probe: https://x.github.io/r/config.json :: json mode == "fleet"',
   'Verify-probe: https://x.github.io/r/settings-read.mjs :: not matches /node:/',
   'Retry-every: 6 hours',
@@ -94,7 +94,7 @@ test('contains and matches, each with its not form', () => {
 });
 
 test('json ops navigate a dotted path and judge the value actually there', () => {
-  const body = '{"claudinite":{"packVersions":{"claudinite-single-repo-dashboard":"60821.3"}},"mode":"fleet","n":3}';
+  const body = '{"claudinite":{"packVersions":{"acme-pack":"60821.3"}},"mode":"fleet","n":3}';
   assert.equal(evaluateAssertion(parseAssertion('json mode == "fleet"'), ok200(body)).ok, true);
   assert.equal(evaluateAssertion(parseAssertion('json mode == "repo"'), ok200(body)).ok, false);
   assert.equal(evaluateAssertion(parseAssertion('json n == 3'), ok200(body)).ok, true);
@@ -102,7 +102,7 @@ test('json ops navigate a dotted path and judge the value actually there', () =>
   assert.equal(evaluateAssertion(parseAssertion('json nope exists'), ok200(body)).ok, false);
   assert.equal(evaluateAssertion(parseAssertion('json mode != "repo"'), ok200(body)).ok, true);
   assert.equal(
-    evaluateAssertion(parseAssertion('json claudinite.packVersions.claudinite-single-repo-dashboard >= 60821.3'), ok200(body)).ok,
+    evaluateAssertion(parseAssertion('json claudinite.packVersions.acme-pack >= 60821.3'), ok200(body)).ok,
     true);
   const observed = evaluateAssertion(parseAssertion('json mode == "repo"'), ok200(body)).observed;
   assert.match(observed, /"fleet"/, 'the observation carries the value actually read');

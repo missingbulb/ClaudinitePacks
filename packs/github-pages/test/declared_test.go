@@ -29,11 +29,11 @@ func TestPack(t *testing.T) {
 		return files
 	}
 	fixture.Run(t, "github-pages", []fixture.Case{
-		{Name: "a Pages repo carrying the config and the vendored workflow is clean", Member: site(nil), Also: []string{"claudinite-tasks", "public-website"}},
-		{Name: "a repo with neither signal carries no finding", Member: map[string]string{"index.html": "x\n"}, Also: []string{"claudinite-tasks", "public-website"}},
-		{Name: "site-config demands the config beside the workflow", Member: site(nil, configPath), Also: []string{"claudinite-tasks", "public-website"},
+		{Name: "a Pages repo carrying the config and the vendored workflow is clean", Member: site(nil), Also: []string{"public-website"}},
+		{Name: "a repo with neither signal carries no finding", Member: map[string]string{"index.html": "x\n"}, Also: []string{"public-website"}},
+		{Name: "site-config demands the config beside the workflow", Member: site(nil, configPath), Also: []string{"public-website"},
 			Expect: []string{"finding site-config " + configPath}},
-		{Name: "deploy-workflow refuses a push trigger", Also: []string{"claudinite-tasks", "public-website"},
+		{Name: "deploy-workflow refuses a push trigger", Also: []string{"public-website"},
 			Member: site(map[string]string{deployPath: strings.Replace(string(raw), "on:\n  workflow_dispatch:", "on:\n  push:\n  workflow_dispatch:", 1)}),
 			Expect: []string{"finding deploy-workflow " + deployPath}},
 	})

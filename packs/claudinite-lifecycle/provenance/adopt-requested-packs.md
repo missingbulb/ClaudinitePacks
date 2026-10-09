@@ -62,3 +62,8 @@
 - **Reason:** the owner dropped `add-packs` from the approved labels; the converged titles already key the work lists.
 - **Actor:** @missingbulb (owner), approving a closed list of labels canon packs may write.
 - **Model:** Claude Opus 5.5 (1M context)
+
+## 2026-10-09 · reworded · the fleet half is the engine's fleet/fleet-add-missing-packs
+- **Reason:** claudinite-fleet-sheepdog is deleted; `cn fleet add-packs` writes the work lists.
+- **Actor:** @missingbulb (owner), collapsing claudinite-tasks, claudinite-canon-curation,
+  claudinite-fleet-sheepdog and claudinite-single-repo-dashboard into the engine.
