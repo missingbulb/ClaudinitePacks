@@ -11,3 +11,10 @@
   basics-seeded repo carried until now.
 - **Rejected:** opt-in, which drops the request lane and the deferral rules from every new repo that
   adopts the queue.
+
+## 2026-10-09 · scope-changed · requires no claudinite-tasks
+- **Reason:** the task queue is the engine's on every member (ClaudiniteEngine#146), so the pack it
+  once needed is retiring.
+- **Actor:** @missingbulb (owner), folding claudinite-tasks into the engine.
+- **Model:** Claude Opus 5.5
+- **Mechanism:** the manifest's `requires`. task-flow 1.61009.1.
